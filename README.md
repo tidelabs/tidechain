@@ -2,7 +2,15 @@
 
 Based on the substrate-node-template [Substrate](https://github.com/substrate-developer-hub/substrate-node-template) with the addition of [pallet_multisig](https://crates.io/crates/pallet-multisig) and [pallet contracts](https://crates.io/crates/pallet-contracts) :rocket:
 
-### run it
+### run it in on a server
+
+`cargo build --release`
+
+`./target/release/tidefi-substrate-node --dev --ws-external`
+
+port 9944 needs to be open
+
+### run it in temp mode
 
 `cargo build --release`
 
