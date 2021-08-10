@@ -599,3 +599,39 @@ impl_runtime_apis! {
 		}
 	}
 }
+
+use pallet_contracts::chain_extension::{
+	ChainExtension, Environment, Ext, InitState, RetVal, SysConfig, UncheckedFrom,
+};
+use sp_runtime::DispatchError;
+
+pub struct TemplateExtension;
+
+impl ChainExtension<Runtime> for TemplateExtension {
+	fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
+	where
+		<E::T as SysConfig>::AccountId: UncheckedFrom<<E::T as SysConfig>::Hash> + AsRef<[u8]>,
+	{
+		match func_id {
+			1101 => {
+				let mut env = env.buf_in_buf_out();
+				let caller: Vec<u8> = env.ext().caller().as_ref().into();
+				// trace!("[ChainExtension]|call|caller:{:}", caller);
+				// env.ext().transfer(to: &AccountIdOf<Self::T>, 13);
+				// pallet_balances::Call::transfer(_, _)
+				// let CHARLIE = sp_runtime::AccountId32::new([3u8; 32]);
+				// BalancesCall::transfer(CHARLIE, 22)
+				env.write(&caller, false, None)
+					.map_err(|_| DispatchError::Other("ChainExtension failed to call random"))?;
+			}
+			_ => {
+				// error!("Called an unregistered `func_id`: {:}", func_id);
+				return Err(DispatchError::Other("Unimplemented func_id"));
+			}
+		}
+		Ok(RetVal::Converging(0))
+	}
+	fn enabled() -> bool {
+		true
+	}
+}
