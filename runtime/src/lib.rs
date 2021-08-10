@@ -617,12 +617,11 @@ impl ChainExtension<Runtime> for TemplateExtension {
 				let mut env = env.buf_in_buf_out();
 				let caller: Vec<u8> = env.ext().caller().as_ref().into();
 				// trace!("[ChainExtension]|call|caller:{:}", caller);
-				// env.ext().transfer(to: &AccountIdOf<Self::T>, 13);
-				// pallet_balances::Call::transfer(_, _)
-				// let CHARLIE = sp_runtime::AccountId32::new([3u8; 32]);
-				// BalancesCall::transfer(CHARLIE, 22)
+				let charlie = sp_runtime::AccountId32::new([3u8; 32]);
+				// env.ext().transfer(&charlie.into(), 23.into());
 				env.write(&caller, false, None)
 					.map_err(|_| DispatchError::Other("ChainExtension failed to call random"))?;
+				// Call::Balances(BalancesCall::transfer(charlie.into(), 23));
 			}
 			_ => {
 				// error!("Called an unregistered `func_id`: {:}", func_id);
@@ -635,3 +634,6 @@ impl ChainExtension<Runtime> for TemplateExtension {
 		true
 	}
 }
+
+// pub type BalanceOf<T> =
+// 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
