@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use codec::Decode;
 use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
@@ -607,6 +608,12 @@ use sp_runtime::DispatchError;
 
 pub struct TemplateExtension;
 
+#[derive(codec::Encode, codec::Decode, Debug)]
+struct PayOutArgs {
+	account: AccountId,
+	amount: u128,
+}
+
 impl ChainExtension<Runtime> for TemplateExtension {
 	fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
 	where
@@ -617,8 +624,15 @@ impl ChainExtension<Runtime> for TemplateExtension {
 				let mut env = env.buf_in_buf_out();
 				let caller: Vec<u8> = env.ext().caller().as_ref().into();
 				// trace!("[ChainExtension]|call|caller:{:}", caller);
-				let charlie = sp_runtime::AccountId32::new([3u8; 32]);
-				// env.ext().transfer(&charlie.into(), 23.into());
+				// let val = env.val0();
+
+				// let charlie32 = sp_runtime::AccountId32::new([3u8; 32]);
+				// let charlie =
+				// 	<<E as Ext>::T as SysConfig>::AccountId::decode(charlie32.as_mut()).unwrap();
+				// env.ext().transfer(&charlie, (23_u128).into());
+
+				let args = env.read_as::<PayOutArgs>()?;
+				frame_support::debug::native::debug!("==========> args {:?}", args);
 				env.write(&caller, false, None)
 					.map_err(|_| DispatchError::Other("ChainExtension failed to call random"))?;
 				// Call::Balances(BalancesCall::transfer(charlie.into(), 23));
