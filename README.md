@@ -18,6 +18,8 @@ port 9944 needs to be open
 
 [playground](https://polkadot.js.org/apps/#/accounts)
 
+./target/release/tidefi-substrate-node --dev --tmp -lcustom=debug
+
 ### apps frontend
 
 ```

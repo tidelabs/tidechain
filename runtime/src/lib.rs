@@ -338,10 +338,10 @@ impl pallet_contracts::Config for Runtime {
 	type MaxValueSize = MaxValueSize;
 	type WeightPrice = pallet_transaction_payment::Module<Self>;
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-	type ChainExtension = ();
 	type DeletionQueueDepth = DeletionQueueDepth;
 	type DeletionWeightLimit = DeletionWeightLimit;
 	type MaxCodeSize = MaxCodeSize;
+	type ChainExtension = TemplateExtension;
 }
 
 /// Configure the template pallet in pallets/template.
@@ -631,10 +631,18 @@ impl ChainExtension<Runtime> for TemplateExtension {
 				// 	<<E as Ext>::T as SysConfig>::AccountId::decode(charlie32.as_mut()).unwrap();
 				// env.ext().transfer(&charlie, (23_u128).into());
 
-				let args = env.read_as::<PayOutArgs>()?;
-				frame_support::debug::native::debug!("==========> args {:?}", args);
-				env.write(&caller, false, None)
-					.map_err(|_| DispatchError::Other("ChainExtension failed to call random"))?;
+				match env.read_as::<PayOutArgs>() {
+					Ok(a) => {
+						frame_support::debug::native::debug!(target: "custom", "==========> args <<<<======== {:?}", a);
+					}
+					Err(e) => {
+						frame_support::debug::native::debug!(target: "custom", "==========> ERROR <<<<======== {:?}", e);
+					}
+				};
+				frame_support::debug::native::debug!(target: "custom", "==========> CALLER {:?}", caller);
+
+				env.write(vec![1, 2, 3].as_ref(), false, None)
+					.map_err(|_| DispatchError::Other("ChainExtension failed to call"))?;
 				// Call::Balances(BalancesCall::transfer(charlie.into(), 23));
 			}
 			_ => {
