@@ -20,6 +20,8 @@ port 9944 needs to be open
 
 ./target/release/tidefi-substrate-node --dev --tmp -lcustom=debug
 
+./target/release/tidefi-substrate-node purge-chain --dev
+
 ### apps frontend
 
 ```

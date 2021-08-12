@@ -7,6 +7,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::Decode;
+use core::convert::TryInto;
 use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
@@ -610,8 +611,8 @@ pub struct TemplateExtension;
 
 #[derive(codec::Encode, codec::Decode, Debug)]
 struct PayOutArgs {
-	account: AccountId,
-	amount: u128,
+	pub account: AccountId,
+	pub amount: u128,
 }
 
 impl ChainExtension<Runtime> for TemplateExtension {
@@ -622,26 +623,29 @@ impl ChainExtension<Runtime> for TemplateExtension {
 		match func_id {
 			1101 => {
 				let mut env = env.buf_in_buf_out();
-				let caller: Vec<u8> = env.ext().caller().as_ref().into();
-				// trace!("[ChainExtension]|call|caller:{:}", caller);
-				// let val = env.val0();
-
-				// let charlie32 = sp_runtime::AccountId32::new([3u8; 32]);
-				// let charlie =
-				// 	<<E as Ext>::T as SysConfig>::AccountId::decode(charlie32.as_mut()).unwrap();
-				// env.ext().transfer(&charlie, (23_u128).into());
 
 				match env.read_as::<PayOutArgs>() {
 					Ok(a) => {
-						frame_support::debug::native::debug!(target: "custom", "==========> args <<<<======== {:?}", a);
+						let dest: [u8; 32] = a.account.into();
+						let dest_account =
+							<<E as Ext>::T as SysConfig>::AccountId::decode(&mut &dest[..])
+								.unwrap();
+						match env.ext().transfer(
+							&dest_account,
+							a.amount.try_into().unwrap_or_else(|_| panic!("")),
+						) {
+							Ok(a) => {}
+							Err(e) => {
+								return Err(DispatchError::Other("Transfer Failed"));
+							}
+						};
 					}
 					Err(e) => {
-						frame_support::debug::native::debug!(target: "custom", "==========> ERROR <<<<======== {:?}", e);
+						return Err(DispatchError::Other("Invalid args"));
 					}
 				};
-				frame_support::debug::native::debug!(target: "custom", "==========> CALLER {:?}", caller);
 
-				env.write(vec![1, 2, 3].as_ref(), false, None)
+				env.write(&[0_u8], false, None)
 					.map_err(|_| DispatchError::Other("ChainExtension failed to call"))?;
 				// Call::Balances(BalancesCall::transfer(charlie.into(), 23));
 			}
