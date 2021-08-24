@@ -1,0 +1,28 @@
+# The build container
+FROM rustlang/rust:nightly-alpine3.12 AS build
+
+COPY . .
+
+RUN apk update
+
+RUN apk add build-base protoc clang clang-dev
+
+RUN export LIBCLANG_PATH=/usr/lib/libclang.so:10
+
+# https://github.com/paritytech/polkadot/blob/master/scripts/init.sh
+RUN rustup target add wasm32-unknown-unknown --toolchain nightly
+
+RUN echo $LLVM_CONFIG_PATH
+
+RUN cargo update -p parity-db
+
+RUN cargo build --release
+
+# The runtime container
+FROM rustlang/rust:nightly-alpine3.12
+
+WORKDIR /app
+
+COPY --from=builder /target/release .
+
+CMD tidefi-substrate-node --dev --ws-external`
