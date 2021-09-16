@@ -21,8 +21,8 @@ frame_support::construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-      Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     TideWrapr: pallet_wrapr::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
