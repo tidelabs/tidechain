@@ -1,3 +1,7 @@
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::unused_unit)]
+#![allow(clippy::double_parens)]
 // Copyright (C) 2020 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 

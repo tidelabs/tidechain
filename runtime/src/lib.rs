@@ -242,10 +242,10 @@ parameter_types! {
   Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, MaxEncodedLen,
 )]
 pub enum ProxyType {
-  Any = 0,
-  NonTransfer = 1,
-  Governance = 2,
-  Staking = 3,
+  Any = 0_isize,
+  NonTransfer,
+  Governance,
+  Staking,
 }
 
 impl Default for ProxyType {
@@ -692,11 +692,11 @@ parameter_types! {
     pub const ProposalBondMinimum: Balance = 100 * TIDE;
     pub const SpendPeriod: BlockNumber = 24 * DAYS;
     pub const Burn: Permill = Permill::from_percent(1);
-    pub const TipCountdown: BlockNumber = 1 * DAYS;
+    pub const TipCountdown: BlockNumber = DAYS;
     pub const TipFindersFee: Percent = Percent::from_percent(20);
-    pub const TipReportDepositBase: Balance = 1 * TIDE;
-    pub const DataDepositPerByte: Balance = 1 * CENTS;
-    pub const BountyDepositBase: Balance = 1 * TIDE;
+    pub const TipReportDepositBase: Balance = TIDE;
+    pub const DataDepositPerByte: Balance = CENTS;
+    pub const BountyDepositBase: Balance = TIDE;
     pub const BountyDepositPayoutDelay: BlockNumber = 8 * DAYS;
     pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
     pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;

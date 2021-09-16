@@ -57,9 +57,9 @@ impl system::Config for Test {
   type SS58Prefix = SS58Prefix;
   type OnSetCode = ();
 }
-pub const TIDE: Balance = 1000_000_000_000;
+pub const TIDE: Balance = 1_000_000_000_000;
 parameter_types! {
-  pub const ExistentialDeposit: Balance = 1 * TIDE;
+  pub const ExistentialDeposit: Balance = TIDE;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
 }
