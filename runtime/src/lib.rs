@@ -340,7 +340,7 @@ impl pallet_babe::Config for Runtime {
 
   type HandleEquivocation =
     pallet_babe::EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
-  type WeightInfo = weights::pallet_babe::WeightInfo<Runtime>;
+  type WeightInfo = ();
   type DisabledValidators = Session;
 }
 
@@ -943,9 +943,9 @@ parameter_types! {
     pub const LockPeriod: BlockNumber = 201600;
 }
 
-impl pallet_wrapr::pallet::Config for Runtime {
+impl pallet_wrapr::Config for Runtime {
   type Event = Event;
-  type WeightInfo = ();
+  type WeightInfo = weights::pallet_wrapr::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -984,7 +984,7 @@ construct_runtime!(
         Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 28,
         // Pallets
         OrmlVesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 29,
-        TideWrapr: pallet_wrapr::pallet::{Pallet, Call, Config<T>, Storage, Event<T>} = 30,
+        TideWrapr: pallet_wrapr::{Pallet, Call, Config<T>, Storage, Event<T>} = 30,
     }
 );
 /// Digest item type.
@@ -1220,6 +1220,47 @@ impl_runtime_apis! {
 
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
+      fn benchmark_metadata(extra: bool) -> (
+        Vec<frame_benchmarking::BenchmarkList>,
+        Vec<frame_support::traits::StorageInfo>,
+      ) {
+        use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+        use frame_support::traits::StorageInfoTrait;
+
+        use pallet_session_benchmarking::Pallet as SessionBench;
+        use pallet_offences_benchmarking::Pallet as OffencesBench;
+        use frame_system_benchmarking::Pallet as SystemBench;
+
+        let mut list = Vec::<BenchmarkList>::new();
+
+        list_benchmark!(list, extra, pallet_balances, Balances);
+        list_benchmark!(list, extra, pallet_bounties, Bounties);
+        list_benchmark!(list, extra, pallet_collective, Council);
+        list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
+        list_benchmark!(list, extra, pallet_elections_phragmen, Elections);
+        list_benchmark!(list, extra, pallet_grandpa, Grandpa);
+        list_benchmark!(list, extra, pallet_identity, Identity);
+        list_benchmark!(list, extra, pallet_im_online, ImOnline);
+        list_benchmark!(list, extra, pallet_indices, Indices);
+        list_benchmark!(list, extra, pallet_membership, TechnicalMembership);
+        list_benchmark!(list, extra, pallet_multisig, Multisig);
+        list_benchmark!(list, extra, pallet_offences, OffencesBench::<Runtime>);
+        list_benchmark!(list, extra, pallet_proxy, Proxy);
+        list_benchmark!(list, extra, pallet_scheduler, Scheduler);
+        list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
+        list_benchmark!(list, extra, pallet_staking, Staking);
+        list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+
+        list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+        list_benchmark!(list, extra, pallet_treasury, Treasury);
+        list_benchmark!(list, extra, pallet_utility, Utility);
+        list_benchmark!(list, extra, pallet_wrapr, TideWrapr);
+
+        let storage_info = AllPalletsWithSystem::storage_info();
+
+        return (list, storage_info)
+      }
+
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
@@ -1253,7 +1294,6 @@ impl_runtime_apis! {
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 
-            add_benchmark!(params, batches, pallet_babe, Babe);
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_bounties, Bounties);
             add_benchmark!(params, batches, pallet_collective, Council);
@@ -1274,6 +1314,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, pallet_treasury, Treasury);
             add_benchmark!(params, batches, pallet_utility, Utility);
+            add_benchmark!(params, batches, pallet_wrapr, TideWrapr);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
@@ -1283,9 +1324,9 @@ impl_runtime_apis! {
 
 #[cfg(test)]
 mod tests {
-  use frame_system::offchain::CreateSignedTransaction;
-
   use super::*;
+  use frame_system::offchain::CreateSignedTransaction;
+  use sp_runtime::assert_eq_error_rate;
 
   #[test]
   fn validate_transaction_submitter_bounds() {
@@ -1296,5 +1337,13 @@ mod tests {
     }
 
     is_submit_signed_transaction::<Runtime>();
+  }
+
+  #[test]
+  fn signed_deposit_is_sensible() {
+    // ensure this number does not change, or that it is checked after each change.
+    // a 1 MB solution should need around 0.16 KSM deposit
+    let deposit = SignedDepositBase::get() + (SignedDepositByte::get() * 1024 * 1024);
+    assert_eq_error_rate!(deposit, UNITS * 16 / 100, UNITS / 100);
   }
 }
