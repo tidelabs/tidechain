@@ -28,8 +28,6 @@ use frame_system::{
   limits::{BlockLength, BlockWeights},
   EnsureOneOf, EnsureRoot, RawOrigin,
 };
-use orml_currencies::BasicCurrencyAdapter;
-use orml_traits::parameter_type_with_key;
 #[cfg(any(feature = "std", test))]
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{
@@ -931,60 +929,37 @@ impl EnsureOrigin<Origin> for EnsureRootOrTreasury {
 }
 
 parameter_types! {
-  pub const GetNativeCurrencyId: AssetId = AssetId::TIDE;
+  pub const AssetDeposit: u128 = TIDE;
+  pub const ApprovalDeposit: u128 = TIDE;
+  pub const AssetsStringLimit: u32 = 50;
+  /// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
+  // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+  pub const MetadataDepositBase: Balance = deposit(1, 68);
+  pub const MetadataDepositPerByte: Balance = deposit(0, 1);
+  pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
 }
 
-parameter_type_with_key! {
-  pub ExistentialDeposits: |currency_id: AssetId| -> Balance {
-      match currency_id {
-          AssetId::TIDE => TIDE,
-          AssetId::Asset(_) => Zero::zero()
-      }
-  };
-}
-
-impl orml_currencies::Config for Runtime {
-  type Event = Event;
-  type MultiCurrency = Tokens;
-  type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-  type GetNativeCurrencyId = GetNativeCurrencyId;
-  type WeightInfo = ();
-}
-
-pub struct DustRemovalWhitelist;
-impl Contains<AccountId> for DustRemovalWhitelist {
-  fn contains(a: &AccountId) -> bool {
-    vec![
-      // FIXME: Add Quorum Pallet ID
-      TreasuryPalletId::get().into_account(),
-    ]
-    .contains(a)
-  }
-}
-
-parameter_types! {
-  pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
-}
-
-impl orml_tokens::Config for Runtime {
+impl pallet_assets::Config for Runtime {
   type Event = Event;
   type Balance = Balance;
-  type Amount = Amount;
-  type CurrencyId = AssetId::Asset;
-  type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
+  type AssetId = u32;
+  type Currency = Balances;
+  type ForceOrigin = EnsureRootOrHalfCouncil;
+  type AssetDeposit = AssetDeposit;
+  type MetadataDepositBase = MetadataDepositBase;
+  type MetadataDepositPerByte = MetadataDepositPerByte;
+  type ApprovalDeposit = ApprovalDeposit;
+  type StringLimit = AssetsStringLimit;
+  type Freezer = ();
   type WeightInfo = ();
-  type ExistentialDeposits = ExistentialDeposits;
-  type MaxLocks = MaxLocks;
-  type DustRemovalWhitelist = DustRemovalWhitelist;
-}
-
-parameter_types! {
-    pub const LockPeriod: BlockNumber = 201600;
+  type Extra = ();
 }
 
 impl pallet_wrapr::Config for Runtime {
   type Event = Event;
-  type WeightInfo = weights::pallet_wrapr::WeightInfo<Runtime>;
+  type PalletId = WraprPalletId;
+  type Assets = Assets;
+  type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
 }
 
 construct_runtime!(
@@ -1022,10 +997,8 @@ construct_runtime!(
         Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 27,
         Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 28,
         // Pallets
-        //OrmlVesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 29,
-        Currencies: orml_currencies::{Pallet, Call, Event<T>} = 29,
-        Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 30,
-        TideWrapr: pallet_wrapr::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
+        Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 29,
+        TideWrapr: pallet_wrapr::{Pallet, Call, Config, Storage, Event<T>} = 30,
     }
 );
 /// Digest item type.

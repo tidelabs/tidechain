@@ -1,4 +1,4 @@
-use frame_support::parameter_types;
+use frame_support::{parameter_types, traits::GenesisBuild, PalletId};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -7,7 +7,6 @@ use sp_runtime::{
 };
 
 use crate::pallet as pallet_wrapr;
-use frame_support::traits::GenesisBuild;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -23,7 +22,7 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
-    TideWrapr: pallet_wrapr::{Pallet, Call, Config<T>, Storage, Event<T>},
+    TideWrapr: pallet_wrapr::{Pallet, Call, Config, Storage, Event<T>},
   }
 );
 
@@ -64,6 +63,32 @@ parameter_types! {
   pub const MaxReserves: u32 = 50;
 }
 
+parameter_types! {
+  pub const AssetDeposit: u64 = 1;
+  pub const ApprovalDeposit: u64 = 1;
+  pub const StringLimit: u32 = 50;
+  pub const MetadataDepositBase: u64 = 1;
+  pub const MetadataDepositPerByte: u64 = 1;
+}
+
+type AssetsInstance = pallet_assets::Instance1;
+
+impl pallet_assets::Config<AssetsInstance> for Test {
+  type Event = Event;
+  type Balance = u128;
+  type AssetId = u32;
+  type Currency = Balances;
+  type ForceOrigin = EnsureRoot<AccountId>;
+  type AssetDeposit = AssetDeposit;
+  type MetadataDepositBase = MetadataDepositBase;
+  type MetadataDepositPerByte = MetadataDepositPerByte;
+  type ApprovalDeposit = ApprovalDeposit;
+  type StringLimit = StringLimit;
+  type Freezer = ();
+  type Extra = ();
+  type WeightInfo = ();
+}
+
 impl pallet_balances::Config for Test {
   type Balance = Balance;
   type DustRemoval = ();
@@ -76,9 +101,14 @@ impl pallet_balances::Config for Test {
   type WeightInfo = ();
 }
 
+parameter_types! {
+  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+}
+
 impl pallet_wrapr::Config for Test {
   type Event = Event;
   type WeightInfo = ();
+  type PalletId = WraprPalletId;
 }
 
 impl pallet_sudo::Config for Test {
@@ -98,9 +128,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_sudo::GenesisConfig::<Test> { key: alice }
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_wrapr::GenesisConfig::<Test> {
+  pallet_wrapr::GenesisConfig {
     quorum_enabled: false,
-    highest_token: 8,
+    markets: Vec::new(),
   }
   .assimilate_storage(&mut t)
   .unwrap();

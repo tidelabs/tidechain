@@ -8,7 +8,6 @@ use crate::mock::{new_test_ext, Origin, TideWrapr};
 pub fn check_genesis_config() {
   new_test_ext().execute_with(|| {
     assert!(!TideWrapr::is_quorum_enabled());
-    assert_eq!(TideWrapr::highest_token(), 8);
   });
 }
 

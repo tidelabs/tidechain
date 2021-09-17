@@ -275,8 +275,6 @@ pub fn testnet_genesis(
     technical_membership: Default::default(),
     treasury: Default::default(),
     tide_wrapr: Default::default(),
-    // FIXME: Maybe do default allocation?
-    tokens: Default::default(),
   }
 }
 
