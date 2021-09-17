@@ -5,6 +5,8 @@ use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
 };
+use system::EnsureRoot;
+use tidefi_primitives::AccountId;
 
 use crate::pallet as pallet_wrapr;
 
@@ -22,6 +24,7 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
     TideWrapr: pallet_wrapr::{Pallet, Call, Config, Storage, Event<T>},
   }
 );
@@ -109,6 +112,7 @@ impl pallet_wrapr::Config for Test {
   type Event = Event;
   type WeightInfo = ();
   type PalletId = WraprPalletId;
+  type Assets = Assets;
 }
 
 impl pallet_sudo::Config for Test {

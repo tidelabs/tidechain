@@ -67,8 +67,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use tidefi_primitives::{
-  assets::AssetId, AccountId, AccountIndex, Amount, Balance, BlockNumber, Hash, Index, Moment,
-  Signature,
+  AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, Hash, Index, Moment, Signature,
 };
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
@@ -942,7 +941,7 @@ parameter_types! {
 impl pallet_assets::Config for Runtime {
   type Event = Event;
   type Balance = Balance;
-  type AssetId = u32;
+  type AssetId = AssetId;
   type Currency = Balances;
   type ForceOrigin = EnsureRootOrHalfCouncil;
   type AssetDeposit = AssetDeposit;
