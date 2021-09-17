@@ -16,9 +16,10 @@ use frame_support::{
   RuntimeDebug,
 };
 
+use constants::{currency::*, time::*};
 use frame_support::{
-  traits::{Everything, InstanceFilter, OnUnbalanced},
-  weights::WeightToFeeCoefficient,
+  traits::{Contains, Everything, InstanceFilter, OnUnbalanced},
+  weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
   PalletId,
 };
 #[cfg(any(feature = "std", test))]
@@ -27,6 +28,8 @@ use frame_system::{
   limits::{BlockLength, BlockWeights},
   EnsureOneOf, EnsureRoot, RawOrigin,
 };
+use orml_currencies::BasicCurrencyAdapter;
+use orml_traits::parameter_type_with_key;
 #[cfg(any(feature = "std", test))]
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{
@@ -55,7 +58,7 @@ use sp_runtime::{
   generic, impl_opaque_keys,
   traits::{
     self, AccountIdConversion, BlakeTwo256, Block as BlockT, BlockNumberProvider, NumberFor,
-    OpaqueKeys, SaturatedConversion, StaticLookup,
+    OpaqueKeys, SaturatedConversion, StaticLookup, Zero,
   },
   transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
   ApplyExtrinsicResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
@@ -66,11 +69,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use tidefi_primitives::{
-  AccountId, AccountIndex, Balance, BlockNumber, Hash, Index, Moment, Signature,
+  assets::AssetId, AccountId, AccountIndex, Amount, Balance, BlockNumber, Hash, Index, Moment,
+  Signature,
 };
-
-use constants::{currency::*, time::*};
-use frame_support::weights::{WeightToFeeCoefficients, WeightToFeePolynomial};
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
 pub mod impls;
@@ -367,7 +368,7 @@ impl pallet_balances::Config for Runtime {
   type DustRemoval = ();
   type Event = Event;
   type ExistentialDeposit = ExistentialDeposit;
-  type AccountStore = frame_system::Pallet<Runtime>;
+  type AccountStore = System;
   type MaxLocks = MaxLocks;
   type MaxReserves = MaxReserves;
   type ReserveIdentifier = [u8; 8];
@@ -929,14 +930,52 @@ impl EnsureOrigin<Origin> for EnsureRootOrTreasury {
   }
 }
 
-impl orml_vesting::Config for Runtime {
+parameter_types! {
+  pub const GetNativeCurrencyId: AssetId = AssetId::TIDE;
+}
+
+parameter_type_with_key! {
+  pub ExistentialDeposits: |currency_id: AssetId| -> Balance {
+      match currency_id {
+          AssetId::TIDE => TIDE,
+          AssetId::Asset(_) => Zero::zero()
+      }
+  };
+}
+
+impl orml_currencies::Config for Runtime {
   type Event = Event;
-  type Currency = Balances;
-  type MinVestedTransfer = MinVestedTransfer;
-  type VestedTransferOrigin = EnsureRootOrTreasury;
+  type MultiCurrency = Tokens;
+  type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+  type GetNativeCurrencyId = GetNativeCurrencyId;
   type WeightInfo = ();
-  type MaxVestingSchedules = MaxVestingSchedules;
-  type BlockNumberProvider = SusbtrateBlockNumberProvider;
+}
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+  fn contains(a: &AccountId) -> bool {
+    vec![
+      // FIXME: Add Quorum Pallet ID
+      TreasuryPalletId::get().into_account(),
+    ]
+    .contains(a)
+  }
+}
+
+parameter_types! {
+  pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+}
+
+impl orml_tokens::Config for Runtime {
+  type Event = Event;
+  type Balance = Balance;
+  type Amount = Amount;
+  type CurrencyId = AssetId::Asset;
+  type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
+  type WeightInfo = ();
+  type ExistentialDeposits = ExistentialDeposits;
+  type MaxLocks = MaxLocks;
+  type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
 parameter_types! {
@@ -983,8 +1022,10 @@ construct_runtime!(
         Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 27,
         Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 28,
         // Pallets
-        OrmlVesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 29,
-        TideWrapr: pallet_wrapr::{Pallet, Call, Config<T>, Storage, Event<T>} = 30,
+        //OrmlVesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 29,
+        Currencies: orml_currencies::{Pallet, Call, Event<T>} = 29,
+        Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 30,
+        TideWrapr: pallet_wrapr::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
     }
 );
 /// Digest item type.

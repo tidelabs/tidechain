@@ -6,8 +6,8 @@ use log::info;
 pub use node_tidefi_runtime::GenesisConfig;
 use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
-  BalancesConfig, CouncilConfig, IndicesConfig, OrmlVestingConfig, SessionConfig, SessionKeys,
-  StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
+  BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
+  StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -228,7 +228,7 @@ pub fn testnet_genesis(
       changes_trie_config: Default::default(),
     },
     balances: BalancesConfig {
-      balances: endowed_accounts,
+      balances: endowed_accounts.clone(),
     },
 
     indices: IndicesConfig { indices: vec![] },
@@ -274,8 +274,9 @@ pub fn testnet_genesis(
     grandpa: Default::default(),
     technical_membership: Default::default(),
     treasury: Default::default(),
-    orml_vesting: OrmlVestingConfig { vesting },
     tide_wrapr: Default::default(),
+    // FIXME: Maybe do default allocation?
+    tokens: Default::default(),
   }
 }
 
