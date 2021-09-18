@@ -6,8 +6,8 @@ use log::info;
 pub use node_tidefi_runtime::GenesisConfig;
 use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
-  BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
-  StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
+  BalancesConfig, CouncilConfig, IndicesConfig, QuorumConfig, SessionConfig, SessionKeys,
+  StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -264,7 +264,10 @@ pub fn testnet_genesis(
       members: vec![],
       phantom: Default::default(),
     },
-    sudo: SudoConfig { key: quorum },
+    // FIXME: Should the quorum stay the sudo?
+    sudo: SudoConfig {
+      key: quorum.clone(),
+    },
     babe: BabeConfig {
       authorities: Default::default(),
       epoch_config: Some(node_tidefi_runtime::BABE_GENESIS_EPOCH_CONFIG),
@@ -274,7 +277,10 @@ pub fn testnet_genesis(
     grandpa: Default::default(),
     technical_membership: Default::default(),
     treasury: Default::default(),
-    tide_wrapr: Default::default(),
+    quorum: QuorumConfig {
+      quorum_enabled: true,
+      quorum_account: quorum,
+    },
   }
 }
 

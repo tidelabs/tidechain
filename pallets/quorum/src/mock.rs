@@ -8,7 +8,7 @@ use sp_runtime::{
 use system::EnsureRoot;
 use tidefi_primitives::AccountId;
 
-use crate::pallet as pallet_wrapr;
+use crate::pallet as pallet_quorum;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -25,7 +25,6 @@ frame_support::construct_runtime!(
     Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
-    TideWrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
@@ -107,20 +106,12 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
-  pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
-}
-
-impl pallet_wrapr::Config for Test {
-  type Event = Event;
-  type WeightInfo = ();
-  type PalletId = WraprPalletId;
-  type Assets = Assets;
 }
 
 impl pallet_quorum::Config for Test {
   type Event = Event;
   type WeightInfo = ();
-  type QuorumPalletId = QuorumPalletId;
+  type QuorumPalletId = WraprPalletId;
 }
 
 impl pallet_sudo::Config for Test {

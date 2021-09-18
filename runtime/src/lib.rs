@@ -928,14 +928,15 @@ impl EnsureOrigin<Origin> for EnsureRootOrTreasury {
 }
 
 parameter_types! {
-  pub const AssetDeposit: u128 = TIDE;
-  pub const ApprovalDeposit: u128 = TIDE;
+  pub const ApprovalDeposit: Balance = 10 * CENTS;
+  pub const AssetDeposit: Balance = DOLLARS;
   pub const AssetsStringLimit: u32 = 50;
   /// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
   // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
   pub const MetadataDepositBase: Balance = deposit(1, 68);
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
   pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
+  pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
 }
 
 impl pallet_assets::Config for Runtime {
@@ -959,6 +960,12 @@ impl pallet_wrapr::Config for Runtime {
   type PalletId = WraprPalletId;
   type Assets = Assets;
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_quorum::Config for Runtime {
+  type Event = Event;
+  type QuorumPalletId = QuorumPalletId;
+  type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
 }
 
 construct_runtime!(
@@ -997,7 +1004,8 @@ construct_runtime!(
         Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 28,
         // Pallets
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 29,
-        TideWrapr: pallet_wrapr::{Pallet, Call, Config, Storage, Event<T>} = 30,
+        TideWrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>} = 30,
+        Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
     }
 );
 /// Digest item type.
