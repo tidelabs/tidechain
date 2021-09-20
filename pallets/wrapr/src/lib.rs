@@ -133,6 +133,14 @@ pub mod pallet {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::PalletId::get().into_account()
     }
+
+    pub fn get_account_balance(
+      asset_id: T::AssetId,
+      account_id: &T::AccountId,
+    ) -> Result<Balance, DispatchError> {
+      Ok(pallet_assets::Pallet::<T>::balance(asset_id, account_id))
+    }
+
     pub fn is_quorum_enabled() -> bool {
       pallet_quorum::Pallet::<T>::is_quorum_enabled()
     }

@@ -121,8 +121,9 @@ where
     + Send
     + 'static,
   C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
-  // C::Api: pallet_mmr_rpc::MmrRuntimeApi<Block, <Block as sp_runtime::traits::Block>::Hash>,
   C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+  // wrapr API
+  C::Api: pallet_wrapr_rpc::WraprRuntimeApi<Block, AccountId>,
   C::Api: BabeApi<Block>,
   C::Api: BlockBuilder<Block>,
   P: TransactionPool + 'static,
@@ -130,9 +131,9 @@ where
   B: sc_client_api::Backend<Block> + Send + Sync + 'static,
   B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
-  use substrate_frame_rpc_system::{FullSystem, SystemApi};
-  // use pallet_mmr_rpc::{MmrApi, Mmr};
   use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
+  use pallet_wrapr_rpc::{Wrapr, WraprApi};
+  use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
   let mut io = jsonrpc_core::IoHandler::default();
   let FullDeps {
@@ -193,12 +194,14 @@ where
   io.extend_with(sc_sync_state_rpc::SyncStateRpcApi::to_delegate(
     sc_sync_state_rpc::SyncStateRpcHandler::new(
       chain_spec,
-      client,
+      client.clone(),
       shared_authority_set,
       shared_epoch_changes,
       deny_unsafe,
     )?,
   ));
+
+  io.extend_with(WraprApi::to_delegate(Wrapr::new(client)));
 
   Ok(io)
 }

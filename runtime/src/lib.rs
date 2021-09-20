@@ -59,7 +59,7 @@ use sp_runtime::{
     OpaqueKeys, SaturatedConversion, StaticLookup, Zero,
   },
   transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-  ApplyExtrinsicResult, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
+  ApplyExtrinsicResult, DispatchError, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::prelude::*;
 #[cfg(any(feature = "std", test))]
@@ -1004,7 +1004,7 @@ construct_runtime!(
         Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 28,
         // Pallets
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 29,
-        TideWrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>} = 30,
+        Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>} = 30,
         Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
     }
 );
@@ -1231,6 +1231,13 @@ impl_runtime_apis! {
         }
     }
 
+    // Wrapr Custom API
+    impl pallet_wrapr_rpc_runtime_api::WraprApi<Block, AccountId> for Runtime {
+      fn get_account_balance(asset_id: AssetId, account_id: AccountId) -> Result<Balance, DispatchError> {
+        Wrapr::get_account_balance(asset_id, &account_id)
+      }
+    }
+
     #[cfg(feature = "try-runtime")]
     impl frame_try_runtime::TryRuntime<Block> for Runtime {
         fn on_runtime_upgrade() -> Result<(Weight, Weight), sp_runtime::RuntimeString> {
@@ -1275,7 +1282,7 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_timestamp, Timestamp);
         list_benchmark!(list, extra, pallet_treasury, Treasury);
         list_benchmark!(list, extra, pallet_utility, Utility);
-        list_benchmark!(list, extra, pallet_wrapr, TideWrapr);
+        list_benchmark!(list, extra, pallet_wrapr, Wrapr);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1335,7 +1342,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, pallet_treasury, Treasury);
             add_benchmark!(params, batches, pallet_utility, Utility);
-            add_benchmark!(params, batches, pallet_wrapr, TideWrapr);
+            add_benchmark!(params, batches, pallet_wrapr, Wrapr);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

@@ -25,7 +25,7 @@ frame_support::construct_runtime!(
     Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
-    TideWrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
+    Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
