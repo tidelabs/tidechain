@@ -135,7 +135,7 @@ If all is going well, after a few seconds, the nodes should peer together and st
 2021-09-21 08:46:36 ✨ Imported #28 (0xb4cb…00c6)
 ```
 
-## Using docker
+## Using Docker
 
 The following commands will setup a local TiDeFi network made of 2 nodes. It's using the node key (0000000000000000000000000000000000000000000000000000000000000001). But you should generate your own node key using the subkey as the above.
 
