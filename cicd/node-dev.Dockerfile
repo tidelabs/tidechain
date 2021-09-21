@@ -13,8 +13,11 @@ RUN git config --global credential.helper store && \
 RUN RUST_BACKTRACE=full cargo build -p tidefi-node --release
 
 # ===== LAUNCH NODE ======
-FROM debian:buster-slim
+FROM docker.io/library/ubuntu:20.04
 LABEL description="This is the 2nd stage: a very small image where we copy the TiDeFi node binary."
+
+# Required for the validators
+RUN apt update && apt install -y gpg ca-certificates ubuntu-keyring
 
 # Copy node binary
 COPY --from=builder /tidefi/target/release/tidefi-node /usr/local/bin
@@ -23,10 +26,10 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	mkdir -p /tidefi/.local/share && \
 	mkdir -p /data && \
 	chown -R tidefi:tidefi /data && \
-	ln -s /data /tidefi/.local/share/tidefi-substrate-node && \
+	ln -s /data /tidefi/.local/share/tidefi-node && \
 	rm -rf /usr/bin /usr/sbin
 
-# Copy specs
+# Copy specs (they dont seems to be required anymore, but we'll keep it available in case)
 COPY --from=builder /tidefi/resources/tidefi-spec.json /data
 
 USER tidefi

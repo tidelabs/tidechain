@@ -2,6 +2,7 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 #![allow(clippy::from_over_into)]
+#![allow(clippy::manual_range_contains)]
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
@@ -56,7 +57,7 @@ use sp_runtime::{
   generic, impl_opaque_keys,
   traits::{
     self, AccountIdConversion, BlakeTwo256, Block as BlockT, BlockNumberProvider, NumberFor,
-    OpaqueKeys, SaturatedConversion, StaticLookup, Zero,
+    OpaqueKeys, SaturatedConversion, StaticLookup,
   },
   transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
   ApplyExtrinsicResult, DispatchError, FixedPointNumber, Perbill, Percent, Permill, Perquintill,

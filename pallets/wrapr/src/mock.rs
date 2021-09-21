@@ -1,16 +1,13 @@
-use frame_support::{
-  parameter_types,
-  traits::{GenesisBuild},
-  PalletId,
-};
+#![allow(dead_code)]
+
+use frame_support::{parameter_types, traits::GenesisBuild, PalletId};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
 };
-use system::{EnsureRoot};
-
+use system::EnsureRoot;
 
 use crate::pallet as pallet_wrapr;
 

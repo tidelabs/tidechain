@@ -18,13 +18,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
   use super::*;
-  use frame_support::{
-    pallet_prelude::*, PalletId,
-  };
+  use frame_support::{pallet_prelude::*, PalletId};
   use frame_system::{pallet_prelude::*, RawOrigin};
-  use sp_runtime::{
-    traits::{AccountIdConversion, StaticLookup},
-  };
+  use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{AssetId, Balance};
 
   #[pallet::config]
@@ -146,17 +142,14 @@ pub mod pallet {
       // make sure the currency exists, the pallet failed if already exist but we don't really care.
       // FIXME: Maybe we could check if the failed is because of the asset already exist.
       // otherwise we should failed here
-      if let Err(dispatch_error) = pallet_assets::Pallet::<T>::force_create(
+      let _force_create = pallet_assets::Pallet::<T>::force_create(
         RawOrigin::Root.into(),
         asset_id,
+        // make the pallet account id the owner, so only this pallet can handle the funds.
         T::Lookup::unlookup(Self::account_id()),
         true,
         1,
-      ) {
-        if let DispatchError::Module { .. } = dispatch_error {
-          //println!("Error code: {}", error);
-        }
-      }
+      );
 
       // mint the token
       pallet_assets::Pallet::<T>::mint(
@@ -203,11 +196,7 @@ pub mod pallet {
       )?;
 
       // send event to the chain
-      Self::deposit_event(Event::<T>::Burned(
-        account_id,
-        asset_id,
-        burn_amount,
-      ));
+      Self::deposit_event(Event::<T>::Burned(account_id, asset_id, burn_amount));
 
       /*
       // Remove the pending withdrawal

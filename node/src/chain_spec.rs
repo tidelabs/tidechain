@@ -174,8 +174,8 @@ pub fn testnet_genesis(
 ) -> GenesisConfig {
   const ENDOWMENT: u128 = 20_000 * TIDE;
   const STASH: u128 = 2 * TIDE;
-  // Total funds in treasury also includes 2_000_000 TIDE for parachain auctions
-  let mut treasury_funds: u128 = 10_200_000 * TIDE;
+  // Total funds in treasury
+  let mut treasury_funds: u128 = 10_000_000 * TIDE;
   treasury_funds -=
     adjust_treasury_balance_for_initial_validators(initial_authorities.len(), ENDOWMENT);
 
