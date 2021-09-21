@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use codec::Codec;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
@@ -7,6 +5,7 @@ pub use pallet_wrapr_rpc_runtime_api::WraprApi as WraprRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
+use std::sync::Arc;
 use tidefi_primitives::{AssetId, BalanceInfo};
 
 #[rpc]
