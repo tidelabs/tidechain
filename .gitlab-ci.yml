@@ -1,0 +1,39 @@
+stages:
+  - .pre
+  - test
+  - build
+  - deploy
+
+default:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:14-alpine
+  tags:
+    - dv-Docker
+
+.docker_auth:
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+workflow:
+  rules:
+    # Run on MR to dev branch
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "dev"
+    # Also run on CICD branch for testing
+    # - if: $CI_COMMIT_BRANCH =~ /^cicd/
+    # Also run on a direct push to dev branch
+    - if: $CI_COMMIT_BRANCH == "dev"
+#    - if: $CI_COMMIT_TAG
+#    - if: '$CI_COMMIT_BRANCH =~ /^feat/'
+#    - if: '$CI_COMMIT_BRANCH =~ /^chore/'
+#    - if: '$CI_COMMIT_BRANCH =~ /^fix/'
+
+
+variables:
+  GIT_DEPTH: 5
+
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - local: '/cicd/test.gitlab-ci.yml'
+  - local: '/cicd/build.node.gitlab-ci.yml'
+  - local: '/cicd/deploy.node.gitlab-ci.yml'
