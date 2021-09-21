@@ -159,3 +159,4 @@ docker-compose -f cicd/docker-compose.dev-local.yml up --force-recreate
 The development node is a Substrate-based node, so you can interact with it using standard Substrate tools. The two provided RPC endpoints are:
 - HTTP: `http://127.0.0.1:9933`
 - WS: `ws://127.0.0.1:9944`
+
