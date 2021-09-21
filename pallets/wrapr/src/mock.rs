@@ -1,12 +1,16 @@
-use frame_support::{parameter_types, traits::GenesisBuild, PalletId};
+use frame_support::{
+  parameter_types,
+  traits::{GenesisBuild},
+  PalletId,
+};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
 };
-use system::EnsureRoot;
-use tidefi_primitives::AccountId;
+use system::{EnsureRoot};
+
 
 use crate::pallet as pallet_wrapr;
 
@@ -24,7 +28,7 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
+    Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
@@ -75,14 +79,11 @@ parameter_types! {
   pub const MetadataDepositPerByte: u64 = 1;
 }
 
-type AssetsInstance = pallet_assets::Instance1;
-
-impl pallet_assets::Config<AssetsInstance> for Test {
+impl pallet_assets::Config for Test {
   type Event = Event;
   type Balance = u128;
   type AssetId = u32;
   type Currency = Balances;
-  type ForceOrigin = EnsureRoot<AccountId>;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
@@ -91,6 +92,7 @@ impl pallet_assets::Config<AssetsInstance> for Test {
   type Freezer = ();
   type Extra = ();
   type WeightInfo = ();
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl pallet_balances::Config for Test {
@@ -112,14 +114,14 @@ parameter_types! {
 
 impl pallet_wrapr::Config for Test {
   type Event = Event;
-  type WeightInfo = ();
+  type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type PalletId = WraprPalletId;
   type Assets = Assets;
 }
 
 impl pallet_quorum::Config for Test {
   type Event = Event;
-  type WeightInfo = ();
+  type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
   type QuorumPalletId = QuorumPalletId;
 }
 
@@ -140,7 +142,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_sudo::GenesisConfig::<Test> { key: alice }
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_quorum::GenesisConfig {
+  pallet_quorum::GenesisConfig::<Test> {
     quorum_enabled: false,
     quorum_account: alice,
   }

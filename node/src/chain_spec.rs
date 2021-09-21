@@ -224,7 +224,7 @@ pub fn testnet_genesis(
     20_000_000 * TIDE
   );
 
-  let vesting = get_vesting_terms();
+  let _vesting = get_vesting_terms();
 
   GenesisConfig {
     system: SystemConfig {

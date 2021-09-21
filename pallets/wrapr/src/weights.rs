@@ -14,8 +14,8 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
    fn request_withdrawal() -> Weight {
-         (67_000_000 as Weight)
-         .saturating_add(T::DbWeight::get().reads(6 as Weight))
-         .saturating_add(T::DbWeight::get().writes(5 as Weight))
+         67_000_000_u64
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
    }
 }

@@ -7,7 +7,7 @@ pub use pallet_wrapr_rpc_runtime_api::WraprApi as WraprRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
-use tidefi_primitives::{AssetId, Balance, BalanceInfo};
+use tidefi_primitives::{AssetId, BalanceInfo};
 
 #[rpc]
 pub trait WraprApi<BlockHash, AccountId> {

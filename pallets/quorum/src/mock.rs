@@ -6,9 +6,9 @@ use sp_runtime::{
   traits::{BlakeTwo256, IdentityLookup},
 };
 use system::EnsureRoot;
-use tidefi_primitives::AccountId;
 
-use crate::pallet as pallet_quorum;
+
+use crate::{pallet as pallet_quorum, weights};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -22,9 +22,8 @@ frame_support::construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-    Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
+    Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
@@ -74,13 +73,12 @@ parameter_types! {
   pub const MetadataDepositPerByte: u64 = 1;
 }
 
-type AssetsInstance = pallet_assets::Instance1;
-impl pallet_assets::Config<AssetsInstance> for Test {
+impl pallet_assets::Config for Test {
   type Event = Event;
   type Balance = u128;
   type AssetId = u32;
   type Currency = Balances;
-  type ForceOrigin = EnsureRoot<AccountId>;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
@@ -109,13 +107,8 @@ parameter_types! {
 
 impl pallet_quorum::Config for Test {
   type Event = Event;
-  type WeightInfo = ();
+  type WeightInfo = weights::SubstrateWeight<Test>;
   type QuorumPalletId = WraprPalletId;
-}
-
-impl pallet_sudo::Config for Test {
-  type Event = Event;
-  type Call = Call;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -127,10 +120,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_sudo::GenesisConfig::<Test> { key: alice }
-    .assimilate_storage(&mut t)
-    .unwrap();
-  pallet_quorum::GenesisConfig {
+  pallet_quorum::GenesisConfig::<Test> {
     quorum_enabled: false,
     quorum_account: alice,
   }

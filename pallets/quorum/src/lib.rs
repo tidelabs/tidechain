@@ -19,17 +19,11 @@ pub use pallet::*;
 pub mod pallet {
   use super::*;
   use frame_support::{
-    pallet_prelude::*,
-    traits::tokens::{
-      fungibles::{Inspect, Mutate, Transfer},
-      WithdrawConsequence,
-    },
-    transactional, PalletId,
+    pallet_prelude::*, PalletId,
   };
-  use frame_system::{pallet_prelude::*, Origin, RawOrigin};
+  use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::{
     traits::{AccountIdConversion, StaticLookup},
-    ArithmeticError,
   };
   use tidefi_primitives::{AssetId, Balance};
 
@@ -210,7 +204,7 @@ pub mod pallet {
 
       // send event to the chain
       Self::deposit_event(Event::<T>::Burned(
-        account_id.clone(),
+        account_id,
         asset_id,
         burn_amount,
       ));

@@ -10,7 +10,7 @@ mod tests;
 mod benchmarking;
 
 pub mod weights;
-use sp_runtime::traits::AtLeast32BitUnsigned;
+
 pub use weights::*;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
@@ -26,11 +26,11 @@ pub mod pallet {
       fungibles::{Inspect, Mutate, Transfer},
       WithdrawConsequence,
     },
-    transactional, PalletId,
+    PalletId,
   };
   use frame_system::pallet_prelude::*;
-  use sp_runtime::traits::{AccountIdConversion, StaticLookup};
-  use tidefi_primitives::{AccountId, AssetId, Balance, BalanceInfo};
+  use sp_runtime::traits::AccountIdConversion;
+  use tidefi_primitives::{BalanceInfo};
 
   pub type AssetIdOf<T> =
     <<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::AssetId;
@@ -39,12 +39,7 @@ pub mod pallet {
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
-  pub trait Config:
-    frame_system::Config
-    + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
-    + pallet_quorum::Config
-    + pallet_balances::Config
-  {
+  pub trait Config: frame_system::Config + pallet_quorum::Config + pallet_balances::Config {
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     type Assets: Transfer<Self::AccountId> + Inspect<Self::AccountId> + Mutate<Self::AccountId>;
     #[pallet::constant]
@@ -117,13 +112,7 @@ pub mod pallet {
   }
 
   // helper functions (not dispatchable)
-  impl<
-      T: Config
-        + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
-        + pallet_quorum::Config
-        + pallet_balances::Config,
-    > Pallet<T>
-  {
+  impl<T: Config + pallet_quorum::Config + pallet_balances::Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::PalletId::get().into_account()
     }

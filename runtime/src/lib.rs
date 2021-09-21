@@ -18,7 +18,7 @@ use frame_support::{
 
 use constants::{currency::*, time::*};
 use frame_support::{
-  traits::{Contains, Everything, InstanceFilter, OnUnbalanced},
+  traits::{Everything, InstanceFilter, OnUnbalanced},
   weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
   PalletId,
 };
