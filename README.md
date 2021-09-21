@@ -1,37 +1,44 @@
 # Tidefi Substrate Node
 
-Based on the substrate-node-template [Substrate](https://github.com/substrate-developer-hub/substrate-node-template) with the addition of [pallet_multisig](https://crates.io/crates/pallet-multisig) and [pallet contracts](https://crates.io/crates/pallet-contracts) :rocket:
+Based on the substrate-node-template [Substrate](https://github.com/substrate-developer-hub/substrate-node-template) with custom pallets.
 
-### run it in on a server
+## Build the TiDeFi Node
 
-`cargo build --release`
+To build TiDeFi node, you will need a proper Substrate development environment. If you need a refresher setting up your Substrate environment, see [Substrate's Getting Started Guide](https://substrate.dev/docs/en/knowledgebase/getting-started/).
 
-`./target/release/tidefi-substrate-node --dev --ws-external`
+Note that cloning master might result in an unstable build.
 
-port 9944 needs to be open
+```bash
+# Fetch the code
+git clone https://tributary.semantic-network.tech/semnet/tidefi/back/tidefi-substrate-node.git
+cd tidefi-substrate-node
 
-### run it in temp mode
-
-`cargo build --release`
-
-`./target/release/tidefi-substrate-node --dev --tmp`
-
-[playground](https://polkadot.js.org/apps/#/accounts)
-
-./target/release/tidefi-substrate-node --dev --tmp -lcustom=debug
-
-./target/release/tidefi-substrate-node purge-chain --dev
-
-### apps frontend
-
-```
-git checkout tags/v0.82.1 -b apps0.82.1
-
-git reset --hard
-
-yarn
-
-yarn run start
+# Build the node (The first build will be long (~30min))
+cargo build --release
 ```
 
-0x69ee4dc4736938360b8f37a4d0ea5d63e70b9880945c4b81f641fb70f1c6aa08
+If a cargo not found error shows up in the terminal, manually add Rust to your system path (or restart your system):
+
+```bash
+source $HOME/.cargo/env
+```
+
+Then, you will want to run the node in dev mode using the following command:
+
+```bash
+./target/release/tidefi-node --dev
+```
+
+> For people not familiar with Substrate, the --dev flag is a way to run a Substrate-based node in a single node developer configuration for testing purposes. You can learn more about `--dev` in [this Substrate tutorial](https://substrate.dev/docs/en/tutorials/create-your-first-substrate-chain/interact).
+
+When running a node via the binary file, data is stored in a local directory typically located in ~/.local/shared/tidefi-node/chains/development/db. If you want to start a fresh instance of the node, you can either delete the content of the folder, or run the following command inside the tidefi folder:
+
+```bash
+./target/release/node-tidefi purge-chain --dev
+```
+
+This will remove the data folder, note that all chain data is now lost.
+
+## Run a local network (two nodes)
+
+_to be completed_
