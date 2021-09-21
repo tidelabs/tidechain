@@ -63,7 +63,7 @@ Alice_Node_Key=$(subkey generate --scheme Ed25519 --output-type Json | jq -r '.s
   --chain dev \
   --alice \
   --port 30333 \
-  --ws-port 9945 \
+  --ws-port 9944 \
   --rpc-port 9933 \
   --node-key $Alice_Node_Key \
   --validator
@@ -102,7 +102,7 @@ Now that Alice's node is up and running, Bob can join the network by bootstrappi
   --chain dev \
   --bob \
   --port 30334 \
-  --ws-port 9946 \
+  --ws-port 9945 \
   --rpc-port 9934 \
   --validator
   --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWDTkjLrcEKPMkU8USQdAb4Qy2g3Rx6wysVeK4TVUgwbcB
@@ -123,7 +123,7 @@ If all is going well, after a few seconds, the nodes should peer together and st
 2021-09-21 08:46:22 🏷 Local node identity is: 12D3KooWNW9WAEi24EX4fCrifoczzp5cGtehRre5X9ie4Zs4gjZ4
 2021-09-21 08:46:22 Could not load all certificates: Custom { kind: InvalidData, error: Custom { kind: InvalidData, error: BadDER } }
 2021-09-21 08:46:23 📦 Highest known block at #7
-2021-09-21 08:46:23 Listening for new connections on 127.0.0.1:9946.
+2021-09-21 08:46:23 Listening for new connections on 127.0.0.1:9945.
 2021-09-21 08:46:23 👶 Starting BABE Authorship worker
 2021-09-21 08:46:24 ✨ Imported #24 (0x5057…8489)
 2021-09-21 08:46:24 🔍 Discovered new external address for our node: /ip4/192.168.0.116/tcp/30334/p2p/12D3KooWNW9WAEi24EX4fCrifoczzp5cGtehRre5X9ie4Zs4gjZ4
