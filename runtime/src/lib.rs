@@ -67,7 +67,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use tidefi_primitives::{
-  AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, Hash, Index, Moment, Signature,
+  AccountId, AccountIndex, Amount, AssetId, Balance, BalanceInfo, BlockNumber, Hash, Index, Moment,
+  Signature,
 };
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
@@ -959,12 +960,14 @@ impl pallet_wrapr::Config for Runtime {
   type Event = Event;
   type PalletId = WraprPalletId;
   type Assets = Assets;
+  // FIXME: Use local weight
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_quorum::Config for Runtime {
   type Event = Event;
   type QuorumPalletId = QuorumPalletId;
+  // FIXME: Use local weight
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
 }
 
@@ -1111,8 +1114,8 @@ impl_runtime_apis! {
         }
 
         fn current_set_id() -> fg_primitives::SetId {
-      Grandpa::current_set_id()
-    }
+          Grandpa::current_set_id()
+        }
 
         fn submit_report_equivocation_unsigned_extrinsic(
             equivocation_proof: fg_primitives::EquivocationProof<
@@ -1233,7 +1236,7 @@ impl_runtime_apis! {
 
     // Wrapr Custom API
     impl pallet_wrapr_rpc_runtime_api::WraprApi<Block, AccountId> for Runtime {
-      fn get_account_balance(asset_id: AssetId, account_id: AccountId) -> Result<Balance, DispatchError> {
+      fn get_account_balance(asset_id: AssetId, account_id: AccountId) -> Result<BalanceInfo, DispatchError> {
         Wrapr::get_account_balance(asset_id, &account_id)
       }
     }
@@ -1283,6 +1286,7 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_treasury, Treasury);
         list_benchmark!(list, extra, pallet_utility, Utility);
         list_benchmark!(list, extra, pallet_wrapr, Wrapr);
+        list_benchmark!(list, extra, pallet_quorum, Quorum);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1343,6 +1347,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_treasury, Treasury);
             add_benchmark!(params, batches, pallet_utility, Utility);
             add_benchmark!(params, batches, pallet_wrapr, Wrapr);
+            add_benchmark!(params, batches, pallet_quorum, Quorum);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

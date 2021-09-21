@@ -10,6 +10,7 @@ mod tests;
 mod benchmarking;
 
 pub mod weights;
+use sp_runtime::traits::AtLeast32BitUnsigned;
 pub use weights::*;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
@@ -17,6 +18,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+
   use super::*;
   use frame_support::{
     pallet_prelude::*,
@@ -28,7 +30,7 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
-  use tidefi_primitives::{AssetId, Balance};
+  use tidefi_primitives::{AccountId, AssetId, Balance, BalanceInfo};
 
   pub type AssetIdOf<T> =
     <<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::AssetId;
@@ -41,6 +43,7 @@ pub mod pallet {
     frame_system::Config
     + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
     + pallet_quorum::Config
+    + pallet_balances::Config
   {
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     type Assets: Transfer<Self::AccountId> + Inspect<Self::AccountId> + Mutate<Self::AccountId>;
@@ -53,21 +56,6 @@ pub mod pallet {
   #[pallet::pallet]
   #[pallet::generate_store(pub (super) trait Store)]
   pub struct Pallet<T>(_);
-
-  /// Mapping of account addresses to deposit details
-  /// Owner -> BalanceOf
-  //FIXME: Not sure if its really needed?
-  #[pallet::storage]
-  #[pallet::getter(fn account_deposits)]
-  pub type AccountDeposits<T: Config> = StorageDoubleMap<
-    _,
-    Blake2_128Concat,
-    AssetIdOf<T>,
-    Blake2_128Concat,
-    T::AccountId,
-    BalanceOf<T>,
-    ValueQuery,
-  >;
 
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
@@ -99,11 +87,11 @@ pub mod pallet {
     /// AccountID request withdrawal.
     /// This will dispatch an Event on the chain and the Quprum should listen to process the job
     /// and send the confirmation once done.
-    #[pallet::weight(10000)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
     pub fn request_withdrawal(
       origin: OriginFor<T>,
       asset_id: AssetIdOf<T>,
-      #[pallet::compact] amount: BalanceOf<T>,
+      amount: BalanceOf<T>,
     ) -> DispatchResultWithPostInfo {
       let who = ensure_signed(origin)?;
       // make sure the quorum is enabled
@@ -115,6 +103,9 @@ pub mod pallet {
           // send event to the chain
           // FIXME: save it to a local cache and quorum can poll via RPC (much safier than listening to events)
           Self::deposit_event(Event::<T>::Withdrawal(who, asset_id, amount));
+
+          //Self::add_to_withdrawals_queue(asset_id, &who, amount);
+
           // ok
           Ok(Pays::No.into())
         }
@@ -127,18 +118,31 @@ pub mod pallet {
 
   // helper functions (not dispatchable)
   impl<
-      T: Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance> + pallet_quorum::Config,
+      T: Config
+        + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
+        + pallet_quorum::Config
+        + pallet_balances::Config,
     > Pallet<T>
   {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::PalletId::get().into_account()
     }
 
+    // rpc, it need to be serializable
     pub fn get_account_balance(
       asset_id: T::AssetId,
       account_id: &T::AccountId,
-    ) -> Result<Balance, DispatchError> {
-      Ok(pallet_assets::Pallet::<T>::balance(asset_id, account_id))
+    ) -> Result<BalanceInfo, DispatchError>
+    where
+      u128: From<<T as pallet_balances::Config>::Balance>,
+    {
+      let balance: u128 = if asset_id == 0 {
+        pallet_balances::Pallet::<T>::free_balance(account_id).into()
+      } else {
+        pallet_assets::Pallet::<T>::balance(asset_id, account_id)
+      };
+
+      Ok(BalanceInfo { amount: balance })
     }
 
     pub fn is_quorum_enabled() -> bool {

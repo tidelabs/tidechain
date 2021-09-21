@@ -75,7 +75,6 @@ parameter_types! {
 }
 
 type AssetsInstance = pallet_assets::Instance1;
-
 impl pallet_assets::Config<AssetsInstance> for Test {
   type Event = Event;
   type Balance = u128;

@@ -27,7 +27,10 @@ pub mod pallet {
     transactional, PalletId,
   };
   use frame_system::{pallet_prelude::*, Origin, RawOrigin};
-  use sp_runtime::traits::{AccountIdConversion, StaticLookup};
+  use sp_runtime::{
+    traits::{AccountIdConversion, StaticLookup},
+    ArithmeticError,
+  };
   use tidefi_primitives::{AssetId, Balance};
 
   #[pallet::config]
@@ -56,6 +59,19 @@ pub mod pallet {
   #[pallet::storage]
   #[pallet::getter(fn quorum_account_id)]
   pub type QuorumAccountID<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+
+  /// Mapping of pending Withdrawals (AssetId, AccountId)
+  #[pallet::storage]
+  #[pallet::getter(fn withdrawals)]
+  pub type Withdrawals<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    T::AssetId,
+    Blake2_128Concat,
+    T::AccountId,
+    T::Balance,
+    ValueQuery,
+  >;
 
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
@@ -119,12 +135,12 @@ pub mod pallet {
     /// - `account_id`: Account Id to be deposited.
     /// - `asset_id`: the asset to be deposited.
     /// - `mint_amount`: the amount to be deposited.
-    #[pallet::weight(10000)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::burn())]
     pub fn mint(
       origin: OriginFor<T>,
       account_id: T::AccountId,
       asset_id: T::AssetId,
-      #[pallet::compact] mint_amount: T::Balance,
+      mint_amount: T::Balance,
     ) -> DispatchResultWithPostInfo {
       // make sure it's the quorum
       let sender = ensure_signed(origin)?;
@@ -136,13 +152,17 @@ pub mod pallet {
       // make sure the currency exists, the pallet failed if already exist but we don't really care.
       // FIXME: Maybe we could check if the failed is because of the asset already exist.
       // otherwise we should failed here
-      pallet_assets::Pallet::<T>::force_create(
+      if let Err(dispatch_error) = pallet_assets::Pallet::<T>::force_create(
         RawOrigin::Root.into(),
         asset_id,
         T::Lookup::unlookup(Self::account_id()),
         true,
         1,
-      )?;
+      ) {
+        if let DispatchError::Module { .. } = dispatch_error {
+          //println!("Error code: {}", error);
+        }
+      }
 
       // mint the token
       pallet_assets::Pallet::<T>::mint(
@@ -163,12 +183,12 @@ pub mod pallet {
     /// - `account_id`: Account Id to remove the funds.
     /// - `asset_id`: the asset to remove the funds.
     /// - `burn_amount`: the amount to remove for this asset.
-    #[pallet::weight(10000)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::burn())]
     pub fn burn(
       origin: OriginFor<T>,
       account_id: T::AccountId,
       asset_id: T::AssetId,
-      #[pallet::compact] burn_amount: T::Balance,
+      burn_amount: T::Balance,
     ) -> DispatchResultWithPostInfo {
       // make sure the quorum is not paused
       Self::ensure_not_paused()?;
@@ -189,13 +209,37 @@ pub mod pallet {
       )?;
 
       // send event to the chain
-      Self::deposit_event(Event::<T>::Burned(account_id, asset_id, burn_amount));
+      Self::deposit_event(Event::<T>::Burned(
+        account_id.clone(),
+        asset_id,
+        burn_amount,
+      ));
 
+      /*
+      // Remove the pending withdrawal
+      Withdrawals::<T>::try_mutate_exists(
+        asset_id,
+        account_id,
+        |current_value: &mut Option<T::Balance>| -> DispatchResult {
+          let new_value = current_value.unwrap_or_default().checked_add(burn_amount);
+          // we don't want to have our queue manager to failed
+          if let Some(new_value) = new_value {
+            // if we have a positive balance, we keep it in the queue
+            if new_value <= 0 {
+              *current_value = None;
+            } else {
+              *current_value = Some(new_value);
+            }
+          }
+          Ok(())
+        },
+      )?;
+      */
       Ok(Pays::No.into())
     }
 
     /// Quorum change status.
-    #[pallet::weight(10000)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, quorum_enabled: bool) -> DispatchResultWithPostInfo {
       // make sure the quorum is not paused
       Self::ensure_not_paused()?;
