@@ -30,7 +30,7 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::traits::AccountIdConversion;
-  use tidefi_primitives::{BalanceInfo};
+  use tidefi_primitives::BalanceInfo;
 
   pub type AssetIdOf<T> =
     <<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::AssetId;

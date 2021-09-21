@@ -18,13 +18,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
   use super::*;
-  use frame_support::{
-    pallet_prelude::*, PalletId,
-  };
+  use frame_support::{pallet_prelude::*, PalletId};
   use frame_system::{pallet_prelude::*, RawOrigin};
-  use sp_runtime::{
-    traits::{AccountIdConversion, StaticLookup},
-  };
+  use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{AssetId, Balance};
 
   #[pallet::config]
@@ -203,11 +199,7 @@ pub mod pallet {
       )?;
 
       // send event to the chain
-      Self::deposit_event(Event::<T>::Burned(
-        account_id,
-        asset_id,
-        burn_amount,
-      ));
+      Self::deposit_event(Event::<T>::Burned(account_id, asset_id, burn_amount));
 
       /*
       // Remove the pending withdrawal

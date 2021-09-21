@@ -7,7 +7,6 @@ use sp_runtime::{
 };
 use system::EnsureRoot;
 
-
 use crate::{pallet as pallet_quorum, weights};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
