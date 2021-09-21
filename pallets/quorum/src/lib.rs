@@ -142,17 +142,14 @@ pub mod pallet {
       // make sure the currency exists, the pallet failed if already exist but we don't really care.
       // FIXME: Maybe we could check if the failed is because of the asset already exist.
       // otherwise we should failed here
-      if let Err(dispatch_error) = pallet_assets::Pallet::<T>::force_create(
+      let _force_create = pallet_assets::Pallet::<T>::force_create(
         RawOrigin::Root.into(),
         asset_id,
+        // make the pallet account id the owner, so only this pallet can handle the funds.
         T::Lookup::unlookup(Self::account_id()),
         true,
         1,
-      ) {
-        if let DispatchError::Module { .. } = dispatch_error {
-          //println!("Error code: {}", error);
-        }
-      }
+      );
 
       // mint the token
       pallet_assets::Pallet::<T>::mint(

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use frame_support::{parameter_types, traits::GenesisBuild, PalletId};
 use frame_system as system;
 use sp_core::H256;
