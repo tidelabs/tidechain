@@ -16,6 +16,9 @@ RUN RUST_BACKTRACE=full cargo build -p tidefi-node --release
 FROM docker.io/library/ubuntu:20.04
 LABEL description="This is the 2nd stage: a very small image where we copy the TiDeFi node binary."
 
+# Required for the validators
+RUN apt update && apt install -y gpg ca-certificates ubuntu-keyring
+
 # Copy node binary
 COPY --from=builder /tidefi/target/release/tidefi-node /usr/local/bin
 
