@@ -13,7 +13,7 @@ RUN git config --global credential.helper store && \
 RUN RUST_BACKTRACE=full cargo build -p tidefi-node --release
 
 # ===== LAUNCH NODE ======
-FROM debian:buster-slim
+FROM docker.io/library/ubuntu:20.04
 LABEL description="This is the 2nd stage: a very small image where we copy the TiDeFi node binary."
 
 # Copy node binary

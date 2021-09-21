@@ -139,9 +139,20 @@ If all is going well, after a few seconds, the nodes should peer together and st
 
 The following commands will setup a local TiDeFi network made of 2 nodes. It's using the node key (0000000000000000000000000000000000000000000000000000000000000001). But you should generate your own node key using the subkey as the above.
 
+### Local build
+
 ```bash
 docker build --file cicd/node-dev.Dockerfile --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN -t tidefi-node .
 docker-compose -f cicd/docker-compose.local.yml up --force-recreate
+```
+
+### Pre-built images
+
+```bash
+# You need to login with any username, and Personal access token from gitlab
+docker login tributary.semantic-network.tech:5050
+# Run the images from the registry
+docker-compose -f cicd/docker-compose.dev-local.yml up --force-recreate
 ```
 
 ## Connecting to the nodes
