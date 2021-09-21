@@ -2,12 +2,12 @@ use frame_support::PalletId;
 use grandpa_primitives::AuthorityId as GrandpaId;
 use hex_literal::hex;
 use itertools::Itertools;
-use log::info;
 pub use node_tidefi_runtime::GenesisConfig;
 use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
   BalancesConfig, CouncilConfig, IndicesConfig, QuorumConfig, SessionConfig, SessionKeys,
   StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
+  TreasuryPalletId,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -172,59 +172,67 @@ pub fn testnet_genesis(
   _initial_nominators: Vec<AccountId>,
   quorum: AccountId,
 ) -> GenesisConfig {
+  // 20k TIDEs / validators
   const ENDOWMENT: u128 = 20_000 * TIDE;
+  const TOTAL_SUPPLY: u128 = 1_000_000_000 * TIDE;
   const STASH: u128 = 2 * TIDE;
-  // Total funds in treasury
-  let mut treasury_funds: u128 = 10_000_000 * TIDE;
-  treasury_funds -=
-    adjust_treasury_balance_for_initial_validators(initial_authorities.len(), ENDOWMENT);
 
-  info!(
-    "👷‍♂️ Tokens taken from treasury:  {:>22}",
-    adjust_treasury_balance_for_initial_validators(initial_authorities.len(), ENDOWMENT)
-  );
-  info!("👷‍♂️ Token remaining in treasury: {:>22}", treasury_funds);
-  // Treasury Account Id
-  pub const TREASURY_PALLET_ID: PalletId = PalletId(*b"py/trsry");
-  let treasury_account: AccountId = TREASURY_PALLET_ID.into_account();
-
-  let mut inital_validators_endowment = initial_authorities
-    .iter()
-    .map(|k| (k.0.clone(), ENDOWMENT))
-    .collect_vec();
-  let mut endowed_accounts = vec![
-    //      Quorum account
-    (quorum.clone(), ENDOWMENT),
-    //     Treasury Funds
-    (treasury_account, treasury_funds),
-  ];
-  // Get rest of the stake holders
+  // Stake holders
   let mut claims = get_stakeholder_tokens();
-
   let mut total_claims: u128 = 0;
+
   for (_, balance) in &claims {
     total_claims += balance;
   }
 
-  info!("👷‍♂️ Total Investor Tokens:       {:>22}", total_claims);
-  // assert_eq!(total_claims, 6_627_105 * TIDE, "Total claims is configured correctly");
+  assert_eq!(
+    total_claims,
+    18_000 * TIDE,
+    "Total claims is configured correctly"
+  );
 
+  // Total funds in treasury
+  let mut treasury_funds: u128 = TOTAL_SUPPLY;
+  treasury_funds -=
+    // remove the fund allocated to the validators
+    adjust_treasury_balance_for_initial_validators(initial_authorities.len(), ENDOWMENT)
+    // all tokens claimed by the stake holders
+    + total_claims;
+
+  // Treasury Account Id
+  let treasury_account: AccountId = TreasuryPalletId::get().into_account();
+
+  // Each initial validsator get an endowment of `ENDOWMENT` TIDE.
+  let mut inital_validators_endowment = initial_authorities
+    .iter()
+    .map(|k| (k.0.clone(), ENDOWMENT))
+    .collect_vec();
+
+  let mut endowed_accounts = vec![
+    // Quorum initial endowment
+    (quorum.clone(), ENDOWMENT),
+    // Treasury funds
+    (treasury_account, treasury_funds),
+  ];
+
+  // Add all stake holders account
   endowed_accounts.append(claims.as_mut());
+
   // Endow to validators
   endowed_accounts.append(&mut inital_validators_endowment);
+
+  // FIXME: add vesting to the airdrop pallet
+  let _vesting = get_vesting_terms();
 
   let mut total_supply: u128 = 0;
   for (_, balance) in &endowed_accounts {
     total_supply += *balance
   }
 
-  info!(
-    "👷‍♂️  Assert Total supply is 20 million: {} == {} ",
-    total_supply,
-    20_000_000 * TIDE
+  assert_eq!(
+    total_supply, TOTAL_SUPPLY,
+    "Total Supply (endowed_accounts) is not equal to 1 billion"
   );
-
-  let _vesting = get_vesting_terms();
 
   GenesisConfig {
     system: SystemConfig {
@@ -269,6 +277,7 @@ pub fn testnet_genesis(
       phantom: Default::default(),
     },
     // FIXME: Should the quorum stay the sudo?
+    // FIXME: Maybe remove sudo totally?
     sudo: SudoConfig {
       key: quorum.clone(),
     },
@@ -289,10 +298,14 @@ pub fn testnet_genesis(
 }
 
 pub fn get_vesting_terms() -> Vec<(AccountId, u32, u32, u32, Balance)> {
-  // 3 months in terms of 12s blocks is 648,000 blocks, i.e. period = 648,000
+  // 43800 = minutes in a month
+  // 20 blocks / minutes
+  // 876_000 blocks / months
+  // 2_628_000 / 3 months
+
   // TODO:
   // who, start, period, period_count, per_period
-  // vec![ (hex!["148d5e55a937b6a6c80db86b28bc55f7336b17b13225e80468eef71d01c79341"].into(), 1, 30, 1, 3655828 * TIDE)]
+  // vec![ (hex!["148d5e55a937b6a6c80db86b28bc55f7336b17b13225e80468eef71d01c79341"].into(), 1, 30, 1, 2628000 * TIDE)]
   vec![]
 }
 
