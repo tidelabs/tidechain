@@ -23,10 +23,10 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	mkdir -p /tidefi/.local/share && \
 	mkdir -p /data && \
 	chown -R tidefi:tidefi /data && \
-	ln -s /data /tidefi/.local/share/tidefi-substrate-node && \
+	ln -s /data /tidefi/.local/share/tidefi-node && \
 	rm -rf /usr/bin /usr/sbin
 
-# Copy specs
+# Copy specs (they dont seems to be required anymore, but we'll keep it available in case)
 COPY --from=builder /tidefi/resources/tidefi-spec.json /data
 
 USER tidefi
