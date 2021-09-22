@@ -19,8 +19,8 @@ benchmarks! {
    // benchmark quorum status
    set_status {}: _(RawOrigin::Root, true)
    burn {
-      let caller: T::AccountId = whitelisted_caller();
-   }: _(RawOrigin::Root, caller, TIDE.into(), INITIAL_AMOUNT.into())
+      let request_id = 1;
+   }: _(RawOrigin::Root, request_id)
    mint {
       let caller: T::AccountId = whitelisted_caller();
    }: _(RawOrigin::Root, caller, TIDE.into(), INITIAL_AMOUNT.into())

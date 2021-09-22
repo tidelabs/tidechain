@@ -114,6 +114,7 @@ impl pallet_wrapr::Config for Test {
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type PalletId = WraprPalletId;
   type Assets = Assets;
+  type Quorum = Quorum;
 }
 
 impl pallet_quorum::Config for Test {
@@ -140,7 +141,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
   pallet_quorum::GenesisConfig::<Test> {
-    quorum_enabled: false,
+    quorum_enabled: true,
     quorum_account: alice,
   }
   .assimilate_storage(&mut t)

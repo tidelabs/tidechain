@@ -3,9 +3,6 @@
 #[cfg(test)]
 mod mock;
 
-#[cfg(test)]
-mod tests;
-
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -18,9 +15,9 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
   use super::*;
   use frame_support::{
+    inherent::Vec,
     pallet_prelude::*,
     traits::tokens::{
       fungibles::{Inspect, Mutate, Transfer},
@@ -30,7 +27,7 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::traits::AccountIdConversion;
-  use tidefi_primitives::BalanceInfo;
+  use tidefi_primitives::{pallet::QuorumExt, BalanceInfo, RequestId};
 
   pub type AssetIdOf<T> =
     <<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::AssetId;
@@ -44,6 +41,8 @@ pub mod pallet {
     type Assets: Transfer<Self::AccountId> + Inspect<Self::AccountId> + Mutate<Self::AccountId>;
     #[pallet::constant]
     type PalletId: Get<PalletId>;
+    /// Quorum traits.
+    type Quorum: QuorumExt<Self::AccountId, AssetIdOf<Self>, BalanceOf<Self>, Self::BlockNumber>;
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
   }
@@ -55,10 +54,22 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Event emitted when widthdraw is requested. The Quorum will process the wrapped
-    /// refund (example BTC) and will send confirmation once completed.
-    /// [sender, asset_id, amount]
-    Withdrawal(T::AccountId, AssetIdOf<T>, BalanceOf<T>),
+    /// Event emitted when widthdraw is requested.
+    /// [request_id, account, asset_id, amount]
+    Withdrawal(RequestId, T::AccountId, AssetIdOf<T>, BalanceOf<T>),
+    /// Event emitted when stake is requested.
+    /// [request_id, account, asset_id_from, amount_from, asset_id_to, amount_to]
+    Trade(
+      RequestId,
+      T::AccountId,
+      AssetIdOf<T>,
+      BalanceOf<T>,
+      AssetIdOf<T>,
+      BalanceOf<T>,
+    ),
+    /// Event emitted when stake is requested.
+    /// [request_id, account, asset_id, duration]
+    Stake(RequestId, T::AccountId, AssetIdOf<T>, u32),
   }
 
   // Errors inform users that something went wrong.
@@ -87,20 +98,104 @@ pub mod pallet {
       origin: OriginFor<T>,
       asset_id: AssetIdOf<T>,
       amount: BalanceOf<T>,
+      external_address: Vec<u8>,
     ) -> DispatchResultWithPostInfo {
-      let who = ensure_signed(origin)?;
+      let account_id = ensure_signed(origin)?;
       // make sure the quorum is enabled
       ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
       // make sure the account have the fund to save some time
       // to the quorum
-      match T::Assets::can_withdraw(asset_id, &who, amount) {
+      match T::Assets::can_withdraw(asset_id, &account_id, amount) {
         WithdrawConsequence::Success => {
+          // add to the queue
+          let (withdrawal_id, _) = T::Quorum::add_new_withdrawal_in_queue(
+            account_id.clone(),
+            asset_id,
+            amount,
+            external_address,
+          );
           // send event to the chain
-          // FIXME: save it to a local cache and quorum can poll via RPC (much safier than listening to events)
-          Self::deposit_event(Event::<T>::Withdrawal(who, asset_id, amount));
+          Self::deposit_event(Event::<T>::Withdrawal(
+            withdrawal_id,
+            account_id,
+            asset_id,
+            amount,
+          ));
+          // ok
+          Ok(Pays::No.into())
+        }
+        WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),
+        WithdrawConsequence::UnknownAsset => Err(Error::<T>::UnknownAsset.into()),
+        _ => Err(Error::<T>::UnknownError.into()),
+      }
+    }
 
-          //Self::add_to_withdrawals_queue(asset_id, &who, amount);
+    /// AccountID request trade.
+    /// This will dispatch an Event on the chain and the Quprum should listen to process the job
+    /// and send the confirmation once done.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
+    pub fn request_trade(
+      origin: OriginFor<T>,
+      asset_id_from: AssetIdOf<T>,
+      amount_from: BalanceOf<T>,
+      asset_id_to: AssetIdOf<T>,
+      amount_to: BalanceOf<T>,
+    ) -> DispatchResultWithPostInfo {
+      let account_id = ensure_signed(origin)?;
+      // make sure the quorum is enabled
+      ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
+      // make sure the account have the fund to save some time
+      // to the quorum
+      match T::Assets::can_withdraw(asset_id_from, &account_id, amount_from) {
+        WithdrawConsequence::Success => {
+          // add to the queue
+          let (trade_id, _) = T::Quorum::add_new_trade_in_queue(
+            account_id.clone(),
+            asset_id_from,
+            amount_from,
+            asset_id_to,
+            amount_to,
+          );
+          // send event to the chain
+          Self::deposit_event(Event::<T>::Trade(
+            trade_id,
+            account_id,
+            asset_id_from,
+            amount_from,
+            asset_id_to,
+            amount_to,
+          ));
+          // ok
+          Ok(Pays::No.into())
+        }
+        WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),
+        WithdrawConsequence::UnknownAsset => Err(Error::<T>::UnknownAsset.into()),
+        _ => Err(Error::<T>::UnknownError.into()),
+      }
+    }
 
+    /// AccountID request stake.
+    /// This will dispatch an Event on the chain and the Quprum should listen to process the job
+    /// and send the confirmation once done.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
+    pub fn request_stake(
+      origin: OriginFor<T>,
+      asset_id: AssetIdOf<T>,
+      amount: BalanceOf<T>,
+      duration: u32,
+    ) -> DispatchResultWithPostInfo {
+      let account_id = ensure_signed(origin)?;
+      // make sure the quorum is enabled
+      ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
+      // make sure the account have the fund to save some time
+      // to the quorum
+      match T::Assets::can_withdraw(asset_id, &account_id, amount) {
+        WithdrawConsequence::Success => {
+          // add to the queue
+          let (stake_id, _) =
+            T::Quorum::add_new_stake_in_queue(account_id.clone(), asset_id, amount, duration);
+          // send event to the chain
+          Self::deposit_event(Event::<T>::Stake(stake_id, account_id, asset_id, duration));
           // ok
           Ok(Pays::No.into())
         }
@@ -135,7 +230,7 @@ pub mod pallet {
     }
 
     pub fn is_quorum_enabled() -> bool {
-      pallet_quorum::Pallet::<T>::is_quorum_enabled()
+      T::Quorum::is_quorum_enabled()
     }
   }
 }

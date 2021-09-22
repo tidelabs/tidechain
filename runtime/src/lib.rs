@@ -450,7 +450,7 @@ impl pallet_session::Config for Runtime {
   type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
   type Keys = SessionKeys;
   type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-  type WeightInfo = weights::pallet_session::WeightInfo;
+  type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -961,6 +961,7 @@ impl pallet_wrapr::Config for Runtime {
   type Event = Event;
   type PalletId = WraprPalletId;
   type Assets = Assets;
+  type Quorum = Quorum;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
 }
@@ -1270,7 +1271,7 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_collective, Council);
         list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
         list_benchmark!(list, extra, pallet_elections_phragmen, Elections);
-        list_benchmark!(list, extra, pallet_grandpa, Grandpa);
+        //list_benchmark!(list, extra, pallet_grandpa, Grandpa);
         list_benchmark!(list, extra, pallet_identity, Identity);
         list_benchmark!(list, extra, pallet_im_online, ImOnline);
         list_benchmark!(list, extra, pallet_indices, Indices);
@@ -1332,7 +1333,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_collective, Council);
             add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
             add_benchmark!(params, batches, pallet_elections_phragmen, Elections);
-            add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+            //add_benchmark!(params, batches, pallet_grandpa, Grandpa);
             add_benchmark!(params, batches, pallet_identity, Identity);
             add_benchmark!(params, batches, pallet_im_online, ImOnline);
             add_benchmark!(params, batches, pallet_indices, Indices);

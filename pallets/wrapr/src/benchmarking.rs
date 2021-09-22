@@ -1,7 +1,7 @@
 //! Benchmarking setup for pallet-wrapr
 
 use crate::*;
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use sp_runtime::{traits::AtLeast32BitUnsigned, FixedPointOperand};
 use tidefi_primitives::AssetId;
@@ -17,7 +17,9 @@ benchmarks! {
           AssetIdOf<T>: AtLeast32BitUnsigned,
    }
 
-   request_withdrawal {}: _(RawOrigin::Root, TIDE.into(), INITIAL_AMOUNT.into())
+   request_withdrawal {
+      let caller: T::AccountId = whitelisted_caller();
+   }: _(RawOrigin::Signed(caller), TIDE.into(), INITIAL_AMOUNT.into())
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

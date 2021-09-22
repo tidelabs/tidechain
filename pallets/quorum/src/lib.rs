@@ -18,10 +18,13 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
   use super::*;
-  use frame_support::{pallet_prelude::*, PalletId};
+  use frame_support::{inherent::Vec, pallet_prelude::*, PalletId};
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
-  use tidefi_primitives::{AssetId, Balance};
+  use tidefi_primitives::{
+    pallet::{QuorumExt, WraprExt},
+    AssetId, Balance, RequestId, Stake, Trade, TradeStatus, Withdrawal, WithdrawalStatus,
+  };
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -50,17 +53,38 @@ pub mod pallet {
   #[pallet::getter(fn quorum_account_id)]
   pub type QuorumAccountID<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-  /// Mapping of pending Withdrawals (AssetId, AccountId)
+  /// Requests counter
+  #[pallet::storage]
+  pub type RequestCounter<T: Config> = StorageValue<_, RequestId, ValueQuery>;
+
+  /// Mapping of pending Withdrawals
   #[pallet::storage]
   #[pallet::getter(fn withdrawals)]
-  pub type Withdrawals<T: Config> = StorageDoubleMap<
+  pub type Withdrawals<T: Config> = StorageMap<
     _,
     Blake2_128Concat,
-    T::AssetId,
+    RequestId,
+    Withdrawal<T::AccountId, T::AssetId, T::Balance, T::BlockNumber>,
+  >;
+
+  /// Mapping of pending Trades
+  #[pallet::storage]
+  #[pallet::getter(fn trades)]
+  pub type Trades<T: Config> = StorageMap<
+    _,
     Blake2_128Concat,
-    T::AccountId,
-    T::Balance,
-    ValueQuery,
+    RequestId,
+    Trade<T::AccountId, T::AssetId, T::Balance, T::BlockNumber>,
+  >;
+
+  /// Mapping of pending Stakes
+  #[pallet::storage]
+  #[pallet::getter(fn stakes)]
+  pub type Stakes<T: Config> = StorageMap<
+    _,
+    Blake2_128Concat,
+    RequestId,
+    Stake<T::AccountId, T::AssetId, T::Balance, T::BlockNumber>,
   >;
 
   #[pallet::genesis_config]
@@ -111,6 +135,10 @@ pub mod pallet {
     QuorumPaused,
     /// The access to the Quorum pallet is not allowed for this account ID.
     AccessDenied,
+    /// Invalid withdrawal ID.
+    InvalidRequestId,
+    /// Unable to burn token.
+    BurnFailed,
   }
 
   // Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -167,19 +195,11 @@ pub mod pallet {
 
     /// Quorum have confirmation and make a new burn (widthdraw).
     ///
-    /// - `account_id`: Account Id to remove the funds.
-    /// - `asset_id`: the asset to remove the funds.
-    /// - `burn_amount`: the amount to remove for this asset.
+    /// - `withdrawal_id`: Withdrawal ID.
     #[pallet::weight(<T as pallet::Config>::WeightInfo::burn())]
-    pub fn burn(
-      origin: OriginFor<T>,
-      account_id: T::AccountId,
-      asset_id: T::AssetId,
-      burn_amount: T::Balance,
-    ) -> DispatchResultWithPostInfo {
+    pub fn burn(origin: OriginFor<T>, withdrawal_id: RequestId) -> DispatchResultWithPostInfo {
       // make sure the quorum is not paused
       Self::ensure_not_paused()?;
-
       // make sure it's the quorum
       let sender = ensure_signed(origin)?;
       ensure!(
@@ -187,37 +207,36 @@ pub mod pallet {
         Error::<T>::AccessDenied
       );
 
-      // Transfer the asset fund to the Wrapr Account (using pallet_assets)
-      pallet_assets::Pallet::<T>::burn(
-        RawOrigin::Signed(Self::account_id()).into(),
-        asset_id,
-        T::Lookup::unlookup(account_id.clone()),
-        burn_amount,
-      )?;
-
-      // send event to the chain
-      Self::deposit_event(Event::<T>::Burned(account_id, asset_id, burn_amount));
-
-      /*
-      // Remove the pending withdrawal
-      Withdrawals::<T>::try_mutate_exists(
-        asset_id,
-        account_id,
-        |current_value: &mut Option<T::Balance>| -> DispatchResult {
-          let new_value = current_value.unwrap_or_default().checked_add(burn_amount);
-          // we don't want to have our queue manager to failed
-          if let Some(new_value) = new_value {
-            // if we have a positive balance, we keep it in the queue
-            if new_value <= 0 {
-              *current_value = None;
-            } else {
-              *current_value = Some(new_value);
-            }
+      Withdrawals::<T>::try_mutate_exists(withdrawal_id, |withdrawal| {
+        match withdrawal {
+          None => {
+            return Err(Error::<T>::InvalidRequestId);
           }
-          Ok(())
-        },
-      )?;
-      */
+          Some(withdrawal) => {
+            // remove the token from the account
+            pallet_assets::Pallet::<T>::burn(
+              RawOrigin::Signed(Self::account_id()).into(),
+              withdrawal.asset_id,
+              T::Lookup::unlookup(withdrawal.account_id.clone()),
+              withdrawal.amount,
+            )
+            .map_err(|_| Error::<T>::BurnFailed)?;
+
+            // FIXME: we can probably remove this and only use the
+            // event emitted by the Assets pallet
+            // emit the burned event
+            Self::deposit_event(Event::<T>::Burned(
+              withdrawal.account_id.clone(),
+              withdrawal.asset_id,
+              withdrawal.amount,
+            ));
+          }
+        }
+        // it deletes the item if mutated to a None.
+        *withdrawal = None;
+        Ok(())
+      })?;
+
       Ok(Pays::No.into())
     }
 
@@ -257,6 +276,101 @@ pub mod pallet {
       } else {
         Err(Error::<T>::QuorumPaused.into())
       }
+    }
+  }
+
+  impl<T: Config> QuorumExt<T::AccountId, T::AssetId, T::Balance, T::BlockNumber> for Pallet<T> {
+    /// Get quorum status
+    fn is_quorum_enabled() -> bool {
+      Self::is_quorum_enabled()
+    }
+
+    /// Update quprum status
+    fn set_quorum_status(quorum_enabled: bool) {
+      // update quorum
+      QuorumStatus::<T>::put(quorum_enabled);
+      // emit event
+      Self::deposit_event(Event::<T>::QuorumStatusChanged(quorum_enabled));
+    }
+
+    /// Add new withdrawal in queue
+    fn add_new_withdrawal_in_queue(
+      account_id: T::AccountId,
+      asset_id: T::AssetId,
+      amount: T::Balance,
+      external_address: Vec<u8>,
+    ) -> (
+      RequestId,
+      Withdrawal<T::AccountId, T::AssetId, T::Balance, T::BlockNumber>,
+    ) {
+      let request_id = <RequestCounter<T>>::get().wrapping_add(1);
+      let withdrawal = Withdrawal {
+        account_id,
+        amount,
+        asset_id,
+        external_address,
+        status: WithdrawalStatus::Pending,
+        block_number: <frame_system::Pallet<T>>::block_number(),
+      };
+
+      // insert in our queue
+      Withdrawals::<T>::insert(request_id, withdrawal.clone());
+
+      // return values
+      (request_id, withdrawal)
+    }
+
+    fn add_new_trade_in_queue(
+      account_id: T::AccountId,
+      asset_id_from: T::AssetId,
+      amount_from: T::Balance,
+      asset_id_to: T::AssetId,
+      amount_to: T::Balance,
+    ) -> (
+      RequestId,
+      Trade<T::AccountId, T::AssetId, T::Balance, T::BlockNumber>,
+    ) {
+      let request_id = <RequestCounter<T>>::get().wrapping_add(1);
+      let trade = Trade {
+        account_id,
+        token_from: asset_id_from,
+        token_to: asset_id_to,
+        amount_from,
+        amount_to,
+        status: TradeStatus::Pending,
+        block_number: <frame_system::Pallet<T>>::block_number(),
+      };
+
+      // insert in our queue
+      Trades::<T>::insert(request_id, trade.clone());
+
+      // return values
+      (request_id, trade)
+    }
+
+    fn add_new_stake_in_queue(
+      account_id: T::AccountId,
+      asset_id: T::AssetId,
+      amount: T::Balance,
+      duration: u32,
+    ) -> (
+      RequestId,
+      Stake<T::AccountId, T::AssetId, T::Balance, T::BlockNumber>,
+    ) {
+      let request_id = <RequestCounter<T>>::get().wrapping_add(1);
+      let stake = Stake {
+        account_id,
+        asset_id,
+        amount,
+        duration,
+        block_number: <frame_system::Pallet<T>>::block_number(),
+      };
+
+      // insert in our queue
+      Stakes::<T>::insert(request_id, stake.clone());
+
+      // return values
+      (request_id, stake)
     }
   }
 }
