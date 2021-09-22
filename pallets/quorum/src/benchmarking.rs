@@ -18,7 +18,7 @@ const ETH: AssetId = 1;
 benchmarks! {
    // benchmark quorum status
    set_status {}: _(RawOrigin::Root, true)
-   burn {
+   confirm_withdrawal {
       let request_id = 1;
    }: _(RawOrigin::Root, request_id)
    mint {

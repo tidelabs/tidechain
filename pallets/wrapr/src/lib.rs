@@ -133,7 +133,7 @@ pub mod pallet {
     /// AccountID request trade.
     /// This will dispatch an Event on the chain and the Quprum should listen to process the job
     /// and send the confirmation once done.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_trade())]
     pub fn request_trade(
       origin: OriginFor<T>,
       asset_id_from: AssetIdOf<T>,
@@ -177,7 +177,7 @@ pub mod pallet {
     /// AccountID request stake.
     /// This will dispatch an Event on the chain and the Quprum should listen to process the job
     /// and send the confirmation once done.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_stake())]
     pub fn request_stake(
       origin: OriginFor<T>,
       asset_id: AssetIdOf<T>,

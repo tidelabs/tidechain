@@ -153,7 +153,7 @@ pub mod pallet {
     /// - `account_id`: Account Id to be deposited.
     /// - `asset_id`: the asset to be deposited.
     /// - `mint_amount`: the amount to be deposited.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::burn())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::mint())]
     pub fn mint(
       origin: OriginFor<T>,
       account_id: T::AccountId,
@@ -196,8 +196,11 @@ pub mod pallet {
     /// Quorum have confirmation and make a new burn (widthdraw).
     ///
     /// - `withdrawal_id`: Withdrawal ID.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::burn())]
-    pub fn burn(origin: OriginFor<T>, withdrawal_id: RequestId) -> DispatchResultWithPostInfo {
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_withdrawal())]
+    pub fn confirm_withdrawal(
+      origin: OriginFor<T>,
+      withdrawal_id: RequestId,
+    ) -> DispatchResultWithPostInfo {
       // make sure the quorum is not paused
       Self::ensure_not_paused()?;
       // make sure it's the quorum
