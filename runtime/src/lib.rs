@@ -8,7 +8,12 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
   construct_runtime, parameter_types,
   traits::{
-    Currency, EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
+    fungible::{
+      Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
+    },
+    fungibles::{Inspect, Mutate, Transfer},
+    tokens::{DepositConsequence, WithdrawConsequence},
+    EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
   },
   weights::{
     constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -60,16 +65,17 @@ use sp_runtime::{
     OpaqueKeys, SaturatedConversion, StaticLookup,
   },
   transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-  ApplyExtrinsicResult, DispatchError, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
+  ApplyExtrinsicResult, DispatchError, DispatchResult, FixedPointNumber, Perbill, Percent, Permill,
+  Perquintill,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use tidefi_primitives::{
-  AccountId, AccountIndex, Amount, AssetId, Balance, BalanceInfo, BlockNumber, Hash, Index, Moment,
-  Signature,
+  AccountId, AccountIndex, Amount, AssetId, Balance, BalanceInfo, BlockNumber, CurrencyId, Hash,
+  Index, Moment, Signature,
 };
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
@@ -124,7 +130,8 @@ pub fn native_version() -> NativeVersion {
   }
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+type NegativeImbalance =
+  <Balances as frame_support::traits::Currency<AccountId>>::NegativeImbalance;
 
 pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
@@ -379,6 +386,107 @@ parameter_types! {
     pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
     pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
     pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
+}
+
+pub struct Adapter<AccountId> {
+  phantom: PhantomData<AccountId>,
+}
+
+impl Inspect<AccountId> for Adapter<AccountId> {
+  type AssetId = CurrencyId;
+  type Balance = Balance;
+
+  fn total_issuance(asset: Self::AssetId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::total_issuance(),
+      CurrencyId::Wrapped(asset_id) => Assets::total_issuance(asset_id),
+    }
+  }
+
+  fn balance(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::balance(who),
+      CurrencyId::Wrapped(asset_id) => Assets::balance(asset_id, who),
+    }
+  }
+
+  fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::minimum_balance(),
+      CurrencyId::Wrapped(asset_id) => Assets::minimum_balance(asset_id),
+    }
+  }
+
+  fn reducible_balance(asset: Self::AssetId, who: &AccountId, keep_alive: bool) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::reducible_balance(who, keep_alive),
+      CurrencyId::Wrapped(asset_id) => Assets::reducible_balance(asset_id, who, keep_alive),
+    }
+  }
+
+  fn can_deposit(
+    asset: Self::AssetId,
+    who: &AccountId,
+    amount: Self::Balance,
+  ) -> DepositConsequence {
+    match asset {
+      CurrencyId::Tide => Balances::can_deposit(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::can_deposit(asset_id, who, amount),
+    }
+  }
+
+  fn can_withdraw(
+    asset: Self::AssetId,
+    who: &AccountId,
+    amount: Self::Balance,
+  ) -> WithdrawConsequence<Self::Balance> {
+    match asset {
+      CurrencyId::Tide => Balances::can_withdraw(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
+    }
+  }
+}
+
+impl Mutate<AccountId> for Adapter<AccountId> {
+  fn mint_into(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
+    match asset {
+      CurrencyId::Tide => Balances::mint_into(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::mint_into(asset_id, who, amount),
+    }
+  }
+
+  fn burn_from(
+    asset: Self::AssetId,
+    who: &AccountId,
+    amount: Balance,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::burn_from(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::burn_from(asset_id, who, amount),
+    }
+  }
+}
+
+impl Transfer<AccountId> for Adapter<AccountId>
+where
+  Assets: Transfer<AccountId>,
+{
+  fn transfer(
+    asset: Self::AssetId,
+    source: &AccountId,
+    dest: &AccountId,
+    amount: Self::Balance,
+    keep_alive: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => {
+        <Balances as FungibleTransfer<AccountId>>::transfer(source, dest, amount, keep_alive)
+      }
+      CurrencyId::Wrapped(asset_id) => {
+        <Assets as Transfer<AccountId>>::transfer(asset_id, source, dest, amount, keep_alive)
+      }
+    }
+  }
 }
 
 pub struct WeightToFee;
@@ -964,6 +1072,8 @@ impl pallet_wrapr::Config for Runtime {
   type Quorum = Quorum;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type QuorumCurrency = Adapter<AccountId>;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -971,6 +1081,8 @@ impl pallet_quorum::Config for Runtime {
   type QuorumPalletId = QuorumPalletId;
   // FIXME: Use local weight
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type QuorumCurrency = Adapter<AccountId>;
 }
 
 construct_runtime!(
@@ -1238,7 +1350,7 @@ impl_runtime_apis! {
 
     // Wrapr Custom API
     impl pallet_wrapr_rpc_runtime_api::WraprApi<Block, AccountId> for Runtime {
-      fn get_account_balance(asset_id: AssetId, account_id: AccountId) -> Result<BalanceInfo, DispatchError> {
+      fn get_account_balance(asset_id: CurrencyId, account_id: AccountId) -> Result<BalanceInfo, DispatchError> {
         Wrapr::get_account_balance(asset_id, &account_id)
       }
     }

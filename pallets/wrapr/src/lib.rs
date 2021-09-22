@@ -27,22 +27,21 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::traits::AccountIdConversion;
-  use tidefi_primitives::{pallet::QuorumExt, BalanceInfo, RequestId};
-
-  pub type AssetIdOf<T> =
-    <<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::AssetId;
-  pub type BalanceOf<T> =
-    <<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
+  use tidefi_primitives::{pallet::QuorumExt, Balance, BalanceInfo, CurrencyId, RequestId};
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
-  pub trait Config: frame_system::Config + pallet_quorum::Config + pallet_balances::Config {
+  pub trait Config: frame_system::Config {
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     type Assets: Transfer<Self::AccountId> + Inspect<Self::AccountId> + Mutate<Self::AccountId>;
     #[pallet::constant]
     type PalletId: Get<PalletId>;
     /// Quorum traits.
-    type Quorum: QuorumExt<Self::AccountId, AssetIdOf<Self>, BalanceOf<Self>, Self::BlockNumber>;
+    type Quorum: QuorumExt<Self::AccountId, Self::BlockNumber>;
+    /// Quorum currency.
+    type QuorumCurrency: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
   }
@@ -56,20 +55,20 @@ pub mod pallet {
   pub enum Event<T: Config> {
     /// Event emitted when widthdraw is requested.
     /// [request_id, account, asset_id, amount]
-    Withdrawal(RequestId, T::AccountId, AssetIdOf<T>, BalanceOf<T>),
+    Withdrawal(RequestId, T::AccountId, CurrencyId, Balance),
     /// Event emitted when stake is requested.
     /// [request_id, account, asset_id_from, amount_from, asset_id_to, amount_to]
     Trade(
       RequestId,
       T::AccountId,
-      AssetIdOf<T>,
-      BalanceOf<T>,
-      AssetIdOf<T>,
-      BalanceOf<T>,
+      CurrencyId,
+      Balance,
+      CurrencyId,
+      Balance,
     ),
     /// Event emitted when stake is requested.
     /// [request_id, account, asset_id, duration]
-    Stake(RequestId, T::AccountId, AssetIdOf<T>, u32),
+    Stake(RequestId, T::AccountId, CurrencyId, u32),
   }
 
   // Errors inform users that something went wrong.
@@ -96,8 +95,8 @@ pub mod pallet {
     #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
     pub fn request_withdrawal(
       origin: OriginFor<T>,
-      asset_id: AssetIdOf<T>,
-      amount: BalanceOf<T>,
+      asset_id: CurrencyId,
+      amount: Balance,
       external_address: Vec<u8>,
     ) -> DispatchResultWithPostInfo {
       let account_id = ensure_signed(origin)?;
@@ -105,7 +104,7 @@ pub mod pallet {
       ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
       // make sure the account have the fund to save some time
       // to the quorum
-      match T::Assets::can_withdraw(asset_id, &account_id, amount) {
+      match T::QuorumCurrency::can_withdraw(asset_id, &account_id, amount) {
         WithdrawConsequence::Success => {
           // add to the queue
           let (withdrawal_id, _) = T::Quorum::add_new_withdrawal_in_queue(
@@ -136,17 +135,17 @@ pub mod pallet {
     #[pallet::weight(<T as pallet::Config>::WeightInfo::request_trade())]
     pub fn request_trade(
       origin: OriginFor<T>,
-      asset_id_from: AssetIdOf<T>,
-      amount_from: BalanceOf<T>,
-      asset_id_to: AssetIdOf<T>,
-      amount_to: BalanceOf<T>,
+      asset_id_from: CurrencyId,
+      amount_from: Balance,
+      asset_id_to: CurrencyId,
+      amount_to: Balance,
     ) -> DispatchResultWithPostInfo {
       let account_id = ensure_signed(origin)?;
       // make sure the quorum is enabled
       ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
       // make sure the account have the fund to save some time
       // to the quorum
-      match T::Assets::can_withdraw(asset_id_from, &account_id, amount_from) {
+      match T::QuorumCurrency::can_withdraw(asset_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
           // add to the queue
           let (trade_id, _) = T::Quorum::add_new_trade_in_queue(
@@ -180,8 +179,8 @@ pub mod pallet {
     #[pallet::weight(<T as pallet::Config>::WeightInfo::request_stake())]
     pub fn request_stake(
       origin: OriginFor<T>,
-      asset_id: AssetIdOf<T>,
-      amount: BalanceOf<T>,
+      asset_id: CurrencyId,
+      amount: Balance,
       duration: u32,
     ) -> DispatchResultWithPostInfo {
       let account_id = ensure_signed(origin)?;
@@ -189,7 +188,7 @@ pub mod pallet {
       ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
       // make sure the account have the fund to save some time
       // to the quorum
-      match T::Assets::can_withdraw(asset_id, &account_id, amount) {
+      match T::QuorumCurrency::can_withdraw(asset_id, &account_id, amount) {
         WithdrawConsequence::Success => {
           // add to the queue
           let (stake_id, _) =
@@ -207,25 +206,17 @@ pub mod pallet {
   }
 
   // helper functions (not dispatchable)
-  impl<T: Config + pallet_quorum::Config + pallet_balances::Config> Pallet<T> {
+  impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::PalletId::get().into_account()
     }
 
     // rpc, it need to be serializable
     pub fn get_account_balance(
-      asset_id: T::AssetId,
+      asset_id: CurrencyId,
       account_id: &T::AccountId,
-    ) -> Result<BalanceInfo, DispatchError>
-    where
-      u128: From<<T as pallet_balances::Config>::Balance>,
-    {
-      let balance: u128 = if asset_id == 0 {
-        pallet_balances::Pallet::<T>::free_balance(account_id).into()
-      } else {
-        pallet_assets::Pallet::<T>::balance(asset_id, account_id)
-      };
-
+    ) -> Result<BalanceInfo, DispatchError> {
+      let balance = T::QuorumCurrency::balance(asset_id, account_id);
       Ok(BalanceInfo { amount: balance })
     }
 
