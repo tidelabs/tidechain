@@ -1,8 +1,13 @@
 build-node-dev:
   stage: build
+  variables:
+    STAGING_ENV: dev
+    NODE_IMAGE_NAME: node
   rules:
     # Run on MR to dev branch
     - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "dev"
+      variables:
+        STAGING_ENV: $CI_MERGE_REQUEST_SOURCE_BRANCH_SHA
     # Do NOT run again after MR is accepted
     - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "dev" && $CI_MERGE_REQUEST_APPROVED
       when: never
@@ -10,9 +15,8 @@ build-node-dev:
     # - if: $CI_COMMIT_BRANCH =~ /^cicd/
     # Also run on a direct push to dev branch
     - if: $CI_COMMIT_BRANCH == "dev"
-  variables:
-    STAGING_ENV: dev
-    NODE_IMAGE_NAME: node
+      variables:
+        STAGING_ENV: "dev"
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -25,5 +29,4 @@ build-node-dev:
       --build-arg CI_JOB_TOKEN=${CI_JOB_TOKEN}
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/cicd/node-dev.Dockerfile
-      --destination $CI_REGISTRY_IMAGE/$NODE_IMAGE_NAME:$CI_MERGE_REQUEST_SOURCE_BRANCH_SHA
       --destination $CI_REGISTRY_IMAGE/$NODE_IMAGE_NAME:$STAGING_ENV
