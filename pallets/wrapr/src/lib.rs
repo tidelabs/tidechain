@@ -56,7 +56,7 @@ pub mod pallet {
     /// Event emitted when widthdraw is requested.
     /// [request_id, account, asset_id, amount]
     Withdrawal(RequestId, T::AccountId, CurrencyId, Balance),
-    /// Event emitted when stake is requested.
+    /// Event emitted when trade is requested.
     /// [request_id, account, asset_id_from, amount_from, asset_id_to, amount_to]
     Trade(
       RequestId,

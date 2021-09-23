@@ -413,6 +413,14 @@ pub mod pallet {
       T::QuorumPalletId::get().into_account()
     }
 
+    /// Increments the cached request id and returns the value to be used.
+    fn next_request_seed() -> RequestId {
+      <RequestCounter<T>>::mutate(|counter| {
+        *counter += 1;
+        *counter
+      })
+    }
+
     fn ensure_not_paused() -> Result<(), DispatchError> {
       if Self::is_quorum_enabled() {
         Ok(())
@@ -443,7 +451,7 @@ pub mod pallet {
       amount: Balance,
       external_address: Vec<u8>,
     ) -> (RequestId, Withdrawal<T::AccountId, T::BlockNumber>) {
-      let request_id = <RequestCounter<T>>::get().wrapping_add(1);
+      let request_id = Self::next_request_seed();
       let withdrawal = Withdrawal {
         account_id,
         amount,
@@ -467,7 +475,7 @@ pub mod pallet {
       asset_id_to: CurrencyId,
       amount_to: Balance,
     ) -> (RequestId, Trade<T::AccountId, T::BlockNumber>) {
-      let request_id = <RequestCounter<T>>::get().wrapping_add(1);
+      let request_id = Self::next_request_seed();
       let trade = Trade {
         account_id,
         token_from: asset_id_from,
@@ -491,7 +499,7 @@ pub mod pallet {
       amount: Balance,
       duration: u32,
     ) -> (RequestId, Stake<T::AccountId, T::BlockNumber>) {
-      let request_id = <RequestCounter<T>>::get().wrapping_add(1);
+      let request_id = Self::next_request_seed();
       let stake = Stake {
         account_id,
         asset_id,
