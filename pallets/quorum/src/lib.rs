@@ -30,9 +30,8 @@ pub mod pallet {
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{
-    pallet::{QuorumExt},
-    AssetId, Balance, CurrencyId, RequestId, Stake, Trade, TradeStatus, Withdrawal,
-    WithdrawalStatus,
+    pallet::QuorumExt, AssetId, Balance, CurrencyId, RequestId, Stake, Trade, TradeStatus,
+    Withdrawal, WithdrawalStatus,
   };
 
   #[pallet::config]
@@ -153,6 +152,8 @@ pub mod pallet {
     Conflict,
     /// Unable to burn token.
     BurnFailed,
+    /// Unable to mint token.
+    MintFailed,
     /// Unknown Asset.
     UnknownAsset,
     /// No Funds available for this Asset Id.
@@ -331,6 +332,11 @@ pub mod pallet {
                   }
                 }
 
+                // make sure we can deposit before burning
+                T::QuorumCurrency::can_deposit(trade.token_to, &trade.account_id, total_to)
+                  .into_result()
+                  .map_err(|_| Error::<T>::MintFailed)?;
+
                 // burn from token
                 T::QuorumCurrency::burn_from(
                   trade.token_from,
@@ -339,9 +345,18 @@ pub mod pallet {
                 )
                 .map_err(|_| Error::<T>::BurnFailed)?;
 
-                // mint new tokens
-                T::QuorumCurrency::mint_into(trade.token_to, &trade.account_id, total_to)
-                  .map_err(|_| Error::<T>::BurnFailed)?;
+                // mint new tokens with fallback to restore token if it fails
+                if let Err(_) =
+                  T::QuorumCurrency::mint_into(trade.token_to, &trade.account_id, total_to)
+                {
+                  let revert = T::QuorumCurrency::mint_into(
+                    trade.token_from,
+                    &trade.account_id,
+                    trade.amount_from,
+                  );
+                  debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
+                  return Err(Error::<T>::MintFailed);
+                };
 
                 // remove tokens from the MM accounts
                 for (pos, amt) in amounts_to.iter().enumerate() {
