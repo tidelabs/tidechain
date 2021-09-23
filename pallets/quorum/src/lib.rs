@@ -202,7 +202,7 @@ pub mod pallet {
       // send event to the chain
       Self::deposit_event(Event::<T>::Minted(account_id, asset_id, mint_amount));
 
-      Ok(Pays::No.into())
+      Ok(().into())
     }
 
     /// Quorum have confirmation and make a new burn (widthdraw).
@@ -248,7 +248,7 @@ pub mod pallet {
         Ok(())
       })?;
 
-      Ok(Pays::No.into())
+      Ok(().into())
     }
 
     /// Quorum have confirmation and make a new burn (widthdraw).
@@ -383,15 +383,12 @@ pub mod pallet {
         Ok(())
       })?;
 
-      Ok(Pays::No.into())
+      Ok(().into())
     }
 
     /// Quorum change status.
     #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, quorum_enabled: bool) -> DispatchResultWithPostInfo {
-      // make sure the quorum is not paused
-      Self::ensure_not_paused()?;
-
       // make sure it's the quorum
       let sender = ensure_signed(origin)?;
       ensure!(
@@ -405,8 +402,29 @@ pub mod pallet {
       // emit event
       Self::deposit_event(Event::<T>::QuorumStatusChanged(quorum_enabled));
 
-      // no payment required
-      Ok(Pays::No.into())
+      Ok(().into())
+    }
+
+    /// Quorum change account ID.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
+    pub fn set_account_id(
+      origin: OriginFor<T>,
+      new_quorum: T::AccountId,
+    ) -> DispatchResultWithPostInfo {
+      // make sure it's the quorum
+      let sender = ensure_signed(origin)?;
+      ensure!(
+        sender == Self::quorum_account_id(),
+        Error::<T>::AccessDenied
+      );
+
+      // update quorum
+      QuorumAccountID::<T>::put(new_quorum.clone());
+
+      // emit event
+      Self::deposit_event(Event::<T>::QuorumAccountChanged(new_quorum));
+
+      Ok(().into())
     }
   }
 
