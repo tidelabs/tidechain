@@ -1063,7 +1063,8 @@ impl pallet_assets::Config for Runtime {
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = AssetsStringLimit;
   type Freezer = ();
-  type WeightInfo = ();
+  // FIXME: Use local weight
+  type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
   type Extra = ();
 }
 
@@ -1411,11 +1412,12 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
         list_benchmark!(list, extra, pallet_staking, Staking);
         list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-
+        list_benchmark!(list, extra, pallet_assets, Assets);
         list_benchmark!(list, extra, pallet_timestamp, Timestamp);
         list_benchmark!(list, extra, pallet_treasury, Treasury);
         list_benchmark!(list, extra, pallet_utility, Utility);
         list_benchmark!(list, extra, pallet_wrapr, Wrapr);
+        list_benchmark!(list, extra, pallet_wrapr_stake, WraprStake);
         list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
 
         let storage_info = AllPalletsWithSystem::storage_info();
@@ -1456,11 +1458,13 @@ impl_runtime_apis! {
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 
+            add_benchmark!(params, batches, pallet_assets, Assets);
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_bounties, Bounties);
             add_benchmark!(params, batches, pallet_collective, Council);
             add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
             add_benchmark!(params, batches, pallet_elections_phragmen, Elections);
+            // FIXME: grandme benchmark do not generate the correct functions
             //add_benchmark!(params, batches, pallet_grandpa, Grandpa);
             add_benchmark!(params, batches, pallet_identity, Identity);
             add_benchmark!(params, batches, pallet_im_online, ImOnline);
@@ -1477,6 +1481,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_treasury, Treasury);
             add_benchmark!(params, batches, pallet_utility, Utility);
             add_benchmark!(params, batches, pallet_wrapr, Wrapr);
+            add_benchmark!(params, batches, pallet_wrapr_stake, WraprStake);
             add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
@@ -1489,7 +1494,6 @@ impl_runtime_apis! {
 mod tests {
   use super::*;
   use frame_system::offchain::CreateSignedTransaction;
-  
 
   #[test]
   fn validate_transaction_submitter_bounds() {
