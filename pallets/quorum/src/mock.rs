@@ -142,7 +142,7 @@ impl pallet_quorum::Config for Test {
   type Event = Event;
   type WeightInfo = weights::SubstrateWeight<Test>;
   type QuorumPalletId = WraprPalletId;
-  type QuorumCurrency = Adapter<AccountId>;
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

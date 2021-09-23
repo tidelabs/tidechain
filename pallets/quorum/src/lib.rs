@@ -45,7 +45,7 @@ pub mod pallet {
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
 
-    type QuorumCurrency: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
@@ -197,7 +197,7 @@ pub mod pallet {
       }
 
       // mint the token
-      T::QuorumCurrency::mint_into(asset_id, &account_id, mint_amount)?;
+      T::CurrencyWrapr::mint_into(asset_id, &account_id, mint_amount)?;
 
       // send event to the chain
       Self::deposit_event(Event::<T>::Minted(account_id, asset_id, mint_amount));
@@ -229,7 +229,7 @@ pub mod pallet {
           }
           Some(withdrawal) => {
             // remove the token from the account
-            T::QuorumCurrency::burn_from(
+            T::CurrencyWrapr::burn_from(
               withdrawal.asset_id,
               &withdrawal.account_id,
               withdrawal.amount,
@@ -304,7 +304,7 @@ pub mod pallet {
             }
 
             // make sure the FROM balance is available
-            match T::QuorumCurrency::can_withdraw(
+            match T::CurrencyWrapr::can_withdraw(
               trade.token_from,
               &trade.account_id,
               trade.amount_from,
@@ -314,7 +314,7 @@ pub mod pallet {
                 // make sure all the market markers have enough funds
                 for (pos, amt) in amounts_to.iter().enumerate() {
                   total_to += amt;
-                  match T::QuorumCurrency::can_withdraw(trade.token_to, &accounts_to[pos], *amt) {
+                  match T::CurrencyWrapr::can_withdraw(trade.token_to, &accounts_to[pos], *amt) {
                     // do nothing, we can continue
                     WithdrawConsequence::Success => continue,
                     // no funds error
@@ -327,23 +327,18 @@ pub mod pallet {
                 }
 
                 // make sure we can deposit before burning
-                T::QuorumCurrency::can_deposit(trade.token_to, &trade.account_id, total_to)
+                T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
                   .into_result()
                   .map_err(|_| Error::<T>::MintFailed)?;
 
                 // burn from token
-                T::QuorumCurrency::burn_from(
-                  trade.token_from,
-                  &trade.account_id,
-                  trade.amount_from,
-                )
-                .map_err(|_| Error::<T>::BurnFailed)?;
+                T::CurrencyWrapr::burn_from(trade.token_from, &trade.account_id, trade.amount_from)
+                  .map_err(|_| Error::<T>::BurnFailed)?;
 
                 // mint new tokens with fallback to restore token if it fails
-                if T::QuorumCurrency::mint_into(trade.token_to, &trade.account_id, total_to)
-                  .is_err()
+                if T::CurrencyWrapr::mint_into(trade.token_to, &trade.account_id, total_to).is_err()
                 {
-                  let revert = T::QuorumCurrency::mint_into(
+                  let revert = T::CurrencyWrapr::mint_into(
                     trade.token_from,
                     &trade.account_id,
                     trade.amount_from,
@@ -354,11 +349,11 @@ pub mod pallet {
                 // remove tokens from the MM accounts
                 for (pos, amt) in amounts_to.iter().enumerate() {
                   // remove token_to from acc
-                  T::QuorumCurrency::burn_from(trade.token_to, &accounts_to[pos], *amt)
+                  T::CurrencyWrapr::burn_from(trade.token_to, &accounts_to[pos], *amt)
                     .map_err(|_| Error::<T>::BurnFailed)?;
                   // add token_from to acc
                   // using amounts_from
-                  T::QuorumCurrency::mint_into(
+                  T::CurrencyWrapr::mint_into(
                     trade.token_from,
                     &accounts_to[pos],
                     amounts_from[pos],

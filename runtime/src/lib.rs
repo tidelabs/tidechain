@@ -1071,11 +1071,11 @@ impl pallet_wrapr::Config for Runtime {
   type Event = Event;
   type PalletId = WraprPalletId;
   type Assets = Assets;
-  type Quorum = Quorum;
+  type Quorum = WraprQuorum;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
-  type QuorumCurrency = Adapter<AccountId>;
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 impl pallet_wrapr_stake::Config for Runtime {
@@ -1085,7 +1085,7 @@ impl pallet_wrapr_stake::Config for Runtime {
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr_stake::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
-  type QuorumCurrency = Adapter<AccountId>;
+  type CurrencyWrapr = Adapter<AccountId>;
   type PeriodBasis = PeriodBasis;
 }
 
@@ -1095,7 +1095,7 @@ impl pallet_quorum::Config for Runtime {
   // FIXME: Use local weight
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
-  type QuorumCurrency = Adapter<AccountId>;
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 construct_runtime!(
@@ -1132,11 +1132,13 @@ construct_runtime!(
         Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 26,
         Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 27,
         Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 28,
-        // Pallets
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 29,
+        // Request handler for withdrawls
         Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>} = 30,
+        // Staking storage and hooks
         WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>} = 31,
-        Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 32,
+        // Storage, events and traits for the quorum
+        WraprQuorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 32,
     }
 );
 /// Digest item type.
@@ -1414,7 +1416,7 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_treasury, Treasury);
         list_benchmark!(list, extra, pallet_utility, Utility);
         list_benchmark!(list, extra, pallet_wrapr, Wrapr);
-        list_benchmark!(list, extra, pallet_quorum, Quorum);
+        list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1475,7 +1477,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_treasury, Treasury);
             add_benchmark!(params, batches, pallet_utility, Utility);
             add_benchmark!(params, batches, pallet_wrapr, Wrapr);
-            add_benchmark!(params, batches, pallet_quorum, Quorum);
+            add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
@@ -1487,7 +1489,7 @@ impl_runtime_apis! {
 mod tests {
   use super::*;
   use frame_system::offchain::CreateSignedTransaction;
-  use sp_runtime::assert_eq_error_rate;
+  
 
   #[test]
   fn validate_transaction_submitter_bounds() {

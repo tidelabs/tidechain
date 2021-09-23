@@ -4,9 +4,9 @@ use itertools::Itertools;
 pub use node_tidefi_runtime::GenesisConfig;
 use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
-  BalancesConfig, CouncilConfig, IndicesConfig, QuorumConfig, SessionConfig, SessionKeys,
-  StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
-  TreasuryPalletId,
+  BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
+  StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TreasuryPalletId,
+  WraprQuorumConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -295,7 +295,7 @@ pub fn testnet_genesis(
     grandpa: Default::default(),
     technical_membership: Default::default(),
     treasury: Default::default(),
-    quorum: QuorumConfig {
+    wrapr_quorum: WraprQuorumConfig {
       quorum_enabled: true,
       quorum_account: quorum,
     },

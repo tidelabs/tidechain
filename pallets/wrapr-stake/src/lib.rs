@@ -19,20 +19,13 @@ pub use pallet::*;
 pub mod pallet {
   use super::*;
   use frame_support::{
-    inherent::Vec,
     pallet_prelude::*,
-    traits::tokens::{
-      fungibles::{Inspect, Mutate, Transfer},
-      WithdrawConsequence,
-    },
+    traits::tokens::fungibles::{Inspect, Mutate, Transfer},
     PalletId,
   };
   use frame_system::pallet_prelude::*;
-  use sp_runtime::{
-    traits::{AccountIdConversion, CheckedAdd},
-    ArithmeticError,
-  };
-  use tidefi_primitives::{pallet::QuorumExt, Balance, BalanceInfo, CurrencyId, RequestId};
+  use sp_runtime::{traits::AccountIdConversion, ArithmeticError};
+  use tidefi_primitives::{Balance, CurrencyId};
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -42,7 +35,7 @@ pub mod pallet {
     #[pallet::constant]
     type PalletId: Get<PalletId>;
     /// Quorum currency.
-    type QuorumCurrency: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
     /// Weight information for extrinsics in this pallet.
@@ -105,7 +98,7 @@ pub mod pallet {
       // FIXME: Maybe we should have some way to open / close a market of staking
 
       // transfer the assets to the pallet account id
-      T::QuorumCurrency::transfer(asset_id, &account_id, &Self::account_id(), amount, true)?;
+      T::CurrencyWrapr::transfer(asset_id, &account_id, &Self::account_id(), amount, true)?;
       AccountStakes::<T>::insert(
         asset_id,
         account_id.clone(),

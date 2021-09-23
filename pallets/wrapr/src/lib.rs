@@ -39,7 +39,7 @@ pub mod pallet {
     /// Quorum traits.
     type Quorum: QuorumExt<Self::AccountId, Self::BlockNumber>;
     /// Quorum currency.
-    type QuorumCurrency: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
     /// Weight information for extrinsics in this pallet.
@@ -101,7 +101,7 @@ pub mod pallet {
       ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
       // make sure the account have the fund to save some time
       // to the quorum
-      match T::QuorumCurrency::can_withdraw(asset_id, &account_id, amount) {
+      match T::CurrencyWrapr::can_withdraw(asset_id, &account_id, amount) {
         WithdrawConsequence::Success => {
           // add to the queue
           let (withdrawal_id, _) = T::Quorum::add_new_withdrawal_in_queue(
@@ -142,7 +142,7 @@ pub mod pallet {
       ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
       // make sure the account have the fund to save some time
       // to the quorum
-      match T::QuorumCurrency::can_withdraw(asset_id_from, &account_id, amount_from) {
+      match T::CurrencyWrapr::can_withdraw(asset_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
           // add to the queue
           let (trade_id, _) = T::Quorum::add_new_trade_in_queue(
@@ -182,7 +182,7 @@ pub mod pallet {
       asset_id: CurrencyId,
       account_id: &T::AccountId,
     ) -> Result<BalanceInfo, DispatchError> {
-      let balance = T::QuorumCurrency::balance(asset_id, account_id);
+      let balance = T::CurrencyWrapr::balance(asset_id, account_id);
       Ok(BalanceInfo { amount: balance })
     }
 

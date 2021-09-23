@@ -149,14 +149,14 @@ impl pallet_wrapr::Config for Test {
   type PalletId = WraprPalletId;
   type Assets = Assets;
   type Quorum = Quorum;
-  type QuorumCurrency = Adapter<AccountId>;
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 impl pallet_quorum::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
   type QuorumPalletId = QuorumPalletId;
-  type QuorumCurrency = Adapter<AccountId>;
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 impl pallet_sudo::Config for Test {

@@ -8,7 +8,6 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    GenesisBuild,
   },
   PalletId,
 };
@@ -23,7 +22,7 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{BlockNumber, CurrencyId};
 
 use crate::pallet as pallet_wrapr_stake;
 
@@ -57,7 +56,6 @@ frame_support::construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-    Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Wrapr: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>},
@@ -140,6 +138,7 @@ impl pallet_balances::Config for Test {
 parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
+  pub const PeriodBasis: BlockNumber = 1000u32;
 }
 
 impl pallet_wrapr_stake::Config for Test {
@@ -147,19 +146,8 @@ impl pallet_wrapr_stake::Config for Test {
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type PalletId = WraprPalletId;
   type Assets = Assets;
-  type QuorumCurrency = Adapter<AccountId>;
-}
-
-impl pallet_quorum::Config for Test {
-  type Event = Event;
-  type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
-  type QuorumPalletId = QuorumPalletId;
-  type QuorumCurrency = Adapter<AccountId>;
-}
-
-impl pallet_sudo::Config for Test {
-  type Event = Event;
-  type Call = Call;
+  type CurrencyWrapr = Adapter<AccountId>;
+  type PeriodBasis = PeriodBasis;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
@@ -266,21 +254,12 @@ where
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let alice = 1u64;
+  let _alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_sudo::GenesisConfig::<Test> { key: alice.into() }
-    .assimilate_storage(&mut t)
-    .unwrap();
-  pallet_quorum::GenesisConfig::<Test> {
-    quorum_enabled: true,
-    quorum_account: alice.into(),
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
   t.into()
 }
