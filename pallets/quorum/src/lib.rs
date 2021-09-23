@@ -30,7 +30,7 @@ pub mod pallet {
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{
-    pallet::{QuorumExt, WraprExt},
+    pallet::{QuorumExt},
     AssetId, Balance, CurrencyId, RequestId, Stake, Trade, TradeStatus, Withdrawal,
     WithdrawalStatus,
   };
@@ -369,9 +369,9 @@ pub mod pallet {
                   trade.amount_to,
                 ));
               }
-              WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds.into()),
-              WithdrawConsequence::UnknownAsset => return Err(Error::<T>::UnknownAsset.into()),
-              _ => return Err(Error::<T>::UnknownError.into()),
+              WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds),
+              WithdrawConsequence::UnknownAsset => return Err(Error::<T>::UnknownAsset),
+              _ => return Err(Error::<T>::UnknownError),
             };
           }
         }

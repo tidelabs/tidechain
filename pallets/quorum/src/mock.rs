@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::{pallet as pallet_quorum, weights};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
@@ -23,6 +21,7 @@ use sp_runtime::{
   traits::{BlakeTwo256, IdentityLookup},
   DispatchError, DispatchResult, RuntimeDebug,
 };
+use std::marker::PhantomData;
 use system::EnsureRoot;
 use tidefi_primitives::CurrencyId;
 
