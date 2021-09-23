@@ -1,4 +1,4 @@
-use crate::{pallet as pallet_quorum, weights};
+#![allow(dead_code)]
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
@@ -8,7 +8,6 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    GenesisBuild,
   },
   PalletId,
 };
@@ -23,7 +22,9 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{BlockNumber, CurrencyId};
+
+use crate::pallet as pallet_wrapr_stake;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -57,7 +58,7 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
+    WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>},
   }
 );
 
@@ -111,7 +112,6 @@ impl pallet_assets::Config for Test {
   type Balance = u128;
   type AssetId = u32;
   type Currency = Balances;
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
@@ -120,6 +120,7 @@ impl pallet_assets::Config for Test {
   type Freezer = ();
   type Extra = ();
   type WeightInfo = ();
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl pallet_balances::Config for Test {
@@ -136,13 +137,17 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
+  pub const PeriodBasis: BlockNumber = 1000u32;
 }
 
-impl pallet_quorum::Config for Test {
+impl pallet_wrapr_stake::Config for Test {
   type Event = Event;
-  type WeightInfo = weights::SubstrateWeight<Test>;
-  type QuorumPalletId = WraprPalletId;
+  type WeightInfo = crate::weights::SubstrateWeight<Test>;
+  type PalletId = WraprPalletId;
+  type Assets = Assets;
   type CurrencyWrapr = Adapter<AccountId>;
+  type PeriodBasis = PeriodBasis;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
@@ -249,18 +254,12 @@ where
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let alice = 1u64;
+  let _alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_quorum::GenesisConfig::<Test> {
-    quorum_enabled: false,
-    quorum_account: alice.into(),
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
   t.into()
 }

@@ -4,9 +4,9 @@ use itertools::Itertools;
 pub use node_tidefi_runtime::GenesisConfig;
 use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
-  BalancesConfig, CouncilConfig, IndicesConfig, QuorumConfig, SessionConfig, SessionKeys,
-  StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
-  TreasuryPalletId,
+  BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
+  StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TreasuryPalletId,
+  WraprQuorumConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -106,8 +106,14 @@ fn development_config_genesis() -> GenesisConfig {
 /// Development config (single validator Alice)
 pub fn development_config() -> ChainSpec {
   let mut properties = Map::new();
-  properties.insert("tokenSymbol".into(), "TIDE".into());
+
+  // FIXME: Should we set a token symbol? As the other assets are
+  // marked with `1.0000 pTIDE` by example in the polkadot UI
+  // maybe we can fork and customize a bit the polkadot UI
+  //properties.insert("tokenSymbol".into(), "TIDE".into());
+
   properties.insert("tokenDecimals".into(), 10.into());
+
   ChainSpec::from_genesis(
     "Development",
     "tidefi_devnet",
@@ -289,7 +295,7 @@ pub fn testnet_genesis(
     grandpa: Default::default(),
     technical_membership: Default::default(),
     treasury: Default::default(),
-    quorum: QuorumConfig {
+    wrapr_quorum: WraprQuorumConfig {
       quorum_enabled: true,
       quorum_account: quorum,
     },

@@ -18,10 +18,21 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
   use super::*;
-  use frame_support::{pallet_prelude::*, PalletId};
+  use frame_support::{
+    inherent::Vec,
+    pallet_prelude::*,
+    traits::{
+      fungibles::{Inspect, Mutate, Transfer},
+      tokens::WithdrawConsequence,
+    },
+    PalletId,
+  };
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
-  use tidefi_primitives::{AssetId, Balance};
+  use tidefi_primitives::{
+    pallet::QuorumExt, AssetId, Balance, CurrencyId, RequestId, Trade, TradeStatus, Withdrawal,
+    WithdrawalStatus,
+  };
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -29,11 +40,14 @@ pub mod pallet {
     frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
   {
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
     #[pallet::constant]
     type QuorumPalletId: Get<PalletId>;
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
+
+    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
 
   #[pallet::pallet]
@@ -50,18 +64,21 @@ pub mod pallet {
   #[pallet::getter(fn quorum_account_id)]
   pub type QuorumAccountID<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-  /// Mapping of pending Withdrawals (AssetId, AccountId)
+  /// Requests counter
+  #[pallet::storage]
+  pub type RequestCounter<T: Config> = StorageValue<_, RequestId, ValueQuery>;
+
+  /// Mapping of pending Withdrawals
   #[pallet::storage]
   #[pallet::getter(fn withdrawals)]
-  pub type Withdrawals<T: Config> = StorageDoubleMap<
-    _,
-    Blake2_128Concat,
-    T::AssetId,
-    Blake2_128Concat,
-    T::AccountId,
-    T::Balance,
-    ValueQuery,
-  >;
+  pub type Withdrawals<T: Config> =
+    StorageMap<_, Blake2_128Concat, RequestId, Withdrawal<T::AccountId, T::BlockNumber>>;
+
+  /// Mapping of pending Trades
+  #[pallet::storage]
+  #[pallet::getter(fn trades)]
+  pub type Trades<T: Config> =
+    StorageMap<_, Blake2_128Concat, RequestId, Trade<T::AccountId, T::BlockNumber>>;
 
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
@@ -98,10 +115,20 @@ pub mod pallet {
     QuorumAccountChanged(T::AccountId),
     /// Quorum minted token to the account
     /// [sender, asset_id, amount]
-    Minted(T::AccountId, T::AssetId, T::Balance),
+    Minted(T::AccountId, CurrencyId, Balance),
     /// Quorum burned token to the account
     /// [sender, asset_id, amount]
-    Burned(T::AccountId, T::AssetId, T::Balance),
+    Burned(T::AccountId, CurrencyId, Balance),
+    /// Quorum traded token to the account
+    /// [sender, account_id, token_from, token_amount_from, token_to, token_amount_to]
+    Traded(
+      RequestId,
+      T::AccountId,
+      CurrencyId,
+      Balance,
+      CurrencyId,
+      Balance,
+    ),
   }
 
   // Errors inform users that something went wrong.
@@ -111,6 +138,22 @@ pub mod pallet {
     QuorumPaused,
     /// The access to the Quorum pallet is not allowed for this account ID.
     AccessDenied,
+    /// Invalid request ID.
+    InvalidRequestId,
+    /// Invalid request status.
+    InvalidRequestStatus,
+    /// There is a conflict in the request.
+    Conflict,
+    /// Unable to burn token.
+    BurnFailed,
+    /// Unable to mint token.
+    MintFailed,
+    /// Unknown Asset.
+    UnknownAsset,
+    /// No Funds available for this Asset Id.
+    NoFunds,
+    /// Unknown Error.
+    UnknownError,
   }
 
   // Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -125,12 +168,12 @@ pub mod pallet {
     /// - `account_id`: Account Id to be deposited.
     /// - `asset_id`: the asset to be deposited.
     /// - `mint_amount`: the amount to be deposited.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::burn())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::mint())]
     pub fn mint(
       origin: OriginFor<T>,
       account_id: T::AccountId,
-      asset_id: T::AssetId,
-      mint_amount: T::Balance,
+      asset_id: CurrencyId,
+      mint_amount: Balance,
     ) -> DispatchResultWithPostInfo {
       // make sure it's the quorum
       let sender = ensure_signed(origin)?;
@@ -142,44 +185,36 @@ pub mod pallet {
       // make sure the currency exists, the pallet failed if already exist but we don't really care.
       // FIXME: Maybe we could check if the failed is because of the asset already exist.
       // otherwise we should failed here
-      let _force_create = pallet_assets::Pallet::<T>::force_create(
-        RawOrigin::Root.into(),
-        asset_id,
-        // make the pallet account id the owner, so only this pallet can handle the funds.
-        T::Lookup::unlookup(Self::account_id()),
-        true,
-        1,
-      );
+      if let CurrencyId::Wrapped(asset) = asset_id {
+        let _force_create = pallet_assets::Pallet::<T>::force_create(
+          RawOrigin::Root.into(),
+          asset,
+          // make the pallet account id the owner, so only this pallet can handle the funds.
+          T::Lookup::unlookup(Self::account_id()),
+          true,
+          1,
+        );
+      }
 
       // mint the token
-      pallet_assets::Pallet::<T>::mint(
-        RawOrigin::Signed(Self::account_id()).into(),
-        asset_id,
-        T::Lookup::unlookup(account_id.clone()),
-        mint_amount,
-      )?;
+      T::CurrencyWrapr::mint_into(asset_id, &account_id, mint_amount)?;
 
       // send event to the chain
       Self::deposit_event(Event::<T>::Minted(account_id, asset_id, mint_amount));
 
-      Ok(Pays::No.into())
+      Ok(().into())
     }
 
     /// Quorum have confirmation and make a new burn (widthdraw).
     ///
-    /// - `account_id`: Account Id to remove the funds.
-    /// - `asset_id`: the asset to remove the funds.
-    /// - `burn_amount`: the amount to remove for this asset.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::burn())]
-    pub fn burn(
+    /// - `request_id`: Request ID.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_withdrawal())]
+    pub fn confirm_withdrawal(
       origin: OriginFor<T>,
-      account_id: T::AccountId,
-      asset_id: T::AssetId,
-      burn_amount: T::Balance,
+      request_id: RequestId,
     ) -> DispatchResultWithPostInfo {
       // make sure the quorum is not paused
       Self::ensure_not_paused()?;
-
       // make sure it's the quorum
       let sender = ensure_signed(origin)?;
       ensure!(
@@ -187,46 +222,173 @@ pub mod pallet {
         Error::<T>::AccessDenied
       );
 
-      // Transfer the asset fund to the Wrapr Account (using pallet_assets)
-      pallet_assets::Pallet::<T>::burn(
-        RawOrigin::Signed(Self::account_id()).into(),
-        asset_id,
-        T::Lookup::unlookup(account_id.clone()),
-        burn_amount,
-      )?;
-
-      // send event to the chain
-      Self::deposit_event(Event::<T>::Burned(account_id, asset_id, burn_amount));
-
-      /*
-      // Remove the pending withdrawal
-      Withdrawals::<T>::try_mutate_exists(
-        asset_id,
-        account_id,
-        |current_value: &mut Option<T::Balance>| -> DispatchResult {
-          let new_value = current_value.unwrap_or_default().checked_add(burn_amount);
-          // we don't want to have our queue manager to failed
-          if let Some(new_value) = new_value {
-            // if we have a positive balance, we keep it in the queue
-            if new_value <= 0 {
-              *current_value = None;
-            } else {
-              *current_value = Some(new_value);
-            }
+      Withdrawals::<T>::try_mutate_exists(request_id, |withdrawal| {
+        match withdrawal {
+          None => {
+            return Err(Error::<T>::InvalidRequestId);
           }
-          Ok(())
-        },
-      )?;
-      */
-      Ok(Pays::No.into())
+          Some(withdrawal) => {
+            // remove the token from the account
+            T::CurrencyWrapr::burn_from(
+              withdrawal.asset_id,
+              &withdrawal.account_id,
+              withdrawal.amount,
+            )
+            .map_err(|_| Error::<T>::BurnFailed)?;
+
+            Self::deposit_event(Event::<T>::Burned(
+              withdrawal.account_id.clone(),
+              withdrawal.asset_id,
+              withdrawal.amount,
+            ));
+          }
+        }
+        // it deletes the item if mutated to a None.
+        *withdrawal = None;
+        Ok(())
+      })?;
+
+      Ok(().into())
+    }
+
+    /// Quorum have confirmation and make a new burn (widthdraw).
+    ///
+    /// - `request_id`: Request ID.
+    /// - `amounts_from`: Amounts from the market markers.
+    /// - `accounts_to`: Accounts of the market markers.
+    /// - `amounts_to`: Request ID.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_withdrawal())]
+    pub fn confirm_trade(
+      origin: OriginFor<T>,
+      request_id: RequestId,
+      amounts_from: Vec<Balance>,
+      accounts_to: Vec<T::AccountId>,
+      amounts_to: Vec<Balance>,
+    ) -> DispatchResultWithPostInfo {
+      // make sure the quorum is not paused
+      Self::ensure_not_paused()?;
+      // make sure it's the quorum
+      let sender = ensure_signed(origin)?;
+      ensure!(
+        sender == Self::quorum_account_id(),
+        Error::<T>::AccessDenied
+      );
+
+      Trades::<T>::try_mutate_exists(request_id, |trade| {
+        match trade {
+          None => {
+            return Err(Error::<T>::InvalidRequestId);
+          }
+          Some(trade) => {
+            if trade.status != TradeStatus::Pending {
+              return Err(Error::<T>::InvalidRequestStatus);
+            }
+
+            // check total_from
+            let mut total_from: Balance = 0;
+            for amt_from in amounts_from.iter() {
+              total_from += amt_from;
+            }
+            if trade.amount_from != total_from {
+              return Err(Error::<T>::Conflict);
+            }
+
+            // check amounts_to
+            // allowed to go +/- 10%
+            let mut total_to: Balance = 0;
+            for amt_to in amounts_to.iter() {
+              total_to += amt_to;
+            }
+            if total_to * 10 < trade.amount_to * 9 || total_to * 10 > trade.amount_to * 11 {
+              return Err(Error::Conflict);
+            }
+
+            // make sure the FROM balance is available
+            match T::CurrencyWrapr::can_withdraw(
+              trade.token_from,
+              &trade.account_id,
+              trade.amount_from,
+            ) {
+              WithdrawConsequence::Success => {
+                let mut total_to = 0;
+                // make sure all the market markers have enough funds
+                for (pos, amt) in amounts_to.iter().enumerate() {
+                  total_to += amt;
+                  match T::CurrencyWrapr::can_withdraw(trade.token_to, &accounts_to[pos], *amt) {
+                    // do nothing, we can continue
+                    WithdrawConsequence::Success => continue,
+                    // no funds error
+                    WithdrawConsequence::NoFunds => return Err(Error::NoFunds),
+                    // unknown assets
+                    WithdrawConsequence::UnknownAsset => return Err(Error::UnknownAsset),
+                    // throw an error, we really need a success here
+                    _ => return Err(Error::UnknownError),
+                  }
+                }
+
+                // make sure we can deposit before burning
+                T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
+                  .into_result()
+                  .map_err(|_| Error::<T>::MintFailed)?;
+
+                // burn from token
+                T::CurrencyWrapr::burn_from(trade.token_from, &trade.account_id, trade.amount_from)
+                  .map_err(|_| Error::<T>::BurnFailed)?;
+
+                // mint new tokens with fallback to restore token if it fails
+                if T::CurrencyWrapr::mint_into(trade.token_to, &trade.account_id, total_to).is_err()
+                {
+                  let revert = T::CurrencyWrapr::mint_into(
+                    trade.token_from,
+                    &trade.account_id,
+                    trade.amount_from,
+                  );
+                  debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
+                  return Err(Error::<T>::MintFailed);
+                };
+                // remove tokens from the MM accounts
+                for (pos, amt) in amounts_to.iter().enumerate() {
+                  // remove token_to from acc
+                  T::CurrencyWrapr::burn_from(trade.token_to, &accounts_to[pos], *amt)
+                    .map_err(|_| Error::<T>::BurnFailed)?;
+                  // add token_from to acc
+                  // using amounts_from
+                  T::CurrencyWrapr::mint_into(
+                    trade.token_from,
+                    &accounts_to[pos],
+                    amounts_from[pos],
+                  )
+                  .map_err(|_| Error::<T>::BurnFailed)?;
+                }
+                // FIXME: we can probably remove this and only use the
+                // event emitted by the Assets pallet
+                // emit the burned event
+                Self::deposit_event(Event::<T>::Traded(
+                  request_id,
+                  trade.account_id.clone(),
+                  trade.token_from,
+                  trade.amount_from,
+                  trade.token_to,
+                  trade.amount_to,
+                ));
+              }
+              WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds),
+              WithdrawConsequence::UnknownAsset => return Err(Error::<T>::UnknownAsset),
+              _ => return Err(Error::<T>::UnknownError),
+            };
+          }
+        }
+        // it deletes the item if mutated to a None.
+        *trade = None;
+        Ok(())
+      })?;
+
+      Ok(().into())
     }
 
     /// Quorum change status.
     #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, quorum_enabled: bool) -> DispatchResultWithPostInfo {
-      // make sure the quorum is not paused
-      Self::ensure_not_paused()?;
-
       // make sure it's the quorum
       let sender = ensure_signed(origin)?;
       ensure!(
@@ -240,15 +402,44 @@ pub mod pallet {
       // emit event
       Self::deposit_event(Event::<T>::QuorumStatusChanged(quorum_enabled));
 
-      // no payment required
-      Ok(Pays::No.into())
+      Ok(().into())
+    }
+
+    /// Quorum change account ID.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
+    pub fn set_account_id(
+      origin: OriginFor<T>,
+      new_quorum: T::AccountId,
+    ) -> DispatchResultWithPostInfo {
+      // make sure it's the quorum
+      let sender = ensure_signed(origin)?;
+      ensure!(
+        sender == Self::quorum_account_id(),
+        Error::<T>::AccessDenied
+      );
+
+      // update quorum
+      QuorumAccountID::<T>::put(new_quorum.clone());
+
+      // emit event
+      Self::deposit_event(Event::<T>::QuorumAccountChanged(new_quorum));
+
+      Ok(().into())
     }
   }
 
   // helper functions (not dispatchable)
-  impl<T: Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>> Pallet<T> {
+  impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
       T::QuorumPalletId::get().into_account()
+    }
+
+    /// Increments the cached request id and returns the value to be used.
+    fn next_request_seed() -> RequestId {
+      <RequestCounter<T>>::mutate(|counter| {
+        *counter += 1;
+        *counter
+      })
     }
 
     fn ensure_not_paused() -> Result<(), DispatchError> {
@@ -257,6 +448,70 @@ pub mod pallet {
       } else {
         Err(Error::<T>::QuorumPaused.into())
       }
+    }
+  }
+
+  impl<T: Config> QuorumExt<T::AccountId, T::BlockNumber> for Pallet<T> {
+    /// Get quorum status
+    fn is_quorum_enabled() -> bool {
+      Self::is_quorum_enabled()
+    }
+
+    /// Update quprum status
+    fn set_quorum_status(quorum_enabled: bool) {
+      // update quorum
+      QuorumStatus::<T>::put(quorum_enabled);
+      // emit event
+      Self::deposit_event(Event::<T>::QuorumStatusChanged(quorum_enabled));
+    }
+
+    /// Add new withdrawal in queue
+    fn add_new_withdrawal_in_queue(
+      account_id: T::AccountId,
+      asset_id: CurrencyId,
+      amount: Balance,
+      external_address: Vec<u8>,
+    ) -> (RequestId, Withdrawal<T::AccountId, T::BlockNumber>) {
+      let request_id = Self::next_request_seed();
+      let withdrawal = Withdrawal {
+        account_id,
+        amount,
+        asset_id,
+        external_address,
+        status: WithdrawalStatus::Pending,
+        block_number: <frame_system::Pallet<T>>::block_number(),
+      };
+
+      // insert in our queue
+      Withdrawals::<T>::insert(request_id, withdrawal.clone());
+
+      // return values
+      (request_id, withdrawal)
+    }
+
+    fn add_new_trade_in_queue(
+      account_id: T::AccountId,
+      asset_id_from: CurrencyId,
+      amount_from: Balance,
+      asset_id_to: CurrencyId,
+      amount_to: Balance,
+    ) -> (RequestId, Trade<T::AccountId, T::BlockNumber>) {
+      let request_id = Self::next_request_seed();
+      let trade = Trade {
+        account_id,
+        token_from: asset_id_from,
+        token_to: asset_id_to,
+        amount_from,
+        amount_to,
+        status: TradeStatus::Pending,
+        block_number: <frame_system::Pallet<T>>::block_number(),
+      };
+
+      // insert in our queue
+      Trades::<T>::insert(request_id, trade.clone());
+
+      // return values
+      (request_id, trade)
     }
   }
 }

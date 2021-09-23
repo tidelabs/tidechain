@@ -17,7 +17,7 @@ pub fn set_migration_operational_status_works() {
     let non_sudo = 2u64;
     assert_ok!(Quorum::set_status(Origin::root(), true));
     assert_noop!(
-      Quorum::set_status(Origin::signed(non_sudo), false),
+      Quorum::set_status(Origin::signed(non_sudo.into()), false),
       BadOrigin,
     );
     assert!(Quorum::is_quorum_enabled());

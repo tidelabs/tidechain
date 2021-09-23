@@ -8,7 +8,12 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
   construct_runtime, parameter_types,
   traits::{
-    Currency, EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
+    fungible::{
+      Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
+    },
+    fungibles::{Inspect, Mutate, Transfer},
+    tokens::{DepositConsequence, WithdrawConsequence},
+    EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
   },
   weights::{
     constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -60,16 +65,17 @@ use sp_runtime::{
     OpaqueKeys, SaturatedConversion, StaticLookup,
   },
   transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
-  ApplyExtrinsicResult, DispatchError, FixedPointNumber, Perbill, Percent, Permill, Perquintill,
+  ApplyExtrinsicResult, DispatchError, DispatchResult, FixedPointNumber, Perbill, Percent, Permill,
+  Perquintill,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use tidefi_primitives::{
-  AccountId, AccountIndex, Amount, AssetId, Balance, BalanceInfo, BlockNumber, Hash, Index, Moment,
-  Signature,
+  AccountId, AccountIndex, Amount, AssetId, Balance, BalanceInfo, BlockNumber, CurrencyId, Hash,
+  Index, Moment, Signature,
 };
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
@@ -124,7 +130,8 @@ pub fn native_version() -> NativeVersion {
   }
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+type NegativeImbalance =
+  <Balances as frame_support::traits::Currency<AccountId>>::NegativeImbalance;
 
 pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
@@ -381,6 +388,107 @@ parameter_types! {
     pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
 }
 
+pub struct Adapter<AccountId> {
+  phantom: PhantomData<AccountId>,
+}
+
+impl Inspect<AccountId> for Adapter<AccountId> {
+  type AssetId = CurrencyId;
+  type Balance = Balance;
+
+  fn total_issuance(asset: Self::AssetId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::total_issuance(),
+      CurrencyId::Wrapped(asset_id) => Assets::total_issuance(asset_id),
+    }
+  }
+
+  fn balance(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::balance(who),
+      CurrencyId::Wrapped(asset_id) => Assets::balance(asset_id, who),
+    }
+  }
+
+  fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::minimum_balance(),
+      CurrencyId::Wrapped(asset_id) => Assets::minimum_balance(asset_id),
+    }
+  }
+
+  fn reducible_balance(asset: Self::AssetId, who: &AccountId, keep_alive: bool) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::reducible_balance(who, keep_alive),
+      CurrencyId::Wrapped(asset_id) => Assets::reducible_balance(asset_id, who, keep_alive),
+    }
+  }
+
+  fn can_deposit(
+    asset: Self::AssetId,
+    who: &AccountId,
+    amount: Self::Balance,
+  ) -> DepositConsequence {
+    match asset {
+      CurrencyId::Tide => Balances::can_deposit(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::can_deposit(asset_id, who, amount),
+    }
+  }
+
+  fn can_withdraw(
+    asset: Self::AssetId,
+    who: &AccountId,
+    amount: Self::Balance,
+  ) -> WithdrawConsequence<Self::Balance> {
+    match asset {
+      CurrencyId::Tide => Balances::can_withdraw(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
+    }
+  }
+}
+
+impl Mutate<AccountId> for Adapter<AccountId> {
+  fn mint_into(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
+    match asset {
+      CurrencyId::Tide => Balances::mint_into(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::mint_into(asset_id, who, amount),
+    }
+  }
+
+  fn burn_from(
+    asset: Self::AssetId,
+    who: &AccountId,
+    amount: Balance,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::burn_from(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::burn_from(asset_id, who, amount),
+    }
+  }
+}
+
+impl Transfer<AccountId> for Adapter<AccountId>
+where
+  Assets: Transfer<AccountId>,
+{
+  fn transfer(
+    asset: Self::AssetId,
+    source: &AccountId,
+    dest: &AccountId,
+    amount: Self::Balance,
+    keep_alive: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => {
+        <Balances as FungibleTransfer<AccountId>>::transfer(source, dest, amount, keep_alive)
+      }
+      CurrencyId::Wrapped(asset_id) => {
+        <Assets as Transfer<AccountId>>::transfer(asset_id, source, dest, amount, keep_alive)
+      }
+    }
+  }
+}
+
 pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
   type Balance = Balance;
@@ -450,7 +558,7 @@ impl pallet_session::Config for Runtime {
   type SessionHandler = <SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
   type Keys = SessionKeys;
   type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-  type WeightInfo = weights::pallet_session::WeightInfo;
+  type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 impl pallet_session::historical::Config for Runtime {
@@ -939,6 +1047,8 @@ parameter_types! {
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
   pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
   pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
+
+  pub const PeriodBasis: BlockNumber = 1000u32;
 }
 
 impl pallet_assets::Config for Runtime {
@@ -953,7 +1063,8 @@ impl pallet_assets::Config for Runtime {
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = AssetsStringLimit;
   type Freezer = ();
-  type WeightInfo = ();
+  // FIXME: Use local weight
+  type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
   type Extra = ();
 }
 
@@ -961,8 +1072,22 @@ impl pallet_wrapr::Config for Runtime {
   type Event = Event;
   type PalletId = WraprPalletId;
   type Assets = Assets;
+  type Quorum = WraprQuorum;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
+}
+
+impl pallet_wrapr_stake::Config for Runtime {
+  type Event = Event;
+  type PalletId = WraprPalletId;
+  type Assets = Assets;
+  // FIXME: Use local weight
+  type WeightInfo = pallet_wrapr_stake::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
+  type PeriodBasis = PeriodBasis;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -970,6 +1095,8 @@ impl pallet_quorum::Config for Runtime {
   type QuorumPalletId = QuorumPalletId;
   // FIXME: Use local weight
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 construct_runtime!(
@@ -1006,10 +1133,13 @@ construct_runtime!(
         Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 26,
         Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 27,
         Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 28,
-        // Pallets
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 29,
+        // Request handler for withdrawls
         Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>} = 30,
-        Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
+        // Staking storage and hooks
+        WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>} = 31,
+        // Storage, events and traits for the quorum
+        WraprQuorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 32,
     }
 );
 /// Digest item type.
@@ -1237,7 +1367,7 @@ impl_runtime_apis! {
 
     // Wrapr Custom API
     impl pallet_wrapr_rpc_runtime_api::WraprApi<Block, AccountId> for Runtime {
-      fn get_account_balance(asset_id: AssetId, account_id: AccountId) -> Result<BalanceInfo, DispatchError> {
+      fn get_account_balance(asset_id: CurrencyId, account_id: AccountId) -> Result<BalanceInfo, DispatchError> {
         Wrapr::get_account_balance(asset_id, &account_id)
       }
     }
@@ -1270,7 +1400,7 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_collective, Council);
         list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
         list_benchmark!(list, extra, pallet_elections_phragmen, Elections);
-        list_benchmark!(list, extra, pallet_grandpa, Grandpa);
+        //list_benchmark!(list, extra, pallet_grandpa, Grandpa);
         list_benchmark!(list, extra, pallet_identity, Identity);
         list_benchmark!(list, extra, pallet_im_online, ImOnline);
         list_benchmark!(list, extra, pallet_indices, Indices);
@@ -1282,12 +1412,13 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
         list_benchmark!(list, extra, pallet_staking, Staking);
         list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-
+        list_benchmark!(list, extra, pallet_assets, Assets);
         list_benchmark!(list, extra, pallet_timestamp, Timestamp);
         list_benchmark!(list, extra, pallet_treasury, Treasury);
         list_benchmark!(list, extra, pallet_utility, Utility);
         list_benchmark!(list, extra, pallet_wrapr, Wrapr);
-        list_benchmark!(list, extra, pallet_quorum, Quorum);
+        list_benchmark!(list, extra, pallet_wrapr_stake, WraprStake);
+        list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1327,12 +1458,14 @@ impl_runtime_apis! {
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 
+            add_benchmark!(params, batches, pallet_assets, Assets);
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_bounties, Bounties);
             add_benchmark!(params, batches, pallet_collective, Council);
             add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
             add_benchmark!(params, batches, pallet_elections_phragmen, Elections);
-            add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+            // FIXME: grandme benchmark do not generate the correct functions
+            //add_benchmark!(params, batches, pallet_grandpa, Grandpa);
             add_benchmark!(params, batches, pallet_identity, Identity);
             add_benchmark!(params, batches, pallet_im_online, ImOnline);
             add_benchmark!(params, batches, pallet_indices, Indices);
@@ -1348,7 +1481,8 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_treasury, Treasury);
             add_benchmark!(params, batches, pallet_utility, Utility);
             add_benchmark!(params, batches, pallet_wrapr, Wrapr);
-            add_benchmark!(params, batches, pallet_quorum, Quorum);
+            add_benchmark!(params, batches, pallet_wrapr_stake, WraprStake);
+            add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
@@ -1360,7 +1494,6 @@ impl_runtime_apis! {
 mod tests {
   use super::*;
   use frame_system::offchain::CreateSignedTransaction;
-  use sp_runtime::assert_eq_error_rate;
 
   #[test]
   fn validate_transaction_submitter_bounds() {
@@ -1371,13 +1504,5 @@ mod tests {
     }
 
     is_submit_signed_transaction::<Runtime>();
-  }
-
-  #[test]
-  fn signed_deposit_is_sensible() {
-    // ensure this number does not change, or that it is checked after each change.
-    // a 1 MB solution should need around 0.16 KSM deposit
-    let deposit = SignedDepositBase::get() + (SignedDepositByte::get() * 1024 * 1024);
-    assert_eq_error_rate!(deposit, UNITS * 16 / 100, UNITS / 100);
   }
 }

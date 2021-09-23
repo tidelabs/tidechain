@@ -6,14 +6,14 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use std::sync::Arc;
-use tidefi_primitives::{AssetId, BalanceInfo};
+use tidefi_primitives::{BalanceInfo, CurrencyId};
 
 #[rpc]
 pub trait WraprApi<BlockHash, AccountId> {
   #[rpc(name = "wrapr_getAccountBalance")]
   fn get_account_balance(
     &self,
-    asset_id: AssetId,
+    asset_id: CurrencyId,
     account_id: AccountId,
     at: Option<BlockHash>,
   ) -> Result<BalanceInfo>;
@@ -60,7 +60,7 @@ where
 {
   fn get_account_balance(
     &self,
-    asset_id: AssetId,
+    asset_id: CurrencyId,
     account_id: AccountId,
     at: Option<<Block as BlockT>::Hash>,
   ) -> Result<BalanceInfo> {
