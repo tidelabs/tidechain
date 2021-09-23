@@ -106,8 +106,14 @@ fn development_config_genesis() -> GenesisConfig {
 /// Development config (single validator Alice)
 pub fn development_config() -> ChainSpec {
   let mut properties = Map::new();
-  properties.insert("tokenSymbol".into(), "TIDE".into());
+
+  // FIXME: Should we set a token symbol? As the other assets are
+  // marked with `1.0000 pTIDE` by example in the polkadot UI
+  // maybe we can fork and customize a bit the polkadot UI
+  //properties.insert("tokenSymbol".into(), "TIDE".into());
+
   properties.insert("tokenDecimals".into(), 10.into());
+
   ChainSpec::from_genesis(
     "Development",
     "tidefi_devnet",

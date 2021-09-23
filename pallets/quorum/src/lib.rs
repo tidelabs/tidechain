@@ -340,8 +340,8 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::BurnFailed)?;
 
                 // mint new tokens with fallback to restore token if it fails
-                if let Err(_) =
-                  T::QuorumCurrency::mint_into(trade.token_to, &trade.account_id, total_to)
+                if T::QuorumCurrency::mint_into(trade.token_to, &trade.account_id, total_to)
+                  .is_err()
                 {
                   let revert = T::QuorumCurrency::mint_into(
                     trade.token_from,
@@ -351,7 +351,6 @@ pub mod pallet {
                   debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
                   return Err(Error::<T>::MintFailed);
                 };
-
                 // remove tokens from the MM accounts
                 for (pos, amt) in amounts_to.iter().enumerate() {
                   // remove token_to from acc
