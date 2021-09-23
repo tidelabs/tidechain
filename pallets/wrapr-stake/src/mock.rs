@@ -58,7 +58,7 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    Wrapr: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>},
+    WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>},
   }
 );
 
