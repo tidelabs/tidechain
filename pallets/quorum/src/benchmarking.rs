@@ -5,9 +5,9 @@ use super::*;
 
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::{self, RawOrigin};
-use tidefi_primitives::{AccountId, CurrencyId};
+use tidefi_primitives::CurrencyId;
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
   frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
