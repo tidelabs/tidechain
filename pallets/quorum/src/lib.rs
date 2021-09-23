@@ -30,8 +30,8 @@ pub mod pallet {
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{
-    pallet::QuorumExt, AssetId, Balance, CurrencyId, RequestId, Stake, Trade, TradeStatus,
-    Withdrawal, WithdrawalStatus,
+    pallet::QuorumExt, AssetId, Balance, CurrencyId, RequestId, Trade, TradeStatus, Withdrawal,
+    WithdrawalStatus,
   };
 
   #[pallet::config]
@@ -79,12 +79,6 @@ pub mod pallet {
   #[pallet::getter(fn trades)]
   pub type Trades<T: Config> =
     StorageMap<_, Blake2_128Concat, RequestId, Trade<T::AccountId, T::BlockNumber>>;
-
-  /// Mapping of pending Stakes
-  #[pallet::storage]
-  #[pallet::getter(fn stakes)]
-  pub type Stakes<T: Config> =
-    StorageMap<_, Blake2_128Concat, RequestId, Stake<T::AccountId, T::BlockNumber>>;
 
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
@@ -506,28 +500,6 @@ pub mod pallet {
 
       // return values
       (request_id, trade)
-    }
-
-    fn add_new_stake_in_queue(
-      account_id: T::AccountId,
-      asset_id: CurrencyId,
-      amount: Balance,
-      duration: u32,
-    ) -> (RequestId, Stake<T::AccountId, T::BlockNumber>) {
-      let request_id = Self::next_request_seed();
-      let stake = Stake {
-        account_id,
-        asset_id,
-        amount,
-        duration,
-        block_number: <frame_system::Pallet<T>>::block_number(),
-      };
-
-      // insert in our queue
-      Stakes::<T>::insert(request_id, stake.clone());
-
-      // return values
-      (request_id, stake)
     }
   }
 }

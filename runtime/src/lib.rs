@@ -1047,6 +1047,8 @@ parameter_types! {
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
   pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
   pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
+
+  pub const PeriodBasis: BlockNumber = 1000u32;
 }
 
 impl pallet_assets::Config for Runtime {
@@ -1074,6 +1076,17 @@ impl pallet_wrapr::Config for Runtime {
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type QuorumCurrency = Adapter<AccountId>;
+}
+
+impl pallet_wrapr_stake::Config for Runtime {
+  type Event = Event;
+  type PalletId = WraprPalletId;
+  type Assets = Assets;
+  // FIXME: Use local weight
+  type WeightInfo = pallet_wrapr_stake::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type QuorumCurrency = Adapter<AccountId>;
+  type PeriodBasis = PeriodBasis;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -1122,7 +1135,8 @@ construct_runtime!(
         // Pallets
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 29,
         Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>} = 30,
-        Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
+        WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>} = 31,
+        Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 32,
     }
 );
 /// Digest item type.
@@ -1484,13 +1498,5 @@ mod tests {
     }
 
     is_submit_signed_transaction::<Runtime>();
-  }
-
-  #[test]
-  fn signed_deposit_is_sensible() {
-    // ensure this number does not change, or that it is checked after each change.
-    // a 1 MB solution should need around 0.16 KSM deposit
-    let deposit = SignedDepositBase::get() + (SignedDepositByte::get() * 1024 * 1024);
-    assert_eq_error_rate!(deposit, UNITS * 16 / 100, UNITS / 100);
   }
 }

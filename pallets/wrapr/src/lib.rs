@@ -66,9 +66,6 @@ pub mod pallet {
       CurrencyId,
       Balance,
     ),
-    /// Event emitted when stake is requested.
-    /// [request_id, account, asset_id, duration]
-    Stake(RequestId, T::AccountId, CurrencyId, u32),
   }
 
   // Errors inform users that something went wrong.
@@ -164,37 +161,6 @@ pub mod pallet {
             asset_id_to,
             amount_to,
           ));
-          // ok
-          Ok(Pays::No.into())
-        }
-        WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),
-        WithdrawConsequence::UnknownAsset => Err(Error::<T>::UnknownAsset.into()),
-        _ => Err(Error::<T>::UnknownError.into()),
-      }
-    }
-
-    /// AccountID request stake.
-    /// This will dispatch an Event on the chain and the Quprum should listen to process the job
-    /// and send the confirmation once done.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_stake())]
-    pub fn request_stake(
-      origin: OriginFor<T>,
-      asset_id: CurrencyId,
-      amount: Balance,
-      duration: u32,
-    ) -> DispatchResultWithPostInfo {
-      let account_id = ensure_signed(origin)?;
-      // make sure the quorum is enabled
-      ensure!(Self::is_quorum_enabled(), Error::<T>::QuorumPaused);
-      // make sure the account have the fund to save some time
-      // to the quorum
-      match T::QuorumCurrency::can_withdraw(asset_id, &account_id, amount) {
-        WithdrawConsequence::Success => {
-          // add to the queue
-          let (stake_id, _) =
-            T::Quorum::add_new_stake_in_queue(account_id.clone(), asset_id, amount, duration);
-          // send event to the chain
-          Self::deposit_event(Event::<T>::Stake(stake_id, account_id, asset_id, duration));
           // ok
           Ok(Pays::No.into())
         }
