@@ -463,12 +463,7 @@ pub mod pallet {
         Error::<T>::AccessDenied
       );
 
-      // update quorum
-      QuorumStatus::<T>::put(quorum_enabled);
-
-      // emit event
-      Self::deposit_event(Event::<T>::StatusChanged(quorum_enabled));
-
+      Self::set_quorum_status(quorum_enabled);
       Ok(().into())
     }
 
@@ -529,7 +524,7 @@ pub mod pallet {
       // update quorum
       QuorumStatus::<T>::put(quorum_enabled);
       // emit event
-      Self::deposit_event(Event::<T>::QuorumStatusChanged(quorum_enabled));
+      Self::deposit_event(Event::<T>::StatusChanged(quorum_enabled));
     }
 
     /// Add new withdrawal in queue
