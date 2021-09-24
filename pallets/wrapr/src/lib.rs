@@ -54,6 +54,9 @@ pub mod pallet {
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// Event emitted when widthdraw is requested.
+    /// [from_account_id, to_account_id, currency_id, amount]
+    Transfer(T::AccountId, T::AccountId, CurrencyId, Balance),
+    /// Event emitted when widthdraw is requested.
     /// [request_id, account, asset_id, amount]
     Withdrawal(RequestId, T::AccountId, CurrencyId, Balance),
     /// Event emitted when trade is requested.
@@ -86,6 +89,27 @@ pub mod pallet {
   // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
   #[pallet::call]
   impl<T: Config> Pallet<T> {
+    /// Transfer funds from one account into another.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::transfer())]
+    pub fn transfer(
+      origin: OriginFor<T>,
+      destination_id: T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+    ) -> DispatchResultWithPostInfo {
+      let account_id = ensure_signed(origin)?;
+      // transfer the request currency, ofc only if the funds are available and the recipient can receive it.
+      T::CurrencyWrapr::transfer(currency_id, &account_id, &destination_id, amount, true)?;
+      // send event to the chain
+      Self::deposit_event(Event::<T>::Transfer(
+        account_id,
+        destination_id,
+        currency_id,
+        amount,
+      ));
+      Ok(().into())
+    }
+
     /// AccountID request withdrawal.
     /// This will dispatch an Event on the chain and the Quprum should listen to process the job
     /// and send the confirmation once done.

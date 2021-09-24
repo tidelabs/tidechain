@@ -10,6 +10,7 @@ pub trait WeightInfo {
    fn request_withdrawal() -> Weight;
    fn request_trade() -> Weight;
    fn request_stake() -> Weight;
+   fn transfer() -> Weight;
 }
 
 /// Weights for pallet_wrapr using the Substrate node and recommended hardware.
@@ -27,6 +28,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
    }
    fn request_stake() -> Weight {
       14_400_000_u64
+      .saturating_add(T::DbWeight::get().reads(6_u64))
+      .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
+   fn transfer() -> Weight {
+      18_400_000_u64
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }
