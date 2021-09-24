@@ -9,9 +9,6 @@ mod benchmarking;
 pub mod weights;
 pub use weights::*;
 
-pub mod types;
-pub use types::*;
-
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
@@ -25,7 +22,7 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::{traits::AccountIdConversion, ArithmeticError};
-  use tidefi_primitives::{Balance, CurrencyId};
+  use tidefi_primitives::{Balance, CurrencyId, Stake};
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -58,10 +55,10 @@ pub mod pallet {
   pub type AccountStakes<T: Config> = StorageDoubleMap<
     _,
     Blake2_128Concat,
-    CurrencyId,
-    Blake2_128Concat,
     T::AccountId,
-    StakeSnapshot<Balance>,
+    Blake2_128Concat,
+    CurrencyId,
+    Stake<Balance>,
     ValueQuery,
   >;
 
@@ -89,7 +86,7 @@ pub mod pallet {
     #[pallet::weight(<T as pallet::Config>::WeightInfo::stake())]
     pub fn stake(
       origin: OriginFor<T>,
-      asset_id: CurrencyId,
+      currency_id: CurrencyId,
       amount: Balance,
       duration: u32,
     ) -> DispatchResultWithPostInfo {
@@ -98,18 +95,19 @@ pub mod pallet {
       // FIXME: Maybe we should have some way to open / close a market of staking
 
       // transfer the assets to the pallet account id
-      T::CurrencyWrapr::transfer(asset_id, &account_id, &Self::account_id(), amount, true)?;
+      T::CurrencyWrapr::transfer(currency_id, &account_id, &Self::account_id(), amount, true)?;
       AccountStakes::<T>::insert(
-        asset_id,
         account_id.clone(),
-        StakeSnapshot {
+        currency_id,
+        Stake {
+          currency_id,
           initial_balance: amount,
           principal: amount,
           duration,
         },
       );
       // Update our staking pool
-      StakingPool::<T>::try_mutate(asset_id, |balance| -> DispatchResult {
+      StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
         if let Some(b) = balance {
           *balance = Some(b.checked_add(amount).ok_or(ArithmeticError::Overflow)?);
         } else {
@@ -118,7 +116,7 @@ pub mod pallet {
         Ok(())
       })?;
 
-      Self::deposit_event(Event::<T>::Staked(account_id, asset_id, amount));
+      Self::deposit_event(Event::<T>::Staked(account_id, currency_id, amount));
       Ok(().into())
     }
   }
