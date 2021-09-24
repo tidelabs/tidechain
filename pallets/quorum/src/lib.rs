@@ -62,7 +62,7 @@ pub mod pallet {
   /// Quorum Account ID
   #[pallet::storage]
   #[pallet::getter(fn quorum_account_id)]
-  pub type QuorumAccountID<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+  pub type QuorumAccountId<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
   /// Requests counter
   #[pallet::storage]
@@ -100,7 +100,7 @@ pub mod pallet {
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
       QuorumStatus::<T>::put(self.quorum_enabled);
-      QuorumAccountID::<T>::put(self.quorum_account.clone());
+      QuorumAccountId::<T>::put(self.quorum_account.clone());
     }
   }
 
@@ -109,10 +109,10 @@ pub mod pallet {
   pub enum Event<T: Config> {
     /// Quorum status changed
     /// [is_enabled]
-    QuorumStatusChanged(bool),
+    StatusChanged(bool),
     /// Quorum account changed
     /// [account_id]
-    QuorumAccountChanged(T::AccountId),
+    AccountChanged(T::AccountId),
     /// Quorum minted token to the account
     /// [sender, asset_id, amount]
     Minted(T::AccountId, CurrencyId, Balance),
@@ -386,6 +386,73 @@ pub mod pallet {
       Ok(().into())
     }
 
+    // FIXME: [@lemarier] Should be removed after the demo.
+    //
+    /// Quick trade for demo.
+    ///
+    /// - `account_id`: Account ID.
+    /// - `asset_id_from`: Asset Id to send.
+    /// - `amount_from`: Amount to send.
+    /// - `asset_id_to`: Asset Id to receive.
+    /// - `amount_to`: Amount to receive.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_withdrawal())]
+    pub fn quick_trade(
+      origin: OriginFor<T>,
+      account_id: T::AccountId,
+      asset_id_from: CurrencyId,
+      amount_from: Balance,
+      asset_id_to: CurrencyId,
+      amount_to: Balance,
+    ) -> DispatchResultWithPostInfo {
+      // make sure the quorum is not paused
+      Self::ensure_not_paused()?;
+      // make sure it's the quorum
+      let sender = ensure_signed(origin)?;
+      ensure!(
+        sender == Self::quorum_account_id(),
+        Error::<T>::AccessDenied
+      );
+
+      // make sure the FROM balance is available
+      match T::CurrencyWrapr::can_withdraw(asset_id_from, &account_id, amount_from) {
+        WithdrawConsequence::Success => {
+          // make sure we can deposit before burning
+          T::CurrencyWrapr::can_deposit(asset_id_to, &account_id, amount_to)
+            .into_result()
+            .map_err(|_| Error::<T>::MintFailed)?;
+
+          // burn from token
+          T::CurrencyWrapr::burn_from(asset_id_from, &account_id, amount_from)
+            .map_err(|_| Error::<T>::BurnFailed)?;
+
+          // mint new tokens with fallback to restore token if it fails
+          if T::CurrencyWrapr::mint_into(asset_id_to, &account_id, amount_to).is_err() {
+            let revert = T::CurrencyWrapr::mint_into(asset_id_from, &account_id, amount_from);
+            debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
+            return Err(Error::<T>::MintFailed.into());
+          };
+
+          // FIXME: we can probably remove this and only use the
+          // event emitted by the Assets pallet
+          // emit the burned event
+          Self::deposit_event(Event::<T>::Traded(
+            // fake request id
+            0,
+            account_id.clone(),
+            asset_id_from,
+            amount_from,
+            asset_id_to,
+            amount_to,
+          ));
+        }
+        WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds.into()),
+        WithdrawConsequence::UnknownAsset => return Err(Error::<T>::UnknownAsset.into()),
+        _ => return Err(Error::<T>::UnknownError.into()),
+      };
+
+      Ok(().into())
+    }
+
     /// Quorum change status.
     #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, quorum_enabled: bool) -> DispatchResultWithPostInfo {
@@ -396,12 +463,7 @@ pub mod pallet {
         Error::<T>::AccessDenied
       );
 
-      // update quorum
-      QuorumStatus::<T>::put(quorum_enabled);
-
-      // emit event
-      Self::deposit_event(Event::<T>::QuorumStatusChanged(quorum_enabled));
-
+      Self::set_quorum_status(quorum_enabled);
       Ok(().into())
     }
 
@@ -419,10 +481,10 @@ pub mod pallet {
       );
 
       // update quorum
-      QuorumAccountID::<T>::put(new_quorum.clone());
+      QuorumAccountId::<T>::put(new_quorum.clone());
 
       // emit event
-      Self::deposit_event(Event::<T>::QuorumAccountChanged(new_quorum));
+      Self::deposit_event(Event::<T>::AccountChanged(new_quorum));
 
       Ok(().into())
     }
@@ -462,7 +524,7 @@ pub mod pallet {
       // update quorum
       QuorumStatus::<T>::put(quorum_enabled);
       // emit event
-      Self::deposit_event(Event::<T>::QuorumStatusChanged(quorum_enabled));
+      Self::deposit_event(Event::<T>::StatusChanged(quorum_enabled));
     }
 
     /// Add new withdrawal in queue
