@@ -16,13 +16,14 @@ pub use pallet::*;
 pub mod pallet {
   use super::*;
   use frame_support::{
+    inherent::Vec,
     pallet_prelude::*,
     traits::tokens::fungibles::{Inspect, Mutate, Transfer},
     PalletId,
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::{traits::AccountIdConversion, ArithmeticError};
-  use tidefi_primitives::{Balance, CurrencyId, Stake};
+  use tidefi_primitives::{Balance, BalanceInfo, CurrencyId, Stake};
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -100,7 +101,6 @@ pub mod pallet {
         account_id.clone(),
         currency_id,
         Stake {
-          currency_id,
           initial_balance: amount,
           principal: amount,
           duration,
@@ -125,6 +125,26 @@ pub mod pallet {
   impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::PalletId::get().into_account()
+    }
+
+    // Get all stakes for the account, serialized for quick RPC call
+    pub fn get_account_stakes(account_id: &T::AccountId) -> Vec<(CurrencyId, Stake<BalanceInfo>)> {
+      AccountStakes::<T>::iter_prefix(account_id)
+        .map(|(currency_id, stake)| {
+          (
+            currency_id,
+            Stake::<BalanceInfo> {
+              principal: BalanceInfo {
+                amount: stake.principal,
+              },
+              initial_balance: BalanceInfo {
+                amount: stake.initial_balance,
+              },
+              duration: stake.duration,
+            },
+          )
+        })
+        .collect()
     }
   }
 }

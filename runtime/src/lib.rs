@@ -75,7 +75,7 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use tidefi_primitives::{
   AccountId, AccountIndex, Amount, AssetId, Balance, BalanceInfo, BlockNumber, CurrencyId, Hash,
-  Index, Moment, Signature,
+  Index, Moment, Signature, Stake,
 };
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
@@ -1369,6 +1369,9 @@ impl_runtime_apis! {
     impl pallet_wrapr_rpc_runtime_api::WraprApi<Block, AccountId> for Runtime {
       fn get_account_balance(asset_id: CurrencyId, account_id: AccountId) -> Result<BalanceInfo, DispatchError> {
         Wrapr::get_account_balance(asset_id, &account_id)
+      }
+      fn get_account_stakes(account_id: AccountId) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>, DispatchError> {
+        Ok(WraprStake::get_account_stakes(&account_id))
       }
     }
 
