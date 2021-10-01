@@ -57,8 +57,8 @@ pub mod pallet {
     /// [from_account_id, to_account_id, currency_id, amount]
     Transfer(T::AccountId, T::AccountId, CurrencyId, Balance),
     /// Event emitted when widthdraw is requested.
-    /// [request_id, account, asset_id, amount]
-    Withdrawal(RequestId, T::AccountId, CurrencyId, Balance),
+    /// [request_id, account, asset_id, amount, external_address]
+    Withdrawal(RequestId, T::AccountId, CurrencyId, Balance, Vec<u8>),
     /// Event emitted when trade is requested.
     /// [request_id, account, asset_id_from, amount_from, asset_id_to, amount_to]
     Trade(
@@ -132,7 +132,7 @@ pub mod pallet {
             account_id.clone(),
             asset_id,
             amount,
-            external_address,
+            external_address.clone(),
           );
           // send event to the chain
           Self::deposit_event(Event::<T>::Withdrawal(
@@ -140,6 +140,7 @@ pub mod pallet {
             account_id,
             asset_id,
             amount,
+            external_address,
           ));
           // ok
           Ok(Pays::No.into())
