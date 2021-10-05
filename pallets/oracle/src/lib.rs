@@ -321,20 +321,6 @@ pub mod pallet {
       T::Security::is_chain_running() && Self::is_oracle_enabled()
     }
 
-    /// Get currency status
-    fn is_currency_enabled(currency_id: CurrencyId) -> bool {
-      match currency_id {
-        CurrencyId::Tide => {
-          // FIXME: Should we allow disabling of TIDE token?
-          true
-        }
-        CurrencyId::Wrapped(asset) => {
-          // make sure currency is created
-          false
-        }
-      }
-    }
-
     fn add_new_trade_in_queue(
       account_id: T::AccountId,
       asset_id_from: CurrencyId,

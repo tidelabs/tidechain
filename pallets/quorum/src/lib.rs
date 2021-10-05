@@ -23,7 +23,6 @@ pub mod pallet {
     pallet_prelude::*,
     traits::{
       fungibles::{Inspect, Mutate, Transfer},
-      tokens::WithdrawConsequence,
     },
     PalletId,
   };
@@ -31,7 +30,7 @@ pub mod pallet {
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{
     pallet::{QuorumExt, SecurityExt},
-    AssetId, Balance, CurrencyId, Hash, RequestId, Trade, TradeStatus, Withdrawal,
+    AssetId, Balance, CurrencyId, Hash, Withdrawal,
     WithdrawalStatus,
   };
 

@@ -26,7 +26,6 @@ pub mod pallet {
     PalletId,
   };
   use frame_system::pallet_prelude::*;
-  use sp_runtime::traits::AccountIdConversion;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, OracleExt, QuorumExt},
     Balance, BalanceInfo, CurrencyId, Hash,
@@ -111,7 +110,7 @@ pub mod pallet {
 
       // 2. Make sure the currency is not disabled
       ensure!(
-        T::AssetRegistry::is_enabled(currency_id),
+        T::AssetRegistry::is_currency_enabled(currency_id),
         Error::<T>::DisabledAsset
       );
 
@@ -144,7 +143,7 @@ pub mod pallet {
 
       // 3. Make sure the currency is not disabled
       ensure!(
-        T::AssetRegistry::is_enabled(currency_id),
+        T::AssetRegistry::is_currency_enabled(currency_id),
         Error::<T>::DisabledAsset
       );
 
@@ -192,13 +191,13 @@ pub mod pallet {
 
       // 3. Make sure the `currency_id_from` is not disabled
       ensure!(
-        T::AssetRegistry::is_enabled(currency_id_from),
+        T::AssetRegistry::is_currency_enabled(currency_id_from),
         Error::<T>::DisabledAsset
       );
 
       // 4. Make sure the `currency_id_to` is not disabled
       ensure!(
-        T::AssetRegistry::is_enabled(currency_id_to),
+        T::AssetRegistry::is_currency_enabled(currency_id_to),
         Error::<T>::DisabledAsset
       );
 

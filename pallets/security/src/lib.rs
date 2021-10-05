@@ -22,9 +22,7 @@ pub mod pallet {
   use sha2::{Digest, Sha256};
   use sp_core::{H256, U256};
   use sp_runtime::traits::Saturating;
-  use tidefi_primitives::{
-    pallet::SecurityExt, AccountId, AssetId, Balance, BlockNumber, Hash, StatusCode,
-  };
+  use tidefi_primitives::{pallet::SecurityExt, AssetId, Balance, Hash, StatusCode};
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.

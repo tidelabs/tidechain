@@ -20,13 +20,8 @@ pub mod pallet {
   use super::*;
   use frame_support::{inherent::Vec, pallet_prelude::*, PalletId};
   use frame_system::{pallet_prelude::*, RawOrigin};
-  use sp_core::{H256, U256};
-  use sp_runtime::traits::{AccountIdConversion, Saturating, StaticLookup};
-  use sp_std::convert::TryInto;
-  use tidefi_primitives::{
-    pallet::AssetRegistryExt, AccountId, AssetId, Balance, BlockNumber, CurrencyId,
-    CurrencyMetadata, Hash, StatusCode,
-  };
+  use sp_runtime::traits::{AccountIdConversion, StaticLookup};
+  use tidefi_primitives::{pallet::AssetRegistryExt, AssetId, Balance, CurrencyId};
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -153,7 +148,7 @@ pub mod pallet {
       // 5. Emit new registered currency
       Self::deposit_event(<Event<T>>::Registered(currency_id));
 
-      Ok(().into())
+      Ok(())
     }
 
     /// Update asset status.
@@ -206,7 +201,7 @@ pub mod pallet {
         *asset = Some(is_enabled);
       });
 
-      Ok(().into())
+      Ok(())
     }
   }
 
@@ -243,7 +238,7 @@ pub mod pallet {
   }
 
   impl<T: Config> AssetRegistryExt for Pallet<T> {
-    fn is_enabled(currency_id: CurrencyId) -> bool {
+    fn is_currency_enabled(currency_id: CurrencyId) -> bool {
       Self::assets(currency_id).unwrap_or(false)
     }
   }

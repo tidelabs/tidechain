@@ -21,7 +21,7 @@ use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
 };
-use tidefi_primitives::{assets, Balance, Block, CurrencyId, CurrencyMetadata, StatusCode};
+use tidefi_primitives::{assets, Block, CurrencyId};
 pub use tidefi_primitives::{AccountId, Balance, Signature};
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -316,25 +316,25 @@ pub fn testnet_genesis(
         // but we keep it here as reference
         (CurrencyId::Tide, "Tide".into(), "TIDE".into(), 12),
         (
-          CurrencyId::Wrapped(asset::BTC),
+          CurrencyId::Wrapped(assets::BTC),
           "Bitcoin".into(),
           "BTC".into(),
           8,
         ),
         (
-          CurrencyId::Wrapped(asset::ETH),
+          CurrencyId::Wrapped(assets::ETH),
           "Ethereum".into(),
           "ETH".into(),
           18,
         ),
         (
-          CurrencyId::Wrapped(asset::USDC),
+          CurrencyId::Wrapped(assets::USDC),
           "USD Coin".into(),
           "USDC".into(),
           2,
         ),
         (
-          CurrencyId::Wrapped(asset::USDT),
+          CurrencyId::Wrapped(assets::USDT),
           "Tether".into(),
           "USDT".into(),
           2,
