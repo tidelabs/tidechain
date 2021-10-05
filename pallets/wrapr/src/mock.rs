@@ -62,6 +62,8 @@ frame_support::construct_runtime!(
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
   }
 );
 
@@ -141,15 +143,16 @@ impl pallet_balances::Config for Test {
 parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
+  pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
 }
 
 impl pallet_wrapr::Config for Test {
   type Event = Event;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type PalletId = WraprPalletId;
-  type Assets = Assets;
   type Quorum = Quorum;
   type CurrencyWrapr = Adapter<AccountId>;
+  type Oracle = Oracle;
 }
 
 impl pallet_quorum::Config for Test {
@@ -157,6 +160,19 @@ impl pallet_quorum::Config for Test {
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
   type QuorumPalletId = QuorumPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
+  type Security = Security;
+}
+
+impl pallet_oracle::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_oracle::weights::SubstrateWeight<Test>;
+  type OraclePalletId = OraclePalletId;
+  type CurrencyWrapr = Adapter<AccountId>;
+  type Security = Security;
+}
+
+impl pallet_security::Config for Test {
+  type Event = Event;
 }
 
 impl pallet_sudo::Config for Test {
@@ -269,6 +285,7 @@ where
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
   let alice = 1u64;
+  let bob = 2u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
@@ -279,8 +296,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
   pallet_quorum::GenesisConfig::<Test> {
-    quorum_enabled: true,
-    quorum_account: alice.into(),
+    enabled: true,
+    account: alice.into(),
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
+  pallet_oracle::GenesisConfig::<Test> {
+    enabled: true,
+    account: bob.into(),
   }
   .assimilate_storage(&mut t)
   .unwrap();

@@ -1,4 +1,4 @@
-use crate::{pallet as pallet_quorum, weights};
+use crate::{pallet as pallet_oracle, weights};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
@@ -57,7 +57,7 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
   }
 );
@@ -139,12 +139,12 @@ parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
 }
 
-impl pallet_quorum::Config for Test {
+impl pallet_oracle::Config for Test {
   type Event = Event;
   type WeightInfo = weights::SubstrateWeight<Test>;
-  type QuorumPalletId = WraprPalletId;
-  type Security = Security;
+  type OraclePalletId = WraprPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
+  type Security = Security;
 }
 
 impl pallet_security::Config for Test {
@@ -262,7 +262,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_quorum::GenesisConfig::<Test> {
+  pallet_oracle::GenesisConfig::<Test> {
     enabled: false,
     account: alice.into(),
   }

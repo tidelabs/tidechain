@@ -1047,6 +1047,7 @@ parameter_types! {
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
   pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
   pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
+  pub const OraclePalletId: PalletId = PalletId(*b"py/oracl");
 
   pub const PeriodBasis: BlockNumber = 1000u32;
 }
@@ -1071,8 +1072,8 @@ impl pallet_assets::Config for Runtime {
 impl pallet_wrapr::Config for Runtime {
   type Event = Event;
   type PalletId = WraprPalletId;
-  type Assets = Assets;
   type Quorum = WraprQuorum;
+  type Oracle = WraprOracle;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
@@ -1097,6 +1098,19 @@ impl pallet_quorum::Config for Runtime {
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
+}
+
+impl pallet_oracle::Config for Runtime {
+  type Event = Event;
+  type OraclePalletId = OraclePalletId;
+  // FIXME: Use local weight
+  type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
+}
+
+impl pallet_security::Config for Runtime {
+  type Event = Event;
 }
 
 construct_runtime!(
@@ -1140,6 +1154,10 @@ construct_runtime!(
         WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>} = 31,
         // Storage, events and traits for the quorum
         WraprQuorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 32,
+        // Storage, events and traits for the oracle
+        WraprOracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>} = 33,
+        // Storage, events and traits for the oracle
+        WraprSecurity: pallet_security::{Pallet, Call, Config<T>, Storage, Event<T>} = 34,
     }
 );
 /// Digest item type.
@@ -1422,6 +1440,8 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_wrapr, Wrapr);
         list_benchmark!(list, extra, pallet_wrapr_stake, WraprStake);
         list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
+        list_benchmark!(list, extra, pallet_oracle, WraprOracle);
+        list_benchmark!(list, extra, pallet_oracle, WraprSecurity);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1486,6 +1506,8 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_wrapr, Wrapr);
             add_benchmark!(params, batches, pallet_wrapr_stake, WraprStake);
             add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
+            add_benchmark!(params, batches, pallet_oracle, WraprOracle);
+            add_benchmark!(params, batches, pallet_oracle, WraprSecurity);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

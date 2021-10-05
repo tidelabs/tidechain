@@ -6,7 +6,7 @@ use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
   BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
   StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TreasuryPalletId,
-  WraprQuorumConfig,
+  WraprOracleConfig, WraprQuorumConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -100,6 +100,7 @@ fn development_config_genesis() -> GenesisConfig {
     vec![authority_keys_from_seed("Alice")],
     vec![],
     get_account_id_from_seed::<sr25519::Public>("Alice"),
+    get_account_id_from_seed::<sr25519::Public>("Bob"),
   )
 }
 
@@ -112,7 +113,7 @@ pub fn development_config() -> ChainSpec {
   // maybe we can fork and customize a bit the polkadot UI
   //properties.insert("tokenSymbol".into(), "TIDE".into());
 
-  properties.insert("tokenDecimals".into(), 10.into());
+  properties.insert("tokenDecimals".into(), 12.into());
 
   ChainSpec::from_genesis(
     "Development",
@@ -135,6 +136,7 @@ fn testnet_config_genesis() -> GenesisConfig {
     ],
     vec![],
     get_account_id_from_seed::<sr25519::Public>("Alice"),
+    get_account_id_from_seed::<sr25519::Public>("Bob"),
   )
 }
 
@@ -176,6 +178,7 @@ pub fn testnet_genesis(
   )>,
   _initial_nominators: Vec<AccountId>,
   quorum: AccountId,
+  oracle: AccountId,
 ) -> GenesisConfig {
   // 20k TIDEs / validators
   const ENDOWMENT: u128 = 20_000 * TIDE;
@@ -295,9 +298,14 @@ pub fn testnet_genesis(
     grandpa: Default::default(),
     technical_membership: Default::default(),
     treasury: Default::default(),
+    // tidefi custom genesis
     wrapr_quorum: WraprQuorumConfig {
-      quorum_enabled: true,
-      quorum_account: quorum,
+      enabled: true,
+      account: quorum,
+    },
+    wrapr_oracle: WraprOracleConfig {
+      enabled: true,
+      account: oracle,
     },
   }
 }
@@ -332,6 +340,7 @@ pub(crate) mod tests {
       vec![authority_keys_from_seed("Alice")],
       vec![],
       get_account_id_from_seed::<sr25519::Public>("Alice"),
+      get_account_id_from_seed::<sr25519::Public>("Bob"),
     )
   }
 

@@ -58,7 +58,7 @@ pub mod pallet {
     Blake2_128Concat,
     T::AccountId,
     Blake2_128Concat,
-    CurrencyId,
+    (CurrencyId, u32),
     Stake<Balance>,
     ValueQuery,
   >;
@@ -97,21 +97,28 @@ pub mod pallet {
 
       // transfer the assets to the pallet account id
       T::CurrencyWrapr::transfer(currency_id, &account_id, &Self::account_id(), amount, true)?;
-      AccountStakes::<T>::insert(
-        account_id.clone(),
-        currency_id,
-        Stake {
-          initial_balance: amount,
-          principal: amount,
-          duration,
-        },
-      );
+      AccountStakes::<T>::mutate_exists(account_id.clone(), (currency_id, duration), |stake| {
+        match stake {
+          Some(stake) => Some(Stake {
+            initial_balance: amount
+              .checked_add(stake.initial_balance)?,
+            principal: amount
+              .checked_add(stake.principal)?,
+            duration,
+          }),
+          None => Some(Stake {
+            initial_balance: amount,
+            principal: amount,
+            duration,
+          }),
+        }
+      });
       // Update our staking pool
       StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
         if let Some(b) = balance {
           *balance = Some(b.checked_add(amount).ok_or(ArithmeticError::Overflow)?);
         } else {
-          *balance = Some(1)
+          *balance = Some(amount)
         }
         Ok(())
       })?;
@@ -130,7 +137,7 @@ pub mod pallet {
     // Get all stakes for the account, serialized for quick RPC call
     pub fn get_account_stakes(account_id: &T::AccountId) -> Vec<(CurrencyId, Stake<BalanceInfo>)> {
       AccountStakes::<T>::iter_prefix(account_id)
-        .map(|(currency_id, stake)| {
+        .map(|((currency_id, _), stake)| {
           (
             currency_id,
             Stake::<BalanceInfo> {
