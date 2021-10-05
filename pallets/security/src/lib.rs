@@ -47,6 +47,8 @@ pub mod pallet {
   #[pallet::getter(fn status)]
   pub type ChainStatus<T: Config> = StorageValue<_, StatusCode, ValueQuery>;
 
+  /// T::BlockNumber - current block number (when the chain is paused, the block count is not incremented,
+  /// so we don't give reward on staking)
   #[pallet::storage]
   #[pallet::getter(fn current_block_number)]
   pub type CurrentBlockCount<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
