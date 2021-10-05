@@ -342,6 +342,7 @@ pub fn testnet_genesis(
       ],
       // FIXME: Is the asset_registry owner should be the same account as root?
       // this is the owner of the wrapped asset on chain and have full authority on them
+      // this account can also create new wrapped asset on chain
       account: root,
     },
     wrapr_security: Default::default(),
