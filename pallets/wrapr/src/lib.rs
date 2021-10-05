@@ -28,7 +28,7 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   use sp_runtime::traits::AccountIdConversion;
   use tidefi_primitives::{
-    pallet::{OracleExt, QuorumExt},
+    pallet::{AssetRegistryExt, OracleExt, QuorumExt},
     Balance, BalanceInfo, CurrencyId, Hash,
   };
 
@@ -45,6 +45,9 @@ pub mod pallet {
 
     /// Oracle traits
     type Oracle: OracleExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Asset registry traits
+    type AssetRegistry: AssetRegistryExt;
 
     /// Our currencies manager
     type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
@@ -76,15 +79,17 @@ pub mod pallet {
   // Errors inform users that something went wrong.
   #[pallet::error]
   pub enum Error<T> {
-    /// Unknown Asset.
+    /// Asset is currently disabled
+    DisabledAsset,
+    /// Unknown Asset
     UnknownAsset,
-    /// No Funds available for this Asset Id.
+    /// No Funds available for this Asset Id
     NoFunds,
-    /// Unknown Error.
+    /// Unknown Error
     UnknownError,
-    /// Quorum is paused. Withdrawal is not allowed.
+    /// Quorum is paused. Withdrawal is not allowed
     QuorumPaused,
-    /// Oracle is paused. Trading is not allowed.
+    /// Oracle is paused. Trading is not allowed
     OraclePaused,
   }
 
@@ -101,10 +106,19 @@ pub mod pallet {
       currency_id: CurrencyId,
       amount: Balance,
     ) -> DispatchResultWithPostInfo {
+      // 1. Make sure the transaction is signed
       let account_id = ensure_signed(origin)?;
-      // transfer the request currency, ofc only if the funds are available and the recipient can receive it.
+
+      // 2. Make sure the currency is not disabled
+      ensure!(
+        T::AssetRegistry::is_enabled(currency_id),
+        Error::<T>::DisabledAsset
+      );
+
+      // 3. Transfer the request currency, only if the funds are available and the recipient can receive it.
       T::CurrencyWrapr::transfer(currency_id, &account_id, &destination_id, amount, true)?;
-      // send event to the chain
+
+      // 4. Send event to the chain
       Self::deposit_event(Event::<T>::Transfer(
         account_id,
         destination_id,
@@ -114,39 +128,45 @@ pub mod pallet {
       Ok(().into())
     }
 
-    /// AccountID request withdrawal.
-    /// This will dispatch an Event on the chain and the Quprum should listen to process the job
-    /// and send the confirmation once done.
+    /// AccountID request withdrawal of currency.
     #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
     pub fn request_withdrawal(
       origin: OriginFor<T>,
-      asset_id: CurrencyId,
+      currency_id: CurrencyId,
       amount: Balance,
       external_address: Vec<u8>,
     ) -> DispatchResultWithPostInfo {
+      // 1. Make sure the transaction is signed
       let account_id = ensure_signed(origin)?;
-      // make sure the quorum is enabled
+
+      // 2. Make sure the quorum is enabled
       ensure!(T::Quorum::is_quorum_enabled(), Error::<T>::QuorumPaused);
-      // make sure the account have the fund to save some time
-      // to the quorum
-      match T::CurrencyWrapr::can_withdraw(asset_id, &account_id, amount) {
+
+      // 3. Make sure the currency is not disabled
+      ensure!(
+        T::AssetRegistry::is_enabled(currency_id),
+        Error::<T>::DisabledAsset
+      );
+
+      // 4. Make sure the account have enough funds
+      match T::CurrencyWrapr::can_withdraw(currency_id, &account_id, amount) {
         WithdrawConsequence::Success => {
-          // add to the queue
+          // Add withdrawal in queue
           let (withdrawal_id, _) = T::Quorum::add_new_withdrawal_in_queue(
             account_id.clone(),
-            asset_id,
+            currency_id,
             amount,
             external_address.clone(),
           );
-          // send event to the chain
+          // Send event to the chain
           Self::deposit_event(Event::<T>::Withdrawal(
             withdrawal_id,
             account_id,
-            asset_id,
+            currency_id,
             amount,
             external_address,
           ));
-          // ok
+
           Ok(().into())
         }
         WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),
@@ -156,41 +176,53 @@ pub mod pallet {
     }
 
     /// AccountID request trade.
-    /// This will dispatch an Event on the chain and the Quprum should listen to process the job
-    /// and send the confirmation once done.
     #[pallet::weight(<T as pallet::Config>::WeightInfo::request_trade())]
     pub fn request_trade(
       origin: OriginFor<T>,
-      asset_id_from: CurrencyId,
+      currency_id_from: CurrencyId,
       amount_from: Balance,
-      asset_id_to: CurrencyId,
+      currency_id_to: CurrencyId,
       amount_to: Balance,
     ) -> DispatchResultWithPostInfo {
+      // 1. Make sure the transaction is signed
       let account_id = ensure_signed(origin)?;
-      // make sure the quorum is enabled
+
+      // 2. Make sure the oracle is enabled
       ensure!(T::Oracle::is_oracle_enabled(), Error::<T>::QuorumPaused);
-      // make sure the account have the fund to save some time
-      // to the quorum
-      match T::CurrencyWrapr::can_withdraw(asset_id_from, &account_id, amount_from) {
+
+      // 3. Make sure the `currency_id_from` is not disabled
+      ensure!(
+        T::AssetRegistry::is_enabled(currency_id_from),
+        Error::<T>::DisabledAsset
+      );
+
+      // 4. Make sure the `currency_id_to` is not disabled
+      ensure!(
+        T::AssetRegistry::is_enabled(currency_id_to),
+        Error::<T>::DisabledAsset
+      );
+
+      // 5. Make sure the account have enough funds for the `asset_id_from`
+      match T::CurrencyWrapr::can_withdraw(currency_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
-          // add to the queue
+          // Add trade in queue
           let (trade_id, _) = T::Oracle::add_new_trade_in_queue(
             account_id.clone(),
-            asset_id_from,
+            currency_id_from,
             amount_from,
-            asset_id_to,
+            currency_id_to,
             amount_to,
           );
-          // send event to the chain
+          // Send event to the chain
           Self::deposit_event(Event::<T>::Trade(
             trade_id,
             account_id,
-            asset_id_from,
+            currency_id_from,
             amount_from,
-            asset_id_to,
+            currency_id_to,
             amount_to,
           ));
-          // ok
+
           Ok(().into())
         }
         WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),

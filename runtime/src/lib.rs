@@ -1048,6 +1048,7 @@ parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
   pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
   pub const OraclePalletId: PalletId = PalletId(*b"py/oracl");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
 
   pub const PeriodBasis: BlockNumber = 1000u32;
 }
@@ -1078,6 +1079,8 @@ impl pallet_wrapr::Config for Runtime {
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
+  // Asset registry
+  type AssetRegistry = WraprAssetRegistry;
 }
 
 impl pallet_wrapr_stake::Config for Runtime {
@@ -1098,6 +1101,8 @@ impl pallet_quorum::Config for Runtime {
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
+  // Security utils
+  type Security = WraprSecurity;
 }
 
 impl pallet_oracle::Config for Runtime {
@@ -1107,10 +1112,18 @@ impl pallet_oracle::Config for Runtime {
   type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
+  // Security utils
+  type Security = WraprSecurity;
 }
 
 impl pallet_security::Config for Runtime {
   type Event = Event;
+}
+
+impl pallet_asset_registry::Config for Runtime {
+  type Event = Event;
+  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Runtime>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
 }
 
 construct_runtime!(
@@ -1156,8 +1169,10 @@ construct_runtime!(
         WraprQuorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 32,
         // Storage, events and traits for the oracle
         WraprOracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>} = 33,
-        // Storage, events and traits for the oracle
-        WraprSecurity: pallet_security::{Pallet, Call, Config<T>, Storage, Event<T>} = 34,
+        // Storage, events and traits for the securities utils
+        WraprSecurity: pallet_security::{Pallet, Call, Config, Storage, Event<T>} = 34,
+        // Storage, events and traits for the asset registry
+        WraprAssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 35,
     }
 );
 /// Digest item type.
@@ -1441,7 +1456,8 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_wrapr_stake, WraprStake);
         list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
         list_benchmark!(list, extra, pallet_oracle, WraprOracle);
-        list_benchmark!(list, extra, pallet_oracle, WraprSecurity);
+        list_benchmark!(list, extra, pallet_security, WraprSecurity);
+        list_benchmark!(list, extra, pallet_asset_registry, WraprAssetRegistry);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1507,7 +1523,8 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_wrapr_stake, WraprStake);
             add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
             add_benchmark!(params, batches, pallet_oracle, WraprOracle);
-            add_benchmark!(params, batches, pallet_oracle, WraprSecurity);
+            add_benchmark!(params, batches, pallet_security, WraprSecurity);
+            add_benchmark!(params, batches, pallet_asset_registry, WraprAssetRegistry);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

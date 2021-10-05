@@ -64,6 +64,7 @@ frame_support::construct_runtime!(
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
+    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
@@ -144,6 +145,7 @@ parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
   pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
 }
 
 impl pallet_wrapr::Config for Test {
@@ -153,6 +155,7 @@ impl pallet_wrapr::Config for Test {
   type Quorum = Quorum;
   type CurrencyWrapr = Adapter<AccountId>;
   type Oracle = Oracle;
+  type AssetRegistry = AssetRegistry;
 }
 
 impl pallet_quorum::Config for Test {
@@ -173,6 +176,12 @@ impl pallet_oracle::Config for Test {
 
 impl pallet_security::Config for Test {
   type Event = Event;
+}
+
+impl pallet_asset_registry::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
 }
 
 impl pallet_sudo::Config for Test {
@@ -304,6 +313,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_oracle::GenesisConfig::<Test> {
     enabled: true,
     account: bob.into(),
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
+  pallet_asset_registry::GenesisConfig::<Test> {
+    assets: Vec::new(),
+    account: alice.into(),
   }
   .assimilate_storage(&mut t)
   .unwrap();

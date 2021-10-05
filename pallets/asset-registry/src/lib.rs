@@ -24,8 +24,8 @@ pub mod pallet {
   use sp_runtime::traits::{AccountIdConversion, Saturating, StaticLookup};
   use sp_std::convert::TryInto;
   use tidefi_primitives::{
-    pallet::SecurityExt, AccountId, AssetId, Balance, BlockNumber, CurrencyId, CurrencyMetadata,
-    Hash, StatusCode,
+    pallet::AssetRegistryExt, AccountId, AssetId, Balance, BlockNumber, CurrencyId,
+    CurrencyMetadata, Hash, StatusCode,
   };
 
   #[pallet::config]
@@ -56,7 +56,10 @@ pub mod pallet {
 
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
-    pub assets: Vec<(CurrencyId, CurrencyMetadata<T::Balance>)>,
+    pub assets: Vec<(
+      CurrencyId,
+      CurrencyMetadata<<T as pallet_assets::Config>::Balance>,
+    )>,
     pub account: T::AccountId,
   }
 
@@ -133,7 +136,7 @@ pub mod pallet {
       name: Vec<u8>,
       symbol: Vec<u8>,
       decimals: u8,
-      existential_deposit: T::Balance,
+      existential_deposit: <T as pallet_assets::Config>::Balance,
     ) -> DispatchResult {
       // 1. Make sure it's signed from the asset-registry owner
       ensure!(
@@ -221,7 +224,7 @@ pub mod pallet {
       name: Vec<u8>,
       symbol: Vec<u8>,
       decimals: u8,
-      existential_deposit: T::Balance,
+      existential_deposit: <T as pallet_assets::Config>::Balance,
     ) -> Result<(), DispatchError> {
       // 1. Create asset
       pallet_assets::Pallet::<T>::force_create(
@@ -244,6 +247,12 @@ pub mod pallet {
       )?;
 
       Ok(())
+    }
+  }
+
+  impl<T: Config> AssetRegistryExt for Pallet<T> {
+    fn is_enabled(currency_id: CurrencyId) -> bool {
+      Self::assets(currency_id).unwrap_or(false)
     }
   }
 }
