@@ -6,7 +6,7 @@ use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
   BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
   StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TreasuryPalletId,
-  WraprOracleConfig, WraprQuorumConfig,
+  WraprAssetRegistryConfig, WraprOracleConfig, WraprQuorumConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -21,7 +21,7 @@ use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
 };
-use tidefi_primitives::Block;
+use tidefi_primitives::{assets, Balance, Block, CurrencyId, CurrencyMetadata, StatusCode};
 pub use tidefi_primitives::{AccountId, Balance, Signature};
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -101,6 +101,7 @@ fn development_config_genesis() -> GenesisConfig {
     vec![],
     get_account_id_from_seed::<sr25519::Public>("Alice"),
     get_account_id_from_seed::<sr25519::Public>("Bob"),
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
   )
 }
 
@@ -137,6 +138,7 @@ fn testnet_config_genesis() -> GenesisConfig {
     vec![],
     get_account_id_from_seed::<sr25519::Public>("Alice"),
     get_account_id_from_seed::<sr25519::Public>("Bob"),
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
   )
 }
 
@@ -179,6 +181,7 @@ pub fn testnet_genesis(
   _initial_nominators: Vec<AccountId>,
   quorum: AccountId,
   oracle: AccountId,
+  root: AccountId,
 ) -> GenesisConfig {
   // 20k TIDEs / validators
   const ENDOWMENT: u128 = 20_000 * TIDE;
@@ -284,11 +287,10 @@ pub fn testnet_genesis(
       members: vec![],
       phantom: Default::default(),
     },
-    // FIXME: Should the quorum stay the sudo?
-    // FIXME: Maybe remove sudo totally?
-    sudo: SudoConfig {
-      key: quorum.clone(),
-    },
+
+    // FIXME: Remove sudo once the staging is completed
+    sudo: SudoConfig { key: root.clone() },
+
     babe: BabeConfig {
       authorities: Default::default(),
       epoch_config: Some(node_tidefi_runtime::BABE_GENESIS_EPOCH_CONFIG),
@@ -307,6 +309,42 @@ pub fn testnet_genesis(
       enabled: true,
       account: oracle,
     },
+    wrapr_asset_registry: WraprAssetRegistryConfig {
+      // these assets are created on first initialization
+      assets: vec![
+        // Note: Tide decimals is not used as we use the genesis definition
+        // but we keep it here as reference
+        (CurrencyId::Tide, "Tide".into(), "TIDE".into(), 12),
+        (
+          CurrencyId::Wrapped(asset::BTC),
+          "Bitcoin".into(),
+          "BTC".into(),
+          8,
+        ),
+        (
+          CurrencyId::Wrapped(asset::ETH),
+          "Ethereum".into(),
+          "ETH".into(),
+          18,
+        ),
+        (
+          CurrencyId::Wrapped(asset::USDC),
+          "USD Coin".into(),
+          "USDC".into(),
+          2,
+        ),
+        (
+          CurrencyId::Wrapped(asset::USDT),
+          "Tether".into(),
+          "USDT".into(),
+          2,
+        ),
+      ],
+      // FIXME: Is the asset_registry owner should be the same account as root?
+      // this is the owner of the wrapped asset on chain and have full authority on them
+      account: root,
+    },
+    wrapr_security: Default::default(),
   }
 }
 
@@ -341,6 +379,7 @@ pub(crate) mod tests {
       vec![],
       get_account_id_from_seed::<sr25519::Public>("Alice"),
       get_account_id_from_seed::<sr25519::Public>("Bob"),
+      get_account_id_from_seed::<sr25519::Public>("Alice"),
     )
   }
 

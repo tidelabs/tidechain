@@ -56,10 +56,8 @@ pub mod pallet {
 
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
-    pub assets: Vec<(
-      CurrencyId,
-      CurrencyMetadata<<T as pallet_assets::Config>::Balance>,
-    )>,
+    /// [currency_id, name, symbol, decimals]
+    pub assets: Vec<(CurrencyId, Vec<u8>, Vec<u8>, u8)>,
     pub account: T::AccountId,
   }
 
@@ -80,16 +78,10 @@ pub mod pallet {
       AssetRegistryAccountId::<T>::put(self.account.clone());
 
       // 2. Loop trough all currency defined in our genesis config
-      for (currency_id, metadata) in self.assets.clone() {
+      for (currency_id, name, symbol, decimals) in self.assets.clone() {
         // If it's a wrapped token, register it with pallet_assets
         if let CurrencyId::Wrapped(asset_id) = currency_id {
-          let _ = Pallet::<T>::register_asset(
-            asset_id,
-            metadata.name,
-            metadata.symbol,
-            metadata.decimals,
-            1,
-          );
+          let _ = Pallet::<T>::register_asset(asset_id, name, symbol, decimals, 1);
         }
         // Insert inside our local map
         Assets::<T>::insert(currency_id, true);
