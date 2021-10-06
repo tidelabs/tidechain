@@ -570,7 +570,7 @@ pallet_staking_reward_curve::build! {
     const REWARD_CURVE: PiecewiseLinear<'static> = curve!(
         min_inflation: 0_025_000,
         max_inflation: 0_100_000,
-    // Before, we launch the products we want 50% of supply to be staked
+        // Before, we launch the products we want 50% of supply to be staked
         ideal_stake: 0_500_000,
         falloff: 0_050_000,
         max_piece_count: 40,
@@ -1045,10 +1045,43 @@ parameter_types! {
   // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
   pub const MetadataDepositBase: Balance = deposit(1, 68);
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-  pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
-  pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
 
+  // Pallet Id's
+  pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
+  pub const OraclePalletId: PalletId = PalletId(*b"py/oracl");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
+  pub const WraprStakePalletId: PalletId = PalletId(*b"py/stake");
+
+  // FIXME: Should be better than that as we have multiple basis
   pub const PeriodBasis: BlockNumber = 1000u32;
+}
+
+pub struct EnsureRootOrAssetRegistry;
+impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
+  type Success = AccountId;
+
+  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
+      RawOrigin::Signed(caller) => {
+        // Allow call from asset registry pallet ID account
+        if caller == AssetRegistryPalletId::get().into_account()
+        // Allow call from asset registry owner
+        || caller == WraprAssetRegistry::account_id()
+        {
+          Ok(caller)
+        } else {
+          Err(Origin::from(Some(caller)))
+        }
+      }
+      r => Err(Origin::from(r)),
+    })
+  }
+
+  #[cfg(feature = "runtime-benchmarks")]
+  fn successful_origin() -> Origin {
+    Origin::from(RawOrigin::Signed(Default::default()))
+  }
 }
 
 impl pallet_assets::Config for Runtime {
@@ -1056,7 +1089,7 @@ impl pallet_assets::Config for Runtime {
   type Balance = Balance;
   type AssetId = AssetId;
   type Currency = Balances;
-  type ForceOrigin = EnsureRootOrHalfCouncil;
+  type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
@@ -1070,24 +1103,26 @@ impl pallet_assets::Config for Runtime {
 
 impl pallet_wrapr::Config for Runtime {
   type Event = Event;
-  type PalletId = WraprPalletId;
-  type Assets = Assets;
   type Quorum = WraprQuorum;
+  type Oracle = WraprOracle;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
+  // Asset registry
+  type AssetRegistry = WraprAssetRegistry;
 }
 
 impl pallet_wrapr_stake::Config for Runtime {
   type Event = Event;
-  type PalletId = WraprPalletId;
-  type Assets = Assets;
+  type StakePalletId = WraprStakePalletId;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr_stake::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
   type PeriodBasis = PeriodBasis;
+  // Asset registry
+  type AssetRegistry = WraprAssetRegistry;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -1095,6 +1130,33 @@ impl pallet_quorum::Config for Runtime {
   type QuorumPalletId = QuorumPalletId;
   // FIXME: Use local weight
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
+  // Security utils
+  type Security = WraprSecurity;
+  // Asset registry
+  type AssetRegistry = WraprAssetRegistry;
+}
+
+impl pallet_oracle::Config for Runtime {
+  type Event = Event;
+  type OraclePalletId = OraclePalletId;
+  // FIXME: Use local weight
+  type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
+  // Security utils
+  type Security = WraprSecurity;
+}
+
+impl pallet_security::Config for Runtime {
+  type Event = Event;
+}
+
+impl pallet_asset_registry::Config for Runtime {
+  type Event = Event;
+  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Runtime>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
 }
@@ -1140,6 +1202,12 @@ construct_runtime!(
         WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>} = 31,
         // Storage, events and traits for the quorum
         WraprQuorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 32,
+        // Storage, events and traits for the oracle
+        WraprOracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>} = 33,
+        // Storage, events and traits for the securities utils
+        WraprSecurity: pallet_security::{Pallet, Call, Config, Storage, Event<T>} = 34,
+        // Storage, events and traits for the asset registry
+        WraprAssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 35,
     }
 );
 /// Digest item type.
@@ -1422,6 +1490,8 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_wrapr, Wrapr);
         list_benchmark!(list, extra, pallet_wrapr_stake, WraprStake);
         list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
+        list_benchmark!(list, extra, pallet_oracle, WraprOracle);
+        list_benchmark!(list, extra, pallet_asset_registry, WraprAssetRegistry);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1486,6 +1556,8 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_wrapr, Wrapr);
             add_benchmark!(params, batches, pallet_wrapr_stake, WraprStake);
             add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
+            add_benchmark!(params, batches, pallet_oracle, WraprOracle);
+            add_benchmark!(params, batches, pallet_asset_registry, WraprAssetRegistry);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

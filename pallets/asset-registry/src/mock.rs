@@ -1,4 +1,3 @@
-use crate::{pallet as pallet_quorum, weights};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
@@ -8,7 +7,6 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    GenesisBuild,
   },
   PalletId,
 };
@@ -57,9 +55,6 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
-    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
@@ -138,27 +133,6 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
-  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
-}
-
-impl pallet_quorum::Config for Test {
-  type Event = Event;
-  type WeightInfo = weights::SubstrateWeight<Test>;
-  type QuorumPalletId = WraprPalletId;
-  type Security = Security;
-  type CurrencyWrapr = Adapter<AccountId>;
-  type AssetRegistry = AssetRegistry;
-}
-
-impl pallet_security::Config for Test {
-  type Event = Event;
-}
-
-impl pallet_asset_registry::Config for Test {
-  type Event = Event;
-  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
-  type AssetRegistryPalletId = AssetRegistryPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
@@ -265,18 +239,13 @@ where
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let alice = 1u64;
+  let _alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_quorum::GenesisConfig::<Test> {
-    enabled: false,
-    account: alice.into(),
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
+
   t.into()
 }

@@ -6,7 +6,7 @@ use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
   BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
   StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TreasuryPalletId,
-  WraprQuorumConfig,
+  WraprAssetRegistryConfig, WraprOracleConfig, WraprQuorumConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -21,7 +21,7 @@ use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
 };
-use tidefi_primitives::Block;
+use tidefi_primitives::{assets, Block, CurrencyId};
 pub use tidefi_primitives::{AccountId, Balance, Signature};
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -100,6 +100,8 @@ fn development_config_genesis() -> GenesisConfig {
     vec![authority_keys_from_seed("Alice")],
     vec![],
     get_account_id_from_seed::<sr25519::Public>("Alice"),
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
   )
 }
 
@@ -112,7 +114,7 @@ pub fn development_config() -> ChainSpec {
   // maybe we can fork and customize a bit the polkadot UI
   //properties.insert("tokenSymbol".into(), "TIDE".into());
 
-  properties.insert("tokenDecimals".into(), 10.into());
+  properties.insert("tokenDecimals".into(), 12.into());
 
   ChainSpec::from_genesis(
     "Development",
@@ -134,6 +136,8 @@ fn testnet_config_genesis() -> GenesisConfig {
       authority_keys_from_seed("Bob"),
     ],
     vec![],
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
     get_account_id_from_seed::<sr25519::Public>("Alice"),
   )
 }
@@ -176,6 +180,8 @@ pub fn testnet_genesis(
   )>,
   _initial_nominators: Vec<AccountId>,
   quorum: AccountId,
+  oracle: AccountId,
+  root: AccountId,
 ) -> GenesisConfig {
   // 20k TIDEs / validators
   const ENDOWMENT: u128 = 20_000 * TIDE;
@@ -195,6 +201,11 @@ pub fn testnet_genesis(
     18_000 * TIDE,
     "Total claims is configured correctly"
   );
+
+  let alice_addr = get_account_id_from_seed::<sr25519::Public>("Alice");
+  let bob_addr = get_account_id_from_seed::<sr25519::Public>("Bob");
+  let eve_addr = get_account_id_from_seed::<sr25519::Public>("Eve");
+  let ferdie_addr = get_account_id_from_seed::<sr25519::Public>("Ferdie");
 
   // Total funds in treasury
   let mut treasury_funds: u128 = TOTAL_SUPPLY;
@@ -281,11 +292,10 @@ pub fn testnet_genesis(
       members: vec![],
       phantom: Default::default(),
     },
-    // FIXME: Should the quorum stay the sudo?
-    // FIXME: Maybe remove sudo totally?
-    sudo: SudoConfig {
-      key: quorum.clone(),
-    },
+
+    // FIXME: Remove sudo once the staging is completed
+    sudo: SudoConfig { key: root.clone() },
+
     babe: BabeConfig {
       authorities: Default::default(),
       epoch_config: Some(node_tidefi_runtime::BABE_GENESIS_EPOCH_CONFIG),
@@ -295,10 +305,87 @@ pub fn testnet_genesis(
     grandpa: Default::default(),
     technical_membership: Default::default(),
     treasury: Default::default(),
+    // tidefi custom genesis
     wrapr_quorum: WraprQuorumConfig {
-      quorum_enabled: true,
-      quorum_account: quorum,
+      enabled: true,
+      account: quorum,
     },
+    wrapr_oracle: WraprOracleConfig {
+      enabled: true,
+      account: oracle,
+    },
+    wrapr_asset_registry: WraprAssetRegistryConfig {
+      // these assets are created on first initialization
+      assets: vec![
+        // Note: Tide decimals is not used as we use the genesis definition
+        // but we keep it here as reference
+        (
+          CurrencyId::Tide,
+          "Tide".into(),
+          "TIDE".into(),
+          12,
+          vec![
+            (alice_addr.clone(), 22500000000000000000),
+            (bob_addr.clone(), 22500000000000000000),
+            (eve_addr.clone(), 22500000000000000000),
+            (ferdie_addr.clone(), 22500000000000000000),
+          ],
+        ),
+        (
+          CurrencyId::Wrapped(assets::BTC),
+          "Bitcoin".into(),
+          "BTC".into(),
+          8,
+          vec![
+            (alice_addr.clone(), 25000000000000),
+            (bob_addr.clone(), 15000000000000),
+            (eve_addr.clone(), 10000000000000),
+            (ferdie_addr.clone(), 20000000000000),
+          ],
+        ),
+        (
+          CurrencyId::Wrapped(assets::ETH),
+          "Ethereum".into(),
+          "ETH".into(),
+          18,
+          vec![
+            (alice_addr.clone(), 2500000000000000000000000),
+            (bob_addr.clone(), 1500000000000000000000000),
+            (eve_addr.clone(), 100000000000000000000000),
+            (ferdie_addr.clone(), 200000000000000000000000),
+          ],
+        ),
+        (
+          CurrencyId::Wrapped(assets::USDC),
+          "USD Coin".into(),
+          "USDC".into(),
+          2,
+          vec![
+            (alice_addr.clone(), 1125600000),
+            (bob_addr.clone(), 122600000),
+            (eve_addr.clone(), 112600000),
+            (ferdie_addr.clone(), 321600000),
+          ],
+        ),
+        (
+          CurrencyId::Wrapped(assets::USDT),
+          "Tether".into(),
+          "USDT".into(),
+          2,
+          vec![
+            (alice_addr, 2125600000),
+            (bob_addr, 522600000),
+            (eve_addr, 312600000),
+            (ferdie_addr, 121600000),
+          ],
+        ),
+      ],
+      // FIXME: Is the asset_registry owner should be the same account as root?
+      // this is the owner of the wrapped asset on chain and have full authority on them
+      // this account can also create new wrapped asset on chain
+      account: root,
+    },
+    wrapr_security: Default::default(),
   }
 }
 
@@ -331,6 +418,8 @@ pub(crate) mod tests {
     testnet_genesis(
       vec![authority_keys_from_seed("Alice")],
       vec![],
+      get_account_id_from_seed::<sr25519::Public>("Alice"),
+      get_account_id_from_seed::<sr25519::Public>("Alice"),
       get_account_id_from_seed::<sr25519::Public>("Alice"),
     )
   }
