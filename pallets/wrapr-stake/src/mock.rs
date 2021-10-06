@@ -59,6 +59,7 @@ frame_support::construct_runtime!(
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>},
+    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
@@ -138,16 +139,23 @@ impl pallet_balances::Config for Test {
 parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
   pub const PeriodBasis: BlockNumber = 1000u32;
 }
 
 impl pallet_wrapr_stake::Config for Test {
   type Event = Event;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
-  type PalletId = WraprPalletId;
-  type Assets = Assets;
+  type StakePalletId = WraprPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type PeriodBasis = PeriodBasis;
+  type AssetRegistry = AssetRegistry;
+}
+
+impl pallet_asset_registry::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

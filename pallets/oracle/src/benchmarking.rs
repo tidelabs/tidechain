@@ -15,12 +15,10 @@ const INITIAL_AMOUNT: u32 = 500_000_000;
 
 benchmarks! {
    set_status {}: _(RawOrigin::Root, true)
-   confirm_withdrawal {
+   set_account_id {}: _(RawOrigin::Root, true)
+   confirm_trade {
       let request_id = 1;
    }: _(RawOrigin::Root, request_id)
-   mint {
-      let caller: T::AccountId = whitelisted_caller();
-   }: _(RawOrigin::Root, caller, CurrencyId::Tide, INITIAL_AMOUNT.into())
 
 }
 

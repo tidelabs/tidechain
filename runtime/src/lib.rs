@@ -1045,10 +1045,11 @@ parameter_types! {
   // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
   pub const MetadataDepositBase: Balance = deposit(1, 68);
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-  pub const WraprPalletId: PalletId = PalletId(*b"py/wrapr");
+
   pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
   pub const OraclePalletId: PalletId = PalletId(*b"py/oracl");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
+  pub const WraprStakePalletId: PalletId = PalletId(*b"py/stake");
 
   pub const PeriodBasis: BlockNumber = 1000u32;
 }
@@ -1072,7 +1073,6 @@ impl pallet_assets::Config for Runtime {
 
 impl pallet_wrapr::Config for Runtime {
   type Event = Event;
-  type PalletId = WraprPalletId;
   type Quorum = WraprQuorum;
   type Oracle = WraprOracle;
   // FIXME: Use local weight
@@ -1085,13 +1085,14 @@ impl pallet_wrapr::Config for Runtime {
 
 impl pallet_wrapr_stake::Config for Runtime {
   type Event = Event;
-  type PalletId = WraprPalletId;
-  type Assets = Assets;
+  type StakePalletId = WraprStakePalletId;
   // FIXME: Use local weight
   type WeightInfo = pallet_wrapr_stake::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
   type PeriodBasis = PeriodBasis;
+  // Asset registry
+  type AssetRegistry = WraprAssetRegistry;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -1103,6 +1104,8 @@ impl pallet_quorum::Config for Runtime {
   type CurrencyWrapr = Adapter<AccountId>;
   // Security utils
   type Security = WraprSecurity;
+  // Asset registry
+  type AssetRegistry = WraprAssetRegistry;
 }
 
 impl pallet_oracle::Config for Runtime {

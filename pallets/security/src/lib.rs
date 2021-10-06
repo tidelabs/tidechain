@@ -6,12 +6,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
-
-pub mod weights;
-pub use weights::*;
-
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
@@ -24,11 +18,12 @@ pub mod pallet {
   use sp_runtime::traits::Saturating;
   use tidefi_primitives::{pallet::SecurityExt, AssetId, Balance, Hash, StatusCode};
 
+  /// Security configuration
   #[pallet::config]
-  /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config:
     frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
   {
+    /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
   }
 
@@ -36,23 +31,25 @@ pub mod pallet {
   #[pallet::generate_store(pub (super) trait Store)]
   pub struct Pallet<T>(_);
 
-  /// Integer increment-only counter, used to prevent collisions when generating identifiers
+  /// Integer increment-only counter
   #[pallet::storage]
   pub type Nonce<T: Config> = StorageValue<_, U256, ValueQuery>;
 
-  /// Integer - enum defining the current state of the chain
+  /// Chain status, currently support maintenance mode/running state
   #[pallet::storage]
   #[pallet::getter(fn status)]
   pub type ChainStatus<T: Config> = StorageValue<_, StatusCode, ValueQuery>;
 
-  /// T::BlockNumber - current block number (when the chain is paused, the block count is not incremented,
-  /// so we don't give reward on staking)
+  /// Current block number (when the chain is paused, the block count is not incremented,
+  /// so we don't give rewards on staking)
   #[pallet::storage]
   #[pallet::getter(fn current_block_number)]
   pub type CurrentBlockCount<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
 
+  /// Genesis config
   #[pallet::genesis_config]
   pub struct GenesisConfig {
+    /// Chain status
     pub status: StatusCode,
   }
 
@@ -60,6 +57,7 @@ pub mod pallet {
   impl Default for GenesisConfig {
     fn default() -> Self {
       Self {
+        // default to running state
         status: StatusCode::Running,
       }
     }
@@ -75,7 +73,9 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Processing new block
+    /// Quorum status changed \[status_code\]
+    StatusChanged(StatusCode),
+    /// Processing new block \[block_number\]
     UpdateCurrentBlock(T::BlockNumber),
   }
 
@@ -101,16 +101,24 @@ pub mod pallet {
     }
   }
 
-  // Dispatchable functions allows users to interact with the pallet and invoke state changes.
-  // These functions materialize as "extrinsics", which are often compared to transactions.
-  // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    /// Set the chain status code.
+    /// Change chain status.
+    ///
+    /// This should be used only as emergency as you can disable Oracle or
+    /// Quorum independently. All transactions will be rejected, even from the Oracle
+    /// and the Quorum for security reason.
+    ///
+    /// - `status_code`: New chain `StatusCode`
+    ///
+    /// Emits `StatusChanged` event when successful.
+    ///
+    /// Weight: `0`
     #[pallet::weight(0)]
     pub fn set_status(origin: OriginFor<T>, status_code: StatusCode) -> DispatchResultWithPostInfo {
       ensure_root(origin)?;
-      <ChainStatus<T>>::set(status_code);
+      <ChainStatus<T>>::set(status_code.clone());
+      Self::deposit_event(Event::StatusChanged(status_code));
       Ok(().into())
     }
   }

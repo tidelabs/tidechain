@@ -142,7 +142,6 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
   pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
@@ -151,7 +150,6 @@ parameter_types! {
 impl pallet_wrapr::Config for Test {
   type Event = Event;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
-  type PalletId = WraprPalletId;
   type Quorum = Quorum;
   type CurrencyWrapr = Adapter<AccountId>;
   type Oracle = Oracle;
@@ -164,6 +162,7 @@ impl pallet_quorum::Config for Test {
   type QuorumPalletId = QuorumPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type Security = Security;
+  type AssetRegistry = AssetRegistry;
 }
 
 impl pallet_oracle::Config for Test {

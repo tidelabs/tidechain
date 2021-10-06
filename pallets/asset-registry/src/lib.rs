@@ -23,15 +23,19 @@ pub mod pallet {
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{pallet::AssetRegistryExt, AssetId, Balance, CurrencyId};
 
+  /// Asset registry configuration
   #[pallet::config]
-  /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config:
     frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
   {
+    /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+    /// Pallet ID
     #[pallet::constant]
     type AssetRegistryPalletId: Get<PalletId>;
-    /// Weight information for extrinsics in this pallet.
+
+    /// Weights
     type WeightInfo: WeightInfo;
   }
 
@@ -39,9 +43,9 @@ pub mod pallet {
   #[pallet::generate_store(pub (super) trait Store)]
   pub struct Pallet<T>(_);
 
+  /// Assets registered \[currency_id, is_enabled\]
   #[pallet::storage]
   #[pallet::getter(fn assets)]
-  /// Asset mapping [currency_id, is_enabled]
   pub type Assets<T: Config> = StorageMap<_, Twox64Concat, CurrencyId, bool, OptionQuery>;
 
   /// Assets Account ID owner
@@ -49,10 +53,14 @@ pub mod pallet {
   #[pallet::getter(fn account_id)]
   pub type AssetRegistryAccountId<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
+  /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
-    /// [currency_id, name, symbol, decimals]
+    /// Assets to create on initialization
+    /// \[currency_id, name, symbol, decimals\]
     pub assets: Vec<(CurrencyId, Vec<u8>, Vec<u8>, u8)>,
+    /// Assets owner
+    /// Only this account can modify storage on this pallet.
     pub account: T::AccountId,
   }
 
@@ -60,7 +68,10 @@ pub mod pallet {
   impl<T: Config> Default for GenesisConfig<T> {
     fn default() -> Self {
       Self {
+        // empty assets by default
         assets: Vec::new(),
+        // We use pallet account ID by default,
+        // but should always be set in the genesis config.
         account: T::AssetRegistryPalletId::get().into_account(),
       }
     }
@@ -78,6 +89,7 @@ pub mod pallet {
         if let CurrencyId::Wrapped(asset_id) = currency_id {
           let _ = Pallet::<T>::register_asset(asset_id, name, symbol, decimals, 1);
         }
+
         // Insert inside our local map
         Assets::<T>::insert(currency_id, true);
       }
@@ -87,10 +99,10 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub(super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Asset was registered. [currency_id]
+    /// Asset was registered. \[currency_id\]
     Registered(CurrencyId),
-    /// Asset was updated. [currency_id]
-    Updated(CurrencyId),
+    /// Asset was updated. \[currency_id, is_enabled\]
+    StatusChanged(CurrencyId, bool),
   }
 
   // Errors inform users that something went wrong.
@@ -98,8 +110,6 @@ pub mod pallet {
   pub enum Error<T> {
     /// The access to the Asset registry pallet is not allowed for this account ID.
     AccessDenied,
-    /// Invalid asset name or symbol.
-    AssetNotFound,
     /// Asset ID is not registered in the asset-registry.
     AssetNotRegistered,
     /// Asset ID status is already the same as requested.
@@ -110,12 +120,19 @@ pub mod pallet {
     CurrencyIdNotValid,
   }
 
-  // Dispatchable functions allows users to interact with the pallet and invoke state changes.
-  // These functions materialize as "extrinsics", which are often compared to transactions.
-  // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    /// Register a new asset.
+    /// Register new asset on chain.
+    ///
+    /// - `currency_id`: The currency ID to register
+    /// - `name`: Currency name. Ex: `Bitcoin`
+    /// - `symbol`: Currency symbol. Ex: `BTC`
+    /// - `decimals`: Number of decimals for the asset. Ex: `8`
+    /// - `existential_deposit`: Number of token required to keep the balance alive. Ex: `1`
+    ///
+    /// Emits `Registered` event when successful.
+    ///
+    /// Weight: `O(1)`
     #[pallet::weight(<T as Config>::WeightInfo::set_status())]
     pub fn register(
       origin: OriginFor<T>,
@@ -152,6 +169,13 @@ pub mod pallet {
     }
 
     /// Update asset status.
+    ///
+    /// - `currency_id`: The currency ID to register
+    /// - `is_enabled`: Is the currency enabled on chain?
+    ///
+    /// Emits `StatusChanged` event when successful.
+    ///
+    /// Weight: `O(1)`
     #[pallet::weight(<T as Config>::WeightInfo::set_status())]
     pub fn set_status(
       origin: OriginFor<T>,
@@ -200,6 +224,9 @@ pub mod pallet {
       <Assets<T>>::mutate(currency_id, |asset| {
         *asset = Some(is_enabled);
       });
+
+      // 6. Emit new registered currency
+      Self::deposit_event(<Event<T>>::StatusChanged(currency_id, is_enabled));
 
       Ok(())
     }

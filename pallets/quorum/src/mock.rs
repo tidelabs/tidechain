@@ -59,6 +59,7 @@ frame_support::construct_runtime!(
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
+    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
@@ -137,6 +138,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
   pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
 }
 
 impl pallet_quorum::Config for Test {
@@ -145,10 +147,17 @@ impl pallet_quorum::Config for Test {
   type QuorumPalletId = WraprPalletId;
   type Security = Security;
   type CurrencyWrapr = Adapter<AccountId>;
+  type AssetRegistry = AssetRegistry;
 }
 
 impl pallet_security::Config for Test {
   type Event = Event;
+}
+
+impl pallet_asset_registry::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

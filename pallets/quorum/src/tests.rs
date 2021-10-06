@@ -7,7 +7,7 @@ use crate::mock::{new_test_ext, Origin, Quorum};
 #[test]
 pub fn check_genesis_config() {
   new_test_ext().execute_with(|| {
-    assert!(!Quorum::is_quorum_enabled());
+    assert!(!Quorum::status());
   });
 }
 
@@ -20,8 +20,8 @@ pub fn set_migration_operational_status_works() {
       Quorum::set_status(Origin::signed(non_sudo.into()), false),
       BadOrigin,
     );
-    assert!(Quorum::is_quorum_enabled());
+    assert!(Quorum::status());
     assert_ok!(Quorum::set_status(Origin::root(), false));
-    assert!(!Quorum::is_quorum_enabled());
+    assert!(!Quorum::status());
   });
 }

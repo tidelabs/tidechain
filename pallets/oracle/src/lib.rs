@@ -34,20 +34,25 @@ pub mod pallet {
     AssetId, Balance, CurrencyId, Hash, Trade, TradeStatus,
   };
 
+  /// Oracle configuration
   #[pallet::config]
-  /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config:
     frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
   {
+    /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+    /// Pallet ID
     #[pallet::constant]
     type OraclePalletId: Get<PalletId>;
-    /// Weight information for extrinsics in this pallet.
+
+    /// Weights
     type WeightInfo: WeightInfo;
 
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
 
+    /// Currency wrapr
     type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
@@ -59,12 +64,12 @@ pub mod pallet {
 
   /// Oracle is enabled
   #[pallet::storage]
-  #[pallet::getter(fn is_oracle_enabled)]
+  #[pallet::getter(fn status)]
   pub(super) type OracleStatus<T: Config> = StorageValue<_, bool, ValueQuery>;
 
   /// Oracle Account ID
   #[pallet::storage]
-  #[pallet::getter(fn oracle_account_id)]
+  #[pallet::getter(fn account_id)]
   pub type OracleAccountId<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
   /// Mapping of pending Trades
@@ -73,9 +78,13 @@ pub mod pallet {
   pub type Trades<T: Config> =
     StorageMap<_, Blake2_128Concat, Hash, Trade<T::AccountId, T::BlockNumber>>;
 
+  /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
+    /// Oracle status
     pub enabled: bool,
+    /// Oracle Account ID. Multisig is supported.
+    /// This account will be able to confirm trades on-chain.
     pub account: T::AccountId,
   }
 
@@ -83,7 +92,10 @@ pub mod pallet {
   impl<T: Config> Default for GenesisConfig<T> {
     fn default() -> Self {
       Self {
+        // Oracle is enabled by default
         enabled: true,
+        // We use pallet account ID by default,
+        // but should always be set in the genesis config.
         account: T::OraclePalletId::get().into_account(),
       }
     }
@@ -100,14 +112,12 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Oracle status changed
-    /// [is_enabled]
+    /// Oracle status changed \[is_enabled\]
     StatusChanged(bool),
-    /// Oracle account changed
-    /// [account_id]
+    /// Oracle account changed \[account_id\]
     AccountChanged(T::AccountId),
     /// Oracle confirmed trade
-    /// [request_id, account_id, token_from, token_amount_from, token_to, token_amount_to]
+    /// \[request_id, account_id, token_from, token_amount_from, token_to, token_amount_to\]
     Traded(Hash, T::AccountId, CurrencyId, Balance, CurrencyId, Balance),
   }
 
@@ -136,18 +146,19 @@ pub mod pallet {
     UnknownError,
   }
 
-  // Dispatchable functions allows users to interact with the pallet and invoke state changes.
-  // These functions materialize as "extrinsics", which are often compared to transactions.
-  // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    /// Oracle have confirmation and make a new burn (widthdraw).
+    /// Oracle have confirmation and confirm the trade.
     ///
-    /// - `request_id`: Request ID.
+    /// - `request_id`: Unique request ID.
     /// - `amounts_from`: Amounts from the market markers.
     /// - `accounts_to`: Accounts of the market markers.
-    /// - `amounts_to`: Request ID.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_withdrawal())]
+    /// - `amounts_to`: Amount of the final asset to allocate from the market makers.
+    ///
+    /// Emits `Traded` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_trade())]
     pub fn confirm_trade(
       origin: OriginFor<T>,
       request_id: Hash,
@@ -155,27 +166,26 @@ pub mod pallet {
       accounts_to: Vec<T::AccountId>,
       amounts_to: Vec<Balance>,
     ) -> DispatchResultWithPostInfo {
-      // make sure the oracle is not paused
+      // 1. Make sure the oracle/chain is not paused
       Self::ensure_not_paused()?;
 
-      // make sure it's the oracle account
+      // 2. Make sure this is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(
-        sender == Self::oracle_account_id(),
-        Error::<T>::AccessDenied
-      );
+      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
 
+      // 3. Make sure the `request_id` exist
       Trades::<T>::try_mutate_exists(request_id, |trade| {
         match trade {
           None => {
             return Err(Error::<T>::InvalidRequestId);
           }
           Some(trade) => {
+            // 4. Make sure the trade status is pending
             if trade.status != TradeStatus::Pending {
               return Err(Error::<T>::InvalidRequestStatus);
             }
 
-            // check total_from
+            // 5. Check `amounts_from`
             let mut total_from: Balance = 0;
             for amt_from in amounts_from.iter() {
               total_from += amt_from;
@@ -184,8 +194,7 @@ pub mod pallet {
               return Err(Error::<T>::Conflict);
             }
 
-            // check amounts_to
-            // allowed to go +/- 10%
+            // 6. Check `amounts_to`
             let mut total_to: Balance = 0;
             for amt_to in amounts_to.iter() {
               total_to += amt_to;
@@ -194,7 +203,7 @@ pub mod pallet {
               return Err(Error::Conflict);
             }
 
-            // make sure the FROM balance is available
+            // 7. Make sure the `account_id` can withdraw the funds
             match T::CurrencyWrapr::can_withdraw(
               trade.token_from,
               &trade.account_id,
@@ -202,7 +211,8 @@ pub mod pallet {
             ) {
               WithdrawConsequence::Success => {
                 let mut total_to = 0;
-                // make sure all the market markers have enough funds
+
+                // 8. Make sure all the market markers have enough funds before we can continue
                 for (pos, amt) in amounts_to.iter().enumerate() {
                   total_to += amt;
                   match T::CurrencyWrapr::can_withdraw(trade.token_to, &accounts_to[pos], *amt) {
@@ -217,16 +227,16 @@ pub mod pallet {
                   }
                 }
 
-                // make sure we can deposit before burning
+                // 9. Make sure we can deposit before burning
                 T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
                   .into_result()
                   .map_err(|_| Error::<T>::MintFailed)?;
 
-                // burn from token
+                // 10. Burn token
                 T::CurrencyWrapr::burn_from(trade.token_from, &trade.account_id, trade.amount_from)
                   .map_err(|_| Error::<T>::BurnFailed)?;
 
-                // mint new tokens with fallback to restore token if it fails
+                // 11. Mint new tokens with fallback to restore token if it fails
                 if T::CurrencyWrapr::mint_into(trade.token_to, &trade.account_id, total_to).is_err()
                 {
                   let revert = T::CurrencyWrapr::mint_into(
@@ -237,7 +247,8 @@ pub mod pallet {
                   debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
                   return Err(Error::<T>::MintFailed);
                 };
-                // remove tokens from the MM accounts
+
+                // 12. Remove tokens from the market makers accounts only if previous step succeed
                 for (pos, amt) in amounts_to.iter().enumerate() {
                   // remove token_to from acc
                   T::CurrencyWrapr::burn_from(trade.token_to, &accounts_to[pos], *amt)
@@ -251,9 +262,8 @@ pub mod pallet {
                   )
                   .map_err(|_| Error::<T>::BurnFailed)?;
                 }
-                // FIXME: we can probably remove this and only use the
-                // event emitted by the Assets pallet
-                // emit the burned event
+
+                // 13. Emit event on chain
                 Self::deposit_event(Event::<T>::Traded(
                   request_id,
                   trade.account_id.clone(),
@@ -269,7 +279,9 @@ pub mod pallet {
             };
           }
         }
+
         // it deletes the item if mutated to a None.
+        // FIXME: do we want to keep a copy and update the status to completed?
         *trade = None;
         Ok(())
       })?;
@@ -277,24 +289,52 @@ pub mod pallet {
       Ok(().into())
     }
 
-    /// Quorum change account ID.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
+    /// Oracle change the account ID who can confirm trade.
+    ///
+    /// Make sure to have access to the `account_id` otherwise
+    /// only `root` will be able to update the oracle account.
+    ///
+    /// - `new_account_id`: The new Oracle account id.
+    ///
+    /// Emits `AccountChanged` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
     pub fn set_account_id(
       origin: OriginFor<T>,
-      new_quorum: T::AccountId,
+      new_account_id: T::AccountId,
     ) -> DispatchResultWithPostInfo {
-      // make sure it's the quorum
+      // 1. Make sure this is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(
-        sender == Self::oracle_account_id(),
-        Error::<T>::AccessDenied
-      );
+      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
 
-      // update oracle
-      OracleAccountId::<T>::put(new_quorum.clone());
+      // 2. Update oracle account
+      OracleAccountId::<T>::put(new_account_id.clone());
 
-      // emit event
-      Self::deposit_event(Event::<T>::AccountChanged(new_quorum));
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::AccountChanged(new_account_id));
+
+      Ok(().into())
+    }
+
+    /// Change Oracle status.
+    ///
+    /// - `is_enabled`: Is the oracle enabled?
+    ///
+    /// Emits `StatusChanged` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
+    pub fn set_status(origin: OriginFor<T>, is_enabled: bool) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is signed by `account_id`
+      let sender = ensure_signed(origin)?;
+      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+
+      // 2. Update oracle status
+      OracleStatus::<T>::set(is_enabled);
+
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::StatusChanged(is_enabled));
 
       Ok(().into())
     }
@@ -302,10 +342,6 @@ pub mod pallet {
 
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
-    pub fn account_id() -> T::AccountId {
-      T::OraclePalletId::get().into_account()
-    }
-
     fn ensure_not_paused() -> Result<(), DispatchError> {
       if Self::is_oracle_enabled() {
         Ok(())
@@ -315,10 +351,11 @@ pub mod pallet {
     }
   }
 
+  // implement the `OracleExt` functions
   impl<T: Config> OracleExt<T::AccountId, T::BlockNumber> for Pallet<T> {
-    /// Get oracle status
     fn is_oracle_enabled() -> bool {
-      T::Security::is_chain_running() && Self::is_oracle_enabled()
+      // make sure the chain and the oracle pallet are enabled
+      T::Security::is_chain_running() && Self::status()
     }
 
     fn add_new_trade_in_queue(
@@ -328,6 +365,7 @@ pub mod pallet {
       asset_id_to: CurrencyId,
       amount_to: Balance,
     ) -> (Hash, Trade<T::AccountId, T::BlockNumber>) {
+      // unique request id
       let request_id = T::Security::get_unique_id(account_id.clone());
       let trade = Trade {
         account_id,

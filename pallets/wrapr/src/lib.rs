@@ -7,7 +7,6 @@ mod mock;
 mod benchmarking;
 
 pub mod weights;
-
 pub use weights::*;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
@@ -23,7 +22,6 @@ pub mod pallet {
       fungibles::{Inspect, Mutate, Transfer},
       WithdrawConsequence,
     },
-    PalletId,
   };
   use frame_system::pallet_prelude::*;
   use tidefi_primitives::{
@@ -31,13 +29,14 @@ pub mod pallet {
     Balance, BalanceInfo, CurrencyId, Hash,
   };
 
+  /// Wrapr configuration
   #[pallet::config]
-  /// Configure the pallet by specifying the parameters and types on which it depends.
   pub trait Config: frame_system::Config {
+    /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-    #[pallet::constant]
-    type PalletId: Get<PalletId>;
+    /// Weights
+    type WeightInfo: WeightInfo;
 
     /// Quorum traits
     type Quorum: QuorumExt<Self::AccountId, Self::BlockNumber>;
@@ -48,13 +47,10 @@ pub mod pallet {
     /// Asset registry traits
     type AssetRegistry: AssetRegistryExt;
 
-    /// Our currencies manager
+    /// Currency wrapr
     type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
-
-    /// Weight information for extrinsics in this pallet
-    type WeightInfo: WeightInfo;
   }
 
   #[pallet::pallet]
@@ -65,21 +61,21 @@ pub mod pallet {
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// Event emitted when widthdraw is requested.
-    /// [from_account_id, to_account_id, currency_id, amount]
+    /// \[from_account_id, to_account_id, currency_id, amount\]
     Transfer(T::AccountId, T::AccountId, CurrencyId, Balance),
     /// Event emitted when widthdraw is requested.
-    /// [request_id, account, asset_id, amount, external_address]
+    /// \[request_id, account, currency_id, amount, external_address\]
     Withdrawal(Hash, T::AccountId, CurrencyId, Balance, Vec<u8>),
     /// Event emitted when trade is requested.
-    /// [request_id, account, asset_id_from, amount_from, asset_id_to, amount_to]
+    /// \[request_id, account, currency_id_from, amount_from, currency_id_to, amount_to\]
     Trade(Hash, T::AccountId, CurrencyId, Balance, CurrencyId, Balance),
   }
 
   // Errors inform users that something went wrong.
   #[pallet::error]
   pub enum Error<T> {
-    /// Asset is currently disabled
-    DisabledAsset,
+    /// Asset is currently disabled or do not exist on chain
+    AssetDisabled,
     /// Unknown Asset
     UnknownAsset,
     /// No Funds available for this Asset Id
@@ -92,12 +88,17 @@ pub mod pallet {
     OraclePaused,
   }
 
-  // Dispatchable functions allows users to interact with the pallet and invoke state changes.
-  // These functions materialize as "extrinsics", which are often compared to transactions.
-  // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
   #[pallet::call]
   impl<T: Config> Pallet<T> {
     /// Transfer funds from one account into another.
+    ///
+    /// - `destination_id`: Destination account
+    /// - `currency_id`: The currency to transfer
+    /// - `amount`: The amount to transfer
+    ///
+    /// Emits `Transfer` event when successful.
+    ///
+    /// Weight: `O(1)`
     #[pallet::weight(<T as pallet::Config>::WeightInfo::transfer())]
     pub fn transfer(
       origin: OriginFor<T>,
@@ -111,7 +112,7 @@ pub mod pallet {
       // 2. Make sure the currency is not disabled
       ensure!(
         T::AssetRegistry::is_currency_enabled(currency_id),
-        Error::<T>::DisabledAsset
+        Error::<T>::AssetDisabled
       );
 
       // 3. Transfer the request currency, only if the funds are available and the recipient can receive it.
@@ -127,7 +128,15 @@ pub mod pallet {
       Ok(().into())
     }
 
-    /// AccountID request withdrawal of currency.
+    /// Request wrapped asset withdrawal.
+    ///
+    /// - `currency_id`: The currency to withdraw.
+    /// - `amount`: The amount to transfer
+    /// - `external_address`: External address where to send funds.
+    ///
+    /// Emits `Withdrawal` event when successful.
+    ///
+    /// Weight: `O(1)`
     #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
     pub fn request_withdrawal(
       origin: OriginFor<T>,
@@ -144,10 +153,13 @@ pub mod pallet {
       // 3. Make sure the currency is not disabled
       ensure!(
         T::AssetRegistry::is_currency_enabled(currency_id),
-        Error::<T>::DisabledAsset
+        Error::<T>::AssetDisabled
       );
 
-      // 4. Make sure the account have enough funds
+      // 4. Make sure the currency not a TIDE as it's not supported.
+      ensure!(currency_id != CurrencyId::Tide, Error::<T>::UnknownAsset);
+
+      // 5. Make sure the account have enough funds
       match T::CurrencyWrapr::can_withdraw(currency_id, &account_id, amount) {
         WithdrawConsequence::Success => {
           // Add withdrawal in queue
@@ -174,7 +186,19 @@ pub mod pallet {
       }
     }
 
-    /// AccountID request trade.
+    /// Request trade (swap) trough the market makers.
+    ///
+    /// This will register a new request and will be queued for the oracle, do
+    /// not expect an immediate response.
+    ///
+    /// - `currency_id_from`: The currency to send.
+    /// - `amount_from`: The amount to send.
+    /// - `currency_id_to`: The currency to receive.
+    /// - `amount_to`: The expected amount to receive with a 10% margin.
+    ///
+    /// Emits `Trade` event when successful.
+    ///
+    /// Weight: `O(1)`
     #[pallet::weight(<T as pallet::Config>::WeightInfo::request_trade())]
     pub fn request_trade(
       origin: OriginFor<T>,
@@ -192,13 +216,13 @@ pub mod pallet {
       // 3. Make sure the `currency_id_from` is not disabled
       ensure!(
         T::AssetRegistry::is_currency_enabled(currency_id_from),
-        Error::<T>::DisabledAsset
+        Error::<T>::AssetDisabled
       );
 
       // 4. Make sure the `currency_id_to` is not disabled
       ensure!(
         T::AssetRegistry::is_currency_enabled(currency_id_to),
-        Error::<T>::DisabledAsset
+        Error::<T>::AssetDisabled
       );
 
       // 5. Make sure the account have enough funds for the `asset_id_from`

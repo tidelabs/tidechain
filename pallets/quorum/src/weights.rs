@@ -8,6 +8,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_wrapr.
 pub trait WeightInfo {
    fn set_status() -> Weight;
+   fn set_account_id() -> Weight;
    fn confirm_withdrawal() -> Weight;
    fn mint() -> Weight;
 }
@@ -20,13 +21,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
           .saturating_add(T::DbWeight::get().reads(6_u64))
           .saturating_add(T::DbWeight::get().writes(5_u64))
   }
-  fn confirm_withdrawal() -> Weight {
-      62_000_400_u64
+  fn set_account_id() -> Weight {
+      62_000_300_u64
+       .saturating_add(T::DbWeight::get().reads(6_u64))
+       .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
+   fn confirm_withdrawal() -> Weight {
+      63_000_400_u64
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn mint() -> Weight {
-      63_000_500_u64
+      64_000_500_u64
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
