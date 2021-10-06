@@ -106,8 +106,12 @@ pub mod pallet {
     /// Change chain status.
     ///
     /// This should be used only as emergency as you can disable Oracle or
-    /// Quorum independently. All transactions will be rejected, even from the Oracle
+    /// Quorum independently. You can also disable a currency if it's a known issue with
+    /// a bridge. All transactions will be rejected, even from the Oracle
     /// and the Quorum for security reason.
+    /// 
+    /// This will also stop the staking block increment, so even if the Validators
+    /// are still building blocks, they are not counted for the rewards.
     ///
     /// - `status_code`: New chain `StatusCode`
     ///
