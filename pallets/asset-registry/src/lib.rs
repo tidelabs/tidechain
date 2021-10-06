@@ -206,14 +206,14 @@ pub mod pallet {
           true => {
             // unfreeze asset
             pallet_assets::Pallet::<T>::thaw_asset(
-              RawOrigin::Signed(Self::account_id()).into(),
+              RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account()).into(),
               asset_id,
             )?;
           }
           false => {
             // freeze asset
             pallet_assets::Pallet::<T>::freeze_asset(
-              RawOrigin::Signed(Self::account_id()).into(),
+              RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account()).into(),
               asset_id,
             )?;
           }
@@ -245,14 +245,14 @@ pub mod pallet {
         RawOrigin::Root.into(),
         asset_id,
         // make the pallet account id the owner, so only this pallet can handle the funds.
-        T::Lookup::unlookup(Self::account_id()),
+        T::Lookup::unlookup(T::AssetRegistryPalletId::get().into_account()),
         true,
         existential_deposit,
       )?;
 
       // 2. Set metadata
       pallet_assets::Pallet::<T>::force_set_metadata(
-        RawOrigin::Signed(Self::account_id()).into(),
+        RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account()).into(),
         asset_id,
         name,
         symbol,

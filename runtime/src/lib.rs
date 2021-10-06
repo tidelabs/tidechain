@@ -1046,12 +1046,38 @@ parameter_types! {
   pub const MetadataDepositBase: Balance = deposit(1, 68);
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
 
+  // Pallet Id's
   pub const QuorumPalletId: PalletId = PalletId(*b"py/quorm");
   pub const OraclePalletId: PalletId = PalletId(*b"py/oracl");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
   pub const WraprStakePalletId: PalletId = PalletId(*b"py/stake");
 
+  // FIXME: Should be better than that as we have multiple basis
   pub const PeriodBasis: BlockNumber = 1000u32;
+}
+
+pub struct EnsureRootOrAssetRegistry;
+impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
+  type Success = AccountId;
+
+  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
+      RawOrigin::Signed(caller) => {
+        if caller == AssetRegistryPalletId::get().into_account() {
+          Ok(caller)
+        } else {
+          Err(Origin::from(Some(caller)))
+        }
+      }
+      r => Err(Origin::from(r)),
+    })
+  }
+
+  #[cfg(feature = "runtime-benchmarks")]
+  fn successful_origin() -> Origin {
+    Origin::from(RawOrigin::Signed(Default::default()))
+  }
 }
 
 impl pallet_assets::Config for Runtime {
@@ -1059,7 +1085,7 @@ impl pallet_assets::Config for Runtime {
   type Balance = Balance;
   type AssetId = AssetId;
   type Currency = Balances;
-  type ForceOrigin = EnsureRootOrHalfCouncil;
+  type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
