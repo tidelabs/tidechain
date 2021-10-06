@@ -1064,7 +1064,7 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
     Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
       RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
       RawOrigin::Signed(caller) => {
-        // Allow call from asset registry pallet ID
+        // Allow call from asset registry pallet ID account
         if caller == AssetRegistryPalletId::get().into_account()
         // Allow call from asset registry owner
         || caller == WraprAssetRegistry::account_id()
