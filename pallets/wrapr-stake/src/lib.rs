@@ -23,7 +23,7 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_runtime::{traits::AccountIdConversion, ArithmeticError};
-  use tidefi_primitives::{Balance, BalanceInfo, CurrencyId, Stake, pallet::AssetRegistryExt};
+  use tidefi_primitives::{pallet::AssetRegistryExt, Balance, BalanceInfo, CurrencyId, Stake};
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -67,8 +67,8 @@ pub mod pallet {
     Blake2_128Concat,
     T::AccountId,
     Blake2_128Concat,
-    (CurrencyId, u32),
-    Stake<Balance>,
+    CurrencyId,
+    Vec<Stake<Balance>>,
     ValueQuery,
   >;
 
@@ -111,20 +111,13 @@ pub mod pallet {
       // 2. Transfer the funds into the staking pool
       T::CurrencyWrapr::transfer(currency_id, &account_id, &Self::account_id(), amount, true)?;
 
-      // 3. Update our `AccountStakes` storage
-      AccountStakes::<T>::mutate_exists(account_id.clone(), (currency_id, duration), |stake| {
-        match stake {
-          Some(stake) => Some(Stake {
-            initial_balance: amount.checked_add(stake.initial_balance)?,
-            principal: amount.checked_add(stake.principal)?,
-            duration,
-          }),
-          None => Some(Stake {
-            initial_balance: amount,
-            principal: amount,
-            duration,
-          }),
-        }
+      // 3. Insert the new staking
+      AccountStakes::<T>::mutate(account_id.clone(), currency_id, |stake| {
+        stake.push(Stake {
+          initial_balance: amount,
+          principal: amount,
+          duration,
+        });
       });
 
       // 4. Update our `StakingPool` storage
@@ -152,22 +145,30 @@ pub mod pallet {
 
     // Get all stakes for the account, serialized for quick RPC call
     pub fn get_account_stakes(account_id: &T::AccountId) -> Vec<(CurrencyId, Stake<BalanceInfo>)> {
-      AccountStakes::<T>::iter_prefix(account_id)
-        .map(|((currency_id, _), stake)| {
-          (
+      let mut final_stakes = Vec::new();
+
+      let all_stakes: Vec<(CurrencyId, Vec<Stake<Balance>>)> =
+        AccountStakes::<T>::iter_prefix(account_id).collect();
+
+      // we need to re-organize as our storage use a unique AccountId / CurrencyId key
+      for (currency_id, currency_stakes) in all_stakes {
+        for currency_stake in currency_stakes {
+          final_stakes.push((
             currency_id,
-            Stake::<BalanceInfo> {
+            Stake {
               principal: BalanceInfo {
-                amount: stake.principal,
+                amount: currency_stake.principal,
               },
               initial_balance: BalanceInfo {
-                amount: stake.initial_balance,
+                amount: currency_stake.initial_balance,
               },
-              duration: stake.duration,
+              duration: currency_stake.duration,
             },
-          )
-        })
-        .collect()
+          ));
+        }
+      }
+
+      final_stakes
     }
   }
 }
