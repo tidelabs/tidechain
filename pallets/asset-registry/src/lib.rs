@@ -18,7 +18,12 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
   use super::*;
-  use frame_support::{inherent::Vec, pallet_prelude::*, PalletId};
+  use frame_support::{
+    inherent::Vec,
+    pallet_prelude::*,
+    traits::fungibles::{Inspect, Mutate, Transfer},
+    PalletId,
+  };
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use tidefi_primitives::{pallet::AssetRegistryExt, AssetId, Balance, CurrencyId};
@@ -37,6 +42,11 @@ pub mod pallet {
 
     /// Weights
     type WeightInfo: WeightInfo;
+
+    /// Currency wrapr
+    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
 
   #[pallet::pallet]
@@ -58,7 +68,13 @@ pub mod pallet {
   pub struct GenesisConfig<T: Config> {
     /// Assets to create on initialization
     /// \[currency_id, name, symbol, decimals\]
-    pub assets: Vec<(CurrencyId, Vec<u8>, Vec<u8>, u8)>,
+    pub assets: Vec<(
+      CurrencyId,
+      Vec<u8>,
+      Vec<u8>,
+      u8,
+      Vec<(T::AccountId, T::Balance)>,
+    )>,
     /// Assets owner
     /// Only this account can modify storage on this pallet.
     pub account: T::AccountId,
@@ -84,10 +100,14 @@ pub mod pallet {
       AssetRegistryAccountId::<T>::put(self.account.clone());
 
       // 2. Loop trough all currency defined in our genesis config
-      for (currency_id, name, symbol, decimals) in self.assets.clone() {
+      for (currency_id, name, symbol, decimals, pre_filled_account) in self.assets.clone() {
         // If it's a wrapped token, register it with pallet_assets
         if let CurrencyId::Wrapped(asset_id) = currency_id {
           let _ = Pallet::<T>::register_asset(asset_id, name, symbol, decimals, 1);
+        }
+
+        for (account_id, mint_amount) in pre_filled_account {
+          let _ = T::CurrencyWrapr::mint_into(currency_id, &account_id, mint_amount);
         }
 
         // Insert inside our local map

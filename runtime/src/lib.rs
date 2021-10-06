@@ -1157,6 +1157,8 @@ impl pallet_asset_registry::Config for Runtime {
   type Event = Event;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Runtime>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 construct_runtime!(

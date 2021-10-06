@@ -100,7 +100,7 @@ fn development_config_genesis() -> GenesisConfig {
     vec![authority_keys_from_seed("Alice")],
     vec![],
     get_account_id_from_seed::<sr25519::Public>("Alice"),
-    get_account_id_from_seed::<sr25519::Public>("Bob"),
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
     get_account_id_from_seed::<sr25519::Public>("Alice"),
   )
 }
@@ -137,7 +137,7 @@ fn testnet_config_genesis() -> GenesisConfig {
     ],
     vec![],
     get_account_id_from_seed::<sr25519::Public>("Alice"),
-    get_account_id_from_seed::<sr25519::Public>("Bob"),
+    get_account_id_from_seed::<sr25519::Public>("Alice"),
     get_account_id_from_seed::<sr25519::Public>("Alice"),
   )
 }
@@ -201,6 +201,11 @@ pub fn testnet_genesis(
     18_000 * TIDE,
     "Total claims is configured correctly"
   );
+
+  let alice_addr = get_account_id_from_seed::<sr25519::Public>("Alice");
+  let bob_addr = get_account_id_from_seed::<sr25519::Public>("Bob");
+  let eve_addr = get_account_id_from_seed::<sr25519::Public>("Eve");
+  let ferdie_addr = get_account_id_from_seed::<sr25519::Public>("Ferdie");
 
   // Total funds in treasury
   let mut treasury_funds: u128 = TOTAL_SUPPLY;
@@ -314,30 +319,65 @@ pub fn testnet_genesis(
       assets: vec![
         // Note: Tide decimals is not used as we use the genesis definition
         // but we keep it here as reference
-        (CurrencyId::Tide, "Tide".into(), "TIDE".into(), 12),
+        (
+          CurrencyId::Tide,
+          "Tide".into(),
+          "TIDE".into(),
+          12,
+          vec![
+            (alice_addr.clone(), 22500000000000000000),
+            (bob_addr.clone(), 22500000000000000000),
+            (eve_addr.clone(), 22500000000000000000),
+            (ferdie_addr.clone(), 22500000000000000000),
+          ],
+        ),
         (
           CurrencyId::Wrapped(assets::BTC),
           "Bitcoin".into(),
           "BTC".into(),
           8,
+          vec![
+            (alice_addr.clone(), 25000000000000),
+            (bob_addr.clone(), 15000000000000),
+            (eve_addr.clone(), 10000000000000),
+            (ferdie_addr.clone(), 20000000000000),
+          ],
         ),
         (
           CurrencyId::Wrapped(assets::ETH),
           "Ethereum".into(),
           "ETH".into(),
           18,
+          vec![
+            (alice_addr.clone(), 2500000000000000000000000),
+            (bob_addr.clone(), 1500000000000000000000000),
+            (eve_addr.clone(), 100000000000000000000000),
+            (ferdie_addr.clone(), 200000000000000000000000),
+          ],
         ),
         (
           CurrencyId::Wrapped(assets::USDC),
           "USD Coin".into(),
           "USDC".into(),
           2,
+          vec![
+            (alice_addr.clone(), 1125600000),
+            (bob_addr.clone(), 122600000),
+            (eve_addr.clone(), 112600000),
+            (ferdie_addr.clone(), 321600000),
+          ],
         ),
         (
           CurrencyId::Wrapped(assets::USDT),
           "Tether".into(),
           "USDT".into(),
           2,
+          vec![
+            (alice_addr, 2125600000),
+            (bob_addr, 522600000),
+            (eve_addr, 312600000),
+            (ferdie_addr, 121600000),
+          ],
         ),
       ],
       // FIXME: Is the asset_registry owner should be the same account as root?
@@ -379,7 +419,7 @@ pub(crate) mod tests {
       vec![authority_keys_from_seed("Alice")],
       vec![],
       get_account_id_from_seed::<sr25519::Public>("Alice"),
-      get_account_id_from_seed::<sr25519::Public>("Bob"),
+      get_account_id_from_seed::<sr25519::Public>("Alice"),
       get_account_id_from_seed::<sr25519::Public>("Alice"),
     )
   }

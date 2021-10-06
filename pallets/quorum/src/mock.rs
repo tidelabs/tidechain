@@ -158,6 +158,7 @@ impl pallet_asset_registry::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

@@ -181,6 +181,7 @@ impl pallet_asset_registry::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
+  type CurrencyWrapr = Adapter<AccountId>;
 }
 
 impl pallet_sudo::Config for Test {

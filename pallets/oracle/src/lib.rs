@@ -289,6 +289,72 @@ pub mod pallet {
       Ok(().into())
     }
 
+    // FIXME: [@lemarier] Should be removed after the demo.
+    //
+    /// Quick trade for demo.
+    ///
+    /// - `account_id`: Account ID.
+    /// - `asset_id_from`: Asset Id to send.
+    /// - `amount_from`: Amount to send.
+    /// - `asset_id_to`: Asset Id to receive.
+    /// - `amount_to`: Amount to receive.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::quick_trade())]
+    pub fn quick_trade(
+      origin: OriginFor<T>,
+      account_id: T::AccountId,
+      asset_id_from: CurrencyId,
+      amount_from: Balance,
+      asset_id_to: CurrencyId,
+      amount_to: Balance,
+    ) -> DispatchResultWithPostInfo {
+      // make sure the quorum is not paused
+      Self::ensure_not_paused()?;
+
+      // make sure it's the oracle
+      let sender = ensure_signed(origin)?;
+      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+
+      // make sure the FROM balance is available
+      match T::CurrencyWrapr::can_withdraw(asset_id_from, &account_id, amount_from) {
+        WithdrawConsequence::Success => {
+          // make sure we can deposit before burning
+          T::CurrencyWrapr::can_deposit(asset_id_to, &account_id, amount_to)
+            .into_result()
+            .map_err(|_| Error::<T>::MintFailed)?;
+
+          // burn from token
+          T::CurrencyWrapr::burn_from(asset_id_from, &account_id, amount_from)
+            .map_err(|_| Error::<T>::BurnFailed)?;
+
+          // mint new tokens with fallback to restore token if it fails
+          if T::CurrencyWrapr::mint_into(asset_id_to, &account_id, amount_to).is_err() {
+            let revert = T::CurrencyWrapr::mint_into(asset_id_from, &account_id, amount_from);
+            debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
+            return Err(Error::<T>::MintFailed.into());
+          };
+
+          // FIXME: we can probably remove this and only use the
+          // event emitted by the Assets pallet
+          // emit the burned event
+          let request_id = T::Security::get_unique_id(account_id.clone());
+          Self::deposit_event(Event::<T>::Traded(
+            // fake request id
+            request_id,
+            account_id.clone(),
+            asset_id_from,
+            amount_from,
+            asset_id_to,
+            amount_to,
+          ));
+        }
+        WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds.into()),
+        WithdrawConsequence::UnknownAsset => return Err(Error::<T>::UnknownAsset.into()),
+        _ => return Err(Error::<T>::UnknownError.into()),
+      };
+
+      Ok(().into())
+    }
+
     /// Oracle change the account ID who can confirm trade.
     ///
     /// Make sure to have access to the `account_id` otherwise
