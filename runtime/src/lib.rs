@@ -1491,7 +1491,6 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_wrapr_stake, WraprStake);
         list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
         list_benchmark!(list, extra, pallet_oracle, WraprOracle);
-        list_benchmark!(list, extra, pallet_security, WraprSecurity);
         list_benchmark!(list, extra, pallet_asset_registry, WraprAssetRegistry);
 
         let storage_info = AllPalletsWithSystem::storage_info();
@@ -1558,7 +1557,6 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_wrapr_stake, WraprStake);
             add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
             add_benchmark!(params, batches, pallet_oracle, WraprOracle);
-            add_benchmark!(params, batches, pallet_security, WraprSecurity);
             add_benchmark!(params, batches, pallet_asset_registry, WraprAssetRegistry);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

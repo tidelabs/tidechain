@@ -5,7 +5,7 @@ use super::*;
 
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::{self, RawOrigin};
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{CurrencyId, Hash};
 
 fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
   frame_system::Pallet::<T>::assert_last_event(generic_event.into());
@@ -16,7 +16,7 @@ const INITIAL_AMOUNT: u32 = 500_000_000;
 benchmarks! {
    set_status {}: _(RawOrigin::Root, true)
    confirm_withdrawal {
-      let request_id = 1;
+      let request_id = Hash::zero();
    }: _(RawOrigin::Root, request_id)
    mint {
       let caller: T::AccountId = whitelisted_caller();
