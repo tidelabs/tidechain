@@ -26,7 +26,7 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, OracleExt, QuorumExt},
-    Balance, BalanceInfo, CurrencyId, Hash,
+    Balance, CurrencyId, Hash,
   };
 
   /// Wrapr configuration
@@ -252,17 +252,6 @@ pub mod pallet {
         WithdrawConsequence::UnknownAsset => Err(Error::<T>::UnknownAsset.into()),
         _ => Err(Error::<T>::UnknownError.into()),
       }
-    }
-  }
-
-  impl<T: Config> Pallet<T> {
-    /// Get account balance via custom RPC api using the currency wrapper.
-    pub fn get_account_balance(
-      asset_id: CurrencyId,
-      account_id: &T::AccountId,
-    ) -> Result<BalanceInfo, DispatchError> {
-      let balance = T::CurrencyWrapr::balance(asset_id, account_id);
-      Ok(BalanceInfo { amount: balance })
     }
   }
 }
