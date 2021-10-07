@@ -268,10 +268,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
   ) -> DispatchResult {
     Self::increase_balance(id, beneficiary, amount, |details| -> DispatchResult {
       if let Some(check_issuer) = maybe_check_issuer {
-        ensure!(
-          &check_issuer == &details.issuer,
-          Error::<T, I>::NoPermission
-        );
+        ensure!(check_issuer == details.issuer, Error::<T, I>::NoPermission);
       }
       debug_assert!(
         T::Balance::max_value() - details.supply >= amount,
@@ -339,7 +336,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     let actual = Self::decrease_balance(id, target, amount, f, |actual, details| {
       // Check admin rights.
       if let Some(check_admin) = maybe_check_admin {
-        ensure!(&check_admin == &details.admin, Error::<T, I>::NoPermission);
+        ensure!(check_admin == details.admin, Error::<T, I>::NoPermission);
       }
 
       debug_assert!(details.supply >= actual, "checked in prep; qed");
@@ -435,7 +432,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
       // Check admin rights.
       if let Some(need_admin) = maybe_need_admin {
-        ensure!(&need_admin == &details.admin, Error::<T, I>::NoPermission);
+        ensure!(need_admin == details.admin, Error::<T, I>::NoPermission);
       }
 
       // Skip if source == dest
