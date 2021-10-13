@@ -1,5 +1,5 @@
 use grandpa_primitives::AuthorityId as GrandpaId;
-use hex_literal::hex;
+//use hex_literal::hex;
 use itertools::Itertools;
 pub use node_tidefi_runtime::GenesisConfig;
 use node_tidefi_runtime::{
@@ -198,7 +198,7 @@ pub fn testnet_genesis(
 
   assert_eq!(
     total_claims,
-    18_000 * TIDE,
+    70_500_000 * TIDE,
     "Total claims is configured correctly"
   );
 
@@ -317,20 +317,6 @@ pub fn testnet_genesis(
     wrapr_asset_registry: WraprAssetRegistryConfig {
       // these assets are created on first initialization
       assets: vec![
-        // Note: Tide decimals is not used as we use the genesis definition
-        // but we keep it here as reference
-        (
-          CurrencyId::Tide,
-          "Tide".into(),
-          "TIDE".into(),
-          12,
-          vec![
-            (alice_addr.clone(), 22500000000000000000),
-            (bob_addr.clone(), 22500000000000000000),
-            (eve_addr.clone(), 22500000000000000000),
-            (ferdie_addr.clone(), 22500000000000000000),
-          ],
-        ),
         (
           CurrencyId::Wrapped(assets::BTC),
           "Bitcoin".into(),
@@ -401,11 +387,17 @@ pub fn get_vesting_terms() -> Vec<(AccountId, u32, u32, u32, Balance)> {
   vec![]
 }
 
+// 70_500_000
 pub fn get_stakeholder_tokens() -> Vec<(AccountId, Balance)> {
-  let claims = vec![(
-    hex!["e4cdc8abc0405db44c1a6886a2f2c59012fa3b98c07b61d63cc7f9e437ba243e"].into(),
-    3 * 6_000 * TIDE,
-  )];
+  let bob_addr = get_account_id_from_seed::<sr25519::Public>("Bob");
+  let eve_addr = get_account_id_from_seed::<sr25519::Public>("Eve");
+  let ferdie_addr = get_account_id_from_seed::<sr25519::Public>("Ferdie");
+
+  let claims = vec![
+    (bob_addr, 22_500_000 * TIDE),
+    (eve_addr, 23_500_000 * TIDE),
+    (ferdie_addr, 24_500_000 * TIDE),
+  ];
   claims
 }
 

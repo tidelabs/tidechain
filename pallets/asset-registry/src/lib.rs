@@ -27,7 +27,10 @@ pub mod pallet {
   };
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
-  use tidefi_primitives::{pallet::AssetRegistryExt, AssetId, Balance, CurrencyId};
+  use sp_std::vec;
+  use tidefi_primitives::{
+    pallet::AssetRegistryExt, AssetId, Balance, BalanceInfo, CurrencyId, CurrencyMetadata,
+  };
 
   /// Asset registry configuration
   #[pallet::config]
@@ -53,11 +56,6 @@ pub mod pallet {
   #[pallet::pallet]
   #[pallet::generate_store(pub (super) trait Store)]
   pub struct Pallet<T>(_);
-
-  /// Assets registered \[currency_id, is_enabled\]
-  #[pallet::storage]
-  #[pallet::getter(fn assets)]
-  pub type Assets<T: Config> = StorageMap<_, Twox64Concat, CurrencyId, bool, OptionQuery>;
 
   /// Assets Account ID owner
   #[pallet::storage]
@@ -110,9 +108,6 @@ pub mod pallet {
         for (account_id, mint_amount) in pre_filled_account {
           let _ = T::CurrencyWrapr::mint_into(currency_id, &account_id, mint_amount);
         }
-
-        // Insert inside our local map
-        Assets::<T>::insert(currency_id, true);
       }
     }
   }
@@ -171,7 +166,7 @@ pub mod pallet {
 
       // 2. Make sure the asset isn't already registered
       ensure!(
-        Self::assets(currency_id).is_none(),
+        !Self::is_currency_exist(currency_id),
         Error::<T>::AssetAlreadyRegistered
       );
 
@@ -179,9 +174,6 @@ pub mod pallet {
       if let CurrencyId::Wrapped(asset_id) = currency_id {
         Self::register_asset(asset_id, name, symbol, decimals, existential_deposit)?;
       }
-
-      // 4. Register local store
-      Assets::<T>::insert(currency_id, true);
 
       // 5. Emit new registered currency
       Self::deposit_event(<Event<T>>::Registered(currency_id));
@@ -211,17 +203,12 @@ pub mod pallet {
 
       // 2. Make sure the currency is already registered
       ensure!(
-        Self::assets(currency_id).is_some(),
+        Self::is_currency_exist(currency_id),
         Error::<T>::AssetNotRegistered
       );
 
-      // 3. Make sure the status will change
-      ensure!(
-        Self::assets(currency_id) == Some(!is_enabled),
-        Error::<T>::NoStatusChangeRequested
-      );
-
-      // 4. If it's wrapped asset, freeze/unfreeze at the chain level
+      // 3. Freeze/unfreeze at the chain level, do nothing if
+      // we requested a TIDE freeze
       if let CurrencyId::Wrapped(asset_id) = currency_id {
         match is_enabled {
           true => {
@@ -241,12 +228,7 @@ pub mod pallet {
         };
       }
 
-      // 5. Mutate local storage for quick reference
-      <Assets<T>>::mutate(currency_id, |asset| {
-        *asset = Some(is_enabled);
-      });
-
-      // 6. Emit new registered currency
+      // 4. Emit new registered currency
       Self::deposit_event(<Event<T>>::StatusChanged(currency_id, is_enabled));
 
       Ok(())
@@ -283,11 +265,86 @@ pub mod pallet {
 
       Ok(())
     }
+
+    pub fn is_currency_exist(currency_id: CurrencyId) -> bool {
+      match currency_id {
+        // tide always exist
+        CurrencyId::Tide => true,
+        CurrencyId::Wrapped(asset_id) => {
+          pallet_assets::Pallet::<T>::asset_details(asset_id).is_some()
+        }
+      }
+    }
+
+    pub fn get_account_balance(
+      account_id: &T::AccountId,
+      asset_id: CurrencyId,
+    ) -> Result<BalanceInfo, DispatchError> {
+      let balance = T::CurrencyWrapr::balance(asset_id, account_id);
+      Ok(BalanceInfo { amount: balance })
+    }
+
+    pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata)>, DispatchError> {
+      let mut final_assets = vec![(
+        CurrencyId::Tide,
+        CurrencyMetadata {
+          name: "Tide".into(),
+          symbol: "TIDE".into(),
+          decimals: 12,
+          is_frozen: false,
+        },
+      )];
+
+      let mut asset_metadatas = pallet_assets::Metadata::<T>::iter()
+        .map(|(asset_id, asset_metadata)| {
+          (
+            CurrencyId::Wrapped(asset_id),
+            CurrencyMetadata {
+              name: asset_metadata.name.into(),
+              symbol: asset_metadata.symbol.into(),
+              decimals: asset_metadata.decimals,
+              is_frozen: asset_metadata.is_frozen,
+            },
+          )
+        })
+        .collect();
+
+      final_assets.append(&mut asset_metadatas);
+
+      Ok(final_assets)
+    }
+
+    pub fn get_account_balances(
+      account_id: &T::AccountId,
+    ) -> Result<Vec<(CurrencyId, BalanceInfo)>, DispatchError> {
+      let mut final_balances = vec![(
+        CurrencyId::Tide,
+        Self::get_account_balance(account_id, CurrencyId::Tide)?,
+      )];
+      let mut asset_balances = pallet_assets::Account::<T>::iter_prefix(account_id)
+        .map(|(asset_id, balance)| {
+          (
+            CurrencyId::Wrapped(asset_id),
+            BalanceInfo {
+              amount: balance.balance,
+            },
+          )
+        })
+        .collect();
+      final_balances.append(&mut asset_balances);
+      Ok(final_balances)
+    }
   }
 
   impl<T: Config> AssetRegistryExt for Pallet<T> {
     fn is_currency_enabled(currency_id: CurrencyId) -> bool {
-      Self::assets(currency_id).unwrap_or(false)
+      match currency_id {
+        // we can't disable tide
+        CurrencyId::Tide => true,
+        CurrencyId::Wrapped(asset_id) => pallet_assets::Pallet::<T>::asset_details(asset_id)
+          .map(|detail| !detail.is_frozen)
+          .unwrap_or(false),
+      }
     }
   }
 }

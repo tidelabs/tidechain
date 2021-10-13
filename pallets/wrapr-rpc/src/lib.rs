@@ -7,17 +7,27 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use std::sync::Arc;
-use tidefi_primitives::{BalanceInfo, CurrencyId, Stake};
+use tidefi_primitives::{BalanceInfo, CurrencyId, CurrencyMetadata, Stake};
 
 #[rpc]
 pub trait WraprApi<BlockHash, AccountId> {
+  #[rpc(name = "wrapr_getAssets")]
+  fn get_assets(&self, at: Option<BlockHash>) -> Result<Vec<(CurrencyId, CurrencyMetadata)>>;
+
   #[rpc(name = "wrapr_getAccountBalance")]
   fn get_account_balance(
     &self,
-    asset_id: CurrencyId,
     account_id: AccountId,
+    asset_id: CurrencyId,
     at: Option<BlockHash>,
   ) -> Result<BalanceInfo>;
+
+  #[rpc(name = "wrapr_getAccountBalances")]
+  fn get_account_balances(
+    &self,
+    account_id: AccountId,
+    at: Option<BlockHash>,
+  ) -> Result<Vec<(CurrencyId, BalanceInfo)>>;
 
   #[rpc(name = "wrapr_getAccountStakes")]
   fn get_account_stakes(
@@ -70,8 +80,8 @@ where
 {
   fn get_account_balance(
     &self,
-    asset_id: CurrencyId,
     account_id: AccountId,
+    asset_id: CurrencyId,
     at: Option<<Block as BlockT>::Hash>,
   ) -> Result<BalanceInfo> {
     let api = self.client.runtime_api();
@@ -80,7 +90,7 @@ where
       self.client.info().best_hash,
     ));
     api
-      .get_account_balance(&at, asset_id, account_id)
+      .get_account_balance(&at, account_id, asset_id)
       .map_err(runtime_error_into_rpc_error)?
       .map_err(account_balance_error_into_rpc_error)
   }
@@ -99,6 +109,37 @@ where
       .get_account_stakes(&at, account_id)
       .map_err(runtime_error_into_rpc_error)?
       .map_err(account_stakes_error_into_rpc_error)
+  }
+
+  fn get_assets(
+    &self,
+    at: Option<<Block as BlockT>::Hash>,
+  ) -> Result<Vec<(CurrencyId, CurrencyMetadata)>> {
+    let api = self.client.runtime_api();
+    let at = BlockId::hash(at.unwrap_or(
+      // If the block hash is not supplied assume the best block.
+      self.client.info().best_hash,
+    ));
+    api
+      .get_assets(&at)
+      .map_err(runtime_error_into_rpc_error)?
+      .map_err(assets_error_into_rpc_error)
+  }
+
+  fn get_account_balances(
+    &self,
+    account_id: AccountId,
+    at: Option<<Block as BlockT>::Hash>,
+  ) -> Result<Vec<(CurrencyId, BalanceInfo)>> {
+    let api = self.client.runtime_api();
+    let at = BlockId::hash(at.unwrap_or(
+      // If the block hash is not supplied assume the best block.
+      self.client.info().best_hash,
+    ));
+    api
+      .get_account_balances(&at, account_id)
+      .map_err(runtime_error_into_rpc_error)?
+      .map_err(account_balance_error_into_rpc_error)
   }
 }
 
@@ -125,6 +166,15 @@ fn account_stakes_error_into_rpc_error(err: impl std::fmt::Debug) -> RpcError {
   RpcError {
     code: ErrorCode::ServerError(Error::AccountStakesError.into()),
     message: "Not able to get account stakes".into(),
+    data: Some(format!("{:?}", err).into()),
+  }
+}
+
+/// Converts an asset error into an RPC error.
+fn assets_error_into_rpc_error(err: impl std::fmt::Debug) -> RpcError {
+  RpcError {
+    code: ErrorCode::ServerError(Error::AccountStakesError.into()),
+    message: "Not able to get assets list".into(),
     data: Some(format!("{:?}", err).into()),
   }
 }
