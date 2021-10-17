@@ -89,8 +89,8 @@ pub mod pallet {
   /// The total fees for the era.
   /// If total hasn't been set or has been removed then 0 stake is returned.
   #[pallet::storage]
-  #[pallet::getter(fn eras_total_fee)]
-  pub type ErasTotalFee<T: Config> =
+  #[pallet::getter(fn era_total_fees)]
+  pub type EraTotalFees<T: Config> =
     StorageDoubleMap<_, Blake2_128Concat, EraIndex, Blake2_128Concat, CurrencyId, Fee, ValueQuery>;
 
   /// Account fees for current era
@@ -173,7 +173,7 @@ pub mod pallet {
 
         let era_duration = (now_as_millis_u64 - active_era_start).saturated_into::<u64>();
         let all_fees_collected: Vec<(CurrencyId, Fee)> =
-          ErasTotalFee::<T>::iter_prefix(active_era.index).collect();
+          EraTotalFees::<T>::iter_prefix(active_era.index).collect();
 
         for (currency_id, fees_details_collected_in_era) in all_fees_collected {
           let total_amount_for_currency = fees_details_collected_in_era.amount;
