@@ -60,6 +60,7 @@ frame_support::construct_runtime!(
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     WraprFees: pallet_fees::{Pallet, Storage, Event<T>},
+    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
   }
 );
 
@@ -96,10 +97,10 @@ impl system::Config for Test {
 }
 
 impl pallet_timestamp::Config for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+  type Moment = u64;
+  type OnTimestampSet = ();
+  type MinimumPeriod = MinimumPeriod;
+  type WeightInfo = ();
 }
 
 pub const TIDE: Balance = 1_000_000_000_000;
@@ -154,10 +155,15 @@ parameter_types! {
 
 impl pallet_fees::Config for Test {
   type Event = Event;
+  type Security = Security;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type FeesPalletId = WraprPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type UnixTime = Timestamp;
+}
+
+impl pallet_security::Config for Test {
+  type Event = Event;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
