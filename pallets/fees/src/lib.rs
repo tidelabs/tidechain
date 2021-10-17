@@ -27,7 +27,8 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   use sp_runtime::{traits::AccountIdConversion, Percent, Permill, SaturatedConversion};
   use tidefi_primitives::{
-    pallet::FeesExt, ActiveEraInfo, Balance, BalanceInfo, BlockNumber, CurrencyId, EraIndex, Stake,
+    pallet::{FeesExt, SecurityExt},
+    ActiveEraInfo, Balance, BalanceInfo, BlockNumber, CurrencyId, EraIndex, Stake,
   };
 
   #[pallet::config]
@@ -49,6 +50,9 @@ pub mod pallet {
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
 
+    /// Security traits
+    type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
+
     /// Currency wrapr
     type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
@@ -64,7 +68,12 @@ pub mod pallet {
   /// The active era is the era being currently rewarded.
   #[pallet::storage]
   #[pallet::getter(fn active_era)]
-  pub type ActiveEra<T> = StorageValue<_, ActiveEraInfo>;
+  pub type ActiveEra<T: Config> = StorageValue<_, ActiveEraInfo<T::BlockNumber>>;
+
+  /// The length of an era in block number.
+  #[pallet::storage]
+  #[pallet::getter(fn era_length)]
+  pub type EraLength<T: Config> = StorageValue<_, T::BlockNumber>;
 
   /// The percentage on each trade to be taken as a network fee
   #[pallet::storage]
@@ -113,22 +122,32 @@ pub mod pallet {
   // hooks
   #[pallet::hooks]
   impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-    fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
+    fn on_initialize(_now: T::BlockNumber) -> Weight {
       // just return the weight of the on_finalize.
       T::DbWeight::get().reads(1)
     }
 
-    fn on_finalize(current_block: BlockNumberFor<T>) {
-      // Set the start of the first era.
+    fn on_finalize(_current_block: T::BlockNumber) {
       if let Some(mut active_era) = Self::active_era() {
-        if active_era.start.is_none() {
-          let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
-          active_era.start = Some(now_as_millis_u64);
-          // This write only ever happens once, we don't include it in the weight in
-          // general
-          ActiveEra::<T>::put(active_era);
-        } 
-        // calculate the end of era
+        let real_block = T::Security::get_current_block_count();
+        match active_era.start_block {
+          Some(start_block) => {
+            let expected_end_block = start_block + Self::era_length().unwrap_or_default();
+
+            // end of era
+            if real_block >= expected_end_block {
+              Self::end_era(active_era);
+            }
+          }
+          None => {
+            let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
+            active_era.start = Some(now_as_millis_u64);
+            active_era.start_block = Some(real_block);
+            // This write only ever happens once, we don't include it in the weight in
+            // general
+            ActiveEra::<T>::put(active_era);
+          }
+        }
       }
       // `on_finalize` weight is tracked in `on_initialize`
     }
@@ -138,16 +157,17 @@ pub mod pallet {
     fn start_era() {
       ActiveEra::<T>::mutate(|active_era| {
         let new_index = active_era.as_ref().map(|info| info.index + 1).unwrap_or(0);
-        *active_era = Some(ActiveEraInfo {
+        *active_era = Some(ActiveEraInfo::<T::BlockNumber> {
           index: new_index,
           // Set new active era start in next `on_finalize`. To guarantee usage of `Time`
+          start_block: None,
           start: None,
         });
         new_index
       });
     }
 
-    fn end_era(active_era: ActiveEraInfo) {
+    fn end_era(active_era: ActiveEraInfo<T::BlockNumber>) {
       // Note: active_era_start can be None if end era is called during genesis config.
       if let Some(active_era_start) = active_era.start {
         let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
