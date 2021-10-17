@@ -28,7 +28,7 @@ pub mod pallet {
   use sp_runtime::{traits::AccountIdConversion, Percent, Permill, SaturatedConversion};
   use tidefi_primitives::{
     pallet::{FeesExt, SecurityExt},
-    ActiveEraInfo, Balance, BalanceInfo, BlockNumber, CurrencyId, EraIndex, Stake,
+    ActiveEraInfo, Balance, BalanceInfo, BlockNumber, CurrencyId, EraIndex, Fee, Stake,
   };
 
   #[pallet::config]
@@ -80,19 +80,18 @@ pub mod pallet {
   #[pallet::getter(fn fees_percentage)]
   pub type FeePercentageAmount<T: Config> = StorageValue<_, Percent, ValueQuery>;
 
+  /// The percentage of all fees for the each asset to re-distribute based on
+  /// the trading volume for each account
+  #[pallet::storage]
+  #[pallet::getter(fn distribution_percentage)]
+  pub type DistributionPercentage<T: Config> = StorageValue<_, Percent, ValueQuery>;
+
   /// The total fees for the era.
   /// If total hasn't been set or has been removed then 0 stake is returned.
   #[pallet::storage]
   #[pallet::getter(fn eras_total_fee)]
-  pub type ErasTotalFee<T: Config> = StorageDoubleMap<
-    _,
-    Blake2_128Concat,
-    EraIndex,
-    Blake2_128Concat,
-    CurrencyId,
-    Balance,
-    ValueQuery,
-  >;
+  pub type ErasTotalFee<T: Config> =
+    StorageDoubleMap<_, Blake2_128Concat, EraIndex, Blake2_128Concat, CurrencyId, Fee, ValueQuery>;
 
   /// Account fees for current era
   #[pallet::storage]
@@ -103,7 +102,7 @@ pub mod pallet {
     CurrencyId,
     Blake2_128Concat,
     T::AccountId,
-    Balance,
+    Fee,
     ValueQuery,
   >;
 
@@ -112,7 +111,7 @@ pub mod pallet {
   pub enum Event<T: Config> {
     /// The fees get redistributed successfully
     /// \[era last block, currency_id, amount\]
-    FeesRedistribution(BlockNumber, CurrencyId, Balance),
+    Rewarded(BlockNumber, CurrencyId, Balance),
   }
 
   // Errors inform users that something went wrong.
@@ -124,7 +123,7 @@ pub mod pallet {
   impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
     fn on_initialize(_now: T::BlockNumber) -> Weight {
       // just return the weight of the on_finalize.
-      T::DbWeight::get().reads(1)
+      T::DbWeight::get().reads(2)
     }
 
     fn on_finalize(_current_block: T::BlockNumber) {
@@ -136,7 +135,7 @@ pub mod pallet {
 
             // end of era
             if real_block >= expected_end_block {
-              Self::end_era(active_era);
+              let _ = Self::end_era(active_era);
             }
           }
           None => {
@@ -167,22 +166,46 @@ pub mod pallet {
       });
     }
 
-    fn end_era(active_era: ActiveEraInfo<T::BlockNumber>) {
+    fn end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
       // Note: active_era_start can be None if end era is called during genesis config.
       if let Some(active_era_start) = active_era.start {
         let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
 
         let era_duration = (now_as_millis_u64 - active_era_start).saturated_into::<u64>();
-        let all_fees_collected: Vec<(CurrencyId, Balance)> =
+        let all_fees_collected: Vec<(CurrencyId, Fee)> =
           ErasTotalFee::<T>::iter_prefix(active_era.index).collect();
 
-        for (currency_id, balance) in all_fees_collected {
+        for (currency_id, fees_details_collected_in_era) in all_fees_collected {
+          let total_amount_for_currency = fees_details_collected_in_era.amount;
+          let total_fees_collected_for_currency = fees_details_collected_in_era.fee;
+
+          // The amount of tokens in each monthly distribution will
+          // be equal to `DistributionPercentage` of `CurrencyId` trading revenue (fees collected).
+          let revenue_for_current_currency =
+            Self::distribution_percentage() * total_fees_collected_for_currency;
+
           // distribute to all accounts
-          for (account_id, total_fee_paid) in AccountFees::<T>::iter_prefix(currency_id) {
-            //T::CurrencyWrapr::transfer(currency_id, Self::account_id(), account_id, )
+          for (account_id, account_fee_for_currency) in AccountFees::<T>::iter_prefix(currency_id) {
+            let total_transfer_in_era_for_account = account_fee_for_currency.amount;
+            let total_token_for_current_account = (total_transfer_in_era_for_account
+              / total_amount_for_currency)
+              * revenue_for_current_currency;
+
+            // FIXME: Convert this amount in TIDE and transfer them from
+            // this account maybe?
+
+            T::CurrencyWrapr::transfer(
+              currency_id,
+              &Self::account_id(),
+              &account_id,
+              total_token_for_current_account,
+              true,
+            )?;
           }
         }
       }
+
+      Ok(())
     }
   }
 
