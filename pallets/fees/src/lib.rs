@@ -77,7 +77,7 @@ pub mod pallet {
 
   /// The percentage on each trade to be taken as a network fee
   #[pallet::storage]
-  #[pallet::getter(fn fees_percentage)]
+  #[pallet::getter(fn fee_percentage)]
   pub type FeePercentageAmount<T: Config> = StorageValue<_, Percent, ValueQuery>;
 
   /// The percentage of all fees for the each asset to re-distribute based on
@@ -218,7 +218,7 @@ pub mod pallet {
     // but if we need to update in the future, we could simply use the currency id
     // and update the storage
     fn calculate_trading_fee(_currency_id: CurrencyId, amount: Balance) -> Balance {
-      Self::fees_percentage() * amount
+      Self::fee_percentage() * amount
     }
   }
 }
