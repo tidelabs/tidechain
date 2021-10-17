@@ -1161,6 +1161,13 @@ impl pallet_asset_registry::Config for Runtime {
   type CurrencyWrapr = Adapter<AccountId>;
 }
 
+impl pallet_fees::Config for Runtime {
+  type Event = Event;
+  type FeesPalletId = WraprPalletId;
+  type CurrencyWrapr = Adapter<AccountId>;
+  type UnixTime = Timestamp;
+}
+
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -1208,6 +1215,8 @@ construct_runtime!(
         WraprSecurity: pallet_security::{Pallet, Call, Config, Storage, Event<T>} = 34,
         // Storage, events and traits for the asset registry
         WraprAssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 35,
+        // Storage, events and traits for the fees / airdrop system
+        WraprFees: pallet_fees::{Pallet, Storage, Event<T>} = 36,
     }
 );
 /// Digest item type.
@@ -1498,6 +1507,7 @@ impl_runtime_apis! {
         list_benchmark!(list, extra, pallet_quorum, WraprQuorum);
         list_benchmark!(list, extra, pallet_oracle, WraprOracle);
         list_benchmark!(list, extra, pallet_asset_registry, WraprAssetRegistry);
+        list_benchmark!(list, extra, pallet_fees, WraprFees);
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1564,6 +1574,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
             add_benchmark!(params, batches, pallet_oracle, WraprOracle);
             add_benchmark!(params, batches, pallet_asset_registry, WraprAssetRegistry);
+            add_benchmark!(params, batches, pallet_fees, WraprFees);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
