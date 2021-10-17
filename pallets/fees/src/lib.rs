@@ -118,7 +118,7 @@ pub mod pallet {
       T::DbWeight::get().reads(1)
     }
 
-    fn on_finalize(_n: BlockNumberFor<T>) {
+    fn on_finalize(current_block: BlockNumberFor<T>) {
       // Set the start of the first era.
       if let Some(mut active_era) = Self::active_era() {
         if active_era.start.is_none() {
@@ -127,7 +127,8 @@ pub mod pallet {
           // This write only ever happens once, we don't include it in the weight in
           // general
           ActiveEra::<T>::put(active_era);
-        }
+        } 
+        // calculate the end of era
       }
       // `on_finalize` weight is tracked in `on_initialize`
     }

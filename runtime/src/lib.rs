@@ -1051,6 +1051,7 @@ parameter_types! {
   pub const OraclePalletId: PalletId = PalletId(*b"py/oracl");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
   pub const WraprStakePalletId: PalletId = PalletId(*b"py/stake");
+  pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
 
   // FIXME: Should be better than that as we have multiple basis
   pub const PeriodBasis: BlockNumber = 1000u32;
@@ -1163,9 +1164,10 @@ impl pallet_asset_registry::Config for Runtime {
 
 impl pallet_fees::Config for Runtime {
   type Event = Event;
-  type FeesPalletId = WraprPalletId;
+  type FeesPalletId = FeesPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type UnixTime = Timestamp;
+  type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
 }
 
 construct_runtime!(
@@ -1215,7 +1217,7 @@ construct_runtime!(
         WraprSecurity: pallet_security::{Pallet, Call, Config, Storage, Event<T>} = 34,
         // Storage, events and traits for the asset registry
         WraprAssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 35,
-        // Storage, events and traits for the fees / airdrop system
+        // Storage, events and traits for the fees
         WraprFees: pallet_fees::{Pallet, Storage, Event<T>} = 36,
     }
 );
