@@ -200,12 +200,16 @@ pub mod pallet {
 
             for mm in market_makers.iter() {
               // make sure all the market markers have enough funds before we can continue
-              match T::CurrencyWrapr::can_withdraw(trade.token_to, &mm.account, mm.amount_to_send) {
+              match T::CurrencyWrapr::can_withdraw(
+                trade.token_to,
+                &mm.account_id,
+                mm.amount_to_send,
+              ) {
                 // make sure we can deposit
                 WithdrawConsequence::Success => {
                   T::CurrencyWrapr::can_deposit(
                     trade.token_from,
-                    &mm.account,
+                    &mm.account_id,
                     mm.amount_to_receive,
                   )
                   .into_result()
@@ -254,7 +258,7 @@ pub mod pallet {
                   if T::CurrencyWrapr::transfer(
                     trade.token_from,
                     &trade.account_id,
-                    &mm.account,
+                    &mm.account_id,
                     mm.amount_to_receive,
                     true,
                   )
@@ -266,7 +270,7 @@ pub mod pallet {
                   // 10. Transfer funds from the market makers to the account
                   if T::CurrencyWrapr::transfer(
                     trade.token_to,
-                    &mm.account,
+                    &mm.account_id,
                     &trade.account_id,
                     mm.amount_to_send,
                     true,
