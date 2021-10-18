@@ -193,9 +193,10 @@ pub mod pallet {
 
             // FIXME: Convert this amount in TIDE and transfer them from
             // this account maybe?
+            let total_tide_token = total_token_for_current_account;
 
             T::CurrencyWrapr::transfer(
-              currency_id,
+              CurrencyId::Tide,
               &Self::account_id(),
               &account_id,
               total_token_for_current_account,

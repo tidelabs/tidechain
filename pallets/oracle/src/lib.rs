@@ -30,8 +30,8 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   use sp_runtime::traits::AccountIdConversion;
   use tidefi_primitives::{
-    pallet::{OracleExt, SecurityExt},
-    AssetId, Balance, CurrencyId, Hash, Trade, TradeStatus,
+    pallet::{FeesExt, OracleExt, SecurityExt},
+    AssetId, Balance, CurrencyId, Hash, Trade, TradeConfirmation, TradeStatus,
   };
 
   /// Oracle configuration
@@ -51,6 +51,9 @@ pub mod pallet {
 
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Fees traits
+    type Fees: FeesExt<Self::AccountId>;
 
     /// Currency wrapr
     type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
@@ -134,14 +137,22 @@ pub mod pallet {
     InvalidRequestStatus,
     /// There is a conflict in the request.
     Conflict,
+    /// Unable to transfer token.
+    TransferFailed,
     /// Unable to burn token.
     BurnFailed,
     /// Unable to mint token.
     MintFailed,
+    /// Unable to take or calculate network fees.
+    FeesFailed,
     /// Unknown Asset.
     UnknownAsset,
     /// No Funds available for this Asset Id.
     NoFunds,
+    /// MarketMakers do not have enough funds
+    MarketMakerNoFunds,
+    /// MarketMakers cannot deposit source funds of the trade
+    MarketMakerCantDeposit,
     /// Unknown Error.
     UnknownError,
   }
@@ -162,9 +173,7 @@ pub mod pallet {
     pub fn confirm_trade(
       origin: OriginFor<T>,
       request_id: Hash,
-      amounts_from: Vec<Balance>,
-      accounts_to: Vec<T::AccountId>,
-      amounts_to: Vec<Balance>,
+      market_makers: Vec<TradeConfirmation<T::AccountId>>,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the oracle/chain is not paused
       Self::ensure_not_paused()?;
@@ -185,20 +194,41 @@ pub mod pallet {
               return Err(Error::<T>::InvalidRequestStatus);
             }
 
-            // 5. Check `amounts_from`
+            // 5. Calculate totals and all market makers
             let mut total_from: Balance = 0;
-            for amt_from in amounts_from.iter() {
-              total_from += amt_from;
+            let mut total_to: Balance = 0;
+
+            for mm in market_makers.iter() {
+              // make sure all the market markers have enough funds before we can continue
+              match T::CurrencyWrapr::can_withdraw(trade.token_to, &mm.account, mm.amount_to_send) {
+                // make sure we can deposit
+                WithdrawConsequence::Success => {
+                  T::CurrencyWrapr::can_deposit(
+                    trade.token_from,
+                    &mm.account,
+                    mm.amount_to_receive,
+                  )
+                  .into_result()
+                  .map_err(|_| Error::<T>::MarketMakerCantDeposit)?;
+
+                  // alls good, let's calculate our totals
+                  total_from += mm.amount_to_receive;
+                  total_to += mm.amount_to_send;
+                }
+                // no funds error
+                WithdrawConsequence::NoFunds => return Err(Error::MarketMakerNoFunds),
+                // unknown assets
+                WithdrawConsequence::UnknownAsset => return Err(Error::UnknownAsset),
+                // throw an error, we really need a success here
+                _ => return Err(Error::UnknownError),
+              }
             }
+
+            // 6. a) Validate totals
             if trade.amount_from != total_from {
               return Err(Error::<T>::Conflict);
             }
-
-            // 6. Check `amounts_to`
-            let mut total_to: Balance = 0;
-            for amt_to in amounts_to.iter() {
-              total_to += amt_to;
-            }
+            // 6. b) Maximum of 10% slippage for the `amount_to`
             if total_to * 10 < trade.amount_to * 9 || total_to * 10 > trade.amount_to * 11 {
               return Err(Error::Conflict);
             }
@@ -210,60 +240,54 @@ pub mod pallet {
               trade.amount_from,
             ) {
               WithdrawConsequence::Success => {
-                let mut total_to = 0;
+                // 8. Calculate and transfer network fee
+                // FIXME: Should we take a transfer fee on the FROM or the TO asset or both?
+                let network_fee = T::Fees::calculate_trading_fee(trade.token_to, total_to);
 
-                // 8. Make sure all the market markers have enough funds before we can continue
-                for (pos, amt) in amounts_to.iter().enumerate() {
-                  total_to += amt;
-                  match T::CurrencyWrapr::can_withdraw(trade.token_to, &accounts_to[pos], *amt) {
-                    // do nothing, we can continue
-                    WithdrawConsequence::Success => continue,
-                    // no funds error
-                    WithdrawConsequence::NoFunds => return Err(Error::NoFunds),
-                    // unknown assets
-                    WithdrawConsequence::UnknownAsset => return Err(Error::UnknownAsset),
-                    // throw an error, we really need a success here
-                    _ => return Err(Error::UnknownError),
+                // 9. Make sure the requester can deposit the new asset before initializing trade process
+                T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
+                  .into_result()
+                  .map_err(|_| Error::<T>::BurnFailed)?;
+
+                for mm in market_makers.iter() {
+                  // 10. Transfer funds from the requester to the market makers
+                  if T::CurrencyWrapr::transfer(
+                    trade.token_from,
+                    &trade.account_id,
+                    &mm.account,
+                    mm.amount_to_receive,
+                    true,
+                  )
+                  .is_err()
+                  {
+                    // FIXME: Add rollback
+                  }
+
+                  // 10. Transfer funds from the market makers to the account
+                  if T::CurrencyWrapr::transfer(
+                    trade.token_to,
+                    &mm.account,
+                    &trade.account_id,
+                    mm.amount_to_send,
+                    true,
+                  )
+                  .is_err()
+                  {
+                    // FIXME: Add rollback
                   }
                 }
 
-                // 9. Make sure we can deposit before burning
-                T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
-                  .into_result()
-                  .map_err(|_| Error::<T>::MintFailed)?;
+                // 11. Pay network fee
+                T::CurrencyWrapr::transfer(
+                  trade.token_to,
+                  &trade.account_id,
+                  &T::Fees::account_id(),
+                  network_fee,
+                  true,
+                )
+                .map_err(|_| Error::<T>::FeesFailed)?;
 
-                // 10. Burn token
-                T::CurrencyWrapr::burn_from(trade.token_from, &trade.account_id, trade.amount_from)
-                  .map_err(|_| Error::<T>::BurnFailed)?;
-
-                // 11. Mint new tokens with fallback to restore token if it fails
-                if T::CurrencyWrapr::mint_into(trade.token_to, &trade.account_id, total_to).is_err()
-                {
-                  let revert = T::CurrencyWrapr::mint_into(
-                    trade.token_from,
-                    &trade.account_id,
-                    trade.amount_from,
-                  );
-                  debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
-                  return Err(Error::<T>::MintFailed);
-                };
-
-                // 12. Remove tokens from the market makers accounts only if previous step succeed
-                for (pos, amt) in amounts_to.iter().enumerate() {
-                  // remove token_to from acc
-                  T::CurrencyWrapr::burn_from(trade.token_to, &accounts_to[pos], *amt)
-                    .map_err(|_| Error::<T>::BurnFailed)?;
-                  // add token_from to acc
-                  // using amounts_from
-                  T::CurrencyWrapr::mint_into(
-                    trade.token_from,
-                    &accounts_to[pos],
-                    amounts_from[pos],
-                  )
-                  .map_err(|_| Error::<T>::BurnFailed)?;
-                }
-
-                // 13. Emit event on chain
+                // 12. Emit event on chain
                 Self::deposit_event(Event::<T>::Traded(
                   request_id,
                   trade.account_id.clone(),
