@@ -59,7 +59,7 @@ frame_support::construct_runtime!(
     Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    WraprFees: pallet_fees::{Pallet, Storage, Event<T>},
+    Fees: pallet_fees::{Pallet, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
   }
 );

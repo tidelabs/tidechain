@@ -162,9 +162,7 @@ pub mod pallet {
     /// Oracle have confirmation and confirm the trade.
     ///
     /// - `request_id`: Unique request ID.
-    /// - `amounts_from`: Amounts from the market markers.
-    /// - `accounts_to`: Accounts of the market markers.
-    /// - `amounts_to`: Amount of the final asset to allocate from the market makers.
+    /// - `market_makers`: Vector of `TradeConfirmation` who represent the allocation of multiple source.
     ///
     /// Emits `Traded` event when successful.
     ///

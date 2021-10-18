@@ -1146,6 +1146,8 @@ impl pallet_oracle::Config for Runtime {
   type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
+  // Fees management
+  type Fees = WraprFees;
   // Security utils
   type Security = WraprSecurity;
 }
@@ -1167,6 +1169,8 @@ impl pallet_fees::Config for Runtime {
   type FeesPalletId = FeesPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type UnixTime = Timestamp;
+  // Security utils
+  type Security = WraprSecurity;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
 }
 
