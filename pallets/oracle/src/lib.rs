@@ -244,7 +244,7 @@ pub mod pallet {
               WithdrawConsequence::Success => {
                 // 8. Calculate and transfer network fee
                 // FIXME: Should we take a transfer fee on the FROM or the TO asset or both?
-                let network_fee = T::Fees::calculate_trading_fee(trade.token_to, total_to);
+                let trading_fees = T::Fees::calculate_trading_fees(trade.token_to, total_to);
 
                 // 9. Make sure the requester can deposit the new asset before initializing trade process
                 T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
@@ -252,12 +252,15 @@ pub mod pallet {
                   .map_err(|_| Error::<T>::BurnFailed)?;
 
                 for mm in market_makers.iter() {
-                  // 10. Transfer funds from the requester to the market makers
+                  // 10. a) Transfer funds from the requester to the market makers
+                  let amount_and_fee =
+                    T::Fees::calculate_trading_fees(trade.token_from, mm.amount_to_receive);
                   if T::CurrencyWrapr::transfer(
                     trade.token_from,
                     &trade.account_id,
                     &mm.account_id,
-                    mm.amount_to_receive,
+                    // deduce the fee from the amount
+                    mm.amount_to_receive - amount_and_fee.fee,
                     true,
                   )
                   .is_err()
@@ -265,31 +268,68 @@ pub mod pallet {
                     // FIXME: Add rollback
                   }
 
-                  // 10. Transfer funds from the market makers to the account
+                  // 10. b) Requester pay fees of the transaction, but this is deducted
+                  // from the MM final amount, so this is paid by the MM
+                  if T::CurrencyWrapr::transfer(
+                    trade.token_from,
+                    &trade.account_id,
+                    &T::Fees::account_id(),
+                    amount_and_fee.fee,
+                    true,
+                  )
+                  .is_err()
+                  {
+                    // FIXME: Add rollback
+                  }
+
+                  // 10. c) Register a new trading fees associated with the account.
+                  // A percentage of the network profits will be re-distributed to the account at the end of the era.
+                  T::Fees::register_trading_fees(
+                    trade.account_id.clone(),
+                    trade.token_from,
+                    mm.amount_to_receive,
+                  );
+
+                  // 11. a) Transfer funds from the market makers to the account
+                  let amount_and_fee =
+                    T::Fees::calculate_trading_fees(trade.token_to, mm.amount_to_send);
                   if T::CurrencyWrapr::transfer(
                     trade.token_to,
                     &mm.account_id,
                     &trade.account_id,
-                    mm.amount_to_send,
+                    // deduce the fee from the amount
+                    mm.amount_to_send - amount_and_fee.fee,
                     true,
                   )
                   .is_err()
                   {
                     // FIXME: Add rollback
                   }
+
+                  // 11. b) Market makers pay fees of the transaction, but this is deducted
+                  // from the requester final amount, so this is paid by the requester
+                  if T::CurrencyWrapr::transfer(
+                    trade.token_to,
+                    &mm.account_id,
+                    &T::Fees::account_id(),
+                    amount_and_fee.fee,
+                    true,
+                  )
+                  .is_err()
+                  {
+                    // FIXME: Add rollback
+                  }
+
+                  // 11. c) Register a new trading fees associated with the account.
+                  // A percentage of the network profits will be re-distributed to the account at the end of the era.
+                  T::Fees::register_trading_fees(
+                    mm.account_id.clone(),
+                    trade.token_to,
+                    mm.amount_to_send,
+                  );
                 }
 
-                // 11. Pay network fee
-                T::CurrencyWrapr::transfer(
-                  trade.token_to,
-                  &trade.account_id,
-                  &T::Fees::account_id(),
-                  network_fee,
-                  true,
-                )
-                .map_err(|_| Error::<T>::FeesFailed)?;
-
-                // 12. Emit event on chain
+                // 13. Emit event on chain
                 Self::deposit_event(Event::<T>::Traded(
                   request_id,
                   trade.account_id.clone(),
