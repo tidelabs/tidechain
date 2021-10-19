@@ -372,6 +372,7 @@ pub fn testnet_genesis(
       account: root,
     },
     wrapr_security: Default::default(),
+    wrapr_fees: Default::default(),
   }
 }
 

@@ -106,6 +106,36 @@ pub mod pallet {
     ValueQuery,
   >;
 
+  /// Genesis configuration
+  #[pallet::genesis_config]
+  pub struct GenesisConfig {
+    /// The percentage on each trade to be taken as a network fee. Default is 2%.
+    pub fee_percentage: Percent,
+    /// The percentage of all fees for the each asset to re-distribute based on
+    /// the trading volume for each account. Default is 20%.
+    pub distribution_percentage: Percent,
+  }
+
+  #[cfg(feature = "std")]
+  impl Default for GenesisConfig {
+    fn default() -> Self {
+      Self {
+        // Default network fee
+        fee_percentage: Percent::from_parts(2),
+        // Default distribution percentage
+        distribution_percentage: Percent::from_parts(20),
+      }
+    }
+  }
+
+  #[pallet::genesis_build]
+  impl<T: Config> GenesisBuild<T> for GenesisConfig {
+    fn build(&self) {
+      FeePercentageAmount::<T>::put(self.fee_percentage);
+      DistributionPercentage::<T>::put(self.distribution_percentage);
+    }
+  }
+
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
@@ -132,7 +162,6 @@ pub mod pallet {
         match active_era.start_block {
           Some(start_block) => {
             let expected_end_block = start_block + Self::era_length().unwrap_or_default();
-
             // end of era
             if real_block >= expected_end_block {
               let _ = Self::end_era(active_era);
@@ -218,8 +247,62 @@ pub mod pallet {
     // we do not use the currency for now as all asset have same fees
     // but if we need to update in the future, we could simply use the currency id
     // and update the storage
-    fn calculate_trading_fee(_currency_id: CurrencyId, amount: Balance) -> Balance {
-      Self::fee_percentage() * amount
+    fn calculate_trading_fees(_currency_id: CurrencyId, total_amount_before_fees: Balance) -> Fee {
+      Fee {
+        amount: total_amount_before_fees,
+        fee: Self::fee_percentage() * total_amount_before_fees,
+      }
+    }
+
+    fn register_trading_fees(
+      account_id: T::AccountId,
+      currency_id: CurrencyId,
+      total_amount_before_fees: Balance,
+    ) -> Fee {
+      match Self::active_era() {
+        Some(current_era) => {
+          let new_fee = Fee {
+            amount: total_amount_before_fees,
+            fee: Self::fee_percentage() * total_amount_before_fees,
+          };
+
+          // Update fees pool for the current era / currency
+          EraTotalFees::<T>::mutate_exists(
+            current_era.index,
+            currency_id,
+            |current_currency_fee| {
+              *current_currency_fee = Some(
+                current_currency_fee
+                  .as_ref()
+                  .map(|current_fee| Fee {
+                    amount: current_fee.amount + new_fee.amount,
+                    fee: current_fee.fee + new_fee.fee,
+                  })
+                  .unwrap_or(new_fee.clone()),
+              );
+            },
+          );
+
+          // Update the total fees for the account
+          AccountFees::<T>::mutate_exists(currency_id, account_id, |account_fee_for_currency| {
+            *account_fee_for_currency = Some(
+              account_fee_for_currency
+                .as_ref()
+                .map(|current_fee| Fee {
+                  amount: current_fee.amount + new_fee.amount,
+                  fee: current_fee.fee + new_fee.fee,
+                })
+                .unwrap_or(new_fee.clone()),
+            );
+          });
+
+          new_fee
+        }
+        None => Fee {
+          amount: total_amount_before_fees,
+          fee: 0,
+        },
+      }
     }
   }
 }

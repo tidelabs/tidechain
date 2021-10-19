@@ -1222,7 +1222,7 @@ construct_runtime!(
         // Storage, events and traits for the asset registry
         WraprAssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 35,
         // Storage, events and traits for the fees
-        WraprFees: pallet_fees::{Pallet, Storage, Event<T>} = 36,
+        WraprFees: pallet_fees::{Pallet, Config, Storage, Event<T>} = 36,
     }
 );
 /// Digest item type.
