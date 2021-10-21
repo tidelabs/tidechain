@@ -1,0 +1,47 @@
+deploy-node-dev:
+  stage: deploy
+  # TODO: replace with common CICD worker container
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/ubuntu
+  environment:
+    name: dev
+  resource_group: dev
+  rules:
+    # Run if MR to dev branch is accepted
+    # - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "dev" && $CI_MERGE_REQUEST_APPROVED
+    # Also run on CICD branch for testing
+    # - if: $CI_COMMIT_BRANCH =~ /^cicd/
+    # Also run on a direct push to dev branch
+    - if: $CI_COMMIT_BRANCH == "dev"
+  extends: .docker_auth
+  dependencies: []
+  cache: {}
+  before_script:
+    # Set up docker image for ssh-agent and rsync
+    # TODO: Move to common CICD worker container
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client rsync -y )'
+    - eval $(ssh-agent -s)
+    - echo "$glrun_dedevtidesubstrate_a" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    # Add known host
+    - ssh-keyscan 10.100.2.{2,3} >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "copying cicd/docker-compose.dev.yml to vcloud servers..."
+    - >
+      rsync -v
+      $CI_PROJECT_DIR/cicd/docker-compose.dev.yml
+      glrun@10.100.2.{2,3}:/srv/tidedi-substrate
+    - echo "copying cicd/nginx.conf to vcloud server..."
+    - >
+      rsync -v
+      $CI_PROJECT_DIR/cicd/nginx.conf
+      glrun@10.100.2.{2,3}:/srv/tidedi-substrate
+    - echo "pulling semnet/tidefi/back/tidefi-substrate/node:dev image to server..."
+    - >
+      ssh glrun@10.100.2.{2,3}
+      "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY && docker pull $CI_REGISTRY_IMAGE/node:dev"
+    # - echo "restarting semnet/tidefi/back/tidefi-substrate/node:dev Dev on server..."
+    # - >
+    #   ssh glrun@10.100.2.{2,3}
+    #   "cd /srv/tidedi-substrate/ && docker-compose -f docker-compose.dev.yml up -d"
