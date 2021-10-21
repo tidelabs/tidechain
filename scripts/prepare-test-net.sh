@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 set -e
+# numbers of quorum
+Q_NUM=3
 
+# empty strings
+AUTHORITIES=""
+QUORUMS=""
 
+# numbers of validators
+if [ "$#" -ne 1 ]; then
+	V_NUM=3
+else
+   V_NUM=$1
+fi
 
 generate_account_id() {
 	subkey inspect ${3:-} ${4:-} "$SECRET//$1//$2" | grep "Account ID" | awk '{ print $3 }'
@@ -34,23 +45,37 @@ generate_address_and_account_id() {
 	printf "//$ADDRESS\nhex![\"${ACCOUNT#'0x'}\"].$INTO(),"
 }
 
-if [ "$#" -ne 1 ]; then
-	V_NUM=3
-else
-   V_NUM=$1
-fi
-
-AUTHORITIES=""
-
 for i in $(seq 1 $V_NUM); do
 	AUTHORITIES+="(\n"
-	AUTHORITIES+="$(generate_address_and_account_id $i stash)\n"
-	AUTHORITIES+="$(generate_address_and_account_id $i controller)\n"
-	AUTHORITIES+="$(generate_address_and_account_id $i grandpa '--scheme ed25519' true)\n"
-	AUTHORITIES+="$(generate_address_and_account_id $i babe '--scheme sr25519' true)\n"
-	AUTHORITIES+="$(generate_address_and_account_id $i im_online '--scheme sr25519' true)\n"
-	AUTHORITIES+="$(generate_address_and_account_id $i authority_discovery '--scheme sr25519' true)\n"
+	AUTHORITIES+="$(generate_address_and_account_id validator$i stash)\n"
+	AUTHORITIES+="$(generate_address_and_account_id validator$i controller)\n"
+	AUTHORITIES+="$(generate_address_and_account_id validator$i grandpa '--scheme ed25519' true)\n"
+	AUTHORITIES+="$(generate_address_and_account_id validator$i babe '--scheme sr25519' true)\n"
+	AUTHORITIES+="$(generate_address_and_account_id validator$i im_online '--scheme sr25519' true)\n"
+	AUTHORITIES+="$(generate_address_and_account_id validator$i authority_discovery '--scheme sr25519' true)\n"
 	AUTHORITIES+="),\n"
 done
 
-printf "$AUTHORITIES"
+printf "// initial authorities\nvec!["
+printf "$AUTHORITIES]"
+
+# QUORUMS
+for i in $(seq 1 $Q_NUM); do
+	QUORUMS+="$(generate_address_and_account_id quorum$i controller)\n"
+done
+
+printf "\n\n"
+printf "// quorums\nvec![\n"
+printf "$QUORUMS]"
+
+# ORACLE
+printf "\n\n"
+printf "// oracle\n"
+printf "$(generate_address_and_account_id oracle controller)\n"
+
+# ROOT
+printf "\n\n"
+printf "// root\n"
+printf "$(generate_address_and_account_id root controller)\n"
+
+printf "\n\n"
