@@ -277,7 +277,7 @@ pub mod pallet {
                     amount: current_fee.amount + new_fee.amount,
                     fee: current_fee.fee + new_fee.fee,
                   })
-                  .unwrap_or(new_fee.clone()),
+                  .unwrap_or_else(|| new_fee.clone()),
               );
             },
           );
@@ -291,7 +291,7 @@ pub mod pallet {
                   amount: current_fee.amount + new_fee.amount,
                   fee: current_fee.fee + new_fee.fee,
                 })
-                .unwrap_or(new_fee.clone()),
+                .unwrap_or_else(|| new_fee.clone()),
             );
           });
 

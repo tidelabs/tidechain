@@ -263,8 +263,8 @@ pub fn testnet_genesis(
   let mut claims: Vec<(AccountId, Balance)> = stakeholders
     .clone()
     .into_iter()
-    .filter(|(currency_id, _, _)| currency_id.clone() == CurrencyId::Tide)
-    .map(|(_, account_id, balance)| (account_id.clone(), balance.clone()))
+    .filter(|(currency_id, _, _)| *currency_id == CurrencyId::Tide)
+    .map(|(_, account_id, balance)| (account_id, balance))
     .collect();
 
   let mut total_claims: u128 = 0;
@@ -342,8 +342,8 @@ pub fn testnet_genesis(
       let all_endowed_accounts = stakeholders
         .clone()
         .into_iter()
-        .filter(|(currency_id, _, _)| currency_id.clone() == CurrencyId::Wrapped(*asset_id))
-        .map(|(_, account_id, balance)| (account_id.clone(), balance.clone()))
+        .filter(|(currency_id, _, _)| *currency_id == CurrencyId::Wrapped(*asset_id))
+        .map(|(_, account_id, balance)| (account_id, balance))
         .collect();
       (
         CurrencyId::Wrapped(*asset_id),
@@ -432,7 +432,7 @@ pub fn testnet_genesis(
   }
 }
 
-pub fn get_vesting_terms() -> Vec<(AccountId, u32, u32, u32, Balance)> {
+pub fn _get_vesting_terms() -> Vec<(AccountId, u32, u32, u32, Balance)> {
   // 43800 = minutes in a month
   // 20 blocks / minutes
   // 876_000 blocks / months
@@ -469,84 +469,84 @@ pub fn get_stakeholder_tokens_devnet() -> Vec<(CurrencyId, AccountId, Balance)> 
     (
       CurrencyId::Wrapped(assets::USDT),
       alice_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::USDT),
       bob_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::USDT),
       eve_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::USDT),
       ferdie_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     // 100k USDC
     (
       CurrencyId::Wrapped(assets::USDC),
       alice_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::USDC),
       bob_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::USDC),
       eve_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::USDC),
       ferdie_addr.clone(),
-      100_000_00,
+      10_000_000,
     ),
     // 10k BTC
     (
       CurrencyId::Wrapped(assets::BTC),
       alice_addr.clone(),
-      10_000_000_000_00,
+      1_000_000_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::BTC),
       bob_addr.clone(),
-      10_000_000_000_00,
+      1_000_000_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::BTC),
       eve_addr.clone(),
-      10_000_000_000_00,
+      1_000_000_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::BTC),
       ferdie_addr.clone(),
-      10_000_000_000_00,
+      1_000_000_000_000,
     ),
     // 10k ETH
     (
       CurrencyId::Wrapped(assets::ETH),
-      alice_addr.clone(),
+      alice_addr,
       10_000_000_000_000_000_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::ETH),
-      bob_addr.clone(),
+      bob_addr,
       10_000_000_000_000_000_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::ETH),
-      eve_addr.clone(),
+      eve_addr,
       10_000_000_000_000_000_000_000,
     ),
     (
       CurrencyId::Wrapped(assets::ETH),
-      ferdie_addr.clone(),
+      ferdie_addr,
       10_000_000_000_000_000_000_000,
     ),
   ];
