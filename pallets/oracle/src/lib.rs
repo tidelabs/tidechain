@@ -244,7 +244,7 @@ pub mod pallet {
               WithdrawConsequence::Success => {
                 // 8. Calculate and transfer network fee
                 // FIXME: Should we take a transfer fee on the FROM or the TO asset or both?
-                let trading_fees = T::Fees::calculate_trading_fees(trade.token_to, total_to);
+                let _trading_fees = T::Fees::calculate_trading_fees(trade.token_to, total_to);
 
                 // 9. Make sure the requester can deposit the new asset before initializing trade process
                 T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)

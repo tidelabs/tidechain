@@ -137,7 +137,6 @@ pub mod pallet {
   }
 
   #[pallet::event]
-  #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// The fees get redistributed successfully
     /// \[era last block, currency_id, amount\]
@@ -182,7 +181,7 @@ pub mod pallet {
   }
 
   impl<T: Config> Pallet<T> {
-    fn start_era() {
+    fn _start_era() {
       ActiveEra::<T>::mutate(|active_era| {
         let new_index = active_era.as_ref().map(|info| info.index + 1).unwrap_or(0);
         *active_era = Some(ActiveEraInfo::<T::BlockNumber> {
@@ -200,7 +199,7 @@ pub mod pallet {
       if let Some(active_era_start) = active_era.start {
         let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
 
-        let era_duration = (now_as_millis_u64 - active_era_start).saturated_into::<u64>();
+        let _era_duration = (now_as_millis_u64 - active_era_start).saturated_into::<u64>();
         let all_fees_collected: Vec<(CurrencyId, Fee)> =
           EraTotalFees::<T>::iter_prefix(active_era.index).collect();
 
@@ -222,7 +221,7 @@ pub mod pallet {
 
             // FIXME: Convert this amount in TIDE and transfer them from
             // this account maybe?
-            let total_tide_token = total_token_for_current_account;
+            let _total_tide_token = total_token_for_current_account;
 
             T::CurrencyWrapr::transfer(
               CurrencyId::Tide,
