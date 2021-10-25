@@ -24,11 +24,11 @@ pub mod pallet {
     },
     PalletId,
   };
-  use frame_system::pallet_prelude::*;
-  use sp_runtime::{traits::AccountIdConversion, Percent, Permill, SaturatedConversion};
+
+  use sp_runtime::{traits::AccountIdConversion, Percent, SaturatedConversion};
   use tidefi_primitives::{
     pallet::{FeesExt, SecurityExt},
-    ActiveEraInfo, Balance, BalanceInfo, BlockNumber, CurrencyId, EraIndex, Fee, Stake,
+    ActiveEraInfo, Balance, BlockNumber, CurrencyId, EraIndex, Fee,
   };
 
   #[pallet::config]

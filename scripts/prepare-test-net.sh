@@ -2,6 +2,8 @@
 set -e
 # numbers of quorum
 Q_NUM=3
+# numbers of investors
+I_NUM=5
 
 # empty strings
 AUTHORITIES=""
@@ -67,6 +69,15 @@ done
 printf "\n\n"
 printf "// quorums\nvec![\n"
 printf "$QUORUMS]"
+
+# INVESTORS (ONLY TIDEs)
+for i in $(seq 1 $I_NUM); do
+	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1000 TIDES\n1000 * TIDE),\n"
+done
+
+printf "\n\n"
+printf "// investors\nvec![\n"
+printf "$INVESTORS]"
 
 # ORACLE
 printf "\n\n"
