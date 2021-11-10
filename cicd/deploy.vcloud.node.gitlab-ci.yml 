@@ -6,12 +6,8 @@ deploy-node-vcloud:
     name: vcloud
   resource_group: dev
   rules:
-    # Run if MR to dev branch is accepted
-    # - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "dev" && $CI_MERGE_REQUEST_APPROVED
-    # Also run on CICD branch for testing
-    # - if: $CI_COMMIT_BRANCH =~ /^cicd/
-    # Also run on a direct push to dev branch
-    - if: $CI_COMMIT_BRANCH == "dev"
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "testnet" && $CI_MERGE_REQUEST_APPROVED
+    - if: $CI_COMMIT_BRANCH == "testnet"
   when: manual
   extends: .docker_auth
   dependencies: []
@@ -28,21 +24,12 @@ deploy-node-vcloud:
     - ssh-keyscan 10.100.2.{2,3} >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
   script:
-    - echo "copying cicd/docker-compose.dev.yml to vcloud servers..."
+    - echo "copying cicd/docker-compose.testnet.yml to vcloud servers..."
     - >
       rsync -v
-      $CI_PROJECT_DIR/cicd/docker-compose.dev.yml
+      $CI_PROJECT_DIR/cicd/docker-compose.testnet.yml
       glrun@10.100.2.{2,3}:/srv/tidedi-substrate
-    - echo "copying cicd/nginx.conf to vcloud server..."
-    - >
-      rsync -v
-      $CI_PROJECT_DIR/cicd/nginx.conf
-      glrun@10.100.2.{2,3}:/srv/tidedi-substrate
-    - echo "pulling semnet/tidefi/substrate/tidefi-substrate/node:dev image to server..."
+    - echo "pulling semnet/tidefi/substrate/tidefi-substrate/node:testnet image to server..."
     - >
       ssh glrun@10.100.2.{2,3}
-      "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY && docker pull $CI_REGISTRY_IMAGE/node:dev"
-    # - echo "restarting semnet/tidefi/substrate/tidefi-substrate/node:dev Dev on server..."
-    # - >
-    #   ssh glrun@10.100.2.{2,3}
-    #   "cd /srv/tidedi-substrate/ && docker-compose -f docker-compose.dev.yml up -d"
+      "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY && docker pull $CI_REGISTRY_IMAGE/node:testnet"

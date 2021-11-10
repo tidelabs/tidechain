@@ -1,0 +1,33 @@
+build-node-testnet:
+  stage: build
+  variables:
+    STAGING_ENV: testnet
+    NODE_IMAGE_NAME: node
+  rules:
+    # Run on MR to dev branch
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "testnet"
+      variables:
+        STAGING_ENV: $CI_COMMIT_SHORT_SHA
+    # Do NOT run again after MR is accepted
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "testnet" && $CI_MERGE_REQUEST_APPROVED
+      when: never
+    # Also run on CICD branch for testing
+    # - if: $CI_COMMIT_BRANCH =~ /^cicd/
+    # Also run on a direct push to testnet branch
+    - if: $CI_COMMIT_BRANCH == "testnet"
+      variables:
+        STAGING_ENV: "testnet"
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  before_script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    - echo "$STAGING_ENV"
+    - cp $CI_PROJECT_DIR/cicd/cicd.dockerignore $CI_PROJECT_DIR/.dockerignore
+    - >
+      /kaniko/executor
+      --build-arg CI_JOB_TOKEN=${CI_JOB_TOKEN}
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/cicd/node-dev.Dockerfile
+      --destination $CI_REGISTRY_IMAGE/$NODE_IMAGE_NAME:$STAGING_ENV
