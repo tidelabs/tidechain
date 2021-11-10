@@ -81,9 +81,7 @@ pub fn run() -> Result<()> {
     None => {
       let runner = cli.create_runner(&cli.run)?;
       runner.run_node_until_exit(|config| async move {
-        match config.role {
-          _ => service::new_full(config),
-        }
+        service::new_full(config)
         .map_err(sc_cli::Error::Service)
       })
     }
