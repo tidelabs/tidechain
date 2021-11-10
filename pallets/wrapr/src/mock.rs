@@ -57,10 +57,12 @@ frame_support::construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+    Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
     Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
+    Fees: pallet_fees::{Pallet, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
@@ -142,9 +144,11 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
+  pub const MinimumPeriod: u64 = 5;
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
   pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
+  pub const FeesPalletId: PalletId = PalletId(*b"fees*pal");
 }
 
 impl pallet_wrapr::Config for Test {
@@ -165,12 +169,20 @@ impl pallet_quorum::Config for Test {
   type AssetRegistry = AssetRegistry;
 }
 
+impl pallet_timestamp::Config for Test {
+  type Moment = u64;
+  type OnTimestampSet = ();
+  type MinimumPeriod = MinimumPeriod;
+  type WeightInfo = ();
+}
+
 impl pallet_oracle::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_oracle::weights::SubstrateWeight<Test>;
   type OraclePalletId = OraclePalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type Security = Security;
+  type Fees = Fees;
 }
 
 impl pallet_security::Config for Test {
@@ -187,6 +199,15 @@ impl pallet_asset_registry::Config for Test {
 impl pallet_sudo::Config for Test {
   type Event = Event;
   type Call = Call;
+}
+
+impl pallet_fees::Config for Test {
+  type Event = Event;
+  type Security = Security;
+  type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
+  type FeesPalletId = FeesPalletId;
+  type CurrencyWrapr = Adapter<AccountId>;
+  type UnixTime = Timestamp;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
