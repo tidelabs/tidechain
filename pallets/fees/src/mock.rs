@@ -8,7 +8,6 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    GenesisBuild,
   },
   PalletId,
 };
@@ -23,27 +22,16 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{BlockNumber, CurrencyId};
 
-use crate::pallet as pallet_wrapr;
+use crate::pallet as pallet_fees;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
 
 #[derive(
-  Encode,
-  Decode,
-  scale_info::TypeInfo,
-  Default,
-  Eq,
-  PartialEq,
-  Copy,
-  Clone,
-  RuntimeDebug,
-  PartialOrd,
-  Ord,
-  MaxEncodedLen,
+  Encode, Decode, Default, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
 pub struct AccountId(pub u64);
@@ -69,21 +57,17 @@ frame_support::construct_runtime!(
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-    Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
     Fees: pallet_fees::{Pallet, Storage, Event<T>},
-    Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
-    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
 parameter_types! {
   pub const BlockHashCount: u64 = 250;
   pub const SS58Prefix: u8 = 42;
+  pub const MinimumPeriod: u64 = 5;
 }
 
 impl system::Config for Test {
@@ -111,6 +95,14 @@ impl system::Config for Test {
   type SS58Prefix = SS58Prefix;
   type OnSetCode = ();
 }
+
+impl pallet_timestamp::Config for Test {
+  type Moment = u64;
+  type OnTimestampSet = ();
+  type MinimumPeriod = MinimumPeriod;
+  type WeightInfo = ();
+}
+
 pub const TIDE: Balance = 1_000_000_000_000;
 parameter_types! {
   pub const ExistentialDeposit: Balance = TIDE;
@@ -155,70 +147,23 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const MinimumPeriod: u64 = 5;
+  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
-  pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
-  pub const FeesPalletId: PalletId = PalletId(*b"fees*pal");
-}
-
-impl pallet_wrapr::Config for Test {
-  type Event = Event;
-  type WeightInfo = crate::weights::SubstrateWeight<Test>;
-  type Quorum = Quorum;
-  type CurrencyWrapr = Adapter<AccountId>;
-  type Oracle = Oracle;
-  type AssetRegistry = AssetRegistry;
-}
-
-impl pallet_quorum::Config for Test {
-  type Event = Event;
-  type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
-  type QuorumPalletId = QuorumPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
-  type Security = Security;
-  type AssetRegistry = AssetRegistry;
-}
-
-impl pallet_timestamp::Config for Test {
-  type Moment = u64;
-  type OnTimestampSet = ();
-  type MinimumPeriod = MinimumPeriod;
-  type WeightInfo = ();
-}
-
-impl pallet_oracle::Config for Test {
-  type Event = Event;
-  type WeightInfo = pallet_oracle::weights::SubstrateWeight<Test>;
-  type OraclePalletId = OraclePalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
-  type Security = Security;
-  type Fees = Fees;
-}
-
-impl pallet_security::Config for Test {
-  type Event = Event;
-}
-
-impl pallet_asset_registry::Config for Test {
-  type Event = Event;
-  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
-  type AssetRegistryPalletId = AssetRegistryPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
-}
-
-impl pallet_sudo::Config for Test {
-  type Event = Event;
-  type Call = Call;
+  pub const PeriodBasis: BlockNumber = 1000u32;
 }
 
 impl pallet_fees::Config for Test {
   type Event = Event;
   type Security = Security;
-  type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
-  type FeesPalletId = FeesPalletId;
+  type WeightInfo = crate::weights::SubstrateWeight<Test>;
+  type FeesPalletId = WraprPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type UnixTime = Timestamp;
+}
+
+impl pallet_security::Config for Test {
+  type Event = Event;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
@@ -325,34 +270,12 @@ where
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let alice = 1u64;
-  let bob = 2u64;
+  let _alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
-  pallet_sudo::GenesisConfig::<Test> { key: alice.into() }
-    .assimilate_storage(&mut t)
-    .unwrap();
-  pallet_quorum::GenesisConfig::<Test> {
-    enabled: true,
-    account: alice.into(),
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
-  pallet_oracle::GenesisConfig::<Test> {
-    enabled: true,
-    account: bob.into(),
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
-  pallet_asset_registry::GenesisConfig::<Test> {
-    assets: Vec::new(),
-    account: alice.into(),
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
   t.into()
 }

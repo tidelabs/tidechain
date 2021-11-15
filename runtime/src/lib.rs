@@ -1151,6 +1151,7 @@ parameter_types! {
   pub const OraclePalletId: PalletId = PalletId(*b"py/oracl");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
   pub const WraprStakePalletId: PalletId = PalletId(*b"py/stake");
+  pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
 
   // FIXME: Should be better than that as we have multiple basis
   pub const PeriodBasis: BlockNumber = 1000u32;
@@ -1245,6 +1246,8 @@ impl pallet_oracle::Config for Runtime {
   type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyWrapr = Adapter<AccountId>;
+  // Fees management
+  type Fees = WraprFees;
   // Security utils
   type Security = WraprSecurity;
 }
@@ -1317,6 +1320,16 @@ impl<T: pallet_bags_list::Config + pallet_staking::Config> SortedListProvider<T:
   }
 }
 
+impl pallet_fees::Config for Runtime {
+  type Event = Event;
+  type FeesPalletId = FeesPalletId;
+  type CurrencyWrapr = Adapter<AccountId>;
+  type UnixTime = Timestamp;
+  // Security utils
+  type Security = WraprSecurity;
+  type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
+}
+
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -1366,8 +1379,11 @@ construct_runtime!(
         WraprAssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 35,
         // Provides a semi-sorted list of nominators for staking.
         BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 36,
+        // Storage, events and traits for the fees
+        WraprFees: pallet_fees::{Pallet, Config, Storage, Event<T>} = 36,
     }
 );
+
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 /// The address format for describing accounts.
