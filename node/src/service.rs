@@ -653,7 +653,10 @@ mod tests {
         };
         let signer = charlie.clone();
 
-        let function = Call::Balances(BalancesCall::transfer(to, amount));
+        let function = Call::Balances(BalancesCall::transfer {
+          dest: to,
+          value: amount,
+        });
 
         let check_spec_version = frame_system::CheckSpecVersion::new();
         let check_tx_version = frame_system::CheckTxVersion::new();
@@ -707,15 +710,6 @@ mod tests {
         } = new_full_base(config, |_, _| ())?;
         Ok(sc_service_test::TestNetComponents::new(
           task_manager,
-          client,
-          network,
-          transaction_pool,
-        ))
-      },
-      |config| {
-        let (keep_alive, _, client, network, transaction_pool) = new_light_base(config)?;
-        Ok(sc_service_test::TestNetComponents::new(
-          keep_alive,
           client,
           network,
           transaction_pool,
