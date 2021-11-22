@@ -23,6 +23,7 @@ use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
 };
+use std::str::FromStr;
 use tidefi_primitives::{assets, AssetId, Block, CurrencyId};
 pub use tidefi_primitives::{AccountId, Balance, Signature};
 
@@ -30,6 +31,8 @@ type AccountPublic = <Signature as Verify>::Signer;
 
 const STAGING_TELEMETRY_URL: &str =
   "ws://dedevtidesubstrate-telem.semantic-network.tech:8001/submit/";
+
+const TESTNET_TELEMETRY_URL: &str = "ws://telemetry.stg.e.semantic-network.tech/submit/";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -125,7 +128,10 @@ pub fn development_config() -> ChainSpec {
     ChainType::Development,
     development_config_genesis,
     vec![],
-    None,
+    Some(
+      TelemetryEndpoints::new(vec![(STAGING_TELEMETRY_URL.to_string(), 0)])
+        .expect("Staging telemetry url is valid; qed"),
+    ),
     None,
     Some(properties),
     Default::default(),
@@ -210,20 +216,29 @@ fn testnet_config_genesis() -> GenesisConfig {
   )
 }
 
-/// Testnet config (single validator Alice)
+/// Testnet config (multisig validator)
 pub fn testnet_config() -> ChainSpec {
+  let mut properties = Map::new();
+  properties.insert("tokenSymbol".into(), "TIDE".into());
+  properties.insert("tokenDecimals".into(), 12.into());
+
   ChainSpec::from_genesis(
     "Testnet",
     "tidefi_testnet",
     ChainType::Live,
     testnet_config_genesis,
-    vec![],
+    vec![
+      // FIXME: Add more bootnodes
+      "/ip4/10.100.2.18/tcp/30333/p2p/12D3KooWEQmRfrvLbDcmxm8dGpFqkpeyUm5rLTY2SjKH9VJxE7rj"
+        .parse()
+        .expect("Testnet bootnode uri is valid; qed"),
+    ],
     Some(
-      TelemetryEndpoints::new(vec![(STAGING_TELEMETRY_URL.to_string(), 0)])
-        .expect("Staging telemetry url is valid; qed"),
+      TelemetryEndpoints::new(vec![(TESTNET_TELEMETRY_URL.to_string(), 0)])
+        .expect("Testnet telemetry url is valid; qed"),
     ),
     None,
-    None,
+    Some(properties),
     Default::default(),
   )
 }
@@ -253,7 +268,6 @@ pub fn testnet_genesis(
   root: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> GenesisConfig {
-  let mut quorums = quorums;
   // 1000 TIDEs / validators
   const ENDOWMENT: u128 = 1000 * TIDE;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * TIDE;
@@ -275,21 +289,24 @@ pub fn testnet_genesis(
 
   // get quorum
   let quorum = if quorums.len() > 1 {
-    // 3/5 threshold (60%)
-    // smallest integer greater than or equal to
-    let quorum_threshold = (quorums.len() as f64 * 0.6).ceil();
+    // threshold (60%)
+    let threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
     // create multisig from the quorum accounts provided
-    quorums.sort();
-    let entropy = (
-      b"modlpy/utilisuba",
-      quorums.clone(),
-      quorum_threshold as u64,
-    )
-      .using_encoded(blake2_256);
+    let mut signatories = quorums.clone();
+    signatories.sort();
+    let entropy = (b"modlpy/utilisuba", &signatories, threshold).using_encoded(blake2_256);
     AccountId::decode(&mut &entropy[..]).unwrap_or_default()
   } else {
     quorums.first().unwrap().clone()
   };
+
+  // Little security can be removed once we have confidence into the multisig
+  // It make sure quorum multisig is valid.
+  assert_eq!(
+    quorum,
+    AccountId::from_str("5CvkgWdXHXrUufjmFaoRbo4wnDuuQsufGvr24GyanQ6Q926o").unwrap(),
+    "Invalid quorum multisig"
+  );
 
   // Total funds in treasury
   let mut treasury_funds: u128 = TOTAL_SUPPLY;
