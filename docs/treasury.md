@@ -3,7 +3,7 @@ title: Treasury
 ---
 
 The Treasury is a pot of funds collected through transaction fees, slashing,
-[staking inefficiencies](learn-staking.md#inflation), etc. The funds held in the Treasury can be spent by making a spending proposal that, if approved by the [Council](learn-governance.md#council), will enter a waiting period before distribution. This waiting period is known as the budget period, and its duration is subject to [governance](learn-governance.md), with the current default set to 24 days. The Treasury attempts to spend as many proposals in the queue as it can without running out of funds.
+[staking inefficiencies](staking-tide.md#inflation), etc. The funds held in the Treasury can be spent by making a spending proposal that, if approved by the [Council](governance.md#council), will enter a waiting period before distribution. This waiting period is known as the budget period, and its duration is subject to [governance](governance.md), with the current default set to 24 days. The Treasury attempts to spend as many proposals in the queue as it can without running out of funds.
 
 If the Treasury ends a budget period without spending all of its funds, it suffers a burn of a percentage of its funds -- thereby causing deflationary pressure. This percentage is currently at 1%.
 
@@ -18,7 +18,7 @@ Proposals may consist of (but are not limited to):
 - Community events and outreach (meetups, pizza parties, hackerspaces).
 - Software development (wallets and wallet integration, clients and client upgrades).
 
-The Treasury is ultimately controlled by the [Council](governance#council), and how the funds will be spent is up to their judgment.
+The Treasury is ultimately controlled by the [Council](governance.md#council), and how the funds will be spent is up to their judgment.
 
 ## Funding the Treasury
 
