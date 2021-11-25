@@ -579,10 +579,11 @@ pallet_staking_reward_curve::build! {
 }
 
 parameter_types! {
-    // Six session in a an era (24 hrs)
+    // Six sessions in an era (6 hours).
     pub const SessionsPerEra: sp_staking::SessionIndex = 6;
-    // 28 era for unbonding (28 days)
+    // 28 eras for unbonding (7 days).
     pub const BondingDuration: pallet_staking::EraIndex = 28;
+    // 27 eras in which slashes can be cancelled (slightly less than 7 days).
     pub const SlashDeferDuration: pallet_staking::EraIndex = 27;
     pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
     pub const MaxNominatorRewardedPerValidator: u32 = 256;
@@ -759,7 +760,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 parameter_types! {
-    pub const TechnicalMotionDuration: BlockNumber = 7 * DAYS;
+    pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
     pub const TechnicalMaxProposals: u32 = 100;
     pub const TechnicalMaxMembers: u32 = 100;
 }
@@ -805,7 +806,7 @@ parameter_types! {
     pub const TipReportDepositBase: Balance = TIDE;
     pub const DataDepositPerByte: Balance = CENTS;
     pub const BountyDepositBase: Balance = TIDE;
-    pub const BountyDepositPayoutDelay: BlockNumber = 8 * DAYS;
+    pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
     pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
     pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
     pub const MaximumReasonLength: u32 = 16384;
