@@ -165,6 +165,7 @@ impl pallet_fees::Config for Test {
   // Security utils
   type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -283,6 +284,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .build_storage::<Test>()
     .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut t)
+    .unwrap();
+  pallet_fees::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
   pallet_oracle::GenesisConfig::<Test> {
