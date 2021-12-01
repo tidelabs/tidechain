@@ -31,10 +31,11 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	ln -s /data /tidefi/.local/share/tidefi-node && \
 	rm -rf /usr/bin /usr/sbin
 
+USER tidefi
+
 # Generate testnet chain spec with current genesis hash
 RUN /usr/local/bin/tidefi-node build-spec --disable-default-bootnode --chain testnet > /data/testnet-spec.json
 
-USER tidefi
 EXPOSE 30333 9933 9944
 VOLUME ["/data"]
 
