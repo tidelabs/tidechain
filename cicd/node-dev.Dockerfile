@@ -29,7 +29,10 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	ln -s /data /tidefi/.local/share/tidefi-node && \
 	rm -rf /usr/bin /usr/sbin
 
-# Copy specs (they dont seems to be required anymore, but we'll keep it available in case)
+# Generate testnet chain spec with current genesis hash
+# RUN /usr/local/bin/tidefi-node build-spec --disable-default-bootnode --chain testnet > ./data/testnet-spec.json
+
+# FIXME: Remove once we recovered the RPC nodes
 COPY --from=builder /tidefi/resources/tidefi-spec.json /data
 
 USER tidefi
