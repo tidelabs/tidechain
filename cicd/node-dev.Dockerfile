@@ -22,7 +22,7 @@ RUN apt update && apt install -y gpg ca-certificates ubuntu-keyring
 # Copy node binary
 COPY --from=builder /tidefi/target/release/tidefi-node /usr/local/bin
 # Copy WASM for runtime upgrade
-COPY --from=builder /tidefi/target/release/wbuild/node-tidefi-runtime/node_tidefi_runtime.compact.wasm /data/tidechain_runtime.testnet.compact.wasm
+COPY --from=builder /tidefi/target/release/wbuild/node-tidefi-runtime/node_tidefi_runtime.compact.compressed.wasm /data/tidechain_testnet.compact.compressed.wasm
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	mkdir -p /tidefi/.local/share && \
@@ -34,13 +34,7 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 
 USER tidefi
 
-# Generate testnet chain spec with current genesis hash
-RUN [ "/bin/sh", "-c", "/usr/local/bin/tidefi-node build-spec --disable-default-bootnode --chain testnet > /data/testnet-spec.json" ]
-
 EXPOSE 30333 9933 9944
 VOLUME ["/data"]
 
 CMD ["/usr/local/bin/tidefi-node"]
-
-# You should be able to run a validator using this docker image in a bash environmment with the following command:
-# docker run <docker_image_name> --chain /data/tidefi-spec.json --bootnodes <bootnodes> --validator --name "Validator-Name"
