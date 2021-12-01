@@ -22,19 +22,20 @@ RUN apt update && apt install -y gpg ca-certificates ubuntu-keyring
 # Copy node binary
 COPY --from=builder /tidefi/target/release/tidefi-node /usr/local/bin
 # Copy WASM for runtime upgrade
-COPY --from=builder /tidefi/target/release/wbuild/node-tidefi-runtime/node_tidefi_runtime.wasm /data/tidechain_runtime.compact.compressed.wasm
+COPY --from=builder /tidefi/target/release/wbuild/node-tidefi-runtime/node_tidefi_runtime.compact.wasm /data/tidechain_runtime.testnet.compact.wasm
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	mkdir -p /tidefi/.local/share && \
 	mkdir -p /data && \
 	chown -R tidefi:tidefi /data && \
 	ln -s /data /tidefi/.local/share/tidefi-node && \
-	rm -rf /usr/bin /usr/sbin
+	rm -rf /usr/bin /usr/sbin && \
+	/usr/local/bin/tidefi-node --version
 
 USER tidefi
 
 # Generate testnet chain spec with current genesis hash
-RUN /usr/local/bin/tidefi-node build-spec --disable-default-bootnode --chain testnet > /data/testnet-spec.json
+RUN [ "/bin/sh", "-c", "/usr/local/bin/tidefi-node build-spec --disable-default-bootnode --chain testnet > /data/testnet-spec.json" ]
 
 EXPOSE 30333 9933 9944
 VOLUME ["/data"]
