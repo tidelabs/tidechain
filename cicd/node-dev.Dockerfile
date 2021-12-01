@@ -21,6 +21,8 @@ RUN apt update && apt install -y gpg ca-certificates ubuntu-keyring
 
 # Copy node binary
 COPY --from=builder /tidefi/target/release/tidefi-node /usr/local/bin
+# Copy WASM for runtime upgrade
+COPY --from=builder /tidefi/target/release/wbuild/node-tidefi-runtime/node_tidefi_runtime.wasm /data/tidechain_runtime.compact.compressed.wasm
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	mkdir -p /tidefi/.local/share && \
@@ -30,10 +32,7 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /tidefi tidefi && \
 	rm -rf /usr/bin /usr/sbin
 
 # Generate testnet chain spec with current genesis hash
-# RUN /usr/local/bin/tidefi-node build-spec --disable-default-bootnode --chain testnet > ./data/testnet-spec.json
-
-# FIXME: Remove once we recovered the RPC nodes
-COPY --from=builder /tidefi/resources/tidefi-spec.json /data
+RUN /usr/local/bin/tidefi-node build-spec --disable-default-bootnode --chain testnet > ./data/testnet-spec.json
 
 USER tidefi
 EXPOSE 30333 9933 9944
