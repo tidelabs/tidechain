@@ -6,9 +6,9 @@ use itertools::Itertools;
 pub use node_tidefi_runtime::GenesisConfig;
 use node_tidefi_runtime::{
   constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
-  BalancesConfig, CouncilConfig, IndicesConfig, SessionConfig, SessionKeys, StakerStatus,
-  StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig, TreasuryPalletId,
-  WraprAssetRegistryConfig, WraprOracleConfig, WraprQuorumConfig,
+  BalancesConfig, CouncilConfig, FeesPalletId, IndicesConfig, SessionConfig, SessionKeys,
+  StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
+  TreasuryPalletId, WraprAssetRegistryConfig, WraprOracleConfig, WraprQuorumConfig,
 };
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
@@ -23,7 +23,6 @@ use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
 };
-use std::str::FromStr;
 use tidefi_primitives::{assets, AssetId, Block, CurrencyId};
 pub use tidefi_primitives::{AccountId, Balance, Signature};
 
@@ -31,8 +30,7 @@ type AccountPublic = <Signature as Verify>::Signer;
 
 const STAGING_TELEMETRY_URL: &str =
   "ws://dedevtidesubstrate-telem.semantic-network.tech:8001/submit/";
-
-const TESTNET_TELEMETRY_URL: &str = "ws://telemetry.stg.e.semantic-network.tech/submit/";
+const TESTNET_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -300,24 +298,19 @@ pub fn testnet_genesis(
     quorums.first().unwrap().clone()
   };
 
-  // Little security can be removed once we have confidence into the multisig
-  // It make sure quorum multisig is valid.
-  assert_eq!(
-    quorum,
-    AccountId::from_str("5CvkgWdXHXrUufjmFaoRbo4wnDuuQsufGvr24GyanQ6Q926o").unwrap(),
-    "Invalid quorum multisig"
-  );
-
   // Total funds in treasury
   let mut treasury_funds: u128 = TOTAL_SUPPLY;
   treasury_funds -=
     // remove the fund allocated to the validators and quorums
     adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
     // all tokens claimed by the stake holders
-    + total_claims;
+    + total_claims
+    // 1 tide endowed to the fee pallet 
+    + 1_000_000_000_000;
 
   // Treasury Account Id
   let treasury_account: AccountId = TreasuryPalletId::get().into_account();
+  let fees_account: AccountId = FeesPalletId::get().into_account();
 
   // Each initial validator get an endowment of `ENDOWMENT` TIDE.
   let mut inital_validators_endowment = initial_authorities
@@ -331,6 +324,8 @@ pub fn testnet_genesis(
   let mut endowed_accounts = vec![
     // Treasury funds
     (treasury_account, treasury_funds),
+    // 1 tide to make sure the fees pallet can receive funds
+    (fees_account, 1_000_000_000_000),
   ];
 
   // Add all stake holders account

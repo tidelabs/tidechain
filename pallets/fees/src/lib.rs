@@ -3,8 +3,8 @@
 #[cfg(test)]
 mod mock;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+#[cfg(test)]
+mod tests;
 
 pub mod weights;
 pub use weights::*;
@@ -24,6 +24,7 @@ pub mod pallet {
     },
     PalletId,
   };
+  use frame_system::pallet_prelude::*;
 
   use sp_runtime::{traits::AccountIdConversion, Percent, SaturatedConversion};
   use tidefi_primitives::{
@@ -57,6 +58,9 @@ pub mod pallet {
     type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+
+    /// The origin which may forcibly update the fee and distribution percentage
+    type ForceOrigin: EnsureOrigin<Self::Origin>;
   }
 
   #[pallet::pallet]
@@ -108,39 +112,50 @@ pub mod pallet {
 
   /// Genesis configuration
   #[pallet::genesis_config]
-  pub struct GenesisConfig {
+  pub struct GenesisConfig<T: Config> {
     /// The percentage on each trade to be taken as a network fee. Default is 2%.
     pub fee_percentage: Percent,
     /// The percentage of all fees for the each asset to re-distribute based on
     /// the trading volume for each account. Default is 20%.
     pub distribution_percentage: Percent,
+    pub runtime_marker: PhantomData<T>,
   }
 
   #[cfg(feature = "std")]
-  impl Default for GenesisConfig {
+  impl<T: Config> Default for GenesisConfig<T> {
     fn default() -> Self {
       Self {
         // Default network fee
         fee_percentage: Percent::from_parts(2),
         // Default distribution percentage
         distribution_percentage: Percent::from_parts(20),
+        runtime_marker: PhantomData,
       }
     }
   }
 
   #[pallet::genesis_build]
-  impl<T: Config> GenesisBuild<T> for GenesisConfig {
+  impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
       FeePercentageAmount::<T>::put(self.fee_percentage);
       DistributionPercentage::<T>::put(self.distribution_percentage);
+      ActiveEra::<T>::put(ActiveEraInfo::<T::BlockNumber> {
+        index: 1,
+        // Set new active era start in next `on_finalize`. To guarantee usage of `Time`
+        start_block: None,
+        start: None,
+      });
     }
   }
 
   #[pallet::event]
+  #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// The fees get redistributed successfully
     /// \[era last block, currency_id, amount\]
     Rewarded(BlockNumber, CurrencyId, Balance),
+    DistributionPercentageUpdated(Percent),
+    FeesPercentageUpdated(Percent),
   }
 
   // Errors inform users that something went wrong.
@@ -163,7 +178,8 @@ pub mod pallet {
             let expected_end_block = start_block + Self::era_length().unwrap_or_default();
             // end of era
             if real_block >= expected_end_block {
-              let _ = Self::end_era(active_era);
+              // FIXME: Make sure end era doesnt break the chain
+              //let _ = Self::end_era(active_era);
             }
           }
           None => {
@@ -180,8 +196,45 @@ pub mod pallet {
     }
   }
 
+  #[pallet::call]
   impl<T: Config> Pallet<T> {
-    fn _start_era() {
+    #[pallet::weight(0)]
+    pub fn set_distribution_percentage(
+      origin: OriginFor<T>,
+      percentage: Percent,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is signed by `account_id`
+      T::ForceOrigin::ensure_origin(origin)?;
+
+      // 2. Update oracle status
+      DistributionPercentage::<T>::set(percentage);
+
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::DistributionPercentageUpdated(percentage));
+
+      Ok(().into())
+    }
+
+    #[pallet::weight(0)]
+    pub fn set_fees_percentage(
+      origin: OriginFor<T>,
+      percentage: Percent,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is signed by `account_id`
+      T::ForceOrigin::ensure_origin(origin)?;
+
+      // 2. Update oracle status
+      FeePercentageAmount::<T>::set(percentage);
+
+      // 3. Emit event on chain
+      Self::deposit_event(Event::<T>::FeesPercentageUpdated(percentage));
+
+      Ok(().into())
+    }
+  }
+
+  impl<T: Config> Pallet<T> {
+    pub fn start_era() {
       ActiveEra::<T>::mutate(|active_era| {
         let new_index = active_era.as_ref().map(|info| info.index + 1).unwrap_or(0);
         *active_era = Some(ActiveEraInfo::<T::BlockNumber> {
@@ -194,7 +247,7 @@ pub mod pallet {
       });
     }
 
-    fn end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
+    pub(crate) fn end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
       // Note: active_era_start can be None if end era is called during genesis config.
       if let Some(active_era_start) = active_era.start {
         let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
