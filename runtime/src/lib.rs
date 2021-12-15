@@ -13,7 +13,7 @@ use frame_support::{
     },
     fungibles::{Inspect, Mutate, Transfer},
     tokens::{DepositConsequence, WithdrawConsequence},
-    EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
+    ConstU32, EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
   },
   weights::{
     constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -77,7 +77,7 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use tidefi_primitives::{
   AccountId, AccountIndex, Amount, AssetId, Balance, BalanceInfo, BlockNumber, CurrencyId,
-  CurrencyMetadata, Hash, Index, Moment, Signature, Stake,
+  CurrencyMetadata, DigestItem, Hash, Index, Moment, Signature, Stake,
 };
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
@@ -214,6 +214,7 @@ impl frame_system::Config for Runtime {
 }
 
 impl pallet_utility::Config for Runtime {
+  type PalletsOrigin = OriginCaller;
   type Event = Event;
   type Call = Call;
   type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
@@ -614,6 +615,13 @@ pallet_staking_reward_curve::build! {
     );
 }
 
+/// A reasonable benchmarking config for staking pallet.
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+  type MaxValidators = ConstU32<1000>;
+  type MaxNominators = ConstU32<1000>;
+}
+
 parameter_types! {
     // Six session in a an era (24 hrs)
     pub const SessionsPerEra: sp_staking::SessionIndex = 6;
@@ -659,6 +667,7 @@ impl pallet_staking::Config for Runtime {
   // Use the nominators map to iter voters, but also keep bags-list up-to-date.
   type SortedListProvider = UseNominatorsAndUpdateBagsList<Runtime>;
   type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
+  type BenchmarkingConfig = StakingBenchmarkingConfig;
 }
 
 parameter_types! {
@@ -1389,8 +1398,6 @@ construct_runtime!(
     }
 );
 
-/// Digest item type.
-pub type DigestItem = generic::DigestItem<Hash>;
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
 /// Block header type as expected by this runtime.
@@ -1427,7 +1434,7 @@ pub type Executive = frame_executive::Executive<
   Block,
   frame_system::ChainContext<Runtime>,
   Runtime,
-  AllPallets,
+  AllPalletsWithSystem,
   (),
 >;
 

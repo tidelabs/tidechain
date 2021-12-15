@@ -89,7 +89,9 @@ pub fn new_partial(config: &Configuration) -> Result<PartialComponents, ServiceE
   let client = Arc::new(client);
 
   let telemetry = telemetry.map(|(worker, telemetry)| {
-    task_manager.spawn_handle().spawn("telemetry", worker.run());
+    task_manager
+      .spawn_handle()
+      .spawn("telemetry", Some("telemetry"), Box::pin(worker.run()));
     telemetry
   });
 
@@ -268,7 +270,6 @@ pub fn new_full_base(
       transaction_pool: transaction_pool.clone(),
       spawn_handle: task_manager.spawn_handle(),
       import_queue,
-      on_demand: None,
       block_announce_validator_builder: None,
       warp_sync: Some(warp_sync),
     })?;
@@ -299,8 +300,6 @@ pub fn new_full_base(
     rpc_extensions_builder,
     transaction_pool: transaction_pool.clone(),
     task_manager: &mut task_manager,
-    on_demand: None,
-    remote_blockchain: None,
     system_rpc_tx,
     telemetry: telemetry.as_mut(),
   })?;
@@ -359,7 +358,7 @@ pub fn new_full_base(
     let babe = sc_consensus_babe::start_babe(babe_config)?;
     task_manager
       .spawn_essential_handle()
-      .spawn_blocking("babe-proposer", babe);
+      .spawn_blocking("babe-proposer", None, babe);
   }
 
   // Spawn authority discovery module.
@@ -389,6 +388,7 @@ pub fn new_full_base(
 
     task_manager.spawn_handle().spawn(
       "authority-discovery-worker",
+      Some("authority-discovery"),
       authority_discovery_worker.run(),
     );
   }
@@ -431,9 +431,11 @@ pub fn new_full_base(
 
     // the GRANDPA voter task is considered infallible, i.e.
     // if it fails we take down the service with it.
-    task_manager
-      .spawn_essential_handle()
-      .spawn_blocking("grandpa-voter", grandpa::run_grandpa_voter(grandpa_config)?);
+    task_manager.spawn_essential_handle().spawn_blocking(
+      "grandpa-voter",
+      None,
+      grandpa::run_grandpa_voter(grandpa_config)?,
+    );
   }
 
   network_starter.start_network();
@@ -548,7 +550,7 @@ mod tests {
           None,
         );
 
-        let mut digest = Digest::<H256>::default();
+        let mut digest = Digest::default();
 
         // even though there's only one authority some slots might be empty,
         // so we must keep trying the next slots until we can claim one.

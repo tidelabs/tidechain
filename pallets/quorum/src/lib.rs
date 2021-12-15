@@ -112,16 +112,23 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Quorum status changed \[is_enabled\]
-    StatusChanged(bool),
-    /// Quorum account changed \[account_id\]
-    AccountChanged(T::AccountId),
+    /// Quorum status changed
+    StatusChanged { is_enabled: bool },
+    /// Quorum account changed
+    AccountChanged { account_id: T::AccountId },
     /// Quorum minted token to the account
-    /// \[account_id, currency_id, amount\]
-    Minted(T::AccountId, CurrencyId, Balance),
+    Minted {
+      account_id: T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+    },
     /// Quorum burned token to the account
-    /// \[request_id, account_id, currency_id, amount\]
-    Burned(Hash, T::AccountId, CurrencyId, Balance),
+    Burned {
+      request_id: Hash,
+      account_id: T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -176,7 +183,11 @@ pub mod pallet {
       T::CurrencyWrapr::mint_into(currency_id, &account_id, mint_amount)?;
 
       // 5. Send event on chain
-      Self::deposit_event(Event::<T>::Minted(account_id, currency_id, mint_amount));
+      Self::deposit_event(Event::<T>::Minted {
+        account_id,
+        currency_id,
+        amount: mint_amount,
+      });
 
       Ok(().into())
     }
@@ -226,12 +237,12 @@ pub mod pallet {
             .map_err(|_| Error::<T>::BurnFailed)?;
 
             // 5. Emit the event on chain
-            Self::deposit_event(Event::<T>::Burned(
+            Self::deposit_event(Event::<T>::Burned {
               request_id,
-              withdrawal.account_id.clone(),
-              withdrawal.asset_id,
-              withdrawal.amount,
-            ));
+              account_id: withdrawal.account_id.clone(),
+              currency_id: withdrawal.asset_id,
+              amount: withdrawal.amount,
+            });
           }
         }
 
@@ -261,7 +272,9 @@ pub mod pallet {
       QuorumStatus::<T>::put(quorum_enabled);
 
       // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::StatusChanged(quorum_enabled));
+      Self::deposit_event(Event::<T>::StatusChanged {
+        is_enabled: quorum_enabled,
+      });
       Ok(().into())
     }
 
@@ -289,7 +302,9 @@ pub mod pallet {
       QuorumAccountId::<T>::put(new_account_id.clone());
 
       // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::AccountChanged(new_account_id));
+      Self::deposit_event(Event::<T>::AccountChanged {
+        account_id: new_account_id,
+      });
 
       Ok(().into())
     }

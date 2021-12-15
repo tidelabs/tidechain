@@ -115,21 +115,20 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Oracle status changed \[is_enabled\]
-    StatusChanged(bool),
-    /// Oracle account changed \[account_id\]
-    AccountChanged(T::AccountId),
+    /// Oracle status changed
+    StatusChanged { is_enabled: bool },
+    /// Oracle account changed
+    AccountChanged { account_id: T::AccountId },
     /// Oracle confirmed trade
-    /// \[request_id, status, account_id, token_from, token_amount_from, token_to, token_amount_to\]
-    Traded(
-      Hash,
-      TradeStatus,
-      T::AccountId,
-      CurrencyId,
-      Balance,
-      CurrencyId,
-      Balance,
-    ),
+    Traded {
+      request_id: Hash,
+      status: TradeStatus,
+      account_id: T::AccountId,
+      currency_from: CurrencyId,
+      currency_amount_from: Balance,
+      currency_to: CurrencyId,
+      currency_amount_to: Balance,
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -408,15 +407,15 @@ pub mod pallet {
                 }
 
                 // 13. Emit event on chain
-                Self::deposit_event(Event::<T>::Traded(
+                Self::deposit_event(Event::<T>::Traded {
                   request_id,
-                  trade.status.clone(),
-                  trade.account_id.clone(),
-                  trade.token_from,
-                  total_from,
-                  trade.token_to,
-                  total_to,
-                ));
+                  status: trade.status.clone(),
+                  account_id: trade.account_id.clone(),
+                  currency_from: trade.token_from,
+                  currency_amount_from: total_from,
+                  currency_to: trade.token_to,
+                  currency_amount_to: total_to,
+                });
               }
               WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds),
               WithdrawConsequence::UnknownAsset => return Err(Error::<T>::UnknownAsset),
@@ -454,7 +453,9 @@ pub mod pallet {
       OracleAccountId::<T>::put(new_account_id.clone());
 
       // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::AccountChanged(new_account_id));
+      Self::deposit_event(Event::<T>::AccountChanged {
+        account_id: new_account_id,
+      });
 
       Ok(().into())
     }
@@ -476,7 +477,7 @@ pub mod pallet {
       OracleStatus::<T>::set(is_enabled);
 
       // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::StatusChanged(is_enabled));
+      Self::deposit_event(Event::<T>::StatusChanged { is_enabled });
 
       Ok(().into())
     }
