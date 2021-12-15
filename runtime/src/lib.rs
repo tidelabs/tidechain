@@ -1382,10 +1382,10 @@ construct_runtime!(
         WraprSecurity: pallet_security::{Pallet, Call, Config, Storage, Event<T>} = 34,
         // Storage, events and traits for the asset registry
         WraprAssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 35,
-        // Provides a semi-sorted list of nominators for staking.
-        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 36,
         // Storage, events and traits for the fees
         WraprFees: pallet_fees::{Pallet, Config<T>, Storage, Event<T>} = 36,
+        // Provides a semi-sorted list of nominators for staking.
+        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 37,
     }
 );
 

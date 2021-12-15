@@ -30,7 +30,18 @@ type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
 
 #[derive(
-  Encode, Decode, Default, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, MaxEncodedLen,
+  Encode,
+  Decode,
+  Default,
+  Eq,
+  PartialEq,
+  Copy,
+  Clone,
+  RuntimeDebug,
+  PartialOrd,
+  Ord,
+  MaxEncodedLen,
+  scale_info::TypeInfo,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
 pub struct AccountId(pub u64);
