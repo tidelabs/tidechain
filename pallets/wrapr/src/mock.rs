@@ -219,6 +219,7 @@ impl pallet_fees::Config for Test {
   type FeesPalletId = FeesPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
   type UnixTime = Timestamp;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

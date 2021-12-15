@@ -120,8 +120,16 @@ pub mod pallet {
     /// Oracle account changed \[account_id\]
     AccountChanged(T::AccountId),
     /// Oracle confirmed trade
-    /// \[request_id, account_id, token_from, token_amount_from, token_to, token_amount_to\]
-    Traded(Hash, T::AccountId, CurrencyId, Balance, CurrencyId, Balance),
+    /// \[request_id, status, account_id, token_from, token_amount_from, token_to, token_amount_to\]
+    Traded(
+      Hash,
+      TradeStatus,
+      T::AccountId,
+      CurrencyId,
+      Balance,
+      CurrencyId,
+      Balance,
+    ),
   }
 
   // Errors inform users that something went wrong.
@@ -135,6 +143,8 @@ pub mod pallet {
     InvalidRequestId,
     /// Invalid request status.
     InvalidRequestStatus,
+    /// Invalid market maker status.
+    InvalidMarketMakerRequest,
     /// There is a conflict in the request.
     Conflict,
     /// Unable to transfer token.
@@ -149,6 +159,8 @@ pub mod pallet {
     UnknownAsset,
     /// No Funds available for this Asset Id.
     NoFunds,
+    /// Trade overflow
+    Overflow,
     /// MarketMakers do not have enough funds
     MarketMakerNoFunds,
     /// MarketMakers cannot deposit source funds of the trade
@@ -171,7 +183,7 @@ pub mod pallet {
     pub fn confirm_trade(
       origin: OriginFor<T>,
       request_id: Hash,
-      market_makers: Vec<TradeConfirmation<T::AccountId>>,
+      market_makers: Vec<TradeConfirmation>,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the oracle/chain is not paused
       Self::ensure_not_paused()?;
@@ -187,27 +199,31 @@ pub mod pallet {
             return Err(Error::<T>::InvalidRequestId);
           }
           Some(trade) => {
-            // 4. Make sure the trade status is pending
-            if trade.status != TradeStatus::Pending {
+            // 5. Make sure the trade status is pending or partially filled
+            if trade.status != TradeStatus::Pending && trade.status != TradeStatus::PartiallyFilled
+            {
               return Err(Error::<T>::InvalidRequestStatus);
             }
 
-            // 5. Calculate totals and all market makers
+            // 6. Calculate totals and all market makers
             let mut total_from: Balance = 0;
             let mut total_to: Balance = 0;
 
             for mm in market_makers.iter() {
+              let mm_trade_request = Trades::<T>::try_get(mm.request_id)
+                .map_err(|_| Error::<T>::InvalidMarketMakerRequest)?;
+
               // make sure all the market markers have enough funds before we can continue
               match T::CurrencyWrapr::can_withdraw(
                 trade.token_to,
-                &mm.account_id,
+                &mm_trade_request.account_id,
                 mm.amount_to_send,
               ) {
                 // make sure we can deposit
                 WithdrawConsequence::Success => {
                   T::CurrencyWrapr::can_deposit(
                     trade.token_from,
-                    &mm.account_id,
+                    &mm_trade_request.account_id,
                     mm.amount_to_receive,
                   )
                   .into_result()
@@ -226,117 +242,180 @@ pub mod pallet {
               }
             }
 
-            // 6. a) Validate totals
-            if trade.amount_from != total_from {
-              return Err(Error::<T>::Conflict);
-            }
-            // 6. b) Maximum of 10% slippage for the `amount_to`
-            if total_to * 10 < trade.amount_to * 9 || total_to * 10 > trade.amount_to * 11 {
-              return Err(Error::Conflict);
+            // 7. a) Validate totals
+            trade.amount_from_filled += total_from;
+            trade.amount_to_filled += total_to;
+
+            if total_from < trade.amount_from {
+              trade.status = TradeStatus::PartiallyFilled;
+              // trade overflow
+              if trade.amount_from_filled > trade.amount_from {
+                return Err(Error::Overflow);
+              }
             }
 
-            // 7. Make sure the `account_id` can withdraw the funds
+            // FIXME: Add slippage check for partial fill
+            // the best would probably get the average value for 1 token, then do the check for 1:1 with provided slippage calculation
+            // 7. b) Maximum of 10% slippage for the `amount_to`
+            //if trade.amount_to_filled * 10 < trade.amount_to * 9 || trade.amount_to_filled * 10 > trade.amount_to * 11 {
+            //  return Err(Error::Conflict);
+            //}
+
+            // 8. Make sure the `account_id` can withdraw the funds
             match T::CurrencyWrapr::can_withdraw(
               trade.token_from,
               &trade.account_id,
               trade.amount_from,
             ) {
               WithdrawConsequence::Success => {
-                // 8. Calculate and transfer network fee
+                // 9. Calculate and transfer network fee
                 // FIXME: Should we take a transfer fee on the FROM or the TO asset or both?
                 let _trading_fees = T::Fees::calculate_trading_fees(trade.token_to, total_to);
 
-                // 9. Make sure the requester can deposit the new asset before initializing trade process
+                // 10. Make sure the requester can deposit the new asset before initializing trade process
                 T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
                   .into_result()
                   .map_err(|_| Error::<T>::BurnFailed)?;
 
                 for mm in market_makers.iter() {
-                  // 10. a) Transfer funds from the requester to the market makers
-                  let amount_and_fee =
-                    T::Fees::calculate_trading_fees(trade.token_from, mm.amount_to_receive);
-                  if T::CurrencyWrapr::transfer(
-                    trade.token_from,
-                    &trade.account_id,
-                    &mm.account_id,
-                    // deduce the fee from the amount
-                    mm.amount_to_receive - amount_and_fee.fee,
-                    true,
-                  )
-                  .is_err()
-                  {
-                    // FIXME: Add rollback
-                  }
+                  Trades::<T>::try_mutate_exists(mm.request_id, |mm_trade_request| {
+                    match mm_trade_request {
+                      None => Err(Error::<T>::InvalidRequestId),
+                      Some(market_maker_trade_intent) => {
+                        // 11. a) Make sure the marketmaker trade request is still valid
+                        if market_maker_trade_intent.status != TradeStatus::Pending
+                          && market_maker_trade_intent.status != TradeStatus::PartiallyFilled
+                        {
+                          return Err(Error::<T>::InvalidRequestStatus);
+                        }
 
-                  // 10. b) Requester pay fees of the transaction, but this is deducted
-                  // from the MM final amount, so this is paid by the MM
-                  if T::CurrencyWrapr::transfer(
-                    trade.token_from,
-                    &trade.account_id,
-                    &T::Fees::account_id(),
-                    amount_and_fee.fee,
-                    true,
-                  )
-                  .is_err()
-                  {
-                    // FIXME: Add rollback
-                  }
+                        // 11. b) Make sure the currency match
+                        if market_maker_trade_intent.token_from != trade.token_to {
+                          return Err(Error::<T>::InvalidMarketMakerRequest);
+                        }
 
-                  // 10. c) Register a new trading fees associated with the account.
-                  // A percentage of the network profits will be re-distributed to the account at the end of the era.
-                  T::Fees::register_trading_fees(
-                    trade.account_id.clone(),
-                    trade.token_from,
-                    mm.amount_to_receive,
-                  );
+                        // 11. c) make sure market maker have enough funds in the trade intent request
+                        if (market_maker_trade_intent.amount_from
+                          - market_maker_trade_intent.amount_from_filled)
+                          < mm.amount_to_send
+                        {
+                          return Err(Error::<T>::InvalidMarketMakerRequest);
+                        }
 
-                  // 11. a) Transfer funds from the market makers to the account
-                  let amount_and_fee =
-                    T::Fees::calculate_trading_fees(trade.token_to, mm.amount_to_send);
-                  if T::CurrencyWrapr::transfer(
-                    trade.token_to,
-                    &mm.account_id,
-                    &trade.account_id,
-                    // deduce the fee from the amount
-                    mm.amount_to_send - amount_and_fee.fee,
-                    true,
-                  )
-                  .is_err()
-                  {
-                    // FIXME: Add rollback
-                  }
+                        if mm.amount_to_send
+                          < (market_maker_trade_intent.amount_from
+                            - market_maker_trade_intent.amount_from_filled)
+                        {
+                          // partial fill
+                          market_maker_trade_intent.status = TradeStatus::PartiallyFilled;
+                        }
 
-                  // 11. b) Market makers pay fees of the transaction, but this is deducted
-                  // from the requester final amount, so this is paid by the requester
-                  if T::CurrencyWrapr::transfer(
-                    trade.token_to,
-                    &mm.account_id,
-                    &T::Fees::account_id(),
-                    amount_and_fee.fee,
-                    true,
-                  )
-                  .is_err()
-                  {
-                    // FIXME: Add rollback
-                  }
+                        market_maker_trade_intent.amount_from_filled += mm.amount_to_send;
+                        market_maker_trade_intent.amount_to_filled += mm.amount_to_receive;
 
-                  // 11. c) Register a new trading fees associated with the account.
-                  // A percentage of the network profits will be re-distributed to the account at the end of the era.
-                  T::Fees::register_trading_fees(
-                    mm.account_id.clone(),
-                    trade.token_to,
-                    mm.amount_to_send,
-                  );
+                        if market_maker_trade_intent.amount_from
+                          == market_maker_trade_intent.amount_from_filled
+                        {
+                          market_maker_trade_intent.status = TradeStatus::Completed;
+                        }
+
+                        // 11. d) Transfer funds from the requester to the market makers
+                        let amount_and_fee =
+                          T::Fees::calculate_trading_fees(trade.token_from, mm.amount_to_receive);
+                        if T::CurrencyWrapr::transfer(
+                          trade.token_from,
+                          &trade.account_id,
+                          &market_maker_trade_intent.account_id,
+                          // deduce the fee from the amount
+                          mm.amount_to_receive - amount_and_fee.fee,
+                          true,
+                        )
+                        .is_err()
+                        {
+                          // FIXME: Add rollback
+                        }
+
+                        // 11. e) Requester pay fees of the transaction, but this is deducted
+                        // from the MM final amount, so this is paid by the MM
+                        if T::CurrencyWrapr::transfer(
+                          trade.token_from,
+                          &trade.account_id,
+                          &T::Fees::account_id(),
+                          amount_and_fee.fee,
+                          true,
+                        )
+                        .is_err()
+                        {
+                          // FIXME: Add rollback
+                        }
+
+                        // 11. f) Register a new trading fees associated with the account.
+                        // A percentage of the network profits will be re-distributed to the account at the end of the era.
+                        T::Fees::register_trading_fees(
+                          trade.account_id.clone(),
+                          trade.token_from,
+                          mm.amount_to_receive,
+                        );
+
+                        // 12. a) Transfer funds from the market makers to the account
+                        let amount_and_fee =
+                          T::Fees::calculate_trading_fees(trade.token_to, mm.amount_to_send);
+
+                        if T::CurrencyWrapr::transfer(
+                          trade.token_to,
+                          &market_maker_trade_intent.account_id,
+                          &trade.account_id,
+                          // deduce the fee from the amount
+                          mm.amount_to_send - amount_and_fee.fee,
+                          true,
+                        )
+                        .is_err()
+                        {
+                          // FIXME: Add rollback
+                        }
+
+                        // 12. b) Market makers pay fees of the transaction, but this is deducted
+                        // from the requester final amount, so this is paid by the requester
+                        if T::CurrencyWrapr::transfer(
+                          trade.token_to,
+                          &market_maker_trade_intent.account_id,
+                          &T::Fees::account_id(),
+                          amount_and_fee.fee,
+                          true,
+                        )
+                        .is_err()
+                        {
+                          // FIXME: Add rollback
+                        }
+
+                        // 12. c) Register a new trading fees associated with the account.
+                        // A percentage of the network profits will be re-distributed to the account at the end of the era.
+                        T::Fees::register_trading_fees(
+                          market_maker_trade_intent.account_id.clone(),
+                          trade.token_to,
+                          mm.amount_to_send,
+                        );
+
+                        Ok(())
+                      }
+                    }
+                  })?;
+                }
+
+                // close the trade if it's complete (we don't use the amount_to compare as there is a slippage to validate)
+                if trade.amount_from == trade.amount_from_filled {
+                  trade.status = TradeStatus::Completed;
                 }
 
                 // 13. Emit event on chain
                 Self::deposit_event(Event::<T>::Traded(
                   request_id,
+                  trade.status.clone(),
                   trade.account_id.clone(),
                   trade.token_from,
-                  trade.amount_from,
+                  total_from,
                   trade.token_to,
-                  trade.amount_to,
+                  total_to,
                 ));
               }
               WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds),
@@ -346,77 +425,8 @@ pub mod pallet {
           }
         }
 
-        // it deletes the item if mutated to a None.
-        // FIXME: do we want to keep a copy and update the status to completed?
-        *trade = None;
         Ok(())
       })?;
-
-      Ok(().into())
-    }
-
-    // FIXME: [@lemarier] Should be removed after the demo.
-    //
-    /// Quick trade for demo.
-    ///
-    /// - `account_id`: Account ID.
-    /// - `asset_id_from`: Asset Id to send.
-    /// - `amount_from`: Amount to send.
-    /// - `asset_id_to`: Asset Id to receive.
-    /// - `amount_to`: Amount to receive.
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::quick_trade())]
-    pub fn quick_trade(
-      origin: OriginFor<T>,
-      account_id: T::AccountId,
-      asset_id_from: CurrencyId,
-      amount_from: Balance,
-      asset_id_to: CurrencyId,
-      amount_to: Balance,
-    ) -> DispatchResultWithPostInfo {
-      // make sure the quorum is not paused
-      Self::ensure_not_paused()?;
-
-      // make sure it's the oracle
-      let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
-
-      // make sure the FROM balance is available
-      match T::CurrencyWrapr::can_withdraw(asset_id_from, &account_id, amount_from) {
-        WithdrawConsequence::Success => {
-          // make sure we can deposit before burning
-          T::CurrencyWrapr::can_deposit(asset_id_to, &account_id, amount_to)
-            .into_result()
-            .map_err(|_| Error::<T>::MintFailed)?;
-
-          // burn from token
-          T::CurrencyWrapr::burn_from(asset_id_from, &account_id, amount_from)
-            .map_err(|_| Error::<T>::BurnFailed)?;
-
-          // mint new tokens with fallback to restore token if it fails
-          if T::CurrencyWrapr::mint_into(asset_id_to, &account_id, amount_to).is_err() {
-            let revert = T::CurrencyWrapr::mint_into(asset_id_from, &account_id, amount_from);
-            debug_assert!(revert.is_ok(), "withdrew funds previously; qed");
-            return Err(Error::<T>::MintFailed.into());
-          };
-
-          // FIXME: we can probably remove this and only use the
-          // event emitted by the Assets pallet
-          // emit the burned event
-          let request_id = T::Security::get_unique_id(account_id.clone());
-          Self::deposit_event(Event::<T>::Traded(
-            // fake request id
-            request_id,
-            account_id.clone(),
-            asset_id_from,
-            amount_from,
-            asset_id_to,
-            amount_to,
-          ));
-        }
-        WithdrawConsequence::NoFunds => return Err(Error::<T>::NoFunds.into()),
-        WithdrawConsequence::UnknownAsset => return Err(Error::<T>::UnknownAsset.into()),
-        _ => return Err(Error::<T>::UnknownError.into()),
-      };
 
       Ok(().into())
     }
@@ -504,7 +514,9 @@ pub mod pallet {
         token_from: asset_id_from,
         token_to: asset_id_to,
         amount_from,
+        amount_from_filled: 0,
         amount_to,
+        amount_to_filled: 0,
         status: TradeStatus::Pending,
         block_number: <frame_system::Pallet<T>>::block_number(),
       };

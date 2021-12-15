@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+use crate::pallet as pallet_fees;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
@@ -8,6 +8,7 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
+    GenesisBuild,
   },
   PalletId,
 };
@@ -23,8 +24,6 @@ use sp_runtime::{
 use std::marker::PhantomData;
 use system::EnsureRoot;
 use tidefi_primitives::{BlockNumber, CurrencyId};
-
-use crate::pallet as pallet_fees;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -159,6 +158,7 @@ impl pallet_fees::Config for Test {
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type FeesPalletId = WraprPalletId;
   type CurrencyWrapr = Adapter<AccountId>;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
   type UnixTime = Timestamp;
 }
 
@@ -274,8 +274,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
+  pallet_fees::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut t)
+    .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
+
   t.into()
 }

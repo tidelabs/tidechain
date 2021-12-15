@@ -112,7 +112,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // and set impl_version to 0. If only runtime
   // implementation changes and behavior does not, then leave spec_version as
   // is and increment impl_version.
-  spec_version: 268,
+  spec_version: 271,
   impl_version: 0,
   apis: RUNTIME_API_VERSIONS,
   transaction_version: 2,
@@ -1328,6 +1328,11 @@ impl pallet_fees::Config for Runtime {
   // Security utils
   type Security = WraprSecurity;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
+  type ForceOrigin = EnsureOneOf<
+    AccountId,
+    EnsureRoot<AccountId>,
+    pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
+  >;
 }
 
 construct_runtime!(
@@ -1380,7 +1385,7 @@ construct_runtime!(
         // Provides a semi-sorted list of nominators for staking.
         BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 36,
         // Storage, events and traits for the fees
-        WraprFees: pallet_fees::{Pallet, Config, Storage, Event<T>} = 36,
+        WraprFees: pallet_fees::{Pallet, Config<T>, Storage, Event<T>} = 36,
     }
 );
 
