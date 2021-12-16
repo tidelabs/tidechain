@@ -412,7 +412,9 @@ pub fn testnet_genesis(
     },
 
     // FIXME: Remove sudo once the staging is completed
-    sudo: SudoConfig { key: root.clone() },
+    sudo: SudoConfig {
+      key: Some(root.clone()),
+    },
 
     babe: BabeConfig {
       authorities: Default::default(),

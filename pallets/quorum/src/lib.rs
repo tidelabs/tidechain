@@ -70,7 +70,7 @@ pub mod pallet {
   /// Quorum Account ID
   #[pallet::storage]
   #[pallet::getter(fn account_id)]
-  pub type QuorumAccountId<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+  pub type QuorumAccountId<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
   /// Mapping of pending Withdrawals
   #[pallet::storage]
@@ -171,7 +171,7 @@ pub mod pallet {
 
       // 2. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 3. Make sure the currency_id exist and is enabled
       ensure!(
@@ -213,7 +213,7 @@ pub mod pallet {
 
       // 2. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 3. Make sure the `request_id` exist
       Withdrawals::<T>::try_mutate_exists(request_id, |withdrawal| {
@@ -266,7 +266,7 @@ pub mod pallet {
     pub fn set_status(origin: OriginFor<T>, quorum_enabled: bool) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 2. Update quorum status
       QuorumStatus::<T>::put(quorum_enabled);
@@ -296,7 +296,7 @@ pub mod pallet {
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 2. Update quorum account id
       QuorumAccountId::<T>::put(new_account_id.clone());

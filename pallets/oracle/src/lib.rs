@@ -73,7 +73,7 @@ pub mod pallet {
   /// Oracle Account ID
   #[pallet::storage]
   #[pallet::getter(fn account_id)]
-  pub type OracleAccountId<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+  pub type OracleAccountId<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
   /// Mapping of pending Trades
   #[pallet::storage]
@@ -189,7 +189,7 @@ pub mod pallet {
 
       // 2. Make sure this is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 3. Make sure the `request_id` exist
       Trades::<T>::try_mutate_exists(request_id, |trade| {
@@ -447,7 +447,7 @@ pub mod pallet {
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure this is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 2. Update oracle account
       OracleAccountId::<T>::put(new_account_id.clone());
@@ -471,7 +471,7 @@ pub mod pallet {
     pub fn set_status(origin: OriginFor<T>, is_enabled: bool) -> DispatchResultWithPostInfo {
       // 1. Make sure this is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(sender == Self::account_id(), Error::<T>::AccessDenied);
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 2. Update oracle status
       OracleStatus::<T>::set(is_enabled);

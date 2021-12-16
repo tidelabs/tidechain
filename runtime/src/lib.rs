@@ -26,7 +26,7 @@ use scale_info::TypeInfo;
 use constants::{currency::*, time::*};
 use frame_election_provider_support::{SortedListProvider, VoteWeight};
 use frame_support::{
-  traits::{Everything, InstanceFilter, OnUnbalanced, PrivilegeCmp},
+  traits::{EnsureOneOf, Everything, InstanceFilter, OnUnbalanced, PrivilegeCmp},
   weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
   PalletId,
 };
@@ -34,7 +34,7 @@ use frame_support::{
 pub use frame_system::Call as SystemCall;
 use frame_system::{
   limits::{BlockLength, BlockWeights},
-  EnsureOneOf, EnsureRoot, RawOrigin,
+  EnsureRoot, RawOrigin,
 };
 #[cfg(any(feature = "std", test))]
 pub use pallet_balances::Call as BalancesCall;
@@ -211,6 +211,7 @@ impl frame_system::Config for Runtime {
   type SystemWeightInfo = frame_system::weights::SubstrateWeight<Runtime>;
   type SS58Prefix = SS58Prefix;
   type OnSetCode = ();
+  type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 impl pallet_utility::Config for Runtime {
@@ -338,6 +339,7 @@ parameter_types! {
     pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
         RuntimeBlockWeights::get().max_block;
     pub const MaxScheduledPerBlock: u32 = 50;
+    pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
 impl pallet_scheduler::Config for Runtime {
@@ -350,6 +352,24 @@ impl pallet_scheduler::Config for Runtime {
   type MaxScheduledPerBlock = MaxScheduledPerBlock;
   type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
   type OriginPrivilegeCmp = OriginPrivilegeCmp;
+  type PreimageProvider = Preimage;
+  type NoPreimagePostponement = NoPreimagePostponement;
+}
+
+parameter_types! {
+  pub const PreimageMaxSize: u32 = 4096 * 1024;
+  pub const PreimageBaseDeposit: Balance = deposit(2, 64);
+  pub const PreimageByteDeposit: Balance = deposit(0, 1);
+}
+
+impl pallet_preimage::Config for Runtime {
+  type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
+  type Event = Event;
+  type Currency = Balances;
+  type ManagerOrigin = EnsureRoot<AccountId>;
+  type MaxSize = PreimageMaxSize;
+  type BaseDeposit = PreimageBaseDeposit;
+  type ByteDeposit = PreimageByteDeposit;
 }
 
 parameter_types! {
@@ -655,7 +675,6 @@ impl pallet_staking::Config for Runtime {
   type SlashDeferDuration = SlashDeferDuration;
   /// A super-majority of the council can cancel the slash.
   type SlashCancelOrigin = EnsureOneOf<
-    AccountId,
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<_3, _4, AccountId, CouncilCollective>,
   >;
@@ -665,7 +684,7 @@ impl pallet_staking::Config for Runtime {
   type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
   type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
   // Use the nominators map to iter voters, but also keep bags-list up-to-date.
-  type SortedListProvider = UseNominatorsAndUpdateBagsList<Runtime>;
+  type SortedListProvider = BagsList;
   type WeightInfo = weights::pallet_staking::WeightInfo<Runtime>;
   type BenchmarkingConfig = StakingBenchmarkingConfig;
 }
@@ -805,7 +824,6 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   >;
   type BenchmarkingConfig = BenchmarkConfigMultiPhase;
   type ForceOrigin = EnsureOneOf<
-    AccountId,
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
   >;
@@ -885,7 +903,6 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 }
 
 type EnsureRootOrHalfCouncil = EnsureOneOf<
-  AccountId,
   EnsureRoot<AccountId>,
   pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
 >;
@@ -926,7 +943,6 @@ impl pallet_treasury::Config for Runtime {
   type PalletId = TreasuryPalletId;
   type Currency = Balances;
   type ApproveOrigin = EnsureOneOf<
-    AccountId,
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
   >;
@@ -953,6 +969,7 @@ impl pallet_bounties::Config for Runtime {
   type DataDepositPerByte = DataDepositPerByte;
   type MaximumReasonLength = MaximumReasonLength;
   type WeightInfo = weights::pallet_bounties::WeightInfo<Runtime>;
+  type ChildBountyManager = ();
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -1175,9 +1192,9 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
       RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
       RawOrigin::Signed(caller) => {
         // Allow call from asset registry pallet ID account
-        if caller == AssetRegistryPalletId::get().into_account()
+        if caller.clone() == AssetRegistryPalletId::get().into_account()
         // Allow call from asset registry owner
-        || caller == WraprAssetRegistry::account_id()
+        || Some(caller.clone()) == WraprAssetRegistry::account_id()
         {
           Ok(caller)
         } else {
@@ -1273,62 +1290,6 @@ impl pallet_asset_registry::Config for Runtime {
   type CurrencyWrapr = Adapter<AccountId>;
 }
 
-/// Implementation of `frame_election_provider_support::SortedListProvider` that updates the
-/// bags-list but uses [`pallet_staking::Nominators`] for `iter`. This is meant to be a transitionary
-/// implementation for runtimes to "test" out the bags-list by keeping it up to date, but not yet
-/// using it for snapshot generation. In contrast, a  "complete" implementation would use bags-list
-/// for `iter`.
-pub struct UseNominatorsAndUpdateBagsList<T>(PhantomData<T>);
-impl<T: pallet_bags_list::Config + pallet_staking::Config> SortedListProvider<T::AccountId>
-  for UseNominatorsAndUpdateBagsList<T>
-{
-  type Error = pallet_bags_list::Error;
-
-  fn iter() -> Box<dyn Iterator<Item = T::AccountId>> {
-    Box::new(pallet_staking::Nominators::<T>::iter().map(|(n, _)| n))
-  }
-
-  fn count() -> u32 {
-    pallet_bags_list::Pallet::<T>::count()
-  }
-
-  fn contains(id: &T::AccountId) -> bool {
-    pallet_bags_list::Pallet::<T>::contains(id)
-  }
-
-  fn on_insert(id: T::AccountId, weight: VoteWeight) -> Result<(), Self::Error> {
-    pallet_bags_list::Pallet::<T>::on_insert(id, weight)
-  }
-
-  fn on_update(id: &T::AccountId, new_weight: VoteWeight) {
-    pallet_bags_list::Pallet::<T>::on_update(id, new_weight);
-  }
-
-  fn on_remove(id: &T::AccountId) {
-    pallet_bags_list::Pallet::<T>::on_remove(id);
-  }
-
-  fn regenerate(
-    all: impl IntoIterator<Item = T::AccountId>,
-    weight_of: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
-  ) -> u32 {
-    pallet_bags_list::Pallet::<T>::regenerate(all, weight_of)
-  }
-
-  fn sanity_check() -> Result<(), &'static str> {
-    pallet_bags_list::Pallet::<T>::sanity_check()
-  }
-
-  fn clear(count: Option<u32>) -> u32 {
-    pallet_bags_list::Pallet::<T>::clear(count)
-  }
-
-  #[cfg(feature = "runtime-benchmarks")]
-  fn weight_update_worst_case(who: &T::AccountId, is_increase: bool) -> VoteWeight {
-    pallet_bags_list::Pallet::<T>::weight_update_worst_case(who, is_increase)
-  }
-}
-
 impl pallet_fees::Config for Runtime {
   type Event = Event;
   type FeesPalletId = FeesPalletId;
@@ -1338,7 +1299,6 @@ impl pallet_fees::Config for Runtime {
   type Security = WraprSecurity;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
   type ForceOrigin = EnsureOneOf<
-    AccountId,
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>,
   >;
@@ -1395,6 +1355,8 @@ construct_runtime!(
         WraprFees: pallet_fees::{Pallet, Config<T>, Storage, Event<T>} = 36,
         // Provides a semi-sorted list of nominators for staking.
         BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 37,
+        // Preimage registrar.
+        Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 38,
     }
 );
 
@@ -1483,7 +1445,7 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
             block_hash: <Block as BlockT>::Hash,
         ) -> TransactionValidity {
-            Executive::validate_transaction(source, tx,block_hash)
+            Executive::validate_transaction(source, tx, block_hash)
         }
     }
 
@@ -1752,6 +1714,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_quorum, WraprQuorum);
             add_benchmark!(params, batches, pallet_oracle, WraprOracle);
             add_benchmark!(params, batches, pallet_asset_registry, WraprAssetRegistry);
+            add_benchmark!(params, batches, pallet_preimage, Preimage);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
