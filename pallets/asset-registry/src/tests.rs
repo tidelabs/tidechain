@@ -1,4 +1,4 @@
-use crate::mock::{new_test_ext, AccountId, AssetRegistry};
+use crate::mock::{new_test_ext, AssetRegistry};
 use tidefi_primitives::{CurrencyId, CurrencyMetadata};
 
 #[test]

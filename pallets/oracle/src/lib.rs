@@ -128,6 +128,7 @@ pub mod pallet {
       currency_amount_from: Balance,
       currency_to: CurrencyId,
       currency_amount_to: Balance,
+      initial_extrinsic_hash: [u8; 32],
     },
   }
 
@@ -395,6 +396,18 @@ pub mod pallet {
                           mm.amount_to_send,
                         );
 
+                        // 13. Emit market maker trade event on chain
+                        Self::deposit_event(Event::<T>::Traded {
+                          request_id,
+                          initial_extrinsic_hash: market_maker_trade_intent.extrinsic_hash,
+                          status: market_maker_trade_intent.status.clone(),
+                          account_id: market_maker_trade_intent.account_id.clone(),
+                          currency_from: trade.token_from,
+                          currency_amount_from: mm.amount_to_send,
+                          currency_to: trade.token_to,
+                          currency_amount_to: mm.amount_to_receive,
+                        });
+
                         Ok(())
                       }
                     }
@@ -406,9 +419,10 @@ pub mod pallet {
                   trade.status = TradeStatus::Completed;
                 }
 
-                // 13. Emit event on chain
+                // 14. Emit event on chain
                 Self::deposit_event(Event::<T>::Traded {
                   request_id,
+                  initial_extrinsic_hash: trade.extrinsic_hash,
                   status: trade.status.clone(),
                   account_id: trade.account_id.clone(),
                   currency_from: trade.token_from,
@@ -507,6 +521,8 @@ pub mod pallet {
       amount_from: Balance,
       asset_id_to: CurrencyId,
       amount_to: Balance,
+      block_number: T::BlockNumber,
+      extrinsic_hash: [u8; 32],
     ) -> (Hash, Trade<T::AccountId, T::BlockNumber>) {
       // unique request id
       let request_id = T::Security::get_unique_id(account_id.clone());
@@ -519,7 +535,8 @@ pub mod pallet {
         amount_to,
         amount_to_filled: 0,
         status: TradeStatus::Pending,
-        block_number: <frame_system::Pallet<T>>::block_number(),
+        block_number,
+        extrinsic_hash,
       };
 
       // insert in our queue

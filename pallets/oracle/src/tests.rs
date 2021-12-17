@@ -108,6 +108,11 @@ pub fn confirm_trade_partial_filling() {
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
       20000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
     );
 
     // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
@@ -117,6 +122,11 @@ pub fn confirm_trade_partial_filling() {
       400000,
       CurrencyId::Tide,
       200_000_000_000_000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
     );
 
     // DAVE (MM): 8000 TEMP for 400 TIDE
@@ -126,6 +136,11 @@ pub fn confirm_trade_partial_filling() {
       800_000,
       CurrencyId::Tide,
       400_000_000_000_000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
     );
 
     // make sure our trade request is created correctly
@@ -308,6 +323,11 @@ pub fn confirm_trade_simple_with_fees() {
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
       20_000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
     );
 
     // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
@@ -317,6 +337,11 @@ pub fn confirm_trade_simple_with_fees() {
       400_000,
       CurrencyId::Tide,
       200_000_000_000_000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
     );
 
     // DAVE (MM): 100 TEMP for 5 TIDE
@@ -326,6 +351,11 @@ pub fn confirm_trade_simple_with_fees() {
       10_000,
       CurrencyId::Tide,
       5_000_000_000_000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
     );
 
     // make sure our trade request is created correctly

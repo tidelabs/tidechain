@@ -24,6 +24,7 @@ pub mod pallet {
     },
   };
   use frame_system::pallet_prelude::*;
+  use sp_io::hashing::blake2_256;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, OracleExt, QuorumExt},
     Balance, CurrencyId, Hash,
@@ -85,6 +86,7 @@ pub mod pallet {
       amount_from: Balance,
       currency_id_to: CurrencyId,
       amount_to: Balance,
+      extrinsic_hash: [u8; 32],
     },
   }
 
@@ -242,18 +244,26 @@ pub mod pallet {
         Error::<T>::AssetDisabled
       );
 
-      // 5. Make sure the account have enough funds for the `asset_id_from`
+      // 5. Grab the extrinsic hash of the current extrinsic for better traceability
+      let extrinsic_hash = blake2_256(&<frame_system::Pallet<T>>::extrinsic_data(
+        <frame_system::Pallet<T>>::extrinsic_index().ok_or(Error::<T>::UnknownError)?,
+      ));
+
+      // 6. Make sure the account have enough funds for the `asset_id_from`
       match T::CurrencyWrapr::can_withdraw(currency_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
-          // Add trade in queue
+          // 6. a) Add trade in queue
           let (trade_id, _) = T::Oracle::add_new_trade_in_queue(
             account_id.clone(),
             currency_id_from,
             amount_from,
             currency_id_to,
             amount_to,
+            <frame_system::Pallet<T>>::block_number(),
+            extrinsic_hash
           );
-          // Send event to the chain
+
+          // 6 b) Send event to the chain
           Self::deposit_event(Event::<T>::Trade {
             request_id: trade_id,
             account: account_id,
@@ -261,6 +271,7 @@ pub mod pallet {
             amount_from,
             currency_id_to,
             amount_to,
+            extrinsic_hash,
           });
 
           Ok(().into())
