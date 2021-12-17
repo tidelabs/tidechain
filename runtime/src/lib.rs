@@ -1192,7 +1192,7 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
       RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
       RawOrigin::Signed(caller) => {
         // Allow call from asset registry pallet ID account
-        if caller.clone() == AssetRegistryPalletId::get().into_account()
+        if caller == AssetRegistryPalletId::get().into_account()
         // Allow call from asset registry owner
         || Some(caller.clone()) == WraprAssetRegistry::account_id()
         {
@@ -1653,7 +1653,7 @@ impl_runtime_apis! {
 
         let storage_info = AllPalletsWithSystem::storage_info();
 
-        return (list, storage_info)
+        (list, storage_info)
       }
 
         fn dispatch_benchmark(

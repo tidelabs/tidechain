@@ -138,7 +138,11 @@ pub mod pallet {
       })?;
 
       // 5. Emit event on chain
-      Self::deposit_event(Event::<T>::Staked{ account_id, currency_id, amount});
+      Self::deposit_event(Event::<T>::Staked {
+        account_id,
+        currency_id,
+        amount,
+      });
 
       Ok(().into())
     }

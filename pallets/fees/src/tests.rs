@@ -26,7 +26,7 @@ pub fn calculate_trading_fees() {
 pub fn register_trading_fees() {
   new_test_ext().execute_with(|| {
     Fees::start_era();
-    assert_eq!(Fees::active_era().is_none(), false);
+    assert!(!Fees::active_era().is_none());
 
     // 100 tide @ 2% should cost 2 TIDEs
     let calculated_fee =
