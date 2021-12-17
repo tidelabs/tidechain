@@ -76,11 +76,18 @@ pub mod pallet {
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// The assets get staked successfully
-    /// \[account_id, currency_id, amount\]
-    Staked(T::AccountId, CurrencyId, Balance),
+    Staked {
+      account_id: T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+    },
     /// The assets get unstaked successfully
-    /// \[account_id, currency_id, initial_amount, final_amount\]
-    Unstaked(T::AccountId, CurrencyId, Balance, Balance),
+    Unstaked {
+      account_id: T::AccountId,
+      currency_id: CurrencyId,
+      initial_amount: Balance,
+      final_amount: Balance,
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -131,7 +138,11 @@ pub mod pallet {
       })?;
 
       // 5. Emit event on chain
-      Self::deposit_event(Event::<T>::Staked(account_id, currency_id, amount));
+      Self::deposit_event(Event::<T>::Staked {
+        account_id,
+        currency_id,
+        amount,
+      });
 
       Ok(().into())
     }

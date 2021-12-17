@@ -372,7 +372,6 @@ pub fn testnet_genesis(
   GenesisConfig {
     system: SystemConfig {
       code: wasm_binary_unwrap().to_vec(),
-      changes_trie_config: Default::default(),
     },
     balances: BalancesConfig {
       balances: endowed_accounts.clone(),
@@ -413,7 +412,9 @@ pub fn testnet_genesis(
     },
 
     // FIXME: Remove sudo once the staging is completed
-    sudo: SudoConfig { key: root.clone() },
+    sudo: SudoConfig {
+      key: Some(root.clone()),
+    },
 
     babe: BabeConfig {
       authorities: Default::default(),

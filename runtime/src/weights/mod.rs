@@ -21,6 +21,7 @@
 
 pub mod frame_system;
 pub mod pallet_assets;
+pub mod pallet_bags_list;
 pub mod pallet_balances;
 pub mod pallet_bounties;
 pub mod pallet_collective;
@@ -32,6 +33,7 @@ pub mod pallet_im_online;
 pub mod pallet_indices;
 pub mod pallet_membership;
 pub mod pallet_multisig;
+pub mod pallet_preimage;
 pub mod pallet_proxy;
 pub mod pallet_quorum;
 pub mod pallet_scheduler;

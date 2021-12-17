@@ -62,13 +62,30 @@ pub mod pallet {
   pub enum Event<T: Config> {
     /// Event emitted when widthdraw is requested.
     /// \[from_account_id, to_account_id, currency_id, amount\]
-    Transfer(T::AccountId, T::AccountId, CurrencyId, Balance),
+    Transfer {
+      from_account_id: T::AccountId,
+      to_account_id: T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+    },
     /// Event emitted when widthdraw is requested.
-    /// \[request_id, account, currency_id, amount, external_address\]
-    Withdrawal(Hash, T::AccountId, CurrencyId, Balance, Vec<u8>),
+    Withdrawal {
+      request_id: Hash,
+      account: T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+      external_address: Vec<u8>,
+    },
     /// Event emitted when trade is requested.
     /// \[request_id, account, currency_id_from, amount_from, currency_id_to, amount_to\]
-    Trade(Hash, T::AccountId, CurrencyId, Balance, CurrencyId, Balance),
+    Trade {
+      request_id: Hash,
+      account: T::AccountId,
+      currency_id_from: CurrencyId,
+      amount_from: Balance,
+      currency_id_to: CurrencyId,
+      amount_to: Balance,
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -119,12 +136,12 @@ pub mod pallet {
       T::CurrencyWrapr::transfer(currency_id, &account_id, &destination_id, amount, true)?;
 
       // 4. Send event to the chain
-      Self::deposit_event(Event::<T>::Transfer(
-        account_id,
-        destination_id,
+      Self::deposit_event(Event::<T>::Transfer {
+        from_account_id: account_id,
+        to_account_id: destination_id,
         currency_id,
         amount,
-      ));
+      });
       Ok(().into())
     }
 
@@ -170,13 +187,13 @@ pub mod pallet {
             external_address.clone(),
           );
           // Send event to the chain
-          Self::deposit_event(Event::<T>::Withdrawal(
-            withdrawal_id,
-            account_id,
+          Self::deposit_event(Event::<T>::Withdrawal {
+            request_id: withdrawal_id,
+            account: account_id,
             currency_id,
             amount,
             external_address,
-          ));
+          });
 
           Ok(().into())
         }
@@ -237,14 +254,14 @@ pub mod pallet {
             amount_to,
           );
           // Send event to the chain
-          Self::deposit_event(Event::<T>::Trade(
-            trade_id,
-            account_id,
+          Self::deposit_event(Event::<T>::Trade {
+            request_id: trade_id,
+            account: account_id,
             currency_id_from,
             amount_from,
             currency_id_to,
             amount_to,
-          ));
+          });
 
           Ok(().into())
         }

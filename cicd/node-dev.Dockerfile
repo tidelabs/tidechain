@@ -1,5 +1,5 @@
 # ===== BUILD NODE ======
-FROM paritytech/ci-linux:9575dfcd-20210729 as builder
+FROM paritytech/ci-linux:production as builder
 LABEL description="This is the build stage for TiDeFi node. Here we create the binary."
 
 ARG CI_JOB_TOKEN

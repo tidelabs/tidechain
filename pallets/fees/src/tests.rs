@@ -8,7 +8,7 @@ pub fn check_genesis_config() {
   new_test_ext().execute_with(|| {
     assert_eq!(Fees::fee_percentage(), Percent::from_parts(2));
     assert_eq!(Fees::distribution_percentage(), Percent::from_parts(20));
-    assert_eq!(Fees::active_era().is_none(), true);
+    assert!(Fees::active_era().is_none());
   });
 }
 
@@ -26,7 +26,7 @@ pub fn calculate_trading_fees() {
 pub fn register_trading_fees() {
   new_test_ext().execute_with(|| {
     Fees::start_era();
-    assert_eq!(Fees::active_era().is_none(), false);
+    assert!(!Fees::active_era().is_none());
 
     // 100 tide @ 2% should cost 2 TIDEs
     let calculated_fee =

@@ -15,7 +15,7 @@ use tidefi_primitives::{
 #[test]
 pub fn check_genesis_config() {
   new_test_ext().execute_with(|| {
-    assert_eq!(Oracle::status(), false);
+    assert!(!Oracle::status());
   });
 }
 
@@ -26,9 +26,9 @@ pub fn set_operational_status_works() {
     let bob = Origin::signed(2u64.into());
     assert_ok!(Oracle::set_status(alice.clone(), true));
     assert_noop!(Oracle::set_status(bob, false), Error::<Test>::AccessDenied);
-    assert_eq!(Oracle::status(), true);
+    assert!(Oracle::status());
     assert_ok!(Oracle::set_status(alice, false));
-    assert_eq!(Oracle::status(), false);
+    assert!(!Oracle::status());
   });
 }
 
@@ -40,7 +40,7 @@ pub fn confirm_trade_partial_filling() {
     let temp_asset_id = 1;
 
     assert_ok!(Oracle::set_status(alice.clone(), true));
-    assert_eq!(Oracle::status(), true);
+    assert!(Oracle::status());
 
     // add 1 tide to alice & all MMs
     assert_ok!(Adapter::mint_into(
@@ -232,9 +232,9 @@ pub fn confirm_trade_simple_with_fees() {
     let temp_asset_id = 1;
 
     assert_ok!(Oracle::set_status(alice.clone(), true));
-    assert_eq!(Oracle::status(), true);
+    assert!(Oracle::status());
     Fees::start_era();
-    assert_eq!(Fees::active_era().is_none(), false);
+    assert!(!Fees::active_era().is_none());
 
     // add 1 tide to alice & mm
     assert_ok!(Adapter::mint_into(

@@ -60,7 +60,7 @@ pub mod pallet {
   /// Assets Account ID owner
   #[pallet::storage]
   #[pallet::getter(fn account_id)]
-  pub type AssetRegistryAccountId<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+  pub type AssetRegistryAccountId<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
   /// Genesis configuration
   #[pallet::genesis_config]
@@ -160,7 +160,7 @@ pub mod pallet {
     ) -> DispatchResult {
       // 1. Make sure it's signed from the asset-registry owner
       ensure!(
-        ensure_signed(origin)? == Self::account_id(),
+        Some(ensure_signed(origin)?) == Self::account_id(),
         Error::<T>::AccessDenied
       );
 
@@ -197,7 +197,7 @@ pub mod pallet {
     ) -> DispatchResult {
       // 1. Make sure it's signed from the asset-registry owner
       ensure!(
-        ensure_signed(origin)? == Self::account_id(),
+        Some(ensure_signed(origin)?) == Self::account_id(),
         Error::<T>::AccessDenied
       );
 
