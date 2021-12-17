@@ -8,6 +8,7 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
+    ConstU128, ConstU32,
   },
   PalletId,
 };
@@ -103,6 +104,7 @@ impl system::Config for Test {
   type SystemWeightInfo = ();
   type SS58Prefix = SS58Prefix;
   type OnSetCode = ();
+  type MaxConsumers = ConstU32<16>;
 }
 pub const TIDE: Balance = 1_000_000_000_000;
 parameter_types! {
@@ -133,6 +135,7 @@ impl pallet_assets::Config for Test {
   type Extra = ();
   type WeightInfo = ();
   type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type AssetAccountDeposit = ConstU128<0>;
 }
 
 impl pallet_balances::Config for Test {

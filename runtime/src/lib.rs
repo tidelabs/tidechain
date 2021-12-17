@@ -13,7 +13,8 @@ use frame_support::{
     },
     fungibles::{Inspect, Mutate, Transfer},
     tokens::{DepositConsequence, WithdrawConsequence},
-    ConstU32, EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier, U128CurrencyToVote,
+    ConstU128, ConstU32, EnsureOrigin, Imbalance, KeyOwnerProofSystem, LockIdentifier,
+    U128CurrencyToVote,
   },
   weights::{
     constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -24,7 +25,6 @@ use frame_support::{
 use scale_info::TypeInfo;
 
 use constants::{currency::*, time::*};
-use frame_election_provider_support::{SortedListProvider, VoteWeight};
 use frame_support::{
   traits::{EnsureOneOf, Everything, InstanceFilter, OnUnbalanced, PrivilegeCmp},
   weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
@@ -211,7 +211,7 @@ impl frame_system::Config for Runtime {
   type SystemWeightInfo = frame_system::weights::SubstrateWeight<Runtime>;
   type SS58Prefix = SS58Prefix;
   type OnSetCode = ();
-  type MaxConsumers = frame_support::traits::ConstU32<16>;
+  type MaxConsumers = ConstU32<16>;
 }
 
 impl pallet_utility::Config for Runtime {
@@ -1223,6 +1223,9 @@ impl pallet_assets::Config for Runtime {
   type ApprovalDeposit = ApprovalDeposit;
   type StringLimit = AssetsStringLimit;
   type Freezer = ();
+  // The amount of funds that must be reserved for a non-provider asset account to be
+  // maintained.
+  type AssetAccountDeposit = ConstU128<0>;
   // FIXME: Use local weight
   type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
   type Extra = ();

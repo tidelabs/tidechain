@@ -247,7 +247,7 @@ pub mod pallet {
       });
     }
 
-    pub(crate) fn end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
+    pub(crate) fn _end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
       // Note: active_era_start can be None if end era is called during genesis config.
       if let Some(active_era_start) = active_era.start {
         let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();

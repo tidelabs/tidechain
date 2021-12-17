@@ -659,7 +659,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     maybe_check_owner: Option<T::AccountId>,
   ) -> Result<DestroyWitness, DispatchError> {
     Asset::<T, I>::try_mutate_exists(id, |maybe_details| {
-      let mut details = maybe_details.take().ok_or(Error::<T, I>::Unknown)?;
+      let details = maybe_details.take().ok_or(Error::<T, I>::Unknown)?;
       if let Some(check_owner) = maybe_check_owner {
         ensure!(details.owner == check_owner, Error::<T, I>::NoPermission);
       }
