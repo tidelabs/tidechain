@@ -122,6 +122,11 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::op_ref)]
+#![allow(clippy::result_unit_err)]
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
