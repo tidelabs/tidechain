@@ -18,40 +18,42 @@
 //! Various basic types for use in the assets pallet.
 
 use super::*;
-use frame_support::pallet_prelude::*;
-use scale_info::TypeInfo;
-
-use frame_support::traits::{fungible, tokens::BalanceConversion};
+use frame_support::{
+  pallet_prelude::*,
+  traits::{fungible, tokens::BalanceConversion},
+};
 use sp_runtime::{traits::Convert, FixedPointNumber, FixedPointOperand, FixedU128};
 
 pub(super) type DepositBalanceOf<T, I = ()> =
   <<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+pub(super) type AssetAccountOf<T, I> =
+  AssetAccount<<T as Config<I>>::Balance, DepositBalanceOf<T, I>, <T as Config<I>>::Extra>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct AssetDetails<Balance, AccountId, DepositBalance> {
   /// Can change `owner`, `issuer`, `freezer` and `admin` accounts.
-  pub owner: AccountId,
+  pub(super) owner: AccountId,
   /// Can mint tokens.
-  pub issuer: AccountId,
+  pub(super) issuer: AccountId,
   /// Can thaw tokens, force transfers and burn tokens from any account.
-  pub admin: AccountId,
+  pub(super) admin: AccountId,
   /// Can freeze tokens.
-  pub freezer: AccountId,
+  pub(super) freezer: AccountId,
   /// The total supply across all accounts.
-  pub supply: Balance,
+  pub(super) supply: Balance,
   /// The balance deposited for this asset. This pays for the data stored here.
-  pub deposit: DepositBalance,
+  pub(super) deposit: DepositBalance,
   /// The ED for virtual accounts.
-  pub min_balance: Balance,
+  pub(super) min_balance: Balance,
   /// If `true`, then any account with this asset is given a provider reference. Otherwise, it
   /// requires a consumer reference.
-  pub is_sufficient: bool,
+  pub(super) is_sufficient: bool,
   /// The total number of accounts.
-  pub accounts: u32,
+  pub(super) accounts: u32,
   /// The total number of accounts for which we have placed a self-sufficient reference.
-  pub sufficients: u32,
+  pub(super) sufficients: u32,
   /// The total number of approvals.
-  pub approvals: u32,
+  pub(super) approvals: u32,
   /// Whether the asset is frozen for non-admin transfers.
   pub is_frozen: bool,
 }
@@ -71,21 +73,54 @@ impl<Balance, AccountId, DepositBalance> AssetDetails<Balance, AccountId, Deposi
 pub struct Approval<Balance, DepositBalance> {
   /// The amount of funds approved for the balance transfer from the owner to some delegated
   /// target.
-  pub amount: Balance,
+  pub(super) amount: Balance,
   /// The amount reserved on the owner's account to hold this item in storage.
-  pub deposit: DepositBalance,
+  pub(super) deposit: DepositBalance,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default, MaxEncodedLen, TypeInfo)]
-pub struct AssetBalance<Balance, Extra> {
+#[test]
+fn ensure_bool_decodes_to_consumer_or_sufficient() {
+  assert_eq!(false.encode(), ExistenceReason::<()>::Consumer.encode());
+  assert_eq!(true.encode(), ExistenceReason::<()>::Sufficient.encode());
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub enum ExistenceReason<Balance> {
+  #[codec(index = 0)]
+  Consumer,
+  #[codec(index = 1)]
+  Sufficient,
+  #[codec(index = 2)]
+  DepositHeld(Balance),
+  #[codec(index = 3)]
+  DepositRefunded,
+}
+
+impl<Balance> ExistenceReason<Balance> {
+  pub(crate) fn take_deposit(&mut self) -> Option<Balance> {
+    if !matches!(self, ExistenceReason::DepositHeld(_)) {
+      return None;
+    }
+    if let ExistenceReason::DepositHeld(deposit) =
+      sp_std::mem::replace(self, ExistenceReason::DepositRefunded)
+    {
+      return Some(deposit);
+    } else {
+      return None;
+    }
+  }
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub struct AssetAccount<Balance, DepositBalance, Extra> {
   /// The balance.
   pub balance: Balance,
   /// Whether the account is frozen.
   pub is_frozen: bool,
-  /// `true` if this balance gave the account a self-sufficient reference.
-  pub sufficient: bool,
+  /// The reason for the existence of the account.
+  pub(super) reason: ExistenceReason<DepositBalance>,
   /// Additional "sidecar" data, in case some other pallet wants to use this storage item.
-  pub extra: Extra,
+  pub(super) extra: Extra,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -109,33 +144,41 @@ pub struct AssetMetadata<DepositBalance, BoundedString> {
 pub struct DestroyWitness {
   /// The number of accounts holding the asset.
   #[codec(compact)]
-  pub accounts: u32,
+  pub(super) accounts: u32,
   /// The number of accounts holding the asset with a self-sufficient reference.
   #[codec(compact)]
-  pub sufficients: u32,
+  pub(super) sufficients: u32,
   /// The number of transfer-approvals of the asset.
   #[codec(compact)]
-  pub approvals: u32,
+  pub(super) approvals: u32,
 }
 
 /// Trait for allowing a minimum balance on the account to be specified, beyond the
 /// `minimum_balance` of the asset. This is additive - the `minimum_balance` of the asset must be
 /// met *and then* anything here in addition.
 pub trait FrozenBalance<AssetId, AccountId, Balance> {
-  /// Return the frozen balance. Under normal behaviour, this amount should always be
-  /// withdrawable.
+  /// Return the frozen balance.
   ///
-  /// In reality, the balance of every account must be at least the sum of this (if `Some`) and
-  /// the asset's minimum_balance, since there may be complications to destroying an asset's
-  /// account completely.
+  /// Generally, the balance of every account must be at least the sum of this (if `Some`) and
+  /// the asset's `minimum_balance` (the latter since there may be complications to destroying an
+  /// asset's account completely).
+  ///
+  /// Under normal behaviour, the account balance should not go below the sum of this (if `Some`)
+  /// and the asset's minimum balance. However, the account balance may reasonably begin below
+  /// this sum (e.g. if less than the sum had ever been transfered into the account).
+  ///
+  /// In special cases (privileged intervention) the account balance may also go below the sum.
   ///
   /// If `None` is returned, then nothing special is enforced.
-  ///
-  /// If any operation ever breaks this requirement (which will only happen through some sort of
-  /// privileged intervention), then `melted` is called to do any cleanup.
   fn frozen_balance(asset: AssetId, who: &AccountId) -> Option<Balance>;
 
   /// Called when an account has been removed.
+  ///
+  /// # Warning
+  ///
+  /// This function must never access storage of pallet asset. This function is called while some
+  /// change are pending. Calling into the pallet asset in this function can result in unexpected
+  /// state.
   fn died(asset: AssetId, who: &AccountId);
 }
 
@@ -150,25 +193,25 @@ impl<AssetId, AccountId, Balance> FrozenBalance<AssetId, AccountId, Balance> for
 pub(super) struct TransferFlags {
   /// The debited account must stay alive at the end of the operation; an error is returned if
   /// this cannot be achieved legally.
-  pub keep_alive: bool,
+  pub(super) keep_alive: bool,
   /// Less than the amount specified needs be debited by the operation for it to be considered
   /// successful. If `false`, then the amount debited will always be at least the amount
   /// specified.
-  pub best_effort: bool,
+  pub(super) best_effort: bool,
   /// Any additional funds debited (due to minimum balance requirements) should be burned rather
   /// than credited to the destination account.
-  pub burn_dust: bool,
+  pub(super) burn_dust: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct DebitFlags {
+pub(super) struct DebitFlags {
   /// The debited account must stay alive at the end of the operation; an error is returned if
   /// this cannot be achieved legally.
-  pub keep_alive: bool,
+  pub(super) keep_alive: bool,
   /// Less than the amount specified needs be debited by the operation for it to be considered
   /// successful. If `false`, then the amount debited will always be at least the amount
   /// specified.
-  pub best_effort: bool,
+  pub(super) best_effort: bool,
 }
 
 impl From<TransferFlags> for DebitFlags {
