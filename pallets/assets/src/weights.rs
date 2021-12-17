@@ -47,6 +47,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn create() -> Weight;
 	fn force_create() -> Weight;
+	fn destroy(c: u32, s: u32, a: u32, ) -> Weight;
 	fn mint() -> Weight;
 	fn burn() -> Weight;
 	fn transfer() -> Weight;
@@ -83,6 +84,28 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		21_378_000_u64
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
+	// Storage: Assets Asset (r:1 w:1)
+	// Storage: Assets Account (r:5002 w:5001)
+	// Storage: System Account (r:5000 w:5000)
+	// Storage: Assets Metadata (r:1 w:0)
+	// Storage: Assets Approvals (r:501 w:500)
+	fn destroy(c: u32, s: u32, a: u32, ) -> Weight {
+		0_u64
+			// Standard Error: 32_000
+			.saturating_add(21_163_000_u64.saturating_mul(c as Weight))
+			// Standard Error: 32_000
+			.saturating_add(26_932_000_u64.saturating_mul(s as Weight))
+			// Standard Error: 329_000
+			.saturating_add(29_714_000_u64.saturating_mul(a as Weight))
+			.saturating_add(T::DbWeight::get().reads(5_u64))
+			.saturating_add(T::DbWeight::get().reads(2_u64.saturating_mul(c as Weight)))
+			.saturating_add(T::DbWeight::get().reads(2_u64.saturating_mul(s as Weight)))
+			.saturating_add(T::DbWeight::get().reads(1_u64.saturating_mul(a as Weight)))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64.saturating_mul(c as Weight)))
+			.saturating_add(T::DbWeight::get().writes(2_u64.saturating_mul(s as Weight)))
+			.saturating_add(T::DbWeight::get().writes(1_u64.saturating_mul(a as Weight)))
 	}
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
@@ -246,6 +269,28 @@ impl WeightInfo for () {
 		21_378_000_u64
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
+	}
+	// Storage: Assets Asset (r:1 w:1)
+	// Storage: Assets Account (r:5002 w:5001)
+	// Storage: System Account (r:5000 w:5000)
+	// Storage: Assets Metadata (r:1 w:0)
+	// Storage: Assets Approvals (r:501 w:500)
+	fn destroy(c: u32, s: u32, a: u32, ) -> Weight {
+		0_u64
+			// Standard Error: 32_000
+			.saturating_add(21_163_000_u64.saturating_mul(c as Weight))
+			// Standard Error: 32_000
+			.saturating_add(26_932_000_u64.saturating_mul(s as Weight))
+			// Standard Error: 329_000
+			.saturating_add(29_714_000_u64.saturating_mul(a as Weight))
+			.saturating_add(RocksDbWeight::get().reads(5_u64))
+			.saturating_add(RocksDbWeight::get().reads(2_u64.saturating_mul(c as Weight)))
+			.saturating_add(RocksDbWeight::get().reads(2_u64.saturating_mul(s as Weight)))
+			.saturating_add(RocksDbWeight::get().reads(1_u64.saturating_mul(a as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(2_u64))
+			.saturating_add(RocksDbWeight::get().writes(2_u64.saturating_mul(c as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(2_u64.saturating_mul(s as Weight)))
+			.saturating_add(RocksDbWeight::get().writes(1_u64.saturating_mul(a as Weight)))
 	}
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)

@@ -8,6 +8,7 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
+    ConstU128, ConstU32,
   },
   PalletId,
 };
@@ -31,7 +32,18 @@ type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
 
 #[derive(
-  Encode, Decode, Default, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, MaxEncodedLen,
+  Encode,
+  Decode,
+  scale_info::TypeInfo,
+  Default,
+  Eq,
+  PartialEq,
+  Copy,
+  Clone,
+  RuntimeDebug,
+  PartialOrd,
+  Ord,
+  MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
 pub struct AccountId(pub u64);
@@ -92,6 +104,7 @@ impl system::Config for Test {
   type SystemWeightInfo = ();
   type SS58Prefix = SS58Prefix;
   type OnSetCode = ();
+  type MaxConsumers = ConstU32<16>;
 }
 pub const TIDE: Balance = 1_000_000_000_000;
 parameter_types! {
@@ -122,6 +135,7 @@ impl pallet_assets::Config for Test {
   type Extra = ();
   type WeightInfo = ();
   type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type AssetAccountDeposit = ConstU128<0>;
 }
 
 impl pallet_balances::Config for Test {

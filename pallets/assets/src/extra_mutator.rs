@@ -65,11 +65,11 @@ impl<T: Config<I>, I: 'static> ExtraMutator<T, I> {
     id: T::AssetId,
     who: impl sp_std::borrow::Borrow<T::AccountId>,
   ) -> Option<ExtraMutator<T, I>> {
-    if Account::<T, I>::contains_key(who.borrow(), id) {
+    if let Some(a) = Account::<T, I>::get(who.borrow(), id) {
       Some(ExtraMutator::<T, I> {
         id,
         who: who.borrow().clone(),
-        original: Account::<T, I>::get(who.borrow(), id).extra,
+        original: a.extra,
         pending: None,
       })
     } else {
@@ -80,13 +80,11 @@ impl<T: Config<I>, I: 'static> ExtraMutator<T, I> {
   /// Commit any changes to storage.
   pub fn commit(&mut self) -> Result<(), ()> {
     if let Some(extra) = self.pending.take() {
-      Account::<T, I>::try_mutate_exists(self.who.borrow(), self.id, |maybe_account| {
-        if let Some(ref mut account) = maybe_account {
-          account.extra = extra;
-          Ok(())
-        } else {
-          Err(())
-        }
+      Account::<T, I>::try_mutate(self.who.borrow(), self.id, |maybe_account| {
+        maybe_account
+          .as_mut()
+          .ok_or(())
+          .map(|account| account.extra = extra)
       })
     } else {
       Ok(())
@@ -96,13 +94,11 @@ impl<T: Config<I>, I: 'static> ExtraMutator<T, I> {
   /// Revert any changes, even those already committed by `self` and drop self.
   pub fn revert(mut self) -> Result<(), ()> {
     self.pending = None;
-    Account::<T, I>::try_mutate_exists(self.who.borrow(), self.id, |maybe_account| {
-      if let Some(ref mut account) = maybe_account {
-        account.extra = self.original.clone();
-        Ok(())
-      } else {
-        Err(())
-      }
+    Account::<T, I>::try_mutate(self.who.borrow(), self.id, |maybe_account| {
+      maybe_account
+        .as_mut()
+        .ok_or(())
+        .map(|account| account.extra = self.original.clone())
     })
   }
 }

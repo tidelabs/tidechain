@@ -1,4 +1,4 @@
-use crate::pallet as pallet_asset_registry;
+use crate::{pallet as pallet_asset_registry, weights};
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
@@ -8,7 +8,7 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    EnsureOrigin, GenesisBuild, SortedMembers,
+    ConstU128, ConstU32, GenesisBuild,
   },
   PalletId,
 };
@@ -18,19 +18,30 @@ use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_runtime::{
   testing::Header,
-  traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+  traits::{BlakeTwo256, IdentityLookup},
   DispatchError, DispatchResult, RuntimeDebug,
 };
 use std::marker::PhantomData;
-use system::{EnsureOneOf, EnsureRoot, EnsureSignedBy, RawOrigin};
-use tidefi_primitives::CurrencyId;
+use system::EnsureRoot;
+use tidefi_primitives::{assets, CurrencyId};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
 
 #[derive(
-  Encode, Decode, Default, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, MaxEncodedLen,
+  Encode,
+  Decode,
+  scale_info::TypeInfo,
+  Default,
+  Eq,
+  PartialEq,
+  Copy,
+  Clone,
+  RuntimeDebug,
+  PartialOrd,
+  Ord,
+  MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
 pub struct AccountId(pub u64);
@@ -90,6 +101,7 @@ impl system::Config for Test {
   type SystemWeightInfo = ();
   type SS58Prefix = SS58Prefix;
   type OnSetCode = ();
+  type MaxConsumers = ConstU32<16>;
 }
 pub const TIDE: Balance = 1_000_000_000_000;
 parameter_types! {
@@ -106,46 +118,12 @@ parameter_types! {
   pub const MetadataDepositPerByte: u64 = 1;
 }
 
-parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
-  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
-}
-
-pub struct EnsureRootOrAssetRegistry;
-impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
-  type Success = AccountId;
-
-  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
-      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
-      RawOrigin::Signed(caller) => {
-        // Allow call from asset registry pallet ID account
-        if caller == AssetRegistryPalletId::get().into_account()
-        // Allow call from asset registry owner
-        || caller == AssetRegistry::account_id()
-        {
-          Ok(caller)
-        } else {
-          Err(Origin::from(Some(caller)))
-        }
-      }
-      r => Err(Origin::from(r)),
-    })
-  }
-
-  #[cfg(feature = "runtime-benchmarks")]
-  fn successful_origin() -> Origin {
-    Origin::from(RawOrigin::Signed(Default::default()))
-  }
-}
-
 impl pallet_assets::Config for Test {
   type Event = Event;
   type Balance = u128;
   type AssetId = u32;
   type Currency = Balances;
-  // make sure we do have access to pallet assets from the registry
-  type ForceOrigin = EnsureRootOrAssetRegistry;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
@@ -154,13 +132,7 @@ impl pallet_assets::Config for Test {
   type Freezer = ();
   type Extra = ();
   type WeightInfo = ();
-}
-
-impl pallet_asset_registry::Config for Test {
-  type Event = Event;
-  type WeightInfo = crate::weights::SubstrateWeight<Test>;
-  type AssetRegistryPalletId = AssetRegistryPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type AssetAccountDeposit = ConstU128<0>;
 }
 
 impl pallet_balances::Config for Test {
@@ -173,6 +145,19 @@ impl pallet_balances::Config for Test {
   type MaxReserves = MaxReserves;
   type ReserveIdentifier = [u8; 8];
   type WeightInfo = ();
+}
+
+impl pallet_asset_registry::Config for Test {
+  type Event = Event;
+  type WeightInfo = weights::SubstrateWeight<Test>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
+  // Wrapped currency
+  type CurrencyWrapr = Adapter<AccountId>;
+}
+
+parameter_types! {
+  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"wrpr*art");
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
@@ -280,30 +265,48 @@ where
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
   let alice = 1u64;
-  let bob = 2u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
-
-  pallet_asset_registry::GenesisConfig::<Test> {
-    assets: vec![(
-      CurrencyId::Wrapped(1),
-      "Test".into(),
-      "TST".into(),
-      6,
-      vec![
-        // endow 100 TST on genesis block to bob
-        (bob.into(), 100_000_000),
-      ],
-    )],
-    account: alice.into(),
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
-
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
+
+  let config = pallet_asset_registry::GenesisConfig::<Test> {
+    assets: vec![
+      (
+        CurrencyId::Wrapped(assets::BTC),
+        "Bitcoin".into(),
+        "BTC".into(),
+        8,
+        Vec::new(),
+      ),
+      (
+        CurrencyId::Wrapped(assets::ETH),
+        "Ethereum".into(),
+        "ETH".into(),
+        18,
+        Vec::new(),
+      ),
+      (
+        CurrencyId::Wrapped(assets::USDC),
+        "USD Coin".into(),
+        "USDC".into(),
+        2,
+        Vec::new(),
+      ),
+      (
+        CurrencyId::Wrapped(assets::USDT),
+        "Tether".into(),
+        "USDT".into(),
+        2,
+        Vec::new(),
+      ),
+    ],
+    account: alice.into(),
+  };
+
+  config.assimilate_storage(&mut t).unwrap();
 
   t.into()
 }
