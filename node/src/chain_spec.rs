@@ -23,7 +23,6 @@ use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
 };
-
 use tidefi_primitives::{assets, AssetId, Block, CurrencyId};
 pub use tidefi_primitives::{AccountId, Balance, Signature};
 
@@ -31,7 +30,6 @@ type AccountPublic = <Signature as Verify>::Signer;
 
 const STAGING_TELEMETRY_URL: &str =
   "ws://dedevtidesubstrate-telem.semantic-network.tech:8001/submit/";
-
 const TESTNET_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
 /// Node `ChainSpec` extensions.
