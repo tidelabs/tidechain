@@ -4,6 +4,8 @@ set -e
 Q_NUM=3
 # numbers of investors
 I_NUM=5
+# numbers of devs
+D_NUM=5
 
 # empty strings
 AUTHORITIES=""
@@ -72,13 +74,20 @@ printf "$QUORUMS]"
 
 # INVESTORS (ONLY TIDEs)
 for i in $(seq 1 $I_NUM); do
-	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1000 TIDES\n1000 * TIDE),\n"
+	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1000 TIDES\n1_000_000_000_000_000),\n"
+done
+
+# DEVS (TIDEs & CURRENCIES)
+for i in $(seq 1 $D_NUM); do
+	DEVS+="(CurrencyId::Tide,\n$(generate_address_and_account_id dev$i stash)\n// 1000 TIDE\n1_000_000_000_000_000),\n"
 done
 
 printf "\n\n"
-printf "// investors\nvec![\n"
-printf "$INVESTORS]"
+# FAUCET
+FAUCET="(CurrencyId::Tide,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TIDE\n10_000_000_000_000_000),\n"
 
+printf "\n// get_stakeholder_tokens_testnet\nvec![\n"
+printf "// faucet\n$FAUCET// investors\n$INVESTORS\n// devs\n$DEVS]"
 # ORACLE
 printf "\n\n"
 printf "// oracle\n"
