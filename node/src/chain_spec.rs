@@ -100,11 +100,15 @@ pub fn authority_keys_from_seed(
 
 fn development_config_genesis() -> GenesisConfig {
   testnet_genesis(
-    vec![authority_keys_from_seed("Alice")],
+    vec![
+      authority_keys_from_seed("Alice"),
+      authority_keys_from_seed("Bob"),
+    ],
     get_stakeholder_tokens_devnet(),
-    vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-    get_account_id_from_seed::<sr25519::Public>("Alice"),
-    get_account_id_from_seed::<sr25519::Public>("Alice"),
+    vec![get_account_id_from_seed::<sr25519::Public>("Eve")],
+    //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
+    hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
+    get_account_id_from_seed::<sr25519::Public>("Dave"),
     get_all_assets(),
   )
 }
@@ -306,6 +310,8 @@ pub fn testnet_genesis(
     // all tokens claimed by the stake holders
     + total_claims
     // 1 tide endowed to the fee pallet 
+    + 1_000_000_000_000
+    // 1 tide endowed to root
     + 1_000_000_000_000;
 
   // Treasury Account Id
@@ -326,6 +332,8 @@ pub fn testnet_genesis(
     (treasury_account, treasury_funds),
     // 1 tide to make sure the fees pallet can receive funds
     (fees_account, 1_000_000_000_000),
+    // 1 tide to root so he can pay fees
+    (root.clone(), 1_000_000_000_000),
   ];
 
   // Add all stake holders account
@@ -461,148 +469,320 @@ pub fn get_all_assets() -> Vec<(AssetId, Vec<u8>, Vec<u8>, u8)> {
   vec![
     (assets::BTC, "Bitcoin".into(), "BTC".into(), 8),
     (assets::ETH, "Ethereum".into(), "ETH".into(), 18),
-    (assets::USDC, "USD Coin".into(), "USDC".into(), 2),
-    (assets::USDT, "Tether".into(), "USDT".into(), 2),
+    // FIXME: Revert to correct decimals, when new contract has been deployed
+    (assets::USDC, "USD Coin".into(), "USDC".into(), 18),
+    (assets::USDT, "Tether".into(), "USDT".into(), 18),
   ]
 }
 
+// SECRET="key" ./scripts/prepare-dev-net.sh
 pub fn get_stakeholder_tokens_devnet() -> Vec<(CurrencyId, AccountId, Balance)> {
-  let alice_addr = get_account_id_from_seed::<sr25519::Public>("Alice");
-  let bob_addr = get_account_id_from_seed::<sr25519::Public>("Bob");
-  let eve_addr = get_account_id_from_seed::<sr25519::Public>("Eve");
-  let ferdie_addr = get_account_id_from_seed::<sr25519::Public>("Ferdie");
-
-  let claims = vec![
-    // alice already have quorum endowment for tides
-    // 1000 TIDE
-    (CurrencyId::Tide, bob_addr.clone(), 1000 * TIDE),
-    (CurrencyId::Tide, eve_addr.clone(), 1000 * TIDE),
-    (CurrencyId::Tide, ferdie_addr.clone(), 1000 * TIDE),
-    // 100k USDT
+  vec![
+    // faucet
     (
-      CurrencyId::Wrapped(assets::USDT),
-      alice_addr.clone(),
-      10_000_000,
+      CurrencyId::Tide,
+      //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
+      hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
+      // 10_000 TIDE
+      10_000_000_000_000_000,
+    ),
+    // investors
+    (
+      CurrencyId::Tide,
+      //5DUTRtdo3T6CtLx5rxJQxAVhT9RmZUWGw4FJWZSPWbLFhNf2
+      hex!["3e598e8ee9577c609c70823e394ab1a2e0301f73f074a773a3a1b20bfba9050e"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::USDT),
-      bob_addr.clone(),
-      10_000_000,
+      CurrencyId::Tide,
+      //5GHab6U9Ke5XjbHHEB5WSUreyp293BryKjJrGWgQ1nCvEDzM
+      hex!["bac2a7f4be9d7e0f8eee75e0af5e33240698e8ac0b02904627bd9c4d37b3dd5e"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::USDT),
-      eve_addr.clone(),
-      10_000_000,
+      CurrencyId::Tide,
+      //5CLmiDfMLGbuuvuuc87ZF1fr9itkyVzTE5hjWb725JemcGka
+      hex!["0c40e6b8b6686685828658080a17af04562fa69818c848146795c8c586691a68"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::USDT),
-      ferdie_addr.clone(),
-      10_000_000,
-    ),
-    // 100k USDC
-    (
-      CurrencyId::Wrapped(assets::USDC),
-      alice_addr.clone(),
-      10_000_000,
+      CurrencyId::Tide,
+      //5CJMQZA3LgdZ7EXN1eTXjxqQvmxgZEuXy9iWA1Yvd67zK9Da
+      hex!["0a689812fb1b2763c3ff90ad8f12c652848904d7f4cb3ea5d5328a30c4d3c978"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::USDC),
-      bob_addr.clone(),
-      10_000_000,
+      CurrencyId::Tide,
+      //5DWorbmbirDwHNNrLFu15aRjD63fiEAbi5K9Eo96mxwirVdM
+      hex!["4024cecb82ca165b7960b22a19ac3fafa5240582691eaf22ffee7a6f06cb1526"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    // devs
+    (
+      CurrencyId::Tide,
+      //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
+      hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::USDC),
-      eve_addr.clone(),
-      10_000_000,
+      CurrencyId::Wrapped(1),
+      //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
+      hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
+      // 1000 USDT
+      1_000_000_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::USDC),
-      ferdie_addr.clone(),
-      10_000_000,
-    ),
-    // 10k BTC
-    (
-      CurrencyId::Wrapped(assets::BTC),
-      alice_addr.clone(),
-      1_000_000_000_000,
+      CurrencyId::Wrapped(2),
+      //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
+      hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
+      // 1000 USDC
+      1_000_000_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::BTC),
-      bob_addr.clone(),
-      1_000_000_000_000,
+      CurrencyId::Wrapped(100),
+      //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
+      hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
+      // 1000 BTC
+      100_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::BTC),
-      eve_addr.clone(),
-      1_000_000_000_000,
+      CurrencyId::Wrapped(1000),
+      //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
+      hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
+      // 1000 ETH
+      1_000_000_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::BTC),
-      ferdie_addr.clone(),
-      1_000_000_000_000,
-    ),
-    // 10k ETH
-    (
-      CurrencyId::Wrapped(assets::ETH),
-      alice_addr,
-      10_000_000_000_000_000_000_000,
+      CurrencyId::Tide,
+      //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
+      hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::ETH),
-      bob_addr,
-      10_000_000_000_000_000_000_000,
+      CurrencyId::Wrapped(1),
+      //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
+      hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
+      // 1000 USDT
+      1_000_000_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::ETH),
-      eve_addr,
-      10_000_000_000_000_000_000_000,
+      CurrencyId::Wrapped(2),
+      //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
+      hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
+      // 1000 USDC
+      1_000_000_000_000_000_000_000,
     ),
     (
-      CurrencyId::Wrapped(assets::ETH),
-      ferdie_addr,
-      10_000_000_000_000_000_000_000,
+      CurrencyId::Wrapped(100),
+      //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
+      hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
+      // 1000 BTC
+      100_000_000_000,
     ),
-  ];
-  claims
+    (
+      CurrencyId::Wrapped(1000),
+      //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
+      hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
+      // 1000 ETH
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Tide,
+      //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
+      hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(1),
+      //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
+      hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
+      // 1000 USDT
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(2),
+      //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
+      hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
+      // 1000 USDC
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(100),
+      //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
+      hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
+      // 1000 BTC
+      100_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(1000),
+      //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
+      hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
+      // 1000 ETH
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Tide,
+      //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
+      hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(1),
+      //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
+      hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
+      // 1000 USDT
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(2),
+      //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
+      hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
+      // 1000 USDC
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(100),
+      //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
+      hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
+      // 1000 BTC
+      100_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(1000),
+      //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
+      hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
+      // 1000 ETH
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Tide,
+      //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
+      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(1),
+      //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
+      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+      // 1000 USDT
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(2),
+      //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
+      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+      // 1000 USDC
+      1_000_000_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(100),
+      //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
+      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+      // 1000 BTC
+      100_000_000_000,
+    ),
+    (
+      CurrencyId::Wrapped(1000),
+      //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
+      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+      // 1000 ETH
+      1_000_000_000_000_000_000_000,
+    ),
+  ]
 }
 
 // SECRET="key" ./scripts/prepare-test-net.sh
 pub fn get_stakeholder_tokens_testnet() -> Vec<(CurrencyId, AccountId, Balance)> {
   vec![
+    // faucet
+    (
+      CurrencyId::Tide,
+      //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
+      hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
+      // 10_000 TIDE
+      10_000_000_000_000_000,
+    ),
+    // investors
     (
       CurrencyId::Tide,
       //5DUTRtdo3T6CtLx5rxJQxAVhT9RmZUWGw4FJWZSPWbLFhNf2
       hex!["3e598e8ee9577c609c70823e394ab1a2e0301f73f074a773a3a1b20bfba9050e"].into(),
       // 1000 TIDES
-      1000 * TIDE,
+      1_000_000_000_000_000,
     ),
     (
       CurrencyId::Tide,
       //5GHab6U9Ke5XjbHHEB5WSUreyp293BryKjJrGWgQ1nCvEDzM
       hex!["bac2a7f4be9d7e0f8eee75e0af5e33240698e8ac0b02904627bd9c4d37b3dd5e"].into(),
       // 1000 TIDES
-      1000 * TIDE,
+      1_000_000_000_000_000,
     ),
     (
       CurrencyId::Tide,
       //5CLmiDfMLGbuuvuuc87ZF1fr9itkyVzTE5hjWb725JemcGka
       hex!["0c40e6b8b6686685828658080a17af04562fa69818c848146795c8c586691a68"].into(),
       // 1000 TIDES
-      1000 * TIDE,
+      1_000_000_000_000_000,
     ),
     (
       CurrencyId::Tide,
       //5CJMQZA3LgdZ7EXN1eTXjxqQvmxgZEuXy9iWA1Yvd67zK9Da
       hex!["0a689812fb1b2763c3ff90ad8f12c652848904d7f4cb3ea5d5328a30c4d3c978"].into(),
       // 1000 TIDES
-      1000 * TIDE,
+      1_000_000_000_000_000,
     ),
     (
       CurrencyId::Tide,
       //5DWorbmbirDwHNNrLFu15aRjD63fiEAbi5K9Eo96mxwirVdM
       hex!["4024cecb82ca165b7960b22a19ac3fafa5240582691eaf22ffee7a6f06cb1526"].into(),
       // 1000 TIDES
-      1000 * TIDE,
+      1_000_000_000_000_000,
+    ),
+    // devs
+    (
+      CurrencyId::Tide,
+      //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
+      hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Tide,
+      //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
+      hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Tide,
+      //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
+      hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Tide,
+      //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
+      hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
+    ),
+    (
+      CurrencyId::Tide,
+      //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
+      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+      // 1000 TIDE
+      1_000_000_000_000_000,
     ),
   ]
 }
