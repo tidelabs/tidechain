@@ -22,10 +22,10 @@ use crate::{
   service::new_partial,
 };
 use node_executor::ExecutorDispatch;
-use node_tidefi_runtime::Block;
 use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
-// use node_tidefi_runtime::RuntimeApi;
+use tidechain_runtime::Block;
+// use tidechain_runtime::RuntimeApi;
 
 impl SubstrateCli for Cli {
   fn impl_name() -> String {
@@ -69,7 +69,7 @@ impl SubstrateCli for Cli {
   }
 
   fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-    &node_tidefi_runtime::VERSION
+    &tidechain_runtime::VERSION
   }
 }
 

@@ -26,12 +26,12 @@ source $HOME/.cargo/env
 Then, you will want to run the node in dev mode using the following command:
 
 ```bash
-./target/release/tidefi-node --dev
+./target/release/tidechain --dev
 ```
 
 > For people not familiar with Substrate, the --dev flag is a way to run a Substrate-based node in a single node developer configuration for testing purposes. You can learn more about `--dev` in [this Substrate tutorial](https://substrate.dev/docs/en/tutorials/create-your-first-substrate-chain/interact).
 
-When running a node via the binary file, data is stored in a local directory typically located in ~/.local/shared/tidefi-node/chains/development/db. If you want to start a fresh instance of the node, you can either delete the content of the folder, or run the following command inside the tidefi folder:
+When running a node via the binary file, data is stored in a local directory typically located in ~/.local/shared/tidechain/chains/development/db. If you want to start a fresh instance of the node, you can either delete the content of the folder, or run the following command inside the tidefi folder:
 
 ```bash
 ./target/release/node-tidefi purge-chain --dev
@@ -42,12 +42,14 @@ This will remove the data folder, note that all chain data is now lost.
 ## Run a local network (two nodes)
 
 - Install `subkey`, `jq`
+
 ```bash
 curl https://getsubstrate.io -sSf | bash -s --
 brew install jq
 ```
 
 - Generate node key using `subkey`
+
 ```bash
 Alice_Node_Key=$(subkey generate --scheme Ed25519 --output-type Json | jq -r '.secretSeed')
 ```
@@ -59,7 +61,7 @@ Alice_Node_Key=$(subkey generate --scheme Ed25519 --output-type Json | jq -r '.s
 ./target/release/polkadex-node purge-chain --base-path /tmp/alice --chain local
 
 # Start Alice's node
-./target/release/tidefi-node --base-path /tmp/alice \
+./target/release/tidechain --base-path /tmp/alice \
   --chain dev \
   --alice \
   --port 30333 \
@@ -93,12 +95,13 @@ Alice_Node_Key=$(subkey generate --scheme Ed25519 --output-type Json | jq -r '.s
 Local node identity is: `12D3KooWDTkjLrcEKPMkU8USQdAb4Qy2g3Rx6wysVeK4TVUgwbcB` shows the Peer ID that Bob will need when booting from Alice's node. This value was determined by the --node-key that was used to start Alice's node.
 
 Now that Alice's node is up and running, Bob can join the network by bootstrapping from her node.
+
 ```bash
 # Purge any chain data from previous runs
 ./target/release/polkadex-node purge-chain --base-path /tmp/alice --chain local
 
 # Start Bob's node
-./target/release/tidefi-node --base-path /tmp/bob \
+./target/release/tidechain --base-path /tmp/bob \
   --chain dev \
   --bob \
   --port 30334 \
@@ -142,7 +145,7 @@ The following commands will setup a local TiDeFi network made of 2 nodes. It's u
 ### Local build
 
 ```bash
-docker build --file cicd/node-dev.Dockerfile --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN -t tidefi-node .
+docker build --file cicd/node-dev.Dockerfile --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN -t tidechain .
 docker-compose -f cicd/docker-compose.local.yml up --force-recreate
 ```
 
@@ -156,6 +159,8 @@ docker-compose -f cicd/docker-compose.dev-local.yml up --force-recreate
 ```
 
 ## Connecting to the nodes
+
 The development node is a Substrate-based node, so you can interact with it using standard Substrate tools. The two provided RPC endpoints are:
+
 - HTTP: `http://127.0.0.1:9933`
 - WS: `ws://127.0.0.1:9944`

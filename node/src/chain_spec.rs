@@ -3,13 +3,6 @@ use grandpa_primitives::AuthorityId as GrandpaId;
 use codec::{Decode, Encode};
 use hex_literal::hex;
 use itertools::Itertools;
-pub use node_tidefi_runtime::GenesisConfig;
-use node_tidefi_runtime::{
-  constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
-  BalancesConfig, CouncilConfig, FeesPalletId, IndicesConfig, SessionConfig, SessionKeys,
-  StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
-  TreasuryPalletId, WraprAssetRegistryConfig, WraprOracleConfig, WraprQuorumConfig,
-};
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
 use sc_service::ChainType;
@@ -22,6 +15,13 @@ use sp_core::{blake2_256, crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
+};
+pub use tidechain_runtime::GenesisConfig;
+use tidechain_runtime::{
+  constants::currency::TIDE, wasm_binary_unwrap, AuthorityDiscoveryConfig, BabeConfig,
+  BalancesConfig, CouncilConfig, FeesPalletId, IndicesConfig, SessionConfig, SessionKeys,
+  StakerStatus, StakingConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
+  TreasuryPalletId, WraprAssetRegistryConfig, WraprOracleConfig, WraprQuorumConfig,
 };
 use tidefi_primitives::{assets, AssetId, Block, CurrencyId};
 pub use tidefi_primitives::{AccountId, Balance, Signature};
@@ -424,7 +424,7 @@ pub fn testnet_genesis(
 
     babe: BabeConfig {
       authorities: Default::default(),
-      epoch_config: Some(node_tidefi_runtime::BABE_GENESIS_EPOCH_CONFIG),
+      epoch_config: Some(tidechain_runtime::BABE_GENESIS_EPOCH_CONFIG),
     },
     im_online: Default::default(),
     authority_discovery: AuthorityDiscoveryConfig { keys: vec![] },
