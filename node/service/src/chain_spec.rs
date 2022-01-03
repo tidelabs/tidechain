@@ -874,7 +874,6 @@ fn get_tide_from_stakeholders(
   stakeholders: Vec<(CurrencyId, AccountId, Balance)>,
 ) -> Vec<(AccountId, Balance)> {
   stakeholders
-    
     .into_iter()
     .filter(|(currency_id, _, _)| *currency_id == CurrencyId::Tide)
     .map(|(_, account_id, balance)| (account_id, balance))

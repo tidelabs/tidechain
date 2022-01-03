@@ -260,7 +260,7 @@ pub mod pallet {
             currency_id_to,
             amount_to,
             <frame_system::Pallet<T>>::block_number(),
-            extrinsic_hash
+            extrinsic_hash,
           );
 
           // 6 b) Send event to the chain
