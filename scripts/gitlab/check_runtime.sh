@@ -30,8 +30,8 @@ boldprint "latest release tag ${LATEST_TAG}"
 boldprint "latest 10 commits of ${CI_COMMIT_REF_NAME}"
 git --no-pager log --graph --oneline --decorate=short -n 10
 
-boldprint "make sure the master branch is available in shallow clones"
-git fetch --depth="${GIT_DEPTH:-100}" origin master
+boldprint "make sure the main branch is available in shallow clones"
+git fetch --depth="${GIT_DEPTH:-100}" origin main
 
 
 runtimes=(
