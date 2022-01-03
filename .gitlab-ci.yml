@@ -55,7 +55,7 @@ default:
       - api_failure
   interruptible: true
   tags:
-    - kubernetes-semnet-build
+    - dv-Kubernetes
 
 .docker-env: &docker-env
   image: "${CI_IMAGE}"
@@ -79,7 +79,10 @@ default:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_COMMIT_REF_NAME == "main"
-    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/ # PRs
+    - if: $CI_COMMIT_REF_NAME =~ /^[0-9]+$/ # PRs (Github issues)
+    - if: "$CI_COMMIT_BRANCH =~ /^feat/" # Features
+    - if: "$CI_COMMIT_BRANCH =~ /^chore/" # Chore
+    - if: "$CI_COMMIT_BRANCH =~ /^fix/" # Fix
 
 #### Vault secrets
 .vault-secrets: &vault-secrets
@@ -186,6 +189,17 @@ check-runtime-benchmarks:
     - ./scripts/gitlab/check_runtime_benchmarks.sh
     - sccache -s
 
+check-no-default-features:
+  stage: test
+  <<: *rules-test
+  <<: *docker-env
+  <<: *compiler-info
+  <<: *vault-secrets
+  script:
+    # Check that tidechain-cli will compile no default features.
+    - ./scripts/gitlab/check_no_default_features.sh
+    - sccache -s
+
 spellcheck:
   stage: test
   <<: *docker-env
@@ -213,7 +227,7 @@ check-transaction-versions:
     - apt-get -y update; apt-get -y install jq lsof
     - npm install --ignore-scripts -g @polkadot/metadata-cmp
     # Set git config
-    - git config remote.origin.url "https://github.com/semnet/tidechain.git"
+    - git config remote.origin.url "https://github.com/tide-labs/tidechain.git"
     - git fetch origin release
   script:
     - scripts/gitlab/check_extrinsics_ordering.sh
@@ -288,15 +302,24 @@ build-rustdoc:
 update_tidechain_weights: &update-weights
   stage: build
   when: manual
+  variables:
+    RUNTIME: tidechain
   artifacts:
     paths:
-      - tidechain_weights_${CI_COMMIT_SHORT_SHA}.patch
+      - ${RUNTIME}_weights_${CI_COMMIT_SHORT_SHA}.patch
   script:
-    - ./scripts/run_benches.sh
-    - git diff -P > tidechain_weights_${CI_COMMIT_SHORT_SHA}.patch
+    - ./scripts/run_benches_for_runtime.sh $RUNTIME
+    - git diff -P > ${RUNTIME}_weights_${CI_COMMIT_SHORT_SHA}.patch
   # uses the "shell" executors
   tags:
     - weights
+
+update_hertel_weights: &update-weights
+  <<: *update-weights
+  variables:
+    RUNTIME: hertel
+
+# stage: publish
 
 publish-s3-release: &publish-s3
   stage: publish

@@ -5,19 +5,20 @@ set -e
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/../common/lib.sh"
 
-HEAD_BIN=./artifacts/tidechain
+HEAD_BIN=./artifacts/polkadot
 HEAD_WS=ws://localhost:9944
 RELEASE_WS=ws://localhost:9945
 
 runtimes=(
+  "hertel"
   "tidechain"
 )
 
 # First we fetch the latest released binary
-latest_release=$(latest_release 'semnet/tidechain')
+latest_release=$(latest_release 'tide-labs/tidechain')
 RELEASE_BIN="./tidechain-$latest_release"
 echo "[+] Fetching binary for Tidechain version $latest_release"
-curl -L "https://github.com/semnet/tidechain/releases/download/$latest_release/tidechain" > "$RELEASE_BIN" || exit 1
+curl -L "https://github.com/tide-labs/tidechain/releases/download/$latest_release/tidechain" > "$RELEASE_BIN" || exit 1
 chmod +x "$RELEASE_BIN"
 
 
@@ -25,12 +26,12 @@ for RUNTIME in "${runtimes[@]}"; do
   echo "[+] Checking runtime: ${RUNTIME}"
 
   release_transaction_version=$(
-    git show "origin/release:runtime/src/lib.rs" | \
+    git show "origin/release:runtime/${RUNTIME}/src/lib.rs" | \
       grep 'transaction_version'
   )
 
   current_transaction_version=$(
-    grep 'transaction_version' "./runtime/src/lib.rs"
+    grep 'transaction_version' "./runtime/${RUNTIME}/src/lib.rs"
   )
 
   echo "[+] Release: ${release_transaction_version}"
@@ -42,8 +43,8 @@ for RUNTIME in "${runtimes[@]}"; do
   fi
 
   # Start running the nodes in the background
-  $HEAD_BIN --chain="testnet-local" --tmp &
-  $RELEASE_BIN --chain="testnet-local" --ws-port 9945 --tmp &
+  $HEAD_BIN --chain="$RUNTIME-local" --tmp &
+  $RELEASE_BIN --chain="$RUNTIME-local" --ws-port 9945 --tmp &
   jobs
 
   # Sleep a little to allow the nodes to spin up and start listening

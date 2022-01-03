@@ -16,7 +16,7 @@ set -e # fail on any error
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/../common/lib.sh"
 
-SUBSTRATE_REPO="https://github.com/paritytech/substrate"
+SUBSTRATE_REPO="https://github.com/tide-labs/substrate"
 SUBSTRATE_REPO_CARGO="git\+${SUBSTRATE_REPO}"
 SUBSTRATE_VERSIONS_FILE="bin/node/runtime/src/lib.rs"
 
@@ -35,6 +35,7 @@ git fetch --depth="${GIT_DEPTH:-100}" origin master
 
 
 runtimes=(
+  "hertel"
   "tidechain"
 )
 
@@ -115,7 +116,7 @@ do
 
   # Check if there were changes to this specific runtime or common directories.
   # If not, we can skip to the next runtime
-  regex="^runtime"
+  regex="^runtime/$(join_by '|^runtime/' "$RUNTIME" "${common_dirs[@]}")"
   if ! git diff --name-only "refs/tags/${LATEST_TAG}...${CI_COMMIT_SHA}" \
     | grep -E -q -e "$regex"; then
     continue
@@ -126,11 +127,11 @@ do
   # rebuilt.
 
   add_spec_version="$(
-    git diff "refs/tags/${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/src/lib.rs" \
+    git diff "refs/tags/${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/${RUNTIME}/src/lib.rs" \
     | sed -n -r "s/^\+[[:space:]]+spec_version: +([0-9]+),$/\1/p"
   )"
   sub_spec_version="$(
-    git diff "refs/tags/${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/src/lib.rs" \
+    git diff "refs/tags/${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/${RUNTIME}/src/lib.rs" \
     | sed -n -r "s/^\-[[:space:]]+spec_version: +([0-9]+),$/\1/p"
   )"
 
@@ -141,11 +142,8 @@ do
 
     boldcat <<EOT
 ## RUNTIME: ${RUNTIME} ##
-
 changes to the ${RUNTIME} runtime sources and changes in the spec version.
-
 spec_version: ${sub_spec_version} -> ${add_spec_version}
-
 EOT
     continue
 
@@ -154,11 +152,11 @@ EOT
     # there is no consensus-critical logic that has changed.
 
     add_impl_version="$(
-      git diff refs/tags/"${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/src/lib.rs" \
+      git diff refs/tags/"${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/${RUNTIME}/src/lib.rs" \
       | sed -n -r 's/^\+[[:space:]]+impl_version: +([0-9]+),$/\1/p'
     )"
     sub_impl_version="$(
-      git diff refs/tags/"${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/src/lib.rs" \
+      git diff refs/tags/"${LATEST_TAG}...${CI_COMMIT_SHA}" "runtime/${RUNTIME}/src/lib.rs" \
       | sed -n -r 's/^\-[[:space:]]+impl_version: +([0-9]+),$/\1/p'
     )"
 
@@ -167,13 +165,9 @@ EOT
     if [ "${add_impl_version}" != "${sub_impl_version}" ]
     then
       boldcat <<EOT
-
 ## RUNTIME: ${RUNTIME} ##
-
 changes to the ${RUNTIME} runtime sources and changes in the impl version.
-
 impl_version: ${sub_impl_version} -> ${add_impl_version}
-
 EOT
       continue
     fi
@@ -188,10 +182,8 @@ wasm source files changed or the spec version in the substrate reference in
 the Cargo.lock but not the spec/impl version. If changes made do not alter
 logic, just bump 'impl_version'. If they do change logic, bump
 'spec_version'.
-
 source file directories:
 - runtime
-
 version files: ${failed_runtime_checks[@]}
 EOT
 

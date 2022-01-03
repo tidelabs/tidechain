@@ -22,7 +22,7 @@ _In General_
 
 A Pull Request (PR) needs to be reviewed and approved by project maintainers unless:
 
-- it does not alter any logic (e.g. comments, dependencies, docs), then it may be tagged https://github.com/semnet/tidechain/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+label%3AA2-insubstantial[`insubstantial`] and merged by its author once CI is complete.
+- it does not alter any logic (e.g. comments, dependencies, docs), then it may be tagged https://github.com/tide-labs/tidechain/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+label%3AA2-insubstantial[`insubstantial`] and merged by its author once CI is complete.
 - it is an urgent fix with no large change to logic, then it may be merged after a non-author contributor has approved the review once CI is complete.
 
 _Labels TLDR:_
@@ -35,19 +35,19 @@ _Labels TLDR:_
 _Process:_
 
 - Please tag each PR with exactly one `A`, `B`, `C` and `D` label at the minimum.
-- Once a PR is ready for review please add the https://github.com/semnet/tidechain/pulls?q=is%3Apr+is%3Aopen+label%3AA0-pleasereview[`A0-pleasereview`] label. Generally PRs should sit with this label for 48 hours in order to garner feedback. It may be merged before if all relevant parties had a look at it.
-- If the first review is not an approval, swap `A0-pleasereview` to any label `[A3, A7]` to indicate that the PR has received some feedback, but needs further work. For example. https://github.com/semnet/tidechain/labels/A3-inprogress[`A3-inprogress`] is a general indicator that the PR is work in progress and https://github.com/semnet/tidechain/labels/A4-gotissues[`A4-gotissues`] means that it has significant problems that need fixing. Once the work is done, change the label back to `A0-pleasereview`. You might end up swapping a few times back and forth to climb up the A label group. Once a PR is https://github.com/semnet/tidechain/labels/A8-mergeoncegreen[`A8-mergeoncegreen`], it is ready to merge.
+- Once a PR is ready for review please add the https://github.com/tide-labs/tidechain/pulls?q=is%3Apr+is%3Aopen+label%3AA0-pleasereview[`A0-pleasereview`] label. Generally PRs should sit with this label for 48 hours in order to garner feedback. It may be merged before if all relevant parties had a look at it.
+- If the first review is not an approval, swap `A0-pleasereview` to any label `[A3, A7]` to indicate that the PR has received some feedback, but needs further work. For example. https://github.com/tide-labs/tidechain/labels/A3-inprogress[`A3-inprogress`] is a general indicator that the PR is work in progress and https://github.com/tide-labs/tidechain/labels/A4-gotissues[`A4-gotissues`] means that it has significant problems that need fixing. Once the work is done, change the label back to `A0-pleasereview`. You might end up swapping a few times back and forth to climb up the A label group. Once a PR is https://github.com/tide-labs/tidechain/labels/A8-mergeoncegreen[`A8-mergeoncegreen`], it is ready to merge.
 - PRs must be tagged with their release notes requirements via the `B1-B9` labels.
 - PRs must be tagged with their release importance via the `C1-C9` labels.
 - PRs must be tagged with their audit requirements via the `D1-D9` labels.
-- PRs that must be backported to a stable branch must be tagged with https://github.com/semnet/tidechain/labels/E1-runtimemigration[`E0-patchthis`].
-- PRs that introduce runtime migrations must be tagged with https://github.com/semnet/tidechain/labels/E1-runtimemigration[`E1-runtimemigration`]. See the https://github.com/semnet/tidechain/blob/master/utils/frame/try-runtime/cli/src/lib.rs#L18[Migration Best Practices here] for more info about how to test runtime migrations.
-- PRs that introduce irreversible database migrations must be tagged with https://github.com/semnet/tidechain/labels/E2-databasemigration[`E2-databasemigration`].
-- PRs that add host functions must be tagged with with https://github.com/semnet/tidechain/labels/E4-newhostfunctions[`E4-newhostfunctions`].
-- PRs that break the external API must be tagged with https://github.com/semnet/tidechain/labels/E5-breaksapi[`E5-breaksapi`].
-- PRs that materially change the FRAME/runtime semantics must be tagged with https://github.com/semnet/tidechain/labels/E6-transactionversion[`E6-transactionversion`].
-- PRs that "break everything" must be tagged with https://github.com/semnet/tidechain/labels/E7-breakseverything[`E7-breakseverything`].
-- PRs that block a new release must be tagged with https://github.com/semnet/tidechain/labels/E10-blocker%20%E2%9B%94%EF%B8%8F[`E10-blocker`].
+- PRs that must be backported to a stable branch must be tagged with https://github.com/tide-labs/tidechain/labels/E1-runtimemigration[`E0-patchthis`].
+- PRs that introduce runtime migrations must be tagged with https://github.com/tide-labs/tidechain/labels/E1-runtimemigration[`E1-runtimemigration`]. See the https://github.com/tide-labs/tidechain/blob/master/utils/frame/try-runtime/cli/src/lib.rs#L18[Migration Best Practices here] for more info about how to test runtime migrations.
+- PRs that introduce irreversible database migrations must be tagged with https://github.com/tide-labs/tidechain/labels/E2-databasemigration[`E2-databasemigration`].
+- PRs that add host functions must be tagged with with https://github.com/tide-labs/tidechain/labels/E4-newhostfunctions[`E4-newhostfunctions`].
+- PRs that break the external API must be tagged with https://github.com/tide-labs/tidechain/labels/E5-breaksapi[`E5-breaksapi`].
+- PRs that materially change the FRAME/runtime semantics must be tagged with https://github.com/tide-labs/tidechain/labels/E6-transactionversion[`E6-transactionversion`].
+- PRs that "break everything" must be tagged with https://github.com/tide-labs/tidechain/labels/E7-breakseverything[`E7-breakseverything`].
+- PRs that block a new release must be tagged with https://github.com/tide-labs/tidechain/labels/E10-blocker%20%E2%9B%94%EF%B8%8F[`E10-blocker`].
 - No PR should be merged until all reviews' comments are addressed and CI is successful.
 
 _Reviewing pull requests_:

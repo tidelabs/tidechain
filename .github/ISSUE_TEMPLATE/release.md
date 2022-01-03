@@ -8,7 +8,7 @@ title: Tidechain {{ env.VERSION }} Release checklist
 
 This is the release checklist for Tidechain {{ env.VERSION }}. **All** following
 checks should be completed before publishing a new release of the
-Tidechain runtime or client. The current release candidate can be
+Tidechain/Hertel runtime or client. The current release candidate can be
 checked out with `git checkout release-{{ env.VERSION }}`
 
 ### Runtime Releases
@@ -44,7 +44,7 @@ candidate branch or started an additional release candidate branch (rc-2, rc-3, 
 - [ ] Check that the new client versions have [run on the network](#burn-in)
       without issue for 12 hours.
 - [ ] Check that a draft release has been created at
-      https://github.com/semnet/tidechain/releases with relevant [release
+      https://github.com/tide-labs/tidechain/releases with relevant [release
       notes](#release-notes)
 - [ ] Check that [build artifacts](#build-artifacts) have been added to the
       draft-release
@@ -53,7 +53,7 @@ candidate branch or started an additional release candidate branch (rc-2, rc-3, 
 
 ### Burn In
 
-Ensure that SEMNET DevOps has run the new release on Tidechain Testnet validators for at least 12 hours prior to publishing the release.
+Ensure that SEMNET DevOps has run the new release on Tidechain and Hertel validators for at least 12 hours prior to publishing the release.
 
 ### Build Artifacts
 
@@ -106,7 +106,7 @@ functions. Compare the metadata of the current and new runtimes and ensure that
 the `module index, call index` tuples map to the same set of functions. In case
 of a breaking change, increase `transaction_version`.
 
-To verify the order has not changed, you may manually start the following [Github Action](https://github.com/semnet/tidechain/actions/workflows/extrinsic-ordering-check-from-bin.yml). It takes around a minute to run and will produce the report as artifact you need to manually check.
+To verify the order has not changed, you may manually start the following [Github Action](https://github.com/tide-labs/tidechain/actions/workflows/extrinsic-ordering-check-from-bin.yml). It takes around a minute to run and will produce the report as artifact you need to manually check.
 
 The things to look for in the output are lines like:
 
@@ -125,13 +125,14 @@ date to include them.
 
 ### Benchmarks
 
-There are three benchmarking machines reserved for updating the weights at
-release-time. To initialise a benchmark run for each production runtime (only tidechain for now):
+There are one benchmarking machine reserved for updating the weights at
+release-time. To initialise a benchmark run for each production runtime (tidechain and hertel):
 
-- Go to https://tributary.semantic-network.tech/semnet/tidechain/-/pipelines?page=1&scope=branches&ref=main
+- Go to https://tributary.semantic-network.tech/tide-labs/tidechain/-/pipelines?page=1&scope=branches&ref=main
 - Click the link to the last pipeline run for main
 - Start each of the manual jobs:
   - 'update_tidechain_weights'
+  - 'update_hertel_weights'
 - When these jobs have completed (it takes a few hours), a git PATCH file will
   be available to download as an artifact.
 - On your local machine, branch off master

@@ -2,4 +2,5 @@
 
 set -e
 
-pushd node && cargo check --no-default-features && popd
+pushd node/service && cargo check --no-default-features && popd
+pushd cli && cargo check && popd

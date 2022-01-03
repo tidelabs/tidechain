@@ -55,7 +55,7 @@ logger("Last ref: " + last_ref)
 
 logger("Generate changelog for Tidechain")
 tidechain_cl = Changelog.new(
-  'semnet/tidechain', last_ref, current_ref, token: token
+  'tide-labs/tidechain', last_ref, current_ref, token: token
 )
 
 # Gets the substrate commit hash used for a given tidechain ref
@@ -126,6 +126,7 @@ release_priority = Changelog.highest_priority_for_changes(client_changes)
 rustc_stable = ENV['RUSTC_STABLE']
 rustc_nightly = ENV['RUSTC_NIGHTLY']
 tidechain_runtime = get_runtime('tidechain', tidechain_path)
+hertel_runtime = get_runtime('hertel', tidechain_path)
 
 # These json files should have been downloaded as part of the build-runtimes
 # github action
@@ -133,6 +134,12 @@ tidechain_runtime = get_runtime('tidechain', tidechain_path)
 tidechain_json = JSON.parse(
   File.read(
     "#{ENV['GITHUB_WORKSPACE']}/tidechain-srtool-json/tidechain_srtool_output.json"
+  )
+)
+
+hertel_json = JSON.parse(
+  File.read(
+    "#{ENV['GITHUB_WORKSPACE']}/hertel-srtool-json/hertel_srtool_output.json"
   )
 )
 

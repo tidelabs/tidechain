@@ -14,8 +14,8 @@ LABEL description="Multistage Docker image for Tidechain" \
 	com.semantic-network.image.authors="devops-team@semantic-network.com" \
 	com.semantic-network.image.vendor="Semantic Network" \
 	com.semantic-network.image.description="Tidechain" \
-	com.semantic-network.image.source="https://github.com/semnet/tidechain/blob/${VCS_REF}/scripts/dockerfiles/tidechain/tidechain_builder.Dockerfile" \
-	com.semantic-network.image.documentation="https://github.com/semnet/tidechain/"
+	com.semantic-network.image.source="https://github.com/tide-labs/tidechain/blob/${VCS_REF}/scripts/dockerfiles/tidechain/tidechain_builder.Dockerfile" \
+	com.semantic-network.image.documentation="https://github.com/tide-labs/tidechain/"
 
 COPY --from=builder /tidechain/target/release/tidechain /usr/local/bin
 

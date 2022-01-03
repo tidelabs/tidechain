@@ -73,7 +73,7 @@ github_label () {
     -F "ref=master" \
     -F "variables[LABEL]=${1}" \
     -F "variables[PRNO]=${CI_COMMIT_REF_NAME}" \
-    -F "variables[PROJECT]=semnet/tidechain" \
+    -F "variables[PROJECT]=tide-labs/tidechain" \
     "${GITLAB_API}/projects/${GITHUB_API_PROJECT}/trigger/pipeline"
 }
 
@@ -95,7 +95,7 @@ boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
 
 skip_if_companion_pr() {
-  url="https://api.github.com/repos/semnet/tidechain/pulls/${CI_COMMIT_REF_NAME}"
+  url="https://api.github.com/repos/tide-labs/tidechain/pulls/${CI_COMMIT_REF_NAME}"
   echo "[+] API URL: $url"
 
   pr_title=$(curl -sSL -H "Authorization: token ${GITHUB_PR_TOKEN}" "$url" | jq -r .title)
@@ -111,19 +111,19 @@ skip_if_companion_pr() {
 
 # Fetches the tag name of the latest release from a repository
 # repo: 'organisation/repo'
-# Usage: latest_release 'semnet/tidechain'
+# Usage: latest_release 'tide-labs/tidechain'
 latest_release() {
   curl -s "$api_base/$1/releases/latest" | jq -r '.tag_name'
 }
 
 # Check for runtime changes between two commits. This is defined as any changes
-# to /runtime
+# to any *production* chains under /runtime
 has_runtime_changes() {
   from=$1
   to=$2
 
   if git diff --name-only "${from}...${to}" \
-    | grep -q -e '^runtime/'
+    | grep -q -e '^runtime/tidechain' -e '^runtime/hertel' -e '^runtime/common'
   then
     return 0
   else
