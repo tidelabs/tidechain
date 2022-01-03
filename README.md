@@ -1,166 +1,191 @@
-# Tidefi Substrate Node
+# Tidechain
 
-Based on the substrate-node-template [Substrate](https://github.com/substrate-developer-hub/substrate-node-template) with custom pallets.
+This repo contains runtimes for the Tidechain and Hertel networks.
+The README provides information about installing the `tidechain` binary.
+For more specific guides, like how to be a validator, see the [Tidechain Wiki](#).
 
-## Build the TiDeFi Node
+## Installation
 
-To build TiDeFi node, you will need a proper Substrate development environment. If you need a refresher setting up your Substrate environment, see [Substrate's Getting Started Guide](https://substrate.dev/docs/en/knowledgebase/getting-started/).
+If you just wish to run a Tidechain node without compiling it yourself, you may
+either run the latest binary from our [releases](https://github.com/tide-labs/tidechain/releases) page.
 
-Note that cloning master might result in an unstable build.
+## Building
+
+### Install via Cargo
+
+Make sure you have the support software installed from the **Build from Source** section
+below this section.
+
+If you want to install Tidechain in your PATH, you can do so with with:
 
 ```bash
-# Fetch the code
-git clone https://tributary.semantic-network.tech/semnet/tidefi/back/tidefi-substrate-node.git
-cd tidefi-substrate-node
+cargo install --git https://github.com/tide-labs/tidechain --tag <version> tidechain --locked
+```
 
-# Build the node (The first build will be long (~30min))
+### Build from Source
+
+If you'd like to build from source, first install Rust. You may need to add Cargo's bin directory
+to your PATH environment variable. Restarting your computer will do this for you automatically.
+
+```bash
+curl https://sh.rustup.rs -sSf | sh
+```
+
+If you already have Rust installed, make sure you're using the latest version by running:
+
+```bash
+rustup update
+```
+
+Once done, finish installing the support software:
+
+```bash
+sudo apt install build-essential git clang libclang-dev pkg-config libssl-dev
+```
+
+Build the client by cloning this repository and running the following commands from the root
+directory of the repo:
+
+```bash
+git checkout <latest tagged release>
+./scripts/init.sh
 cargo build --release
 ```
 
-If a cargo not found error shows up in the terminal, manually add Rust to your system path (or restart your system):
+Note that compilation is a memory intensive process. We recommend having 4 GiB of physical RAM or swap available (keep in mind that if a build hits swap it tends to be very slow).
+
+#### Build from Source with Docker
+
+You can also build from source using
+[Parity CI docker image](https://github.com/paritytech/scripts/tree/master/dockerfiles/ci-linux):
 
 ```bash
-source $HOME/.cargo/env
+git checkout <latest tagged release>
+docker run --rm -it -w /shellhere/tidechain \
+                    -v $(pwd):/tidechain/polkadot \
+                    paritytech/ci-linux:production cargo build --release
+sudo chown -R $(id -u):$(id -g) target/
 ```
 
-Then, you will want to run the node in dev mode using the following command:
+## Networks
+
+This repo supports runtimes for Tidechain and Hertel.
+
+Tidechain is built on top of Substrate, a modular framework for blockchains.
+One feature of Substrate is to allow for connection to different networks using a single executable and configuring it with a start-up flag.
+
+### Tidechain Mainnet
+
+Currently Tidechain is built from the tip of `main` and is the default option when starting a node.
+
+Connect to the global Tidechain Mainnet network by running:
 
 ```bash
-./target/release/tidechain --dev
+tidechain --chain=tidechain
 ```
 
-> For people not familiar with Substrate, the --dev flag is a way to run a Substrate-based node in a single node developer configuration for testing purposes. You can learn more about `--dev` in [this Substrate tutorial](https://substrate.dev/docs/en/tutorials/create-your-first-substrate-chain/interact).
+You can see your node on [telemetry] (set a custom name with `--name "my custom name"`).
 
-When running a node via the binary file, data is stored in a local directory typically located in ~/.local/shared/tidechain/chains/development/db. If you want to start a fresh instance of the node, you can either delete the content of the folder, or run the following command inside the tidefi folder:
+[telemetry]: https://telemetry.tidefi.io/#list/Tidechain
+
+### Connect to the Hertel Testnet
+
+Hertel is the latest test network for Tidechain.
+The tokens on this network are called TIDE and they purposefully hold no economic value.
+The `sudo` pallet is enabled on this network allowing the core-team to debug the chain.
+
+Connect to the global Hertel testnet by running:
 
 ```bash
-./target/release/node-tidefi purge-chain --dev
+tidechain --chain=hertel
 ```
 
-This will remove the data folder, note that all chain data is now lost.
+You can see your node on [telemetry] (set a custom name with `--name "my custom name"`).
 
-## Run a local network (two nodes)
+[telemetry]: https://telemetry.tidefi.io/#list/Hertel
 
-- Install `subkey`, `jq`
+### Obtaining TIDEs
+
+For Hertel's TIDE tokens, see the faucet [instructions](#) on the Wiki.
+
+## Hacking on Tidechain
+
+If you'd actually like to hack on Tidechain, you can grab the source code and build it. Ensure you have
+Rust and the support software installed. This script will install or update Rust and install the
+required dependencies (this may take up to 30 minutes on Mac machines):
 
 ```bash
-curl https://getsubstrate.io -sSf | bash -s --
-brew install jq
+curl https://getsubstrate.io -sSf | bash -s -- --fast
 ```
 
-- Generate node key using `subkey`
+Then, grab the Tidechain source code:
 
 ```bash
-Alice_Node_Key=$(subkey generate --scheme Ed25519 --output-type Json | jq -r '.secretSeed')
+git clone https://github.com/tide-labs/tidechain.git
+cd tidechain
 ```
 
-- Run Alice's node
+Then build the code. You will need to build in release mode (`--release`) to start a network. Only
+use debug mode for development (faster compile times for development and testing).
 
 ```bash
-# Purge any chain data from previous runs
-./target/release/polkadex-node purge-chain --base-path /tmp/alice --chain local
-
-# Start Alice's node
-./target/release/tidechain --base-path /tmp/alice \
-  --chain dev \
-  --alice \
-  --port 30333 \
-  --ws-port 9944 \
-  --rpc-port 9933 \
-  --node-key $Alice_Node_Key \
-  --validator
+./scripts/init.sh   # Install WebAssembly. Update Rust
+cargo build # Builds all native code
 ```
+
+You can run the tests if you like:
 
 ```bash
-2021-09-21 08:41:27 TiDeFi Node
-2021-09-21 08:41:27 ✌️  version 1.0.0-6712dba-x86_64-macos
-2021-09-21 08:41:27 ❤️  by Semantic Network <https://semantic-network.com>, 2017-2021
-2021-09-21 08:41:27 📋 Chain specification: Development
-2021-09-21 08:41:27 🏷 Node name: Alice
-2021-09-21 08:41:27 👤 Role: AUTHORITY
-2021-09-21 08:41:27 💾 Database: RocksDb at /tmp/alice/chains/tidefi_devnet/db/full
-2021-09-21 08:41:27 ⛓  Native runtime: node-268 (tidefi-official-0.tx2.au10)
-2021-09-21 08:41:27 🔨 Initializing Genesis block/state (state: 0xaa6e…f921, header-hash: 0x0c34…ce67)
-2021-09-21 08:41:27 👴 Loading GRANDPA authority set from genesis on what appears to be first startup.
-2021-09-21 08:41:28 ⏱  Loaded block-time = 3s from block 0x0c34a9a32a42c852c3cf3348e0da1c249381610ae0672a99332de19b30a8ce67
-2021-09-21 08:41:28 👶 Creating empty BABE epoch changes on what appears to be first startup.
-2021-09-21 08:41:28 Using default protocol ID "sup" because none is configured in the chain specs
-2021-09-21 08:41:28 🏷 Local node identity is: 12D3KooWDTkjLrcEKPMkU8USQdAb4Qy2g3Rx6wysVeK4TVUgwbcB
-2021-09-21 08:41:28 📦 Highest known block at #0
-2021-09-21 08:41:28 〽️ Prometheus exporter started at 127.0.0.1:9615
-2021-09-21 08:41:28 Listening for new connections on 127.0.0.1:9944.
-2021-09-21 08:41:28 👶 Starting BABE Authorship worker
+cargo test --all
 ```
 
-Local node identity is: `12D3KooWDTkjLrcEKPMkU8USQdAb4Qy2g3Rx6wysVeK4TVUgwbcB` shows the Peer ID that Bob will need when booting from Alice's node. This value was determined by the --node-key that was used to start Alice's node.
-
-Now that Alice's node is up and running, Bob can join the network by bootstrapping from her node.
+You can start a development chain with:
 
 ```bash
-# Purge any chain data from previous runs
-./target/release/polkadex-node purge-chain --base-path /tmp/alice --chain local
-
-# Start Bob's node
-./target/release/tidechain --base-path /tmp/bob \
-  --chain dev \
-  --bob \
-  --port 30334 \
-  --ws-port 9945 \
-  --rpc-port 9934 \
-  --validator
-  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWDTkjLrcEKPMkU8USQdAb4Qy2g3Rx6wysVeK4TVUgwbcB
+cargo run -- --dev
 ```
 
-If all is going well, after a few seconds, the nodes should peer together and start producing blocks. You should see some lines like the following in the console that started Alice node.
+Detailed logs may be shown by running the node with the following environment variables set:
 
 ```bash
-2021-09-21 08:46:22 TiDeFi Node
-2021-09-21 08:41:27 ✌️  version 1.0.0-6712dba-x86_64-macos
-2021-09-21 08:41:27 ❤️  by Semantic Network <https://semantic-network.com>, 2017-2021
-2021-09-21 08:41:27 📋 Chain specification: Development
-2021-09-21 08:46:22 🏷 Node name: Bob
-2021-09-21 08:46:22 👤 Role: AUTHORITY
-2021-09-21 08:46:22 💾 Database: RocksDb at /tmp/bob/chains/tidefi_devnet/db/full
-2021-09-21 08:46:22 ⛓  Native runtime: node-268 (tidefi-official-0.tx2.au10)
-2021-09-21 08:46:22 Using default protocol ID "sup" because none is configured in the chain specs
-2021-09-21 08:46:22 🏷 Local node identity is: 12D3KooWNW9WAEi24EX4fCrifoczzp5cGtehRre5X9ie4Zs4gjZ4
-2021-09-21 08:46:22 Could not load all certificates: Custom { kind: InvalidData, error: Custom { kind: InvalidData, error: BadDER } }
-2021-09-21 08:46:23 📦 Highest known block at #7
-2021-09-21 08:46:23 Listening for new connections on 127.0.0.1:9945.
-2021-09-21 08:46:23 👶 Starting BABE Authorship worker
-2021-09-21 08:46:24 ✨ Imported #24 (0x5057…8489)
-2021-09-21 08:46:24 🔍 Discovered new external address for our node: /ip4/192.168.0.116/tcp/30334/p2p/12D3KooWNW9WAEi24EX4fCrifoczzp5cGtehRre5X9ie4Zs4gjZ4
-2021-09-21 08:46:27 ✨ Imported #25 (0x8b4f…afc4)
-2021-09-21 08:46:28 💤 Idle (1 peers), best: #25 (0x8b4f…afc4), finalized #23 (0x0c95…f3c8), ⬇ 2.3kiB/s ⬆ 0.8kiB/s
-2021-09-21 08:46:30 ✨ Imported #26 (0xa86f…9a41)
-2021-09-21 08:46:33 ✨ Imported #27 (0x03c5…4f37)
-2021-09-21 08:46:33 💤 Idle (1 peers), best: #27 (0x03c5…4f37), finalized #24 (0x5057…8489), ⬇ 0.8kiB/s ⬆ 0.5kiB/s
-2021-09-21 08:46:36 ✨ Imported #28 (0xb4cb…00c6)
+RUST_LOG=debug RUST_BACKTRACE=1 cargo run -- --dev
 ```
 
-## Using Docker
+### Development
 
-The following commands will setup a local TiDeFi network made of 2 nodes. It's using the node key (0000000000000000000000000000000000000000000000000000000000000001). But you should generate your own node key using the subkey as the above.
-
-### Local build
+You can run a simple single-node development "network" on your machine by running:
 
 ```bash
-docker build --file cicd/node-dev.Dockerfile --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN -t tidechain .
-docker-compose -f cicd/docker-compose.local.yml up --force-recreate
+tidechain --dev
 ```
 
-### Pre-built images
+### Local Two-node Testnet
+
+If you want to see the multi-node consensus algorithm in action locally, then you can create a
+local testnet. You'll need two terminals open. In one, run:
 
 ```bash
-# You need to login with any username, and Personal access token from gitlab
-docker login tributary.semantic-network.tech:5050
-# Run the images from the registry
-docker-compose -f cicd/docker-compose.dev-local.yml up --force-recreate
+tidechain --chain=tidechain-local --alice -d /tmp/alice
 ```
 
-## Connecting to the nodes
+And in the other, run:
 
-The development node is a Substrate-based node, so you can interact with it using standard Substrate tools. The two provided RPC endpoints are:
+```bash
+tidechain --chain=tidechain-local --bob -d /tmp/bob --port 30334 --bootnodes '/ip4/127.0.0.1/tcp/30333/p2p/ALICE_BOOTNODE_ID_HERE'
+```
 
-- HTTP: `http://127.0.0.1:9933`
-- WS: `ws://127.0.0.1:9944`
+Ensure you replace `ALICE_BOOTNODE_ID_HERE` with the node ID from the output of the first terminal.
+
+### Using Docker
+
+[Using Docker](docs/docker.md)
+
+## Contributing
+
+### Contributing Guidelines
+
+[Contribution Guidelines](CONTRIBUTING.md)
+
+## License
+
+Tidechain is [GPL 3.0 licensed](LICENSE).
