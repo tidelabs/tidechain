@@ -112,9 +112,10 @@ default:
 check-runtime:
   stage: test
   image: paritytech/tools:latest
-  <<: *kubernetes-env
+  #<<: *kubernetes-env
+  <<: *docker-env
   <<: *rules-test
-  <<: *vault-secrets
+  #<<: *vault-secrets
   variables:
     GITLAB_API: "https://gitlab.parity.io/api/v4"
     GITHUB_API_PROJECT: "parity%2Finfrastructure%2Fgithub-api"
@@ -136,7 +137,7 @@ test-deterministic-wasm:
   <<: *rules-test
   <<: *docker-env
   <<: *compiler-info
-  <<: *vault-secrets
+  #<<: *vault-secrets
   script:
     - ./scripts/gitlab/test_deterministic_wasm.sh
 
@@ -145,7 +146,7 @@ test-build-linux-stable:
   <<: *docker-env
   <<: *compiler-info
   <<: *collect-artifacts
-  <<: *vault-secrets
+  #<<: *vault-secrets
   variables:
     RUST_TOOLCHAIN: stable
     # Enable debug assertions since we are running optimized builds for testing
@@ -186,7 +187,7 @@ check-runtime-benchmarks:
   <<: *rules-test
   <<: *docker-env
   <<: *compiler-info
-  <<: *vault-secrets
+  #<<: *vault-secrets
   script:
     # Check that the node will compile with `runtime-benchmarks` feature flag.
     - ./scripts/gitlab/check_runtime_benchmarks.sh
@@ -197,7 +198,7 @@ check-no-default-features:
   <<: *rules-test
   <<: *docker-env
   <<: *compiler-info
-  <<: *vault-secrets
+  #<<: *vault-secrets
   script:
     # Check that tidechain-cli will compile no default features.
     - ./scripts/gitlab/check_no_default_features.sh
@@ -221,7 +222,7 @@ check-transaction-versions:
   stage: build
   <<: *rules-test
   <<: *docker-env
-  <<: *vault-secrets
+  #<<: *vault-secrets
   image: node:15
   needs:
     - job: test-build-linux-stable
@@ -268,9 +269,9 @@ build-rustdoc:
     - echo "<meta http-equiv=refresh content=0;url=tidechain_service/index.html>" > ./crate-docs/index.html
     - sccache -s
 
-.build-push-image: &build-push-image
-  <<: *kubernetes-env
-  <<: *vault-secrets
+.build-push-image: &build-push-image #<<: *kubernetes-env
+  <<: *docker-env
+  #<<: *vault-secrets
   image: quay.io/buildah/stable
   variables: &image-variables
     GIT_STRATEGY: none
@@ -330,8 +331,9 @@ publish-s3-release: &publish-s3
   needs:
     - job: test-build-linux-stable
       artifacts: true
-  <<: *kubernetes-env
-  <<: *vault-secrets
+  #<<: *kubernetes-env
+  <<: *docker-env
+  #<<: *vault-secrets
   image: paritytech/awscli:latest
   variables:
     GIT_STRATEGY: none
@@ -366,8 +368,9 @@ publish-s3-release: &publish-s3
 
 publish-rustdoc:
   stage: publish
-  <<: *kubernetes-env
-  <<: *vault-secrets
+  #<<: *kubernetes-env
+  <<: *docker-env
+  #<<: *vault-secrets
   image: paritytech/tools:latest
   variables:
     GIT_DEPTH: 100
