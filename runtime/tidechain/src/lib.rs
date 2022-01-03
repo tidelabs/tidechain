@@ -60,7 +60,9 @@ mod bag_thresholds;
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-pub const SS58_PREFIX: u8 = 48;
+// FIXME: Replace with SEMNET Unique prefix. (7007)
+// 42 = Substrate default
+pub const SS58_PREFIX: u8 = 42;
 
 /// Wasm binary unwrapped. If built with `SKIP_WASM_BUILD`, the function panics.
 #[cfg(feature = "std")]
