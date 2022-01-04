@@ -8,7 +8,7 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    ConstU128, ConstU32, GenesisBuild,
+    ConstU128, ConstU32, EnsureOrigin, GenesisBuild,
   },
   PalletId,
 };
@@ -18,12 +18,12 @@ use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_runtime::{
   testing::Header,
-  traits::{BlakeTwo256, IdentityLookup},
+  traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
   DispatchError, DispatchResult, RuntimeDebug,
 };
 use std::marker::PhantomData;
-use system::EnsureRoot;
-use tidefi_primitives::{assets, CurrencyId};
+use system::RawOrigin;
+use tidefi_primitives::CurrencyId;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -55,6 +55,34 @@ impl sp_std::fmt::Display for AccountId {
 impl From<u64> for AccountId {
   fn from(account_id: u64) -> Self {
     Self(account_id)
+  }
+}
+
+pub struct EnsureRootOrAssetRegistry;
+impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
+  type Success = AccountId;
+
+  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
+      RawOrigin::Signed(caller) => {
+        // Allow call from asset registry pallet ID account
+        if caller == AssetRegistryPalletId::get().into_account()
+        // Allow call from asset registry owner
+        || caller == AssetRegistry::account_id().expect("Unable to get asset registry account id")
+        {
+          Ok(caller)
+        } else {
+          Err(Origin::from(Some(caller)))
+        }
+      }
+      r => Err(Origin::from(r)),
+    })
+  }
+
+  #[cfg(feature = "runtime-benchmarks")]
+  fn successful_origin() -> Origin {
+    Origin::from(RawOrigin::Signed(Default::default()))
   }
 }
 
@@ -123,7 +151,7 @@ impl pallet_assets::Config for Test {
   type Balance = u128;
   type AssetId = u32;
   type Currency = Balances;
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
@@ -272,31 +300,31 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
-  let config = pallet_asset_registry::GenesisConfig::<Test> {
+  pallet_asset_registry::GenesisConfig::<Test> {
     assets: vec![
       (
-        CurrencyId::Wrapped(assets::BTC),
+        CurrencyId::Wrapped(100),
         "Bitcoin".into(),
         "BTC".into(),
         8,
         Vec::new(),
       ),
       (
-        CurrencyId::Wrapped(assets::ETH),
-        "Ethereum".into(),
-        "ETH".into(),
-        18,
-        Vec::new(),
-      ),
-      (
-        CurrencyId::Wrapped(assets::USDC),
+        CurrencyId::Wrapped(2),
         "USD Coin".into(),
         "USDC".into(),
         2,
         Vec::new(),
       ),
       (
-        CurrencyId::Wrapped(assets::USDT),
+        CurrencyId::Wrapped(1000),
+        "Ethereum".into(),
+        "ETH".into(),
+        18,
+        Vec::new(),
+      ),
+      (
+        CurrencyId::Wrapped(1),
         "Tether".into(),
         "USDT".into(),
         2,
@@ -304,9 +332,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
       ),
     ],
     account: alice.into(),
-  };
-
-  config.assimilate_storage(&mut t).unwrap();
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
 
   t.into()
 }

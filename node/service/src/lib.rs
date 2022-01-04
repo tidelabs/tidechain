@@ -34,7 +34,7 @@ pub use hertel_runtime;
 #[cfg(feature = "hertel-native")]
 pub use tidechain_client::HertelExecutorDispatch;
 
-#[cfg(feature = "full-node")]
+#[cfg(any(feature = "tidechain-native", feature = "hertel-native"))]
 pub mod chain_spec;
 
 #[derive(thiserror::Error, Debug)]
