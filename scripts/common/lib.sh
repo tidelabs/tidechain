@@ -65,18 +65,6 @@ has_label(){
   [ -n "$(echo "$out" | tr -d '\r\n' | jq ".labels | .[] | select(.name==\"$label\")")" ]
 }
 
-github_label () {
-  echo
-  echo "# run github-api job for labeling it ${1}"
-  curl -sS -X POST \
-    -F "token=${CI_JOB_TOKEN}" \
-    -F "ref=master" \
-    -F "variables[LABEL]=${1}" \
-    -F "variables[PRNO]=${CI_COMMIT_REF_NAME}" \
-    -F "variables[PROJECT]=tide-labs/tidechain" \
-    "${GITLAB_API}/projects/${GITHUB_API_PROJECT}/trigger/pipeline"
-}
-
 # Formats a message into a JSON string for posting to Matrix
 # message: 'any plaintext message'
 # formatted_message: '<strong>optional message formatted in <em>html</em></strong>'

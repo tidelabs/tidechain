@@ -1,5 +1,6 @@
+#[cfg(feature = "cli")]
 mod cli;
+#[cfg(feature = "cli")]
 mod command;
-pub use sc_cli::{Error, Result};
-
+#[cfg(feature = "cli")]
 pub use command::*;

@@ -6,20 +6,23 @@ pub use tidechain_client::{
   RuntimeApiCollection,
 };
 
-use sc_basic_authorship::ProposerFactory;
-use sc_client_api::ExecutorProvider;
-use sc_executor::NativeElseWasmExecutor;
-use sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider;
-use sc_service::{
-  config::PrometheusConfig, ChainSpec, Configuration, NativeExecutionDispatch, RpcHandlers,
-  TaskManager,
+#[cfg(feature = "full-node")]
+use {
+  sc_client_api::ExecutorProvider,
+  sc_executor::NativeElseWasmExecutor,
+  sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
+  sc_service::{
+    config::PrometheusConfig, Configuration, NativeExecutionDispatch, RpcHandlers, TaskManager,
+  },
+  sc_telemetry::{Telemetry, TelemetryWorker},
+  sp_api::ConstructRuntimeApi,
+  sp_runtime::traits::Block as BlockT,
+  std::{sync::Arc, time::Duration},
+  substrate_prometheus_endpoint::Registry,
+  tidefi_primitives::Block,
 };
-use sc_telemetry::{Telemetry, TelemetryWorker};
-use sp_api::ConstructRuntimeApi;
-use sp_runtime::traits::Block as BlockT;
-use std::{sync::Arc, time::Duration};
-use substrate_prometheus_endpoint::Registry;
-use tidefi_primitives::Block;
+
+use sc_service::ChainSpec;
 
 #[cfg(feature = "tidechain-native")]
 pub use tidechain_client::TidechainExecutorDispatch;
@@ -31,6 +34,7 @@ pub use hertel_runtime;
 #[cfg(feature = "hertel-native")]
 pub use tidechain_client::HertelExecutorDispatch;
 
+#[cfg(feature = "full-node")]
 pub mod chain_spec;
 
 #[derive(thiserror::Error, Debug)]
@@ -396,7 +400,7 @@ where
   if let sc_service::config::Role::Authority { .. } = &role {
     let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
-    let proposer = ProposerFactory::new(
+    let proposer = sc_basic_authorship::ProposerFactory::new(
       task_manager.spawn_handle(),
       client.clone(),
       transaction_pool,
