@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 #[cfg(feature = "full-node")]
 pub use tidechain_client::{
   AbstractClient, Client, ClientHandle, ExecuteWithClient, FullBackend, FullClient,
