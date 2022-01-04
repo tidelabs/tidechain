@@ -1,4 +1,5 @@
 use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
+pub use sc_executor::NativeElseWasmExecutor;
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{
@@ -10,8 +11,44 @@ use sp_storage::{ChildInfo, StorageData, StorageKey};
 use std::sync::Arc;
 use tidefi_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Header};
 
-#[cfg(not(any(feature = "tidechain-native", feature = "hertel-native",)))]
+#[cfg(not(any(feature = "tidechain", feature = "hertel",)))]
 compile_error!("at least one runtime feature must be enabled");
+
+#[cfg(feature = "tidechain")]
+pub struct TidechainExecutorDispatch;
+
+#[cfg(feature = "tidechain")]
+impl sc_executor::NativeExecutionDispatch for TidechainExecutorDispatch {
+  type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+  fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+    tidechain_runtime::dispatch(method, data)
+  }
+
+  fn native_version() -> sc_executor::NativeVersion {
+    tidechain_runtime::native_version()
+  }
+}
+
+#[cfg(feature = "hertel")]
+pub struct HertelExecutorDispatch;
+
+#[cfg(feature = "hertel")]
+impl sc_executor::NativeExecutionDispatch for HertelExecutorDispatch {
+  type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+  fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+    hertel_runtime::dispatch(method, data)
+  }
+
+  fn native_version() -> sc_executor::NativeVersion {
+    hertel_runtime::native_version()
+  }
+}
+
+pub type FullBackend = sc_service::TFullBackend<Block>;
+pub type FullClient<RuntimeApi, ExecutorDispatch> =
+  sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 
 /// A set of APIs that Tidechain-like runtimes must implement.
 pub trait RuntimeApiCollection:
@@ -128,12 +165,10 @@ pub trait ClientHandle {
 /// See [`ExecuteWithClient`] for more information.
 #[derive(Clone)]
 pub enum Client {
-  #[cfg(feature = "tidechain-native")]
-  Tidechain(
-    Arc<crate::FullClient<tidechain_runtime::RuntimeApi, crate::TidechainExecutorDispatch>>,
-  ),
-  #[cfg(feature = "hertel-native")]
-  Hertel(Arc<crate::FullClient<hertel_runtime::RuntimeApi, crate::HertelExecutorDispatch>>),
+  #[cfg(feature = "tidechain")]
+  Tidechain(Arc<FullClient<tidechain_runtime::RuntimeApi, crate::TidechainExecutorDispatch>>),
+  #[cfg(feature = "hertel")]
+  Hertel(Arc<FullClient<hertel_runtime::RuntimeApi, crate::HertelExecutorDispatch>>),
 }
 
 macro_rules! with_client {
@@ -145,9 +180,9 @@ macro_rules! with_client {
 		}
 	} => {
 		match $self {
-			#[cfg(feature = "tidechain-native")]
+			#[cfg(feature = "tidechain")]
 			Self::Tidechain($client) => { $( $code )* },
-			#[cfg(feature = "hertel-native")]
+			#[cfg(feature = "hertel")]
 			Self::Hertel($client) => { $( $code )* },
 		}
 	}
@@ -159,7 +194,7 @@ impl ClientHandle for Client {
       self,
       client,
       {
-        T::execute_with_client::<_, _, crate::FullBackend>(t, client.clone())
+        T::execute_with_client::<_, _, FullBackend>(t, client.clone())
       }
     }
   }
@@ -258,7 +293,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
   }
 }
 
-impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
+impl sc_client_api::StorageProvider<Block, FullBackend> for Client {
   fn storage(
     &self,
     id: &BlockId<Block>,
@@ -321,7 +356,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     prefix: Option<&'a StorageKey>,
     start_key: Option<&StorageKey>,
   ) -> sp_blockchain::Result<
-    KeyIterator<'a, <crate::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+    KeyIterator<'a, <FullBackend as sc_client_api::Backend<Block>>::State, Block>,
   > {
     with_client! {
       self,
@@ -369,7 +404,7 @@ impl sc_client_api::StorageProvider<Block, crate::FullBackend> for Client {
     prefix: Option<&'a StorageKey>,
     start_key: Option<&StorageKey>,
   ) -> sp_blockchain::Result<
-    KeyIterator<'a, <crate::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+    KeyIterator<'a, <FullBackend as sc_client_api::Backend<Block>>::State, Block>,
   > {
     with_client! {
       self,
