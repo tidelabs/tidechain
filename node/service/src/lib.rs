@@ -21,7 +21,11 @@ use tidefi_primitives::Block;
 
 #[cfg(feature = "tidechain-native")]
 pub use tidechain_client::TidechainExecutorDispatch;
+#[cfg(feature = "tidechain-native")]
+pub use tidechain_runtime;
 
+#[cfg(feature = "hertel-native")]
+pub use hertel_runtime;
 #[cfg(feature = "hertel-native")]
 pub use tidechain_client::HertelExecutorDispatch;
 
