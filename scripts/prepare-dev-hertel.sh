@@ -3,7 +3,7 @@ set -e
 # numbers of investors
 I_NUM=5
 # numbers of devs
-D_NUM=5
+D_NUM=10
 
 # numbers of validators
 if [ "$#" -ne 1 ]; then
@@ -51,11 +51,11 @@ done
 # DEVS (TIDEs & CURRENCIES)
 for i in $(seq 1 $D_NUM); do
 	ADDRESS=$(generate_address_and_account_id dev$i stash)
-	DEVS+="(CurrencyId::Tide,\n$ADDRESS\n// 1000 TIDE\n1_000_000_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(1),\n$ADDRESS\n// 1000 USDT\n1_000_000_000_000_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(2),\n$ADDRESS\n// 1000 USDC\n1_000_000_000_000_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(100),\n$ADDRESS\n// 1000 BTC\n100_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(1000),\n$ADDRESS\n// 1000 ETH\n1_000_000_000_000_000_000_000),\n"
+	DEVS+="(CurrencyId::Tide,\n$ADDRESS\n// 1_000_000_000 TIDE\n1_000_000_000_000_000_000_000),\n"
+	DEVS+="(CurrencyId::Wrapped(1),\n$ADDRESS\n// 1_000_000_000 USDT\n1_000_000_000_000_000),\n"
+	DEVS+="(CurrencyId::Wrapped(2),\n$ADDRESS\n// 1_000_000_000 USDC\n1_000_000_000_000_000),\n"
+	DEVS+="(CurrencyId::Wrapped(100),\n$ADDRESS\n// 1_000_000_000 BTC\n100_000_000_000_000_000),\n"
+	DEVS+="(CurrencyId::Wrapped(1000),\n$ADDRESS\n// 1_000_000_000 ETH\n1_000_000_000_000_000_000_000),\n"
 done
 
 # FAUCET
