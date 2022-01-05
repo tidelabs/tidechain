@@ -266,8 +266,7 @@ update_tidechain_weights: &update-weights
     - git diff -P > ${RUNTIME}_weights_${CI_COMMIT_SHORT_SHA}.patch
   # uses the "shell" executors
   tags:
-    # FIXME: Revert to `dv-Weights` once runner are ups
-    # - dv-Weights
+    # FIXME: Revert to dv-Weights
     - dv-Docker
 
 update_hertel_weights:
@@ -293,7 +292,11 @@ publish-s3-release: &publish-s3
     # publishing binaries nightly
     - if: $CI_PIPELINE_SOURCE == "schedule"
   before_script:
-    - *check-versions
+    - test -s ./artifacts/VERSION || exit 1
+    - test -s ./artifacts/EXTRATAG || exit 1
+    - VERSION="$(cat ./artifacts/VERSION)"
+    - EXTRATAG="$(cat ./artifacts/EXTRATAG)"
+    - echo "Tidechain version = ${VERSION} (EXTRATAG = ${EXTRATAG})"
   script:
     - echo "uploading objects to https://releases.tidefi.io/${PREFIX}/${VERSION}"
     - aws s3 sync --acl public-read ./artifacts/ s3://${AWS_BUCKET}/${PREFIX}/${VERSION}/
