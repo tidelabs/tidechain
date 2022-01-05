@@ -1,8 +1,6 @@
+use crate::mock::{Test, new_test_ext, Origin, Quorum};
+use crate::Error;
 use frame_support::{assert_noop, assert_ok};
-
-use sp_runtime::traits::BadOrigin;
-
-use crate::mock::{new_test_ext, Origin, Quorum};
 
 #[test]
 pub fn check_genesis_config() {
@@ -14,14 +12,13 @@ pub fn check_genesis_config() {
 #[test]
 pub fn set_migration_operational_status_works() {
   new_test_ext().execute_with(|| {
-    let non_sudo = 2u64;
-    assert_ok!(Quorum::set_status(Origin::root(), true));
+    assert_ok!(Quorum::set_status(Origin::signed(1), true));
     assert_noop!(
-      Quorum::set_status(Origin::signed(non_sudo.into()), false),
-      BadOrigin,
+      Quorum::set_status(Origin::signed(2), false),
+      Error::<Test>::AccessDenied,
     );
     assert!(Quorum::status());
-    assert_ok!(Quorum::set_status(Origin::root(), false));
+    assert_ok!(Quorum::set_status(Origin::signed(1), false));
     assert!(!Quorum::status());
   });
 }

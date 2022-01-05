@@ -301,66 +301,6 @@ fn force_cancel_approval_works() {
 }
 
 #[test]
-fn lifecycle_should_work() {
-  new_test_ext().execute_with(|| {
-    Balances::make_free_balance_be(&1, 100);
-    assert_ok!(Assets::create(Origin::signed(1), 0, 1, 1));
-    assert_eq!(Balances::reserved_balance(&1), 1);
-    assert!(Asset::<Test>::contains_key(0));
-
-    assert_ok!(Assets::set_metadata(
-      Origin::signed(1),
-      0,
-      vec![0],
-      vec![0],
-      12
-    ));
-    assert_eq!(Balances::reserved_balance(&1), 4);
-    assert!(Metadata::<Test>::contains_key(0));
-
-    Balances::make_free_balance_be(&10, 100);
-    assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
-    Balances::make_free_balance_be(&20, 100);
-    assert_ok!(Assets::mint(Origin::signed(1), 0, 20, 100));
-    assert_eq!(Account::<Test>::iter_prefix(0).count(), 2);
-
-    let w = Asset::<Test>::get(0).unwrap().destroy_witness();
-    assert_ok!(Assets::destroy(Origin::signed(1), 0, w));
-    assert_eq!(Balances::reserved_balance(&1), 0);
-
-    assert!(!Asset::<Test>::contains_key(0));
-    assert!(!Metadata::<Test>::contains_key(0));
-    assert_eq!(Account::<Test>::iter_prefix(0).count(), 0);
-
-    assert_ok!(Assets::create(Origin::signed(1), 0, 1, 1));
-    assert_eq!(Balances::reserved_balance(&1), 1);
-    assert!(Asset::<Test>::contains_key(0));
-
-    assert_ok!(Assets::set_metadata(
-      Origin::signed(1),
-      0,
-      vec![0],
-      vec![0],
-      12
-    ));
-    assert_eq!(Balances::reserved_balance(&1), 4);
-    assert!(Metadata::<Test>::contains_key(0));
-
-    assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
-    assert_ok!(Assets::mint(Origin::signed(1), 0, 20, 100));
-    assert_eq!(Account::<Test>::iter_prefix(0).count(), 2);
-
-    let w = Asset::<Test>::get(0).unwrap().destroy_witness();
-    assert_ok!(Assets::destroy(Origin::root(), 0, w));
-    assert_eq!(Balances::reserved_balance(&1), 0);
-
-    assert!(!Asset::<Test>::contains_key(0));
-    assert!(!Metadata::<Test>::contains_key(0));
-    assert_eq!(Account::<Test>::iter_prefix(0).count(), 0);
-  });
-}
-
-#[test]
 fn destroy_with_bad_witness_should_not_work() {
   new_test_ext().execute_with(|| {
     Balances::make_free_balance_be(&1, 100);

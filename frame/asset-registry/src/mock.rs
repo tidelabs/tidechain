@@ -1,5 +1,4 @@
 use crate::pallet as pallet_asset_registry;
-use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
   parameter_types,
@@ -14,12 +13,11 @@ use frame_support::{
 };
 use frame_system as system;
 #[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, RuntimeDebug,
+  DispatchError, DispatchResult,
 };
 use std::marker::PhantomData;
 use system::RawOrigin;
@@ -29,34 +27,7 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
 
-#[derive(
-  Encode,
-  Decode,
-  scale_info::TypeInfo,
-  Default,
-  Eq,
-  PartialEq,
-  Copy,
-  Clone,
-  RuntimeDebug,
-  PartialOrd,
-  Ord,
-  MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
-pub struct AccountId(pub u64);
-
-impl sp_std::fmt::Display for AccountId {
-  fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
-
-impl From<u64> for AccountId {
-  fn from(account_id: u64) -> Self {
-    Self(account_id)
-  }
-}
+pub type AccountId = u64;
 
 pub struct EnsureRootOrAssetRegistry;
 impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
@@ -66,8 +37,9 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
     Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
       RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
       RawOrigin::Signed(caller) => {
+        let asset_registry_account: u64 = AssetRegistryPalletId::get().into_account();
         // Allow call from asset registry pallet ID account
-        if caller == AssetRegistryPalletId::get().into_account()
+        if caller == asset_registry_account
         // Allow call from asset registry owner
         || caller == AssetRegistry::account_id().expect("Unable to get asset registry account id")
         {
@@ -292,10 +264,10 @@ where
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
+
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
@@ -317,7 +289,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         Vec::new(),
       ),
     ],
-    account: alice.into(),
+    account: 0,
   }
   .assimilate_storage(&mut t)
   .unwrap();
