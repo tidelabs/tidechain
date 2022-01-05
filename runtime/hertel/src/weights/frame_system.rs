@@ -29,7 +29,7 @@
 use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
 
-/// Weight functions for frame_system.
+/// Weight functions for `frame_system`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 	fn remark(b: u32, ) -> Weight {

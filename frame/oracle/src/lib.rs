@@ -161,9 +161,9 @@ pub mod pallet {
     NoFunds,
     /// Trade overflow
     Overflow,
-    /// MarketMakers do not have enough funds
+    /// Market Makers do not have enough funds
     MarketMakerNoFunds,
-    /// MarketMakers cannot deposit source funds of the trade
+    /// Market Makers cannot deposit source funds of the trade
     MarketMakerCantDeposit,
     /// Unknown Error.
     UnknownError,

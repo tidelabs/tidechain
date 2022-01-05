@@ -62,7 +62,6 @@ pub mod pallet {
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// Event emitted when widthdraw is requested.
-    /// \[from_account_id, to_account_id, currency_id, amount\]
     Transfer {
       from_account_id: T::AccountId,
       to_account_id: T::AccountId,
@@ -78,7 +77,6 @@ pub mod pallet {
       external_address: Vec<u8>,
     },
     /// Event emitted when trade is requested.
-    /// \[request_id, account, currency_id_from, amount_from, currency_id_to, amount_to\]
     Trade {
       request_id: Hash,
       account: T::AccountId,
@@ -205,7 +203,7 @@ pub mod pallet {
       }
     }
 
-    /// Request trade (swap) trough the market makers.
+    /// Request trade (swap) through the market makers.
     ///
     /// This will register a new request and will be queued for the oracle, do
     /// not expect an immediate response.

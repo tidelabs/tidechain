@@ -1250,7 +1250,7 @@ pub mod pallet {
     /// Origin must be Signed and there must be an approval in place between signer and
     /// `delegate`.
     ///
-    /// Unreserves any deposit previously reserved by `approve_transfer` for the approval.
+    /// Unreserve any deposit previously reserved by `approve_transfer` for the approval.
     ///
     /// - `id`: The identifier of the asset.
     /// - `delegate`: The account delegated permission to transfer asset.
@@ -1284,10 +1284,10 @@ pub mod pallet {
 
     /// Cancel all of some asset approved for delegated transfer by a third-party account.
     ///
-    /// Origin must be either ForceOrigin or Signed origin with the signer being the Admin
+    /// Origin must be either `ForceOrigin` or Signed origin with the signer being the Admin
     /// account of the asset `id`.
     ///
-    /// Unreserves any deposit previously reserved by `approve_transfer` for the approval.
+    /// Unreserve any deposit previously reserved by `approve_transfer` for the approval.
     ///
     /// - `id`: The identifier of the asset.
     /// - `delegate`: The account delegated permission to transfer asset.

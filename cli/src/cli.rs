@@ -12,7 +12,7 @@ pub struct Cli {
 
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
-  /// Key management cli utilities
+  /// Key management CLI utilities
   Key(sc_cli::KeySubcommand),
   /// Build a chain specification.
   BuildSpec(sc_cli::BuildSpecCmd),

@@ -163,7 +163,7 @@ pub trait FrozenBalance<AssetId, AccountId, Balance> {
   /// the asset's `minimum_balance` (the latter since there may be complications to destroying an
   /// asset's account completely).
   ///
-  /// Under normal behaviour, the account balance should not go below the sum of this (if `Some`)
+  /// Under normal behavior, the account balance should not go below the sum of this (if `Some`)
   /// and the asset's minimum balance. However, the account balance may reasonably begin below
   /// this sum (e.g. if less than the sum had ever been transfered into the account).
   ///

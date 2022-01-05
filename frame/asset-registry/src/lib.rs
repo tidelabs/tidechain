@@ -98,7 +98,7 @@ pub mod pallet {
       // 1. Save asset registry account id
       AssetRegistryAccountId::<T>::put(self.account.clone());
 
-      // 2. Loop trough all currency defined in our genesis config
+      // 2. Loop through all currency defined in our genesis config
       for (currency_id, name, symbol, decimals, pre_filled_account) in self.assets.clone() {
         // If it's a wrapped token, register it with pallet_assets
         if let CurrencyId::Wrapped(asset_id) = currency_id {
@@ -132,7 +132,7 @@ pub mod pallet {
     NoStatusChangeRequested,
     /// Asset is already registered.
     AssetAlreadyRegistered,
-    /// Invalid CurrencyId
+    /// Invalid Currency Id
     CurrencyIdNotValid,
   }
 

@@ -5,7 +5,7 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
-/// Weight functions needed for pallet_wrapr.
+/// Weight functions needed for `pallet_wrapr`.
 pub trait WeightInfo {
    fn set_status() -> Weight;
    fn set_account_id() -> Weight;
@@ -13,7 +13,7 @@ pub trait WeightInfo {
    fn quick_trade() -> Weight;
 }
 
-/// Weights for pallet_wrapr using the Substrate node and recommended hardware.
+/// Weights for `pallet_wrapr` using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
    fn set_status() -> Weight {
