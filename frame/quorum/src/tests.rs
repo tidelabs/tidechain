@@ -1,5 +1,7 @@
-use crate::mock::{Test, new_test_ext, Origin, Quorum};
-use crate::Error;
+use crate::{
+  mock::{new_test_ext, Origin, Quorum, Test},
+  Error,
+};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]

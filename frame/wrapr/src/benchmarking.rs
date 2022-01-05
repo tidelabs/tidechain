@@ -1,8 +1,7 @@
 //! Benchmarking setup for pallet-wrapr
 use crate::*;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::inherent::Vec;
-use frame_support::traits::fungibles::Mutate;
+use frame_support::{inherent::Vec, traits::fungibles::Mutate};
 use frame_system::RawOrigin;
 use tidefi_primitives::CurrencyId;
 const INITIAL_AMOUNT: u128 = 500_000_000_000_000;
