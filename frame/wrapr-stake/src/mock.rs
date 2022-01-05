@@ -8,7 +8,7 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    ConstU128, ConstU32,
+    ConstU128, ConstU32, GenesisBuild,
   },
   PalletId,
 };
@@ -284,5 +284,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
+
+  pallet_assets::GenesisConfig::<Test> {
+    assets: vec![(1, AccountId(1), true, 1)],
+    metadata: vec![(1, "Test".into(), "TEST".into(), 6)],
+    accounts: vec![],
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
   t.into()
 }

@@ -324,7 +324,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   .unwrap();
 
   pallet_asset_registry::GenesisConfig::<Test> {
-    assets: Vec::new(),
+    assets: vec![(
+      CurrencyId::Wrapped(1),
+      "Test".into(),
+      "TEST".into(),
+      6,
+      vec![],
+    )],
     account: 0,
   }
   .assimilate_storage(&mut t)

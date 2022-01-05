@@ -441,7 +441,8 @@ pub mod pallet {
         Ok(())
       })?;
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
 
     /// Oracle change the account ID who can confirm trade.
@@ -471,7 +472,8 @@ pub mod pallet {
         account_id: new_account_id,
       });
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
 
     /// Change Oracle status.
@@ -493,7 +495,8 @@ pub mod pallet {
       // 3. Emit event on chain
       Self::deposit_event(Event::<T>::StatusChanged { is_enabled });
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
   }
 

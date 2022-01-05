@@ -259,5 +259,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   }
   .assimilate_storage(&mut t)
   .unwrap();
+
   t.into()
 }
