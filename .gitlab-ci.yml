@@ -227,16 +227,8 @@ check-transaction-versions:
     - git fetch origin release
   script:
     - scripts/gitlab/check_extrinsics_ordering.sh
-
-generate-impl-guide:
-  stage: build
-  <<: *rules-test
-  <<: *docker-env
-  image:
-    name: michaelfbryan/mdbook-docker-image:v0.4.4
-    entrypoint: [""]
-  script:
-    - mdbook build roadmap/implementers-guide
+  # FIXME: Remove once repo is public
+  allow_failure: true
 
 build-rustdoc:
   stage: build
@@ -260,41 +252,6 @@ build-rustdoc:
     # Redirect to tidechain_service by default
     - echo "<meta http-equiv=refresh content=0;url=tidechain_service/index.html>" > ./crate-docs/index.html
     - sccache -s
-
-.build-push-image: &build-push-image #<<: *kubernetes-env
-  <<: *docker-env
-  #<<: *vault-secrets
-  image: quay.io/buildah/stable
-  variables: &image-variables
-    GIT_STRATEGY: none
-    DOCKER_USER: ${SEMNETPR_USER}
-    DOCKER_PASS: ${SEMNETPR_PASS}
-  before_script: &check-versions
-    - test -s ./artifacts/VERSION || exit 1
-    - test -s ./artifacts/EXTRATAG || exit 1
-    - VERSION="$(cat ./artifacts/VERSION)"
-    - EXTRATAG="$(cat ./artifacts/EXTRATAG)"
-    - echo "Tidechain version = ${VERSION} (EXTRATAG = ${EXTRATAG})"
-  script:
-    - test "$DOCKER_USER" -a "$DOCKER_PASS" ||
-      ( echo "no docker credentials provided"; exit 1 )
-    - cd ./artifacts
-    - buildah bud
-      --format=docker
-      --build-arg VCS_REF="${CI_COMMIT_SHA}"
-      --build-arg BUILD_DATE="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-      --build-arg IMAGE_NAME="${IMAGE_NAME}"
-      --tag "$IMAGE_NAME:$VERSION"
-      --tag "$IMAGE_NAME:$EXTRATAG"
-      --file ${DOCKERFILE} .
-    # The job will success only on the protected branch
-    - echo "$DOCKER_PASS" |
-      buildah login --username "$DOCKER_USER" --password-stdin docker.io
-    - buildah info
-    - buildah push --format=v2s2 "$IMAGE_NAME:$VERSION"
-    - buildah push --format=v2s2 "$IMAGE_NAME:$EXTRATAG"
-  after_script:
-    - buildah logout --all
 
 update_tidechain_weights: &update-weights
   stage: build
