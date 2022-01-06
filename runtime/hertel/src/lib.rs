@@ -76,10 +76,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   spec_name: create_runtime_str!("hertel"),
   impl_name: create_runtime_str!("hertel"),
   authoring_version: 0,
-  // Per convention: if the runtime behavior changes, increment spec_version
-  // and set impl_version to 0. If only runtime
-  // implementation changes and behavior does not, then leave spec_version as
-  // is and increment impl_version.
   spec_version: 2,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
