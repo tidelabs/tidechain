@@ -25,6 +25,7 @@ pub mod pallet {
     PalletId,
   };
   use frame_system::pallet_prelude::*;
+  #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, QuorumExt, SecurityExt},

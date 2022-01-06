@@ -14,6 +14,12 @@ benchmarks! {
       let balance = INITIAL_AMOUNT.saturating_mul(IA_MULTIPLIER.into());
       T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
    }: _(RawOrigin::Signed(caller), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT.into(), Vec::new())
+   request_trade {
+      let caller: T::AccountId = whitelisted_caller();
+      let balance = INITIAL_AMOUNT.saturating_mul(IA_MULTIPLIER.into());
+      T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
+      T::CurrencyWrapr::mint_into(CurrencyId::Tide, &caller, balance as u128).expect("Unable to mint token");
+   }: _(RawOrigin::Signed(caller), CurrencyId::Tide, INITIAL_AMOUNT.into(), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT.into())
    transfer {
       let caller: T::AccountId = whitelisted_caller();
    }: _(RawOrigin::Signed(caller.clone()), caller.clone(), CurrencyId::Tide, INITIAL_AMOUNT)
