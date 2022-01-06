@@ -50,7 +50,7 @@ impl<T: frame_system::Config> pallet_wrapr_stake::WeightInfo for WeightInfo<T> {
 	// Storage: WraprStake AccountStakes (r:1 w:1)
 	// Storage: WraprStake StakingPool (r:1 w:1)
 	fn stake() -> Weight {
-		(201_000_000 as Weight)
+		(81_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}

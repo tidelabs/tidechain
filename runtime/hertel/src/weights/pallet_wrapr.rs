@@ -52,7 +52,7 @@ impl<T: frame_system::Config> pallet_wrapr::WeightInfo for WeightInfo<T> {
 	// Storage: System ParentHash (r:1 w:0)
 	// Storage: WraprQuorum Withdrawals (r:0 w:1)
 	fn request_withdrawal() -> Weight {
-		(122_000_000 as Weight)
+		(53_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -65,11 +65,11 @@ impl<T: frame_system::Config> pallet_wrapr::WeightInfo for WeightInfo<T> {
 	// Storage: System ParentHash (r:1 w:0)
 	// Storage: WraprOracle Trades (r:0 w:1)
 	fn request_trade() -> Weight {
-		(154_000_000 as Weight)
+		(62_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	fn transfer() -> Weight {
-		(43_000_000 as Weight)
+		(17_000_000 as Weight)
 	}
 }
