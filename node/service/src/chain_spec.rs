@@ -947,7 +947,7 @@ mod helpers {
 
   pub(crate) fn get_all_assets() -> Vec<(AssetId, Vec<u8>, Vec<u8>, u8)> {
     #[cfg(feature = "runtime-benchmarks")]
-    return Vec::new();
+    return vec![(4294967295, "Test".into(), "TEST".into(), 6)];
     #[cfg(not(feature = "runtime-benchmarks"))]
     return vec![
       (assets::BTC, "Bitcoin".into(), "BTC".into(), 8),

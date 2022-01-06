@@ -274,7 +274,8 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_membership, crate::TechnicalMembership);
        list_benchmark!(list, extra, pallet_multisig, crate::Multisig);
        //list_benchmark!(list, extra, pallet_offences, OffencesBench::<Runtime>);
-       list_benchmark!(list, extra, pallet_proxy, crate::Proxy);
+       //list_benchmark!(list, extra, pallet_proxy, crate::Proxy);
+       list_benchmark!(list, extra, pallet_preimage, crate::Preimage);
        list_benchmark!(list, extra, pallet_scheduler, crate::Scheduler);
        list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
        list_benchmark!(list, extra, pallet_staking, crate::Staking);
@@ -345,7 +346,7 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_membership, crate::TechnicalMembership);
            add_benchmark!(params, batches, pallet_multisig, crate::Multisig);
            //add_benchmark!(params, batches, pallet_offences, OffencesBench::<Runtime>);
-           add_benchmark!(params, batches, pallet_proxy, crate::Proxy);
+           //add_benchmark!(params, batches, pallet_proxy, crate::Proxy);
            add_benchmark!(params, batches, pallet_scheduler, crate::Scheduler);
            add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
            add_benchmark!(params, batches, pallet_staking, crate::Staking);

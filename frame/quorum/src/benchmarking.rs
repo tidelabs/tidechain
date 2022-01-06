@@ -28,6 +28,10 @@ benchmarks! {
    set_status {
       let user = pre_set_auth::<T>();
    }: _(RawOrigin::Signed(user), true)
+   set_account_id {
+      let user = pre_set_auth::<T>();
+      let caller: T::AccountId = whitelisted_caller();
+   }: _(RawOrigin::Signed(user), caller)
    confirm_withdrawal {
       let user = pre_set_auth::<T>();
       let account_id: T::AccountId = account("user", USER_ID, SEED);

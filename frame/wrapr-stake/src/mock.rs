@@ -286,8 +286,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
 
   pallet_assets::GenesisConfig::<Test> {
-    assets: vec![(1, AccountId(1), true, 1)],
-    metadata: vec![(1, "Test".into(), "TEST".into(), 6)],
+    assets: vec![(4294967295, AccountId(1), true, 1)],
+    metadata: vec![(4294967295, "Test".into(), "TEST".into(), 6)],
     accounts: vec![],
   }
   .assimilate_storage(&mut t)
