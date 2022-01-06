@@ -53,7 +53,6 @@ mod api;
 mod weights;
 
 // Voter bag threshold definitions.
-#[path = "../../common/bag_thresholds.rs"]
 mod bag_thresholds;
 
 // Make the WASM binary available.
