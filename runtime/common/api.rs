@@ -261,7 +261,7 @@ impl_runtime_apis! {
 
        let mut list = Vec::<BenchmarkList>::new();
 
-       list_benchmark!(list, extra, pallet_bags_list, crate::BagsList);
+       //list_benchmark!(list, extra, pallet_bags_list, crate::BagsList);
        list_benchmark!(list, extra, pallet_balances, crate::Balances);
        list_benchmark!(list, extra, pallet_bounties, crate::Bounties);
        list_benchmark!(list, extra, pallet_collective, crate::Council);
@@ -328,7 +328,8 @@ impl_runtime_apis! {
            let params = (&config, &whitelist);
 
            add_benchmark!(params, batches, pallet_assets, crate::Assets);
-           add_benchmark!(params, batches, pallet_bags_list, crate::BagsList);
+           // FIXME: BagsList benchs are failing (use default provided by substrate)
+           //add_benchmark!(params, batches, pallet_bags_list, crate::BagsList);
            add_benchmark!(params, batches, pallet_balances, crate::Balances);
            add_benchmark!(params, batches, pallet_bounties, crate::Bounties);
            add_benchmark!(params, batches, pallet_collective, crate::Council);

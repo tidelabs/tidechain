@@ -212,7 +212,8 @@ impl pallet_bags_list::Config for Runtime {
   type Event = Event;
   type VoteWeightProvider = Staking;
   type BagThresholds = BagThresholds;
-  type WeightInfo = crate::weights::pallet_bags_list::WeightInfo<Runtime>;
+  /// FIXME: Revert local weighting
+  type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
