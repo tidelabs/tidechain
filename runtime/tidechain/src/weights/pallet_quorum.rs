@@ -18,12 +18,12 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2022-01-06, STEPS: `50`, REPEAT: 20, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("hertel-dev"), DB CACHE: 128
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("tidechain-dev"), DB CACHE: 128
 
 // Executed Command:
-// ./target/release/tidechain
+// target/release/tidechain
 // benchmark
-// --chain=hertel-dev
+// --chain=tidechain-dev
 // --steps=50
 // --repeat=20
 // --pallet=pallet_quorum
@@ -32,7 +32,7 @@
 // --wasm-execution=compiled
 // --heap-pages=4096
 // --header=./file_header.txt
-// --output=./runtime/hertel/src/weights/pallet_quorum.rs
+// --output=./runtime/tidechain/src/weights/
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -47,13 +47,13 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: WraprQuorum QuorumAccountId (r:1 w:0)
 	// Storage: WraprQuorum QuorumStatus (r:0 w:1)
 	fn set_status() -> Weight {
-		(22_000_000 as Weight)
+		(26_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: WraprQuorum QuorumAccountId (r:1 w:1)
 	fn set_account_id() -> Weight {
-		(23_000_000 as Weight)
+		(28_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -64,7 +64,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
 	fn confirm_withdrawal() -> Weight {
-		(68_000_000 as Weight)
+		(86_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -72,7 +72,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: WraprQuorum QuorumStatus (r:1 w:0)
 	// Storage: WraprQuorum QuorumAccountId (r:1 w:0)
 	fn mint() -> Weight {
-		(63_000_000 as Weight)
+		(84_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
 }
