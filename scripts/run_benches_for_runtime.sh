@@ -16,10 +16,11 @@ cargo +nightly run $standard_args benchmark \
     --wasm-execution=compiled \
     --pallet "*" \
     --extrinsic "*" \
-    --repeat 0 | \
-  sed -r -e 's/Pallet: "([a-z_:]+)".*/\1/' | \
+    --list | \
+  sed -r -e 's/(pallet_[a-z_:]+)\,.*/\1/' | \
   uniq | \
-  grep -v frame_system > "${runtime}_pallets"
+  grep -v "pallet, benchmark" | \
+  grep -v "frame_system," > "${runtime}_pallets"
 
 # For each pallet found in the previous command, run benches on each function
 while read -r line; do

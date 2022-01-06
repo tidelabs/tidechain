@@ -15,7 +15,6 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-  bag_thresholds::THRESHOLDS,
   constants::{
     currency::{deposit, CENTS, MILLICENTS, TIDE},
     fee::WeightToFee,
@@ -27,7 +26,7 @@ use crate::{
     EnsureRootOrHalfCouncil, Hash, Nonce, RocksDbWeight, RuntimeBlockLength, RuntimeBlockWeights,
   },
   Babe, Balances, Call, Event, Indices, Moment, Origin, OriginCaller, PalletInfo, Preimage,
-  Runtime, Staking, System, Treasury, SS58_PREFIX, VERSION,
+  Runtime, System, Treasury, SS58_PREFIX, VERSION,
 };
 
 use frame_support::{
@@ -202,18 +201,6 @@ impl pallet_identity::Config for Runtime {
   type ForceOrigin = EnsureRootOrHalfCouncil;
   type RegistrarOrigin = EnsureRootOrHalfCouncil;
   type WeightInfo = crate::weights::pallet_identity::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-  pub const BagThresholds: &'static [u64] = &THRESHOLDS;
-}
-
-impl pallet_bags_list::Config for Runtime {
-  type Event = Event;
-  type VoteWeightProvider = Staking;
-  type BagThresholds = BagThresholds;
-  /// FIXME: Revert local weighting
-  type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {

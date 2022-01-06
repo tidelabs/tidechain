@@ -14,7 +14,15 @@ use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
   Perbill,
 };
-use tidefi_primitives::{assets, AccountId, AssetId, Balance, Block, CurrencyId, Signature};
+
+// Tidechain primitives
+use tidefi_primitives::{AccountId, AssetId, Balance, Block, CurrencyId, Signature};
+
+// We do not create assets in our benchmarks
+// to prevent any issue with the `Default::default()` asset_id
+// used in our benchmarks.
+#[cfg(not(feature = "runtime-benchmarks"))]
+use tidefi_primitives::assets;
 
 #[cfg(feature = "tidechain-native")]
 const TIDECHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
@@ -938,19 +946,25 @@ mod helpers {
   }
 
   pub(crate) fn get_all_assets() -> Vec<(AssetId, Vec<u8>, Vec<u8>, u8)> {
-    vec![
+    #[cfg(feature = "runtime-benchmarks")]
+    return Vec::new();
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    return vec![
       (assets::BTC, "Bitcoin".into(), "BTC".into(), 8),
       (assets::ETH, "Ethereum".into(), "ETH".into(), 18),
       // FIXME: Revert to correct decimals, when new contract has been deployed
       (assets::USDC, "USD Coin".into(), "USDC".into(), 18),
       (assets::USDT, "Tether".into(), "USDT".into(), 18),
-    ]
+    ];
   }
 
   // SECRET="key" ./scripts/prepare-dev-hertel.sh
   #[cfg(feature = "hertel-native")]
   pub(crate) fn get_stakeholder_tokens_hertel() -> Vec<(CurrencyId, AccountId, Balance)> {
-    vec![
+    #[cfg(feature = "runtime-benchmarks")]
+    return Vec::new();
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    return vec![
       // faucet
       (
         CurrencyId::Tide,
@@ -1171,13 +1185,16 @@ mod helpers {
         // 1000 ETH
         1_000_000_000_000_000_000_000,
       ),
-    ]
+    ];
   }
 
   // SECRET="key" ./scripts/prepare-dev-tidechain.sh
   #[cfg(feature = "tidechain-native")]
   pub(crate) fn get_stakeholder_tokens_tidechain() -> Vec<(CurrencyId, AccountId, Balance)> {
-    vec![
+    #[cfg(feature = "runtime-benchmarks")]
+    return Vec::new();
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    return vec![
       // faucet
       (
         CurrencyId::Tide,
@@ -1258,6 +1275,6 @@ mod helpers {
         // 1000 TIDE
         1_000_000_000_000_000,
       ),
-    ]
+    ];
   }
 }

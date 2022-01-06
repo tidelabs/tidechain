@@ -607,47 +607,14 @@ pub mod pallet {
       Self::do_force_create(id, owner, is_sufficient, min_balance)
     }
 
-    /// Destroy a class of fungible assets.
-    ///
-    /// The origin must conform to `ForceOrigin` or must be Signed and the sender must be the
-    /// owner of the asset `id`.
-    ///
-    /// - `id`: The identifier of the asset to be destroyed. This must identify an existing
-    /// asset.
-    ///
-    /// Emits `Destroyed` event when successful.
-    ///
-    /// NOTE: It can be helpful to first freeze an asset before destroying it so that you
-    /// can provide accurate witness information and prevent users from manipulating state
-    /// in a way that can make it harder to destroy.
-    ///
-    /// Weight: `O(c + p + a)` where:
-    /// - `c = (witness.accounts - witness.sufficients)`
-    /// - `s = witness.sufficients`
-    /// - `a = witness.approvals`
-    #[pallet::weight(T::WeightInfo::destroy(
-			witness.accounts.saturating_sub(witness.sufficients),
- 			witness.sufficients,
- 			witness.approvals,
- 		))]
+    /// Destroy are disabled in Tidechain
+    #[pallet::weight(100_000)]
     pub fn destroy(
-      origin: OriginFor<T>,
-      #[pallet::compact] id: T::AssetId,
-      witness: DestroyWitness,
+      _origin: OriginFor<T>,
+      #[pallet::compact] _id: T::AssetId,
+      _witness: DestroyWitness,
     ) -> DispatchResultWithPostInfo {
-      let maybe_check_owner = match T::ForceOrigin::try_origin(origin) {
-        Ok(_) => None,
-        Err(origin) => Some(ensure_signed(origin)?),
-      };
-      let details = Self::do_destroy(id, witness, maybe_check_owner)?;
-      Ok(
-        Some(T::WeightInfo::destroy(
-          details.accounts.saturating_sub(details.sufficients),
-          details.sufficients,
-          details.approvals,
-        ))
-        .into(),
-      )
+      Ok(Some(100_000).into())
     }
 
     /// Mint assets of a particular class.

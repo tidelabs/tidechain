@@ -256,7 +256,7 @@ impl_runtime_apis! {
        use frame_support::traits::StorageInfoTrait;
 
        use pallet_session_benchmarking::Pallet as SessionBench;
-       use pallet_offences_benchmarking::Pallet as OffencesBench;
+       //use pallet_offences_benchmarking::Pallet as OffencesBench;
        use frame_system_benchmarking::Pallet as SystemBench;
 
        let mut list = Vec::<BenchmarkList>::new();
@@ -273,7 +273,7 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_indices, crate::Indices);
        list_benchmark!(list, extra, pallet_membership, crate::TechnicalMembership);
        list_benchmark!(list, extra, pallet_multisig, crate::Multisig);
-       list_benchmark!(list, extra, pallet_offences, OffencesBench::<Runtime>);
+       //list_benchmark!(list, extra, pallet_offences, OffencesBench::<Runtime>);
        list_benchmark!(list, extra, pallet_proxy, crate::Proxy);
        list_benchmark!(list, extra, pallet_scheduler, crate::Scheduler);
        list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
@@ -302,12 +302,14 @@ impl_runtime_apis! {
            // issues. To get around that, we separated the Session benchmarks into its own crate,
            // which is why we need these two lines below.
            use pallet_session_benchmarking::Pallet as SessionBench;
-           use pallet_offences_benchmarking::Pallet as OffencesBench;
-           use frame_system_benchmarking::Pallet as SystemBench;
-
            impl pallet_session_benchmarking::Config for Runtime {}
-           impl pallet_offences_benchmarking::Config for Runtime {}
+
+           use frame_system_benchmarking::Pallet as SystemBench;
            impl frame_system_benchmarking::Config for Runtime {}
+
+           //use pallet_offences_benchmarking::Pallet as OffencesBench;
+           //impl pallet_offences_benchmarking::Config for Runtime {}
+
 
            let whitelist: Vec<TrackedStorageKey> = vec![
                // Block Number
@@ -335,14 +337,14 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_collective, crate::Council);
            add_benchmark!(params, batches, pallet_election_provider_multi_phase, crate::ElectionProviderMultiPhase);
            add_benchmark!(params, batches, pallet_elections_phragmen, crate::Elections);
-           // FIXME: grandme benchmark do not generate the correct functions
+           // FIXME: pallet_grandpa benchmark do not generate the correct functions
            //add_benchmark!(params, batches, pallet_grandpa, Grandpa);
            add_benchmark!(params, batches, pallet_identity, crate::Identity);
            add_benchmark!(params, batches, pallet_im_online, crate::ImOnline);
            add_benchmark!(params, batches, pallet_indices, crate::Indices);
            add_benchmark!(params, batches, pallet_membership, crate::TechnicalMembership);
            add_benchmark!(params, batches, pallet_multisig, crate::Multisig);
-           add_benchmark!(params, batches, pallet_offences, OffencesBench::<Runtime>);
+           //add_benchmark!(params, batches, pallet_offences, OffencesBench::<Runtime>);
            add_benchmark!(params, batches, pallet_proxy, crate::Proxy);
            add_benchmark!(params, batches, pallet_scheduler, crate::Scheduler);
            add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
