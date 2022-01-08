@@ -1,5 +1,4 @@
 use crate::pallet as pallet_asset_registry;
-use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
   parameter_types,
@@ -8,53 +7,54 @@ use frame_support::{
       Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, Mutate, Transfer},
-    ConstU128, ConstU32, GenesisBuild,
+    ConstU128, ConstU32, EnsureOrigin, GenesisBuild,
   },
   PalletId,
 };
 use frame_system as system;
 #[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_runtime::{
   testing::Header,
-  traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, RuntimeDebug,
+  traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+  DispatchError, DispatchResult,
 };
 use std::marker::PhantomData;
-use system::EnsureRoot;
-use tidefi_primitives::{assets, CurrencyId};
+use system::RawOrigin;
+use tidefi_primitives::CurrencyId;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
 
-#[derive(
-  Encode,
-  Decode,
-  scale_info::TypeInfo,
-  Default,
-  Eq,
-  PartialEq,
-  Copy,
-  Clone,
-  RuntimeDebug,
-  PartialOrd,
-  Ord,
-  MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
-pub struct AccountId(pub u64);
+pub type AccountId = u64;
 
-impl sp_std::fmt::Display for AccountId {
-  fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
-    write!(f, "{}", self.0)
+pub struct EnsureRootOrAssetRegistry;
+impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
+  type Success = AccountId;
+
+  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
+      RawOrigin::Signed(caller) => {
+        let asset_registry_account: u64 = AssetRegistryPalletId::get().into_account();
+        // Allow call from asset registry pallet ID account
+        if caller == asset_registry_account
+        // Allow call from asset registry owner
+        || caller == AssetRegistry::account_id().expect("Unable to get asset registry account id")
+        {
+          Ok(caller)
+        } else {
+          Err(Origin::from(Some(caller)))
+        }
+      }
+      r => Err(Origin::from(r)),
+    })
   }
-}
 
-impl From<u64> for AccountId {
-  fn from(account_id: u64) -> Self {
-    Self(account_id)
+  #[cfg(feature = "runtime-benchmarks")]
+  fn successful_origin() -> Origin {
+    Origin::from(RawOrigin::Signed(Default::default()))
   }
 }
 
@@ -123,7 +123,7 @@ impl pallet_assets::Config for Test {
   type Balance = u128;
   type AssetId = u32;
   type Currency = Balances;
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type ForceOrigin = EnsureRootOrAssetRegistry;
   type AssetDeposit = AssetDeposit;
   type MetadataDepositBase = MetadataDepositBase;
   type MetadataDepositPerByte = MetadataDepositPerByte;
@@ -264,49 +264,35 @@ where
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
+
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
 
-  let config = pallet_asset_registry::GenesisConfig::<Test> {
+  pallet_asset_registry::GenesisConfig::<Test> {
     assets: vec![
       (
-        CurrencyId::Wrapped(assets::BTC),
+        CurrencyId::Wrapped(100),
         "Bitcoin".into(),
         "BTC".into(),
         8,
         Vec::new(),
       ),
       (
-        CurrencyId::Wrapped(assets::ETH),
+        CurrencyId::Wrapped(1000),
         "Ethereum".into(),
         "ETH".into(),
         18,
         Vec::new(),
       ),
-      (
-        CurrencyId::Wrapped(assets::USDC),
-        "USD Coin".into(),
-        "USDC".into(),
-        2,
-        Vec::new(),
-      ),
-      (
-        CurrencyId::Wrapped(assets::USDT),
-        "Tether".into(),
-        "USDT".into(),
-        2,
-        Vec::new(),
-      ),
     ],
-    account: alice.into(),
-  };
-
-  config.assimilate_storage(&mut t).unwrap();
+    account: 0,
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
 
   t.into()
 }

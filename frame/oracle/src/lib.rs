@@ -28,6 +28,7 @@ pub mod pallet {
     PalletId,
   };
   use frame_system::pallet_prelude::*;
+  #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
   use tidefi_primitives::{
     pallet::{FeesExt, OracleExt, SecurityExt},
@@ -161,9 +162,9 @@ pub mod pallet {
     NoFunds,
     /// Trade overflow
     Overflow,
-    /// MarketMakers do not have enough funds
+    /// Market Makers do not have enough funds
     MarketMakerNoFunds,
-    /// MarketMakers cannot deposit source funds of the trade
+    /// Market Makers cannot deposit source funds of the trade
     MarketMakerCantDeposit,
     /// Unknown Error.
     UnknownError,
@@ -441,7 +442,8 @@ pub mod pallet {
         Ok(())
       })?;
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
 
     /// Oracle change the account ID who can confirm trade.
@@ -471,7 +473,8 @@ pub mod pallet {
         account_id: new_account_id,
       });
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
 
     /// Change Oracle status.
@@ -493,7 +496,8 @@ pub mod pallet {
       // 3. Emit event on chain
       Self::deposit_event(Event::<T>::StatusChanged { is_enabled });
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
   }
 

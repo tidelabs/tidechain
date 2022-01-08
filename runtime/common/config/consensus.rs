@@ -15,6 +15,7 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
+  bag_thresholds::THRESHOLDS,
   constants::{
     currency::{deposit, UNITS},
     time::{EPOCH_DURATION_IN_SLOTS, MILLISECS_PER_BLOCK},
@@ -28,12 +29,13 @@ use crate::{
   Staking, Timestamp, TransactionPayment, Treasury,
 };
 use codec::Decode;
+use frame_election_provider_support::{SortedListProvider, VoteWeight};
 use frame_support::{
+  pallet_prelude::PhantomData,
   parameter_types,
   traits::{ConstU32, EnsureOneOf, KeyOwnerProofSystem, U128CurrencyToVote},
   weights::{DispatchClass, Weight},
 };
-
 use frame_system::EnsureRoot;
 use sp_core::u32_trait::{_2, _3, _4};
 use sp_runtime::{
@@ -219,13 +221,13 @@ impl frame_support::pallet_prelude::Get<Option<(usize, sp_npos_elections::Extend
 /// since the staking is bounded and the weight pipeline takes hours for this single pallet.
 pub struct BenchmarkConfigMultiPhase;
 impl pallet_election_provider_multi_phase::BenchmarkingConfig for BenchmarkConfigMultiPhase {
-  const VOTERS: [u32; 2] = [1000, 2000];
-  const TARGETS: [u32; 2] = [500, 1000];
-  const ACTIVE_VOTERS: [u32; 2] = [500, 800];
-  const DESIRED_TARGETS: [u32; 2] = [200, 400];
-  const SNAPSHOT_MAXIMUM_VOTERS: u32 = 1000;
-  const MINER_MAXIMUM_VOTERS: u32 = 1000;
-  const MAXIMUM_TARGETS: u32 = 300;
+  const VOTERS: [u32; 2] = [100, 200];
+  const TARGETS: [u32; 2] = [50, 100];
+  const ACTIVE_VOTERS: [u32; 2] = [50, 80];
+  const DESIRED_TARGETS: [u32; 2] = [20, 40];
+  const SNAPSHOT_MAXIMUM_VOTERS: u32 = 100;
+  const MINER_MAXIMUM_VOTERS: u32 = 100;
+  const MAXIMUM_TARGETS: u32 = 30;
 }
 
 impl pallet_election_provider_multi_phase::Config for Runtime {
@@ -318,20 +320,27 @@ parameter_types! {
    pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
 }
 
+/// A reasonable benchmarking config for staking pallet.
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+  type MaxValidators = ConstU32<1000>;
+  type MaxNominators = ConstU32<1000>;
+}
+
 impl pallet_staking::Config for Runtime {
+  const MAX_NOMINATIONS: u32 = MAX_NOMINATIONS;
   type Currency = Balances;
   type UnixTime = Timestamp;
   type CurrencyToVote = U128CurrencyToVote;
-  type ElectionProvider = ElectionProviderMultiPhase;
-  type GenesisElectionProvider =
-    frame_election_provider_support::onchain::OnChainSequentialPhragmen<Self>;
-  const MAX_NOMINATIONS: u32 = MAX_NOMINATIONS;
   type RewardRemainder = Treasury;
   type Event = Event;
   type Slash = Treasury;
   type Reward = ();
   type SessionsPerEra = SessionsPerEra;
   type BondingDuration = BondingDuration;
+  type ElectionProvider = ElectionProviderMultiPhase;
+  type GenesisElectionProvider =
+    frame_election_provider_support::onchain::OnChainSequentialPhragmen<Self>;
   type SlashDeferDuration = SlashDeferDuration;
   /// A super-majority of the council can cancel the slash.
   type SlashCancelOrigin = EnsureOneOf<
@@ -349,9 +358,70 @@ impl pallet_staking::Config for Runtime {
   type WeightInfo = crate::weights::pallet_staking::WeightInfo<Runtime>;
 }
 
-/// A reasonable benchmarking config for staking pallet.
-pub struct StakingBenchmarkingConfig;
-impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
-  type MaxValidators = ConstU32<1000>;
-  type MaxNominators = ConstU32<1000>;
+parameter_types! {
+  pub const BagThresholds: &'static [u64] = &THRESHOLDS;
+}
+
+impl pallet_bags_list::Config for Runtime {
+  type Event = Event;
+  type VoteWeightProvider = Staking;
+  type BagThresholds = BagThresholds;
+  /// FIXME: Revert local weighting
+  type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
+}
+
+/// Implementation of `frame_election_provider_support::SortedListProvider` that updates the
+/// bags-list but uses [`pallet_staking::Nominators`] for `iter`. This is meant to be a transitionary
+/// implementation for runtimes to "test" out the bags-list by keeping it up to date, but not yet
+/// using it for snapshot generation. In contrast, a  "complete" implementation would use bags-list
+/// for `iter`.
+pub struct UseNominatorsAndUpdateBagsList<T>(PhantomData<T>);
+impl<T: pallet_bags_list::Config + pallet_staking::Config> SortedListProvider<T::AccountId>
+  for UseNominatorsAndUpdateBagsList<T>
+{
+  type Error = pallet_bags_list::Error;
+
+  fn iter() -> Box<dyn Iterator<Item = T::AccountId>> {
+    Box::new(pallet_staking::Nominators::<T>::iter().map(|(n, _)| n))
+  }
+
+  fn count() -> u32 {
+    pallet_bags_list::Pallet::<T>::count()
+  }
+
+  fn contains(id: &T::AccountId) -> bool {
+    pallet_bags_list::Pallet::<T>::contains(id)
+  }
+
+  fn on_insert(id: T::AccountId, weight: VoteWeight) -> Result<(), Self::Error> {
+    pallet_bags_list::Pallet::<T>::on_insert(id, weight)
+  }
+
+  fn on_update(id: &T::AccountId, new_weight: VoteWeight) {
+    pallet_bags_list::Pallet::<T>::on_update(id, new_weight);
+  }
+
+  fn on_remove(id: &T::AccountId) {
+    pallet_bags_list::Pallet::<T>::on_remove(id);
+  }
+
+  fn unsafe_regenerate(
+    all: impl IntoIterator<Item = T::AccountId>,
+    weight_of: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
+  ) -> u32 {
+    pallet_bags_list::Pallet::<T>::unsafe_regenerate(all, weight_of)
+  }
+
+  fn sanity_check() -> Result<(), &'static str> {
+    pallet_bags_list::Pallet::<T>::sanity_check()
+  }
+
+  fn unsafe_clear() {
+    pallet_bags_list::Pallet::<T>::unsafe_clear()
+  }
+
+  #[cfg(feature = "runtime-benchmarks")]
+  fn weight_update_worst_case(who: &T::AccountId, is_increase: bool) -> VoteWeight {
+    pallet_bags_list::Pallet::<T>::weight_update_worst_case(who, is_increase)
+  }
 }

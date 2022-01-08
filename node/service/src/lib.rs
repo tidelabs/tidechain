@@ -1,62 +1,41 @@
 #![allow(clippy::type_complexity)]
-pub use crate::client::{
-  AbstractClient, Client, ClientHandle, ExecuteWithClient, RuntimeApiCollection,
-};
-use sc_basic_authorship::ProposerFactory;
-use sc_client_api::ExecutorProvider;
-use sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider;
-use sc_service::{
-  config::PrometheusConfig, ChainSpec, Configuration, NativeExecutionDispatch, RpcHandlers,
-  TaskManager,
-};
-use sc_telemetry::{Telemetry, TelemetryWorker};
-use sp_api::ConstructRuntimeApi;
-use sp_runtime::traits::Block as BlockT;
-use std::{sync::Arc, time::Duration};
-use substrate_prometheus_endpoint::Registry;
-use tidefi_primitives::Block;
 
-pub mod chain_spec;
-mod client;
+#[cfg(feature = "full-node")]
+pub use tidechain_client::{
+  AbstractClient, Client, ClientHandle, ExecuteWithClient, FullBackend, FullClient,
+  RuntimeApiCollection,
+};
 
-#[cfg(feature = "hertel-native")]
-pub use hertel_runtime;
+#[cfg(feature = "full-node")]
+use {
+  sc_client_api::ExecutorProvider,
+  sc_executor::NativeElseWasmExecutor,
+  sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
+  sc_service::{
+    config::PrometheusConfig, Configuration, NativeExecutionDispatch, RpcHandlers, TaskManager,
+  },
+  sc_telemetry::{Telemetry, TelemetryWorker},
+  sp_api::ConstructRuntimeApi,
+  sp_runtime::traits::Block as BlockT,
+  std::{sync::Arc, time::Duration},
+  substrate_prometheus_endpoint::Registry,
+  tidefi_primitives::Block,
+};
+
+use sc_service::ChainSpec;
+
+#[cfg(feature = "tidechain-native")]
+pub use tidechain_client::TidechainExecutorDispatch;
 #[cfg(feature = "tidechain-native")]
 pub use tidechain_runtime;
 
-pub use sc_executor::NativeElseWasmExecutor;
-
-#[cfg(feature = "tidechain-native")]
-pub struct TidechainExecutorDispatch;
-
-#[cfg(feature = "tidechain-native")]
-impl sc_executor::NativeExecutionDispatch for TidechainExecutorDispatch {
-  type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-
-  fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-    tidechain_runtime::dispatch(method, data)
-  }
-
-  fn native_version() -> sc_executor::NativeVersion {
-    tidechain_runtime::native_version()
-  }
-}
-
 #[cfg(feature = "hertel-native")]
-pub struct HertelExecutorDispatch;
-
+pub use hertel_runtime;
 #[cfg(feature = "hertel-native")]
-impl sc_executor::NativeExecutionDispatch for HertelExecutorDispatch {
-  type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+pub use tidechain_client::HertelExecutorDispatch;
 
-  fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-    hertel_runtime::dispatch(method, data)
-  }
-
-  fn native_version() -> sc_executor::NativeVersion {
-    hertel_runtime::native_version()
-  }
-}
+#[cfg(any(feature = "tidechain-native", feature = "hertel-native"))]
+pub mod chain_spec;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -103,10 +82,9 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
   }
 }
 
-pub type FullBackend = sc_service::TFullBackend<Block>;
+#[cfg(feature = "full-node")]
 pub type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
-pub type FullClient<RuntimeApi, ExecutorDispatch> =
-  sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
+#[cfg(feature = "full-node")]
 pub type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch> =
   sc_finality_grandpa::GrandpaBlockImport<
     FullBackend,
@@ -116,6 +94,7 @@ pub type FullGrandpaBlockImport<RuntimeApi, ExecutorDispatch> =
   >;
 
 // If we're using prometheus, use a registry with a prefix of `tidechain`.
+#[cfg(feature = "full-node")]
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
   if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
     *registry = Registry::new_custom(Some("tidechain".into()), None)?;
@@ -124,6 +103,7 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), Error> {
   Ok(())
 }
 
+#[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, ExecutorDispatch>(
   config: &mut Configuration,
 ) -> Result<
@@ -220,7 +200,7 @@ where
 
   let justification_import = grandpa_block_import.clone();
 
-  let babe_config = sc_consensus_babe::Config::get_or_compute(&*client)?;
+  let babe_config = sc_consensus_babe::Config::get(&*client)?;
   let (block_import, babe_link) =
     sc_consensus_babe::block_import(babe_config.clone(), grandpa_block_import, client.clone())?;
 
@@ -314,6 +294,7 @@ where
   })
 }
 
+#[cfg(feature = "full-node")]
 pub struct NewFull<C> {
   pub task_manager: TaskManager,
   pub client: C,
@@ -321,6 +302,7 @@ pub struct NewFull<C> {
   pub rpc_handlers: RpcHandlers,
 }
 
+#[cfg(feature = "full-node")]
 impl<C> NewFull<C> {
   /// Convert the client type using the given `func`.
   pub fn with_client<NC>(self, func: impl FnOnce(C) -> NC) -> NewFull<NC> {
@@ -333,6 +315,7 @@ impl<C> NewFull<C> {
   }
 }
 
+#[cfg(feature = "full-node")]
 pub fn new_full<RuntimeApi, Executor>(
   mut config: Configuration,
 ) -> Result<NewFull<Arc<FullClient<RuntimeApi, Executor>>>, Error>
@@ -417,7 +400,7 @@ where
   if let sc_service::config::Role::Authority { .. } = &role {
     let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
-    let proposer = ProposerFactory::new(
+    let proposer = sc_basic_authorship::ProposerFactory::new(
       task_manager.spawn_handle(),
       client.clone(),
       transaction_pool,
@@ -569,6 +552,7 @@ where
   })
 }
 
+#[cfg(feature = "full-node")]
 pub fn build_full(config: Configuration) -> Result<NewFull<Client>, Error> {
   #[cfg(feature = "tidechain-native")]
   if config.chain_spec.is_tidechain() {
@@ -585,6 +569,7 @@ pub fn build_full(config: Configuration) -> Result<NewFull<Client>, Error> {
   Err(Error::NoRuntime)
 }
 
+#[cfg(feature = "full-node")]
 pub struct NewChainOps<C> {
   pub task_manager: TaskManager,
   pub client: C,
@@ -594,6 +579,7 @@ pub struct NewChainOps<C> {
 }
 
 /// Builds a new object suitable for chain operations.
+#[cfg(feature = "full-node")]
 pub fn new_chain_ops(mut config: &mut Configuration) -> Result<NewChainOps<Client>, Error> {
   config.keystore = sc_service::config::KeystoreConfig::InMemory;
 

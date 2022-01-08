@@ -76,12 +76,11 @@ One feature of Substrate is to allow for connection to different networks using 
 
 ### Tidechain Mainnet
 
-Currently Tidechain is built from the tip of `main` and is the default option when starting a node.
-
+Currently Tidechain is the default option when starting a node.
 Connect to the global Tidechain Mainnet network by running:
 
 ```bash
-tidechain --chain=tidechain
+tidechain
 ```
 
 You can see your node on [telemetry] (set a custom name with `--name "my custom name"`).

@@ -6,9 +6,9 @@ use tidefi_primitives::{pallet::FeesExt, CurrencyId};
 #[test]
 pub fn check_genesis_config() {
   new_test_ext().execute_with(|| {
+    assert!(Fees::active_era().is_some());
     assert_eq!(Fees::fee_percentage(), Percent::from_parts(2));
     assert_eq!(Fees::distribution_percentage(), Percent::from_parts(20));
-    assert!(Fees::active_era().is_none());
   });
 }
 
@@ -25,8 +25,9 @@ pub fn calculate_trading_fees() {
 #[test]
 pub fn register_trading_fees() {
   new_test_ext().execute_with(|| {
+    let current_era = Fees::active_era().unwrap().index;
     Fees::start_era();
-    assert!(!Fees::active_era().is_none());
+    assert_eq!(current_era + 1, Fees::active_era().unwrap().index);
 
     // 100 tide @ 2% should cost 2 TIDEs
     let calculated_fee =

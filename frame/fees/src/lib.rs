@@ -152,7 +152,6 @@ pub mod pallet {
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// The fees get redistributed successfully
-    /// \[era last block, currency_id, amount\]
     Rewarded(BlockNumber, CurrencyId, Balance),
     DistributionPercentageUpdated(Percent),
     FeesPercentageUpdated(Percent),
