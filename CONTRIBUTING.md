@@ -41,7 +41,7 @@ _Process:_
 - PRs must be tagged with their release importance via the `C1-C9` labels.
 - PRs must be tagged with their audit requirements via the `D1-D9` labels.
 - PRs that must be backported to a stable branch must be tagged with https://github.com/tide-labs/tidechain/labels/E1-runtimemigration[`E0-patchthis`].
-- PRs that introduce runtime migrations must be tagged with https://github.com/tide-labs/tidechain/labels/E1-runtimemigration[`E1-runtimemigration`]. See the https://github.com/tide-labs/tidechain/blob/master/utils/frame/try-runtime/cli/src/lib.rs#L18[Migration Best Practices here] for more info about how to test runtime migrations.
+- PRs that introduce runtime migrations must be tagged with https://github.com/tide-labs/tidechain/labels/E1-runtimemigration[`E1-runtimemigration`]. See the https://github.com/tide-labs/tidechain/blob/dev/utils/frame/try-runtime/cli/src/lib.rs#L18[Migration Best Practices here] for more info about how to test runtime migrations.
 - PRs that introduce irreversible database migrations must be tagged with https://github.com/tide-labs/tidechain/labels/E2-databasemigration[`E2-databasemigration`].
 - PRs that add host functions must be tagged with with https://github.com/tide-labs/tidechain/labels/E4-newhostfunctions[`E4-newhostfunctions`].
 - PRs that break the external API must be tagged with https://github.com/tide-labs/tidechain/labels/E5-breaksapi[`E5-breaksapi`].
@@ -85,4 +85,4 @@ This is an experiment and feedback is welcome! This document may also be subject
 
 ## Heritage
 
-These contributing guidelines are modified from the "OPEN Open Source Project" guidelines for the Level project: https://github.com/Level/community/blob/master/CONTRIBUTING.md
+These contributing guidelines are modified from the "OPEN Open Source Project" guidelines for the Level project: https://github.com/Level/community/blob/dev/CONTRIBUTING.md
