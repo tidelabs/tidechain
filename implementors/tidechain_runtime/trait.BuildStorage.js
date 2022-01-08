@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["tidechain_runtime"] = [{"text":"impl <a class=\"trait\" href=\"tidechain_runtime/trait.BuildStorage.html\" title=\"trait tidechain_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"tidechain_runtime/struct.GenesisConfig.html\" title=\"struct tidechain_runtime::GenesisConfig\">GenesisConfig</a>","synthetic":false,"types":["tidechain_runtime::GenesisConfig"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,4 @@
+(function() {var implementors = {};
+implementors["hertel_runtime"] = [{"text":"impl <a class=\"trait\" href=\"frame_support/traits/dispatch/trait.OriginTrait.html\" title=\"trait frame_support::traits::dispatch::OriginTrait\">OriginTrait</a> for <a class=\"struct\" href=\"hertel_runtime/struct.Origin.html\" title=\"struct hertel_runtime::Origin\">Origin</a>","synthetic":false,"types":["hertel_runtime::Origin"]}];
+implementors["tidechain_runtime"] = [{"text":"impl <a class=\"trait\" href=\"frame_support/traits/dispatch/trait.OriginTrait.html\" title=\"trait frame_support::traits::dispatch::OriginTrait\">OriginTrait</a> for <a class=\"struct\" href=\"tidechain_runtime/struct.Origin.html\" title=\"struct tidechain_runtime::Origin\">Origin</a>","synthetic":false,"types":["tidechain_runtime::Origin"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
