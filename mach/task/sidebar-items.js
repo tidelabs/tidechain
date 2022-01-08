@@ -1,1 +1,0 @@
-initSidebarItems({"constant":[["TASK_BOOTSTRAP_PORT",""],["TASK_HOST_PORT",""],["TASK_KERNEL_PORT",""],["TASK_NAME_PORT",""]],"fn":[["task_get_special_port",""],["task_info",""],["task_resume",""],["task_set_info",""],["task_suspend",""],["task_threads",""]],"type":[["task_special_port_t",""]]});
