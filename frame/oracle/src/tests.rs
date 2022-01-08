@@ -1,5 +1,5 @@
 use crate::{
-  mock::{new_test_ext, AccountId, Adapter, Assets, Fees, Oracle, Origin, Test},
+  mock::{new_test_ext, Adapter, Assets, Fees, Oracle, Origin, Test},
   pallet::*,
 };
 use frame_support::{
@@ -458,15 +458,15 @@ pub fn confirm_trade_simple_with_fees() {
     );
 
     // make sure fees are registered on chain
-    let bob_fee = Fees::account_fees(CurrencyId::Tide, AccountId(2u64));
+    let bob_fee = Fees::account_fees(CurrencyId::Tide, 2u64);
     assert_eq!(bob_fee.fee, 200_000_000_000);
     assert_eq!(bob_fee.amount, 10_000_000_000_000);
 
-    let charlie_fee = Fees::account_fees(CurrencyId::Wrapped(temp_asset_id), AccountId(3u64));
+    let charlie_fee = Fees::account_fees(CurrencyId::Wrapped(temp_asset_id), 3u64);
     assert_eq!(charlie_fee.fee, 200);
     assert_eq!(charlie_fee.amount, 10_000);
 
-    let dave_fee = Fees::account_fees(CurrencyId::Wrapped(temp_asset_id), AccountId(4u64));
+    let dave_fee = Fees::account_fees(CurrencyId::Wrapped(temp_asset_id), 4u64);
     assert_eq!(dave_fee.fee, 200);
     assert_eq!(dave_fee.amount, 10_000);
   });

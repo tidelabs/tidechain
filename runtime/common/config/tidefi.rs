@@ -67,7 +67,9 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
 
   #[cfg(feature = "runtime-benchmarks")]
   fn successful_origin() -> Origin {
-    Origin::from(RawOrigin::Signed(Default::default()))
+    Origin::from(RawOrigin::Signed(
+      AssetRegistryPalletId::get().into_account(),
+    ))
   }
 }
 

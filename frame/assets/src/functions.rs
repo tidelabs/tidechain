@@ -682,8 +682,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       // funds.
       //let _ = Self::dead_account(id, &who, &mut details, &v.reason, true);
       //}
-      debug_assert_eq!(details.accounts, 0);
-      debug_assert_eq!(details.sufficients, 0);
+      //debug_assert_eq!(details.accounts, 0);
+      //debug_assert_eq!(details.sufficients, 0);
 
       let metadata = Metadata::<T, I>::take(&id);
       T::Currency::unreserve(

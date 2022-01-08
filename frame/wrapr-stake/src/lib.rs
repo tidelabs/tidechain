@@ -81,7 +81,7 @@ pub mod pallet {
       currency_id: CurrencyId,
       amount: Balance,
     },
-    /// The assets get unstaked successfully
+    /// The assets get `unstaked` successfully
     Unstaked {
       account_id: T::AccountId,
       currency_id: CurrencyId,

@@ -25,6 +25,7 @@ pub mod pallet {
     PalletId,
   };
   use frame_system::pallet_prelude::*;
+  #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, QuorumExt, SecurityExt},
@@ -252,7 +253,8 @@ pub mod pallet {
         Ok(())
       })?;
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
 
     /// Change Quorum status.
@@ -275,7 +277,9 @@ pub mod pallet {
       Self::deposit_event(Event::<T>::StatusChanged {
         is_enabled: quorum_enabled,
       });
-      Ok(().into())
+
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
 
     /// Quorum change the account ID who can confirm withdrawal
@@ -306,7 +310,8 @@ pub mod pallet {
         account_id: new_account_id,
       });
 
-      Ok(().into())
+      // don't take tx fees on success
+      Ok(Pays::No.into())
     }
   }
 

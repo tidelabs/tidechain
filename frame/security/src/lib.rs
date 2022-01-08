@@ -73,9 +73,7 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Quorum status changed \[status_code\]
     StatusChanged(StatusCode),
-    /// Processing new block \[block_number\]
     UpdateCurrentBlock(T::BlockNumber),
   }
 
