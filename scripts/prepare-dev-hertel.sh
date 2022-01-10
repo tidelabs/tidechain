@@ -45,21 +45,21 @@ generate_address_and_account_id() {
 
 # INVESTORS (ONLY TIDEs)
 for i in $(seq 1 $I_NUM); do
-	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1000 TIDE\n1_000_000_000_000_000),\n"
+	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1_000 TIDE\nassets::Asset::Tide.saturating_mul(1_000)),\n"
 done
 
 # DEVS (TIDEs & CURRENCIES)
 for i in $(seq 1 $D_NUM); do
 	ADDRESS=$(generate_address_and_account_id dev$i stash)
-	DEVS+="(CurrencyId::Tide,\n$ADDRESS\n// 1_000_000_000 TIDE\n1_000_000_000_000_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(1),\n$ADDRESS\n// 1_000_000_000 USDT\n1_000_000_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(2),\n$ADDRESS\n// 1_000_000_000 USDC\n1_000_000_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(100),\n$ADDRESS\n// 1_000_000_000 BTC\n100_000_000_000_000_000),\n"
-	DEVS+="(CurrencyId::Wrapped(1000),\n$ADDRESS\n// 1_000_000_000 ETH\n1_000_000_000_000_000_000_000),\n"
+	DEVS+="(assets::Asset::Tide.currency_id(),\n$ADDRESS\n// 1_000_000 TIDE\nassets::Asset::Tide.saturating_mul(1_000_000)),\n"
+	DEVS+="(assets::Asset::Tether.currency_id(),\n$ADDRESS\n// 1_000_000 USDT\nassets::Asset::Tether.saturating_mul(1_000_000)),\n"
+	DEVS+="(assets::Asset::USDCoin.currency_id(),\n$ADDRESS\n// 1_000_000 USDC\nassets::Asset::USDCoin.saturating_mul(1_000_000)),\n"
+	DEVS+="(assets::Asset::Bitcoin.currency_id(),\n$ADDRESS\n// 1_000_000 BTC\nassets::Asset::Bitcoin.saturating_mul(1_000_000)),\n"
+	DEVS+="(assets::Asset::Ethereum.currency_id(),\n$ADDRESS\n// 1_000_000 ETH\nassets::Asset::Ethereum.saturating_mul(1_000_000)),\n"
 done
 
 # FAUCET
-FAUCET="(CurrencyId::Tide,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TIDE\n10_000_000_000_000_000),\n"
+FAUCET="(CurrencyId::Tide,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TIDE\nassets::Asset::Tide.saturating_mul(10_000)),\n"
 
 printf "\nvec![\n"
 printf "// faucet\n$FAUCET// investors\n$INVESTORS\n// devs\n$DEVS]"
