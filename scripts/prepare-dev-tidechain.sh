@@ -74,17 +74,17 @@ printf "$QUORUMS]"
 
 # INVESTORS (ONLY TIDEs)
 for i in $(seq 1 $I_NUM); do
-	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1000 TIDES\n1_000_000_000_000_000),\n"
+	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1_000 TIDES\nassets::Asset::Tide.saturating_mul(1_000)),\n"
 done
 
 # DEVS (TIDEs & CURRENCIES)
 for i in $(seq 1 $D_NUM); do
-	DEVS+="(CurrencyId::Tide,\n$(generate_address_and_account_id dev$i stash)\n// 1000 TIDE\n1_000_000_000_000_000),\n"
+	DEVS+="(CurrencyId::Tide,\n$(generate_address_and_account_id dev$i stash)\n// 1_000 TIDE\nassets::Asset::Tide.saturating_mul(1_000)),\n"
 done
 
 printf "\n\n"
 # FAUCET
-FAUCET="(CurrencyId::Tide,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TIDE\n10_000_000_000_000_000),\n"
+FAUCET="(CurrencyId::Tide,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TIDE\nassets::Asset::Tide.saturating_mul(10_000)),\n"
 
 printf "\n// get_stakeholder_tokens_testnet\nvec![\n"
 printf "// faucet\n$FAUCET// investors\n$INVESTORS\n// devs\n$DEVS]"
