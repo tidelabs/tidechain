@@ -9,7 +9,7 @@ use frame_support::{
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
-  CurrencyId, Hash, TradeConfirmation, TradeStatus,
+  CurrencyId, Hash, SwapConfirmation, SwapStatus,
 };
 
 #[test]
@@ -33,7 +33,7 @@ pub fn set_operational_status_works() {
 }
 
 #[test]
-pub fn confirm_trade_partial_filling() {
+pub fn confirm_swap_partial_filling() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64.into());
 
@@ -102,7 +102,7 @@ pub fn confirm_trade_partial_filling() {
     ));
 
     // BOB: 10 TIDE for 200 TEMP (20 TEMP/TIDE)
-    let (trade_request_id, trade_request) = Oracle::add_new_trade_in_queue(
+    let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
       2u64.into(),
       CurrencyId::Tide,
       10_000_000_000_000,
@@ -116,7 +116,7 @@ pub fn confirm_trade_partial_filling() {
     );
 
     // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
-    let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_trade_in_queue(
+    let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       3u64.into(),
       CurrencyId::Wrapped(temp_asset_id),
       400000,
@@ -130,7 +130,7 @@ pub fn confirm_trade_partial_filling() {
     );
 
     // DAVE (MM): 8000 TEMP for 400 TIDE
-    let (trade_request_mm2_id, trade_request_mm2) = Oracle::add_new_trade_in_queue(
+    let (trade_request_mm2_id, trade_request_mm2) = Oracle::add_new_swap_in_queue(
       4u64.into(),
       CurrencyId::Wrapped(temp_asset_id),
       800_000,
@@ -157,21 +157,21 @@ pub fn confirm_trade_partial_filling() {
         .unwrap_or_default()
     );
 
-    assert_eq!(trade_request.status, TradeStatus::Pending);
-    assert_eq!(trade_request_mm.status, TradeStatus::Pending);
-    assert_eq!(trade_request_mm2.status, TradeStatus::Pending);
+    assert_eq!(trade_request.status, SwapStatus::Pending);
+    assert_eq!(trade_request_mm.status, SwapStatus::Pending);
+    assert_eq!(trade_request_mm2.status, SwapStatus::Pending);
 
     assert_eq!(trade_request.block_number, 0);
     assert_eq!(trade_request_mm.block_number, 0);
     assert_eq!(trade_request_mm2.block_number, 0);
 
     // partial filling
-    assert_ok!(Oracle::confirm_trade(
+    assert_ok!(Oracle::confirm_swap(
       alice.clone(),
       trade_request_id,
       vec![
         // charlie
-        TradeConfirmation {
+        SwapConfirmation {
           request_id: trade_request_mm_id,
           // 5 tide
           amount_to_receive: 5_000_000_000_000,
@@ -183,7 +183,7 @@ pub fn confirm_trade_partial_filling() {
 
     // BOB: make sure the CLIENT current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
-    assert_eq!(trade_request_filled.status, TradeStatus::PartiallyFilled);
+    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
     // 5 tide
     assert_eq!(trade_request_filled.amount_from_filled, 5_000_000_000_000);
     // 100 TEMP
@@ -191,19 +191,19 @@ pub fn confirm_trade_partial_filling() {
 
     // CHARLIE: make sure the MM current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_mm_id).unwrap();
-    assert_eq!(trade_request_filled.status, TradeStatus::PartiallyFilled);
+    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
     // 5 tide
     assert_eq!(trade_request_filled.amount_to_filled, 5_000_000_000_000);
 
     // another partial filling who should close the trade
-    assert_ok!(Oracle::confirm_trade(
+    assert_ok!(Oracle::confirm_swap(
       alice.clone(),
       trade_request_id,
       vec![
         // dave
-        TradeConfirmation {
+        SwapConfirmation {
           request_id: trade_request_mm2_id,
           // 5 tide
           amount_to_receive: 5_000_000_000_000,
@@ -215,12 +215,12 @@ pub fn confirm_trade_partial_filling() {
 
     // BOB: make sure the CLIENT current trade is totally filled (completed)
     let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
-    assert_eq!(trade_request_filled.status, TradeStatus::Completed);
+    assert_eq!(trade_request_filled.status, SwapStatus::Completed);
 
     // cant send another trade confirmation as the request should be marked as completed
     // we do expect `InvalidRequestStatus`
     assert_noop!(
-      Oracle::confirm_trade(alice, trade_request_id, vec![],),
+      Oracle::confirm_swap(alice, trade_request_id, vec![],),
       Error::<Test>::InvalidRequestStatus
     );
 
@@ -231,7 +231,7 @@ pub fn confirm_trade_partial_filling() {
 
     // DAVE: make sure the MM current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_mm2_id).unwrap();
-    assert_eq!(trade_request_filled.status, TradeStatus::PartiallyFilled);
+    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
     // 5 tide
@@ -240,7 +240,7 @@ pub fn confirm_trade_partial_filling() {
 }
 
 #[test]
-pub fn confirm_trade_simple_with_fees() {
+pub fn confirm_swap_simple_with_fees() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64.into());
 
@@ -317,7 +317,7 @@ pub fn confirm_trade_simple_with_fees() {
     ));
 
     // BOB: 10 TIDE for 200 TEMP (20 TEMP/TIDE)
-    let (trade_request_id, trade_request) = Oracle::add_new_trade_in_queue(
+    let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
       2u64.into(),
       CurrencyId::Tide,
       10_000_000_000_000,
@@ -331,7 +331,7 @@ pub fn confirm_trade_simple_with_fees() {
     );
 
     // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
-    let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_trade_in_queue(
+    let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       3u64.into(),
       CurrencyId::Wrapped(temp_asset_id),
       400_000,
@@ -345,7 +345,7 @@ pub fn confirm_trade_simple_with_fees() {
     );
 
     // DAVE (MM): 100 TEMP for 5 TIDE
-    let (trade_request_mm2_id, trade_request_mm2) = Oracle::add_new_trade_in_queue(
+    let (trade_request_mm2_id, trade_request_mm2) = Oracle::add_new_swap_in_queue(
       4u64.into(),
       CurrencyId::Wrapped(temp_asset_id),
       10_000,
@@ -372,20 +372,20 @@ pub fn confirm_trade_simple_with_fees() {
         .unwrap_or_default()
     );
 
-    assert_eq!(trade_request.status, TradeStatus::Pending);
-    assert_eq!(trade_request_mm.status, TradeStatus::Pending);
-    assert_eq!(trade_request_mm2.status, TradeStatus::Pending);
+    assert_eq!(trade_request.status, SwapStatus::Pending);
+    assert_eq!(trade_request_mm.status, SwapStatus::Pending);
+    assert_eq!(trade_request_mm2.status, SwapStatus::Pending);
 
     assert_eq!(trade_request.block_number, 0);
     assert_eq!(trade_request_mm.block_number, 0);
 
     // partial filling
-    assert_ok!(Oracle::confirm_trade(
+    assert_ok!(Oracle::confirm_swap(
       alice,
       trade_request_id,
       vec![
         // charlie
-        TradeConfirmation {
+        SwapConfirmation {
           request_id: trade_request_mm_id,
           // 5 tide
           amount_to_receive: 5_000_000_000_000,
@@ -393,7 +393,7 @@ pub fn confirm_trade_simple_with_fees() {
           amount_to_send: 10_000,
         },
         // dave
-        TradeConfirmation {
+        SwapConfirmation {
           request_id: trade_request_mm2_id,
           // 5 tide
           amount_to_receive: 5_000_000_000_000,
@@ -405,7 +405,7 @@ pub fn confirm_trade_simple_with_fees() {
 
     // BOB: make sure the CLIENT current trade is totally filled (completed)
     let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
-    assert_eq!(trade_request_filled.status, TradeStatus::Completed);
+    assert_eq!(trade_request_filled.status, SwapStatus::Completed);
     // 10 tide
     assert_eq!(trade_request_filled.amount_from_filled, 10_000_000_000_000);
     // 200 TEMP
@@ -413,7 +413,7 @@ pub fn confirm_trade_simple_with_fees() {
 
     // CHARLIE: make sure the MM current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_mm_id).unwrap();
-    assert_eq!(trade_request_filled.status, TradeStatus::PartiallyFilled);
+    assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
     // 5 tide
@@ -421,7 +421,7 @@ pub fn confirm_trade_simple_with_fees() {
 
     // DAVE: make sure the MM current trade is totally filled (completed)
     let trade_request_filled = Oracle::trades(trade_request_mm2_id).unwrap();
-    assert_eq!(trade_request_filled.status, TradeStatus::Completed);
+    assert_eq!(trade_request_filled.status, SwapStatus::Completed);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
 

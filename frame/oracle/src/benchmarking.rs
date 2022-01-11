@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-wrapr
+//! Benchmarking setup for pallet-tidefi
 
 #![cfg(feature = "runtime-benchmarks")]
 use super::*;
@@ -7,7 +7,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, wh
 use frame_support::traits::fungibles::Mutate;
 use frame_system::{self, RawOrigin};
 use sp_runtime::traits::StaticLookup;
-use tidefi_primitives::{pallet::OracleExt, CurrencyId, TradeConfirmation};
+use tidefi_primitives::{pallet::OracleExt, CurrencyId, SwapConfirmation};
 
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;
@@ -33,7 +33,7 @@ benchmarks! {
       let user = pre_set_auth::<T>();
       let caller: T::AccountId = whitelisted_caller();
    }: _(RawOrigin::Signed(user), caller)
-   confirm_trade {
+   confirm_swap {
       let user = pre_set_auth::<T>();
       let account_id: T::AccountId = account("user", USER_ID, SEED);
       let mm_account_id: T::AccountId = account("mm", MM_ID, SEED);
@@ -46,11 +46,11 @@ benchmarks! {
       pallet_assets::Pallet::<T>::force_set_metadata(RawOrigin::Root.into(), 2, "Test2".into(), "TST2".into(), 6, false).expect("Unable to update assets");
 
       // mint tokens
-      T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(1), &account_id, 2_000_000_000_000).expect("Unable to mint token");
-      T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(2), &mm_account_id, 2_000_000_000_000).expect("Unable to mint token");
+      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(1), &account_id, 2_000_000_000_000).expect("Unable to mint token");
+      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(2), &mm_account_id, 2_000_000_000_000).expect("Unable to mint token");
 
       // create requests
-      let user_request = Pallet::<T>::add_new_trade_in_queue(account_id,
+      let user_request = Pallet::<T>::add_new_swap_in_queue(account_id,
          CurrencyId::Wrapped(1),
          1_000_000_000_000,
          CurrencyId::Wrapped(2),
@@ -62,7 +62,7 @@ benchmarks! {
          ]
       );
 
-      let mm_request = Pallet::<T>::add_new_trade_in_queue(mm_account_id,
+      let mm_request = Pallet::<T>::add_new_swap_in_queue(mm_account_id,
          CurrencyId::Wrapped(2),
          1_000_000_000_000,
          CurrencyId::Wrapped(1),
@@ -74,7 +74,7 @@ benchmarks! {
          ]
       );
 
-   }: _(RawOrigin::Signed(user), user_request.0, vec![TradeConfirmation { request_id: mm_request.0, amount_to_receive: 1_000_000_000_000, amount_to_send: 1_000_000_000_000 }])
+   }: _(RawOrigin::Signed(user), user_request.0, vec![SwapConfirmation { request_id: mm_request.0, amount_to_receive: 1_000_000_000_000, amount_to_send: 1_000_000_000_000 }])
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

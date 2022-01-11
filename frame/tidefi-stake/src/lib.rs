@@ -44,8 +44,8 @@ pub mod pallet {
     /// Asset registry traits
     type AssetRegistry: AssetRegistryExt;
 
-    /// Currency wrapr
-    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    /// Tidechain currency wrapper
+    type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
@@ -116,7 +116,7 @@ pub mod pallet {
       let account_id = ensure_signed(origin)?;
 
       // 2. Transfer the funds into the staking pool
-      T::CurrencyWrapr::transfer(currency_id, &account_id, &Self::account_id(), amount, true)?;
+      T::CurrencyTidefi::transfer(currency_id, &account_id, &Self::account_id(), amount, true)?;
 
       // 3. Insert the new staking
       AccountStakes::<T>::mutate(account_id.clone(), currency_id, |stake| {

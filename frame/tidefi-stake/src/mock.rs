@@ -25,7 +25,7 @@ use std::marker::PhantomData;
 use system::EnsureRoot;
 use tidefi_primitives::{BlockNumber, CurrencyId};
 
-use crate::pallet as pallet_wrapr_stake;
+use crate::pallet as pallet_tidefi_stake;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -70,7 +70,7 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    WraprStake: pallet_wrapr_stake::{Pallet, Call, Storage, Event<T>},
+    TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Storage, Event<T>},
     AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
@@ -151,17 +151,17 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
   pub const PeriodBasis: BlockNumber = 1000u32;
 }
 
-impl pallet_wrapr_stake::Config for Test {
+impl pallet_tidefi_stake::Config for Test {
   type Event = Event;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
-  type StakePalletId = WraprPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type StakePalletId = TidefiPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
   type PeriodBasis = PeriodBasis;
   type AssetRegistry = AssetRegistry;
 }
@@ -170,7 +170,7 @@ impl pallet_asset_registry::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

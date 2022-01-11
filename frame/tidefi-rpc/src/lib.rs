@@ -2,7 +2,7 @@ use codec::Codec;
 use frame_support::inherent::Vec;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
-pub use pallet_wrapr_rpc_runtime_api::WraprApi as WraprRuntimeApi;
+pub use pallet_tidefi_rpc_runtime_api::TidefiApi as TidefiRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
@@ -10,11 +10,11 @@ use std::sync::Arc;
 use tidefi_primitives::{BalanceInfo, CurrencyId, CurrencyMetadata, Stake};
 
 #[rpc]
-pub trait WraprApi<BlockHash, AccountId> {
-  #[rpc(name = "wrapr_getAssets")]
+pub trait TidefiApi<BlockHash, AccountId> {
+  #[rpc(name = "tidefi_getAssets")]
   fn get_assets(&self, at: Option<BlockHash>) -> Result<Vec<(CurrencyId, CurrencyMetadata)>>;
 
-  #[rpc(name = "wrapr_getAccountBalance")]
+  #[rpc(name = "tidefi_getAccountBalance")]
   fn get_account_balance(
     &self,
     account_id: AccountId,
@@ -22,14 +22,14 @@ pub trait WraprApi<BlockHash, AccountId> {
     at: Option<BlockHash>,
   ) -> Result<BalanceInfo>;
 
-  #[rpc(name = "wrapr_getAccountBalances")]
+  #[rpc(name = "tidefi_getAccountBalances")]
   fn get_account_balances(
     &self,
     account_id: AccountId,
     at: Option<BlockHash>,
   ) -> Result<Vec<(CurrencyId, BalanceInfo)>>;
 
-  #[rpc(name = "wrapr_getAccountStakes")]
+  #[rpc(name = "tidefi_getAccountStakes")]
   fn get_account_stakes(
     &self,
     account_id: AccountId,
@@ -37,14 +37,14 @@ pub trait WraprApi<BlockHash, AccountId> {
   ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>>;
 }
 
-/// A struct that implements the [`WraprApi`].
-pub struct Wrapr<C, B> {
+/// A struct that implements the [`TidefiApi`].
+pub struct Tidefi<C, B> {
   client: Arc<C>,
   _marker: std::marker::PhantomData<B>,
 }
 
-impl<C, B> Wrapr<C, B> {
-  /// Create new `Wrapr` with the given reference to the client.
+impl<C, B> Tidefi<C, B> {
+  /// Create new `Tidefi` with the given reference to the client.
   pub fn new(client: Arc<C>) -> Self {
     Self {
       client,
@@ -69,13 +69,13 @@ impl From<Error> for i64 {
   }
 }
 
-impl<C, Block, AccountId> WraprApi<<Block as BlockT>::Hash, AccountId> for Wrapr<C, Block>
+impl<C, Block, AccountId> TidefiApi<<Block as BlockT>::Hash, AccountId> for Tidefi<C, Block>
 where
   Block: BlockT,
   C: Send + Sync + 'static,
   C: ProvideRuntimeApi<Block>,
   C: HeaderBackend<Block>,
-  C::Api: WraprRuntimeApi<Block, AccountId>,
+  C::Api: TidefiRuntimeApi<Block, AccountId>,
   AccountId: Codec,
 {
   fn get_account_balance(

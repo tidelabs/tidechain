@@ -120,15 +120,15 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const FeesPalletId: PalletId = PalletId(*b"wrpr*pab");
   pub const MinimumPeriod: u64 = 5;
 }
 
 impl pallet_oracle::Config for Test {
   type Event = Event;
-  type OraclePalletId = WraprPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type OraclePalletId = TidefiPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
   type Fees = Fees;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
@@ -143,7 +143,7 @@ impl pallet_fees::Config for Test {
   type FeesPalletId = FeesPalletId;
   type UnixTime = Timestamp;
   // Wrapped currency
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   // Security utils
   type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;

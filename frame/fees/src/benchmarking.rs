@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-wrapr
+//! Benchmarking setup for pallet-tidefi
 
 #![cfg(feature = "runtime-benchmarks")]
 use super::*;

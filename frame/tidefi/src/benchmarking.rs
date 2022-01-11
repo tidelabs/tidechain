@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-wrapr
+//! Benchmarking setup for pallet-tidefi
 use crate::*;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{inherent::Vec, traits::fungibles::Mutate};
@@ -9,16 +9,16 @@ const IA_MULTIPLIER: u32 = 2;
 const TEST_TOKEN: u32 = 4294967295;
 
 benchmarks! {
-   request_withdrawal {
+   withdrawal {
       let caller: T::AccountId = whitelisted_caller();
       let balance = INITIAL_AMOUNT.saturating_mul(IA_MULTIPLIER.into());
-      T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
+      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
    }: _(RawOrigin::Signed(caller), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT.into(), Vec::new())
-   request_trade {
+   swap {
       let caller: T::AccountId = whitelisted_caller();
       let balance = INITIAL_AMOUNT.saturating_mul(IA_MULTIPLIER.into());
-      T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
-      T::CurrencyWrapr::mint_into(CurrencyId::Tide, &caller, balance as u128).expect("Unable to mint token");
+      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
+      T::CurrencyTidefi::mint_into(CurrencyId::Tide, &caller, balance as u128).expect("Unable to mint token");
    }: _(RawOrigin::Signed(caller), CurrencyId::Tide, INITIAL_AMOUNT.into(), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT.into())
    transfer {
       let caller: T::AccountId = whitelisted_caller();

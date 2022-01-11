@@ -54,8 +54,8 @@ pub mod pallet {
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
 
-    /// Currency wrapr
-    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    /// Tidechain currency wrapper
+    type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
 
@@ -275,7 +275,7 @@ pub mod pallet {
             // this account maybe?
             let _total_tide_token = total_token_for_current_account;
 
-            T::CurrencyWrapr::transfer(
+            T::CurrencyTidefi::transfer(
               CurrencyId::Tide,
               &Self::account_id(),
               &account_id,
@@ -298,14 +298,14 @@ pub mod pallet {
     // we do not use the currency for now as all asset have same fees
     // but if we need to update in the future, we could simply use the currency id
     // and update the storage
-    fn calculate_trading_fees(_currency_id: CurrencyId, total_amount_before_fees: Balance) -> Fee {
+    fn calculate_swap_fees(_currency_id: CurrencyId, total_amount_before_fees: Balance) -> Fee {
       Fee {
         amount: total_amount_before_fees,
         fee: Self::fee_percentage() * total_amount_before_fees,
       }
     }
 
-    fn register_trading_fees(
+    fn register_swap_fees(
       account_id: T::AccountId,
       currency_id: CurrencyId,
       total_amount_before_fees: Balance,

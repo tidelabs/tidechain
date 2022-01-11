@@ -159,7 +159,7 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
   pub const PeriodBasis: BlockNumber = 1000u32;
@@ -169,8 +169,8 @@ impl pallet_fees::Config for Test {
   type Event = Event;
   type Security = Security;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
-  type FeesPalletId = WraprPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type FeesPalletId = TidefiPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
   type UnixTime = Timestamp;
 }

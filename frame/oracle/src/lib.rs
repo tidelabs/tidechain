@@ -32,7 +32,7 @@ pub mod pallet {
   use sp_runtime::traits::AccountIdConversion;
   use tidefi_primitives::{
     pallet::{FeesExt, OracleExt, SecurityExt},
-    AssetId, Balance, CurrencyId, Hash, Trade, TradeConfirmation, TradeStatus,
+    AssetId, Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus,
   };
 
   /// Oracle configuration
@@ -56,8 +56,8 @@ pub mod pallet {
     /// Fees traits
     type Fees: FeesExt<Self::AccountId>;
 
-    /// Currency wrapr
-    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    /// Tidechain currency wrapper
+    type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
@@ -76,11 +76,11 @@ pub mod pallet {
   #[pallet::getter(fn account_id)]
   pub type OracleAccountId<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
-  /// Mapping of pending Trades
+  /// Mapping of pending Swaps
   #[pallet::storage]
   #[pallet::getter(fn trades)]
-  pub type Trades<T: Config> =
-    StorageMap<_, Blake2_128Concat, Hash, Trade<T::AccountId, T::BlockNumber>>;
+  pub type Swaps<T: Config> =
+    StorageMap<_, Blake2_128Concat, Hash, Swap<T::AccountId, T::BlockNumber>>;
 
   /// Genesis configuration
   #[pallet::genesis_config]
@@ -120,10 +120,10 @@ pub mod pallet {
     StatusChanged { is_enabled: bool },
     /// Oracle account changed
     AccountChanged { account_id: T::AccountId },
-    /// Oracle confirmed trade
-    Traded {
+    /// Oracle processed the initial swap
+    SwapProcessed {
       request_id: Hash,
-      status: TradeStatus,
+      status: SwapStatus,
       account_id: T::AccountId,
       currency_from: CurrencyId,
       currency_amount_from: Balance,
@@ -160,7 +160,7 @@ pub mod pallet {
     UnknownAsset,
     /// No Funds available for this Asset Id.
     NoFunds,
-    /// Trade overflow
+    /// Swap overflow
     Overflow,
     /// Market Makers do not have enough funds
     MarketMakerNoFunds,
@@ -175,16 +175,16 @@ pub mod pallet {
     /// Oracle have confirmation and confirm the trade.
     ///
     /// - `request_id`: Unique request ID.
-    /// - `market_makers`: Vector of `TradeConfirmation` who represent the allocation of multiple source.
+    /// - `market_makers`: Vector of `SwapConfirmation` who represent the allocation of multiple source.
     ///
-    /// Emits `Traded` event when successful.
+    /// Emits `SwapProcessed` event when successful.
     ///
     /// Weight: `O(1)`
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_trade())]
-    pub fn confirm_trade(
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_swap())]
+    pub fn confirm_swap(
       origin: OriginFor<T>,
       request_id: Hash,
-      market_makers: Vec<TradeConfirmation>,
+      market_makers: Vec<SwapConfirmation>,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the oracle/chain is not paused
       Self::ensure_not_paused()?;
@@ -194,15 +194,14 @@ pub mod pallet {
       ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
       // 3. Make sure the `request_id` exist
-      Trades::<T>::try_mutate_exists(request_id, |trade| {
+      Swaps::<T>::try_mutate_exists(request_id, |trade| {
         match trade {
           None => {
             return Err(Error::<T>::InvalidRequestId);
           }
           Some(trade) => {
             // 5. Make sure the trade status is pending or partially filled
-            if trade.status != TradeStatus::Pending && trade.status != TradeStatus::PartiallyFilled
-            {
+            if trade.status != SwapStatus::Pending && trade.status != SwapStatus::PartiallyFilled {
               return Err(Error::<T>::InvalidRequestStatus);
             }
 
@@ -211,18 +210,18 @@ pub mod pallet {
             let mut total_to: Balance = 0;
 
             for mm in market_makers.iter() {
-              let mm_trade_request = Trades::<T>::try_get(mm.request_id)
+              let mm_trade_request = Swaps::<T>::try_get(mm.request_id)
                 .map_err(|_| Error::<T>::InvalidMarketMakerRequest)?;
 
               // make sure all the market markers have enough funds before we can continue
-              match T::CurrencyWrapr::can_withdraw(
+              match T::CurrencyTidefi::can_withdraw(
                 trade.token_to,
                 &mm_trade_request.account_id,
                 mm.amount_to_send,
               ) {
                 // make sure we can deposit
                 WithdrawConsequence::Success => {
-                  T::CurrencyWrapr::can_deposit(
+                  T::CurrencyTidefi::can_deposit(
                     trade.token_from,
                     &mm_trade_request.account_id,
                     mm.amount_to_receive,
@@ -248,7 +247,7 @@ pub mod pallet {
             trade.amount_to_filled += total_to;
 
             if total_from < trade.amount_from {
-              trade.status = TradeStatus::PartiallyFilled;
+              trade.status = SwapStatus::PartiallyFilled;
               // trade overflow
               if trade.amount_from_filled > trade.amount_from {
                 return Err(Error::Overflow);
@@ -263,7 +262,7 @@ pub mod pallet {
             //}
 
             // 8. Make sure the `account_id` can withdraw the funds
-            match T::CurrencyWrapr::can_withdraw(
+            match T::CurrencyTidefi::can_withdraw(
               trade.token_from,
               &trade.account_id,
               trade.amount_from,
@@ -271,21 +270,21 @@ pub mod pallet {
               WithdrawConsequence::Success => {
                 // 9. Calculate and transfer network fee
                 // FIXME: Should we take a transfer fee on the FROM or the TO asset or both?
-                let _trading_fees = T::Fees::calculate_trading_fees(trade.token_to, total_to);
+                let _trading_fees = T::Fees::calculate_swap_fees(trade.token_to, total_to);
 
                 // 10. Make sure the requester can deposit the new asset before initializing trade process
-                T::CurrencyWrapr::can_deposit(trade.token_to, &trade.account_id, total_to)
+                T::CurrencyTidefi::can_deposit(trade.token_to, &trade.account_id, total_to)
                   .into_result()
                   .map_err(|_| Error::<T>::BurnFailed)?;
 
                 for mm in market_makers.iter() {
-                  Trades::<T>::try_mutate_exists(mm.request_id, |mm_trade_request| {
+                  Swaps::<T>::try_mutate_exists(mm.request_id, |mm_trade_request| {
                     match mm_trade_request {
                       None => Err(Error::<T>::InvalidRequestId),
                       Some(market_maker_trade_intent) => {
                         // 11. a) Make sure the marketmaker trade request is still valid
-                        if market_maker_trade_intent.status != TradeStatus::Pending
-                          && market_maker_trade_intent.status != TradeStatus::PartiallyFilled
+                        if market_maker_trade_intent.status != SwapStatus::Pending
+                          && market_maker_trade_intent.status != SwapStatus::PartiallyFilled
                         {
                           return Err(Error::<T>::InvalidRequestStatus);
                         }
@@ -308,7 +307,7 @@ pub mod pallet {
                             - market_maker_trade_intent.amount_from_filled)
                         {
                           // partial fill
-                          market_maker_trade_intent.status = TradeStatus::PartiallyFilled;
+                          market_maker_trade_intent.status = SwapStatus::PartiallyFilled;
                         }
 
                         market_maker_trade_intent.amount_from_filled += mm.amount_to_send;
@@ -317,13 +316,13 @@ pub mod pallet {
                         if market_maker_trade_intent.amount_from
                           == market_maker_trade_intent.amount_from_filled
                         {
-                          market_maker_trade_intent.status = TradeStatus::Completed;
+                          market_maker_trade_intent.status = SwapStatus::Completed;
                         }
 
                         // 11. d) Transfer funds from the requester to the market makers
                         let amount_and_fee =
-                          T::Fees::calculate_trading_fees(trade.token_from, mm.amount_to_receive);
-                        if T::CurrencyWrapr::transfer(
+                          T::Fees::calculate_swap_fees(trade.token_from, mm.amount_to_receive);
+                        if T::CurrencyTidefi::transfer(
                           trade.token_from,
                           &trade.account_id,
                           &market_maker_trade_intent.account_id,
@@ -338,7 +337,7 @@ pub mod pallet {
 
                         // 11. e) Requester pay fees of the transaction, but this is deducted
                         // from the MM final amount, so this is paid by the MM
-                        if T::CurrencyWrapr::transfer(
+                        if T::CurrencyTidefi::transfer(
                           trade.token_from,
                           &trade.account_id,
                           &T::Fees::account_id(),
@@ -352,7 +351,7 @@ pub mod pallet {
 
                         // 11. f) Register a new trading fees associated with the account.
                         // A percentage of the network profits will be re-distributed to the account at the end of the era.
-                        T::Fees::register_trading_fees(
+                        T::Fees::register_swap_fees(
                           trade.account_id.clone(),
                           trade.token_from,
                           mm.amount_to_receive,
@@ -360,9 +359,9 @@ pub mod pallet {
 
                         // 12. a) Transfer funds from the market makers to the account
                         let amount_and_fee =
-                          T::Fees::calculate_trading_fees(trade.token_to, mm.amount_to_send);
+                          T::Fees::calculate_swap_fees(trade.token_to, mm.amount_to_send);
 
-                        if T::CurrencyWrapr::transfer(
+                        if T::CurrencyTidefi::transfer(
                           trade.token_to,
                           &market_maker_trade_intent.account_id,
                           &trade.account_id,
@@ -377,7 +376,7 @@ pub mod pallet {
 
                         // 12. b) Market makers pay fees of the transaction, but this is deducted
                         // from the requester final amount, so this is paid by the requester
-                        if T::CurrencyWrapr::transfer(
+                        if T::CurrencyTidefi::transfer(
                           trade.token_to,
                           &market_maker_trade_intent.account_id,
                           &T::Fees::account_id(),
@@ -391,14 +390,14 @@ pub mod pallet {
 
                         // 12. c) Register a new trading fees associated with the account.
                         // A percentage of the network profits will be re-distributed to the account at the end of the era.
-                        T::Fees::register_trading_fees(
+                        T::Fees::register_swap_fees(
                           market_maker_trade_intent.account_id.clone(),
                           trade.token_to,
                           mm.amount_to_send,
                         );
 
                         // 13. Emit market maker trade event on chain
-                        Self::deposit_event(Event::<T>::Traded {
+                        Self::deposit_event(Event::<T>::SwapProcessed {
                           request_id,
                           initial_extrinsic_hash: market_maker_trade_intent.extrinsic_hash,
                           status: market_maker_trade_intent.status.clone(),
@@ -417,11 +416,11 @@ pub mod pallet {
 
                 // close the trade if it's complete (we don't use the amount_to compare as there is a slippage to validate)
                 if trade.amount_from == trade.amount_from_filled {
-                  trade.status = TradeStatus::Completed;
+                  trade.status = SwapStatus::Completed;
                 }
 
                 // 14. Emit event on chain
-                Self::deposit_event(Event::<T>::Traded {
+                Self::deposit_event(Event::<T>::SwapProcessed {
                   request_id,
                   initial_extrinsic_hash: trade.extrinsic_hash,
                   status: trade.status.clone(),
@@ -519,7 +518,7 @@ pub mod pallet {
       T::Security::is_chain_running() && Self::status()
     }
 
-    fn add_new_trade_in_queue(
+    fn add_new_swap_in_queue(
       account_id: T::AccountId,
       asset_id_from: CurrencyId,
       amount_from: Balance,
@@ -527,10 +526,10 @@ pub mod pallet {
       amount_to: Balance,
       block_number: T::BlockNumber,
       extrinsic_hash: [u8; 32],
-    ) -> (Hash, Trade<T::AccountId, T::BlockNumber>) {
+    ) -> (Hash, Swap<T::AccountId, T::BlockNumber>) {
       // unique request id
       let request_id = T::Security::get_unique_id(account_id.clone());
-      let trade = Trade {
+      let swap = Swap {
         account_id,
         token_from: asset_id_from,
         token_to: asset_id_to,
@@ -538,16 +537,16 @@ pub mod pallet {
         amount_from_filled: 0,
         amount_to,
         amount_to_filled: 0,
-        status: TradeStatus::Pending,
+        status: SwapStatus::Pending,
         block_number,
         extrinsic_hash,
       };
 
       // insert in our queue
-      Trades::<T>::insert(request_id, trade.clone());
+      Swaps::<T>::insert(request_id, swap.clone());
 
       // return values
-      (request_id, trade)
+      (request_id, swap)
     }
   }
 }

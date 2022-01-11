@@ -146,7 +146,7 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

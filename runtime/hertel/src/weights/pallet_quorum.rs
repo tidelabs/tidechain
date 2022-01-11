@@ -44,23 +44,23 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_quorum`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
-	// Storage: WraprQuorum QuorumAccountId (r:1 w:0)
-	// Storage: WraprQuorum QuorumStatus (r:0 w:1)
+	// Storage: Quorum QuorumAccountId (r:1 w:0)
+	// Storage: Quorum QuorumStatus (r:0 w:1)
 	fn set_status() -> Weight {
 		(50_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: WraprQuorum QuorumAccountId (r:1 w:1)
+	// Storage: Quorum QuorumAccountId (r:1 w:1)
 	fn set_account_id() -> Weight {
 		(55_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: WraprSecurity ChainStatus (r:1 w:0)
-	// Storage: WraprQuorum QuorumStatus (r:1 w:0)
-	// Storage: WraprQuorum QuorumAccountId (r:1 w:0)
-	// Storage: WraprQuorum Withdrawals (r:1 w:1)
+	// Storage: Security ChainStatus (r:1 w:0)
+	// Storage: Quorum QuorumStatus (r:1 w:0)
+	// Storage: Quorum QuorumAccountId (r:1 w:0)
+	// Storage: Quorum Withdrawals (r:1 w:1)
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
 	fn confirm_withdrawal() -> Weight {
@@ -68,9 +68,9 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
-	// Storage: WraprSecurity ChainStatus (r:1 w:0)
-	// Storage: WraprQuorum QuorumStatus (r:1 w:0)
-	// Storage: WraprQuorum QuorumAccountId (r:1 w:0)
+	// Storage: Security ChainStatus (r:1 w:0)
+	// Storage: Quorum QuorumStatus (r:1 w:0)
+	// Storage: Quorum QuorumAccountId (r:1 w:0)
 	fn mint() -> Weight {
 		(157_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))

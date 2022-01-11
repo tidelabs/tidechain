@@ -17,9 +17,9 @@
 use crate::{
   constants::currency::{deposit, Adapter, CENTS, DOLLARS},
   types::{AccountId, AssetId, Balance, BlockNumber},
-  AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, FeesPalletId, OraclePalletId,
-  Origin, QuorumPalletId, Runtime, Timestamp, WraprAssetRegistry, WraprFees, WraprOracle,
-  WraprQuorum, WraprSecurity, WraprStakePalletId,
+  AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
+  FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security,
+  TidefiStakingPalletId, Timestamp,
 };
 
 use frame_support::{
@@ -54,7 +54,7 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
         // Allow call from asset registry pallet ID account
         if caller == AssetRegistryPalletId::get().into_account()
          // Allow call from asset registry owner
-         || Some(caller.clone()) == WraprAssetRegistry::account_id()
+         || Some(caller.clone()) == AssetRegistry::account_id()
         {
           Ok(caller)
         } else {
@@ -93,28 +93,28 @@ impl pallet_assets::Config for Runtime {
   type Extra = ();
 }
 
-impl pallet_wrapr::Config for Runtime {
+impl pallet_tidefi::Config for Runtime {
   type Event = Event;
-  type Quorum = WraprQuorum;
-  type Oracle = WraprOracle;
+  type Quorum = Quorum;
+  type Oracle = Oracle;
   // FIXME: Use local weight
-  type WeightInfo = pallet_wrapr::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = pallet_tidefi::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   // Asset registry
-  type AssetRegistry = WraprAssetRegistry;
+  type AssetRegistry = AssetRegistry;
 }
 
-impl pallet_wrapr_stake::Config for Runtime {
+impl pallet_tidefi_stake::Config for Runtime {
   type Event = Event;
-  type StakePalletId = WraprStakePalletId;
+  type StakePalletId = TidefiStakingPalletId;
   // FIXME: Use local weight
-  type WeightInfo = pallet_wrapr_stake::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   type PeriodBasis = PeriodBasis;
   // Asset registry
-  type AssetRegistry = WraprAssetRegistry;
+  type AssetRegistry = AssetRegistry;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -123,11 +123,11 @@ impl pallet_quorum::Config for Runtime {
   // FIXME: Use local weight
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   // Security utils
-  type Security = WraprSecurity;
+  type Security = Security;
   // Asset registry
-  type AssetRegistry = WraprAssetRegistry;
+  type AssetRegistry = AssetRegistry;
 }
 
 impl pallet_oracle::Config for Runtime {
@@ -136,11 +136,11 @@ impl pallet_oracle::Config for Runtime {
   // FIXME: Use local weight
   type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   // Fees management
-  type Fees = WraprFees;
+  type Fees = Fees;
   // Security utils
-  type Security = WraprSecurity;
+  type Security = Security;
 }
 
 impl pallet_security::Config for Runtime {
@@ -152,16 +152,16 @@ impl pallet_asset_registry::Config for Runtime {
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Runtime>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
 }
 
 impl pallet_fees::Config for Runtime {
   type Event = Event;
   type FeesPalletId = FeesPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   type UnixTime = Timestamp;
   // Security utils
-  type Security = WraprSecurity;
+  type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
   type ForceOrigin = EnsureOneOf<
     EnsureRoot<AccountId>,
