@@ -402,9 +402,9 @@ pub mod pallet {
                           initial_extrinsic_hash: market_maker_trade_intent.extrinsic_hash,
                           status: market_maker_trade_intent.status.clone(),
                           account_id: market_maker_trade_intent.account_id.clone(),
-                          currency_from: trade.token_from,
+                          currency_from: market_maker_trade_intent.token_from,
                           currency_amount_from: mm.amount_to_send,
-                          currency_to: trade.token_to,
+                          currency_to: market_maker_trade_intent.token_to,
                           currency_amount_to: mm.amount_to_receive,
                         });
 
