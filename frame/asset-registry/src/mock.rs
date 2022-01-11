@@ -152,11 +152,11 @@ impl pallet_asset_registry::Config for Test {
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
 }
 
 parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"wrpr*art");
 }
 

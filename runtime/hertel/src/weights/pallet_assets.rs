@@ -193,7 +193,7 @@ impl<T: frame_system::Config> pallet_assets::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Assets Asset (r:1 w:1)
-	// Storage: WraprAssetRegistry AssetRegistryAccountId (r:1 w:0)
+	// Storage: AssetRegistry AssetRegistryAccountId (r:1 w:0)
 	// Storage: Assets Approvals (r:1 w:1)
 	fn force_cancel_approval() -> Weight {
 		(57_000_000 as Weight)

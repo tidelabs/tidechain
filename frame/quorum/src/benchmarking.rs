@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-wrapr
+//! Benchmarking setup for pallet-tidefi
 
 #![cfg(feature = "runtime-benchmarks")]
 use super::*;
@@ -40,7 +40,7 @@ benchmarks! {
 
       pallet_assets::Pallet::<T>::force_create(RawOrigin::Root.into(), 1, caller_lookup.clone(), true, 1).expect("Unable to create assets");
       pallet_assets::Pallet::<T>::force_set_metadata(RawOrigin::Root.into(), 1, "Test".into(), "TST".into(), 6, false).expect("Unable to update assets");
-      T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(1), &account_id, 3_000_000_000_000).expect("Unable to mint token");
+      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(1), &account_id, 3_000_000_000_000).expect("Unable to mint token");
       let request = Pallet::<T>::add_new_withdrawal_in_queue(account_id, CurrencyId::Wrapped(1), 1_000_000_000_000, "0x9126fFd76a7e02B875326D5C5b4EDFfc20C7B553".into());
 
    }: _(RawOrigin::Signed(user), request.0)

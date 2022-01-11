@@ -19,8 +19,8 @@ use crate::{
     AccountId, AuthorityDiscoveryId, Balance, Block, CurrencyId, EpochDuration, GrandpaId, Index,
     BABE_GENESIS_EPOCH_CONFIG,
   },
-  AuthorityDiscovery, Babe, Executive, Grandpa, Historical, InherentDataExt, Runtime, SessionKeys,
-  System, TransactionPayment, WraprAssetRegistry, WraprStake, VERSION,
+  AssetRegistry, AuthorityDiscovery, Babe, Executive, Grandpa, Historical, InherentDataExt,
+  Runtime, SessionKeys, System, TidefiStaking, TransactionPayment, VERSION,
 };
 use frame_support::traits::KeyOwnerProofSystem;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
@@ -222,19 +222,19 @@ impl_runtime_apis! {
        }
    }
 
-   // Wrapr Custom API
-   impl pallet_wrapr_rpc_runtime_api::WraprApi<Block, AccountId> for Runtime {
+   // Tidefi Custom API
+   impl pallet_tidefi_rpc_runtime_api::TidefiApi<Block, AccountId> for Runtime {
      fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata)>, DispatchError> {
-       WraprAssetRegistry::get_assets()
+       AssetRegistry::get_assets()
      }
      fn get_account_balance(account_id: AccountId, asset_id: CurrencyId) -> Result<BalanceInfo, DispatchError> {
-       WraprAssetRegistry::get_account_balance(&account_id, asset_id)
+       AssetRegistry::get_account_balance(&account_id, asset_id)
      }
      fn get_account_balances(account_id: AccountId) -> Result<Vec<(CurrencyId, BalanceInfo)>, DispatchError> {
-       WraprAssetRegistry::get_account_balances(&account_id)
+       AssetRegistry::get_account_balances(&account_id)
      }
      fn get_account_stakes(account_id: AccountId) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>, DispatchError> {
-       Ok(WraprStake::get_account_stakes(&account_id))
+       Ok(TidefiStaking::get_account_stakes(&account_id))
      }
    }
 
@@ -284,11 +284,11 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_timestamp, crate::Timestamp);
        list_benchmark!(list, extra, pallet_treasury, crate::Treasury);
        list_benchmark!(list, extra, pallet_utility, crate::Utility);
-       list_benchmark!(list, extra, pallet_wrapr, crate::Wrapr);
-       list_benchmark!(list, extra, pallet_wrapr_stake, crate::WraprStake);
-       list_benchmark!(list, extra, pallet_quorum, crate::WraprQuorum);
-       list_benchmark!(list, extra, pallet_oracle, crate::WraprOracle);
-       list_benchmark!(list, extra, pallet_asset_registry, crate::WraprAssetRegistry);
+       list_benchmark!(list, extra, pallet_tidefi, crate::Tidefi);
+       list_benchmark!(list, extra, pallet_tidefi_stake, crate::TidefiStaking);
+       list_benchmark!(list, extra, pallet_quorum, crate::Quorum);
+       list_benchmark!(list, extra, pallet_oracle, crate::Oracle);
+       list_benchmark!(list, extra, pallet_asset_registry, crate::AssetRegistry);
 
        let storage_info = crate::AllPalletsWithSystem::storage_info();
 
@@ -354,11 +354,11 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_timestamp, crate::Timestamp);
            add_benchmark!(params, batches, pallet_treasury, crate::Treasury);
            add_benchmark!(params, batches, pallet_utility, crate::Utility);
-           add_benchmark!(params, batches, pallet_wrapr, crate::Wrapr);
-           add_benchmark!(params, batches, pallet_wrapr_stake, crate::WraprStake);
-           add_benchmark!(params, batches, pallet_quorum, crate::WraprQuorum);
-           add_benchmark!(params, batches, pallet_oracle, crate::WraprOracle);
-           add_benchmark!(params, batches, pallet_asset_registry, crate::WraprAssetRegistry);
+           add_benchmark!(params, batches, pallet_tidefi, crate::Tidefi);
+           add_benchmark!(params, batches, pallet_tidefi_stake, crate::TidefiStaking);
+           add_benchmark!(params, batches, pallet_quorum, crate::Quorum);
+           add_benchmark!(params, batches, pallet_oracle, crate::Oracle);
+           add_benchmark!(params, batches, pallet_asset_registry, crate::AssetRegistry);
            add_benchmark!(params, batches, pallet_preimage, crate::Preimage);
 
            if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

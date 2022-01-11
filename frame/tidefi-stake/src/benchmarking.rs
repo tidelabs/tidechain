@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-wrapr
+//! Benchmarking setup for pallet-tidefi
 use crate::*;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
@@ -13,7 +13,7 @@ benchmarks! {
    stake {
       let caller: T::AccountId = whitelisted_caller();
       let balance = INITIAL_AMOUNT.saturating_mul(IA_MULTIPLIER.into());
-      T::CurrencyWrapr::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
+      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
    }: _(RawOrigin::Signed(caller), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT, 1)
 }
 

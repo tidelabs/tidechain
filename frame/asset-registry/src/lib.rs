@@ -47,8 +47,8 @@ pub mod pallet {
     /// Weights
     type WeightInfo: WeightInfo;
 
-    /// Currency wrapr
-    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    /// Tidechain currency wrapper
+    type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
@@ -106,7 +106,7 @@ pub mod pallet {
         }
 
         for (account_id, mint_amount) in pre_filled_account {
-          let _ = T::CurrencyWrapr::mint_into(currency_id, &account_id, mint_amount);
+          let _ = T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount);
         }
       }
     }
@@ -280,7 +280,7 @@ pub mod pallet {
       account_id: &T::AccountId,
       asset_id: CurrencyId,
     ) -> Result<BalanceInfo, DispatchError> {
-      let balance = T::CurrencyWrapr::balance(asset_id, account_id);
+      let balance = T::CurrencyTidefi::balance(asset_id, account_id);
       Ok(BalanceInfo { amount: balance })
     }
 

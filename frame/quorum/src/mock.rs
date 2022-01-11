@@ -119,16 +119,16 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const WraprPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
 }
 
 impl pallet_quorum::Config for Test {
   type Event = Event;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
-  type QuorumPalletId = WraprPalletId;
+  type QuorumPalletId = TidefiPalletId;
   type Security = Security;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   type AssetRegistry = AssetRegistry;
 }
 
@@ -140,7 +140,7 @@ impl pallet_asset_registry::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

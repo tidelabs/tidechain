@@ -85,14 +85,14 @@ where
   C::Api: BabeApi<Block>,
   C::Api: BlockBuilder<Block>,
   // Tidechain API
-  C::Api: pallet_wrapr_rpc::WraprRuntimeApi<Block, AccountId>,
+  C::Api: pallet_tidefi_rpc::TidefiRuntimeApi<Block, AccountId>,
   P: TransactionPool + 'static,
   SC: SelectChain<Block> + 'static,
   B: sc_client_api::Backend<Block> + Send + Sync + 'static,
   B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
+  use pallet_tidefi_rpc::{Tidefi, TidefiApi};
   use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-  use pallet_wrapr_rpc::{Wrapr, WraprApi};
   use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
   let mut io = jsonrpc_core::IoHandler::default();
@@ -162,7 +162,7 @@ where
   ));
 
   // Tidechain Custom traits
-  io.extend_with(WraprApi::to_delegate(Wrapr::new(client)));
+  io.extend_with(TidefiApi::to_delegate(Tidefi::new(client)));
 
   Ok(io)
 }

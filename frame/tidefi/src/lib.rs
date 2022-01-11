@@ -30,7 +30,7 @@ pub mod pallet {
     Balance, CurrencyId, Hash,
   };
 
-  /// Wrapr configuration
+  /// Tidefi configuration
   #[pallet::config]
   pub trait Config: frame_system::Config {
     /// Events
@@ -48,8 +48,8 @@ pub mod pallet {
     /// Asset registry traits
     type AssetRegistry: AssetRegistryExt;
 
-    /// Currency wrapr
-    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    /// Tidechain currency wrapper
+    type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
@@ -61,14 +61,14 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// Event emitted when widthdraw is requested.
+    /// Event emitted when transfer is processed.
     Transfer {
       from_account_id: T::AccountId,
       to_account_id: T::AccountId,
       currency_id: CurrencyId,
       amount: Balance,
     },
-    /// Event emitted when widthdraw is requested.
+    /// Event emitted when widthdraw is initialized.
     Withdrawal {
       request_id: Hash,
       account: T::AccountId,
@@ -76,8 +76,8 @@ pub mod pallet {
       amount: Balance,
       external_address: Vec<u8>,
     },
-    /// Event emitted when trade is requested.
-    Trade {
+    /// Event emitted when swap is initialized.
+    Swap {
       request_id: Hash,
       account: T::AccountId,
       currency_id_from: CurrencyId,
@@ -133,7 +133,7 @@ pub mod pallet {
       );
 
       // 3. Transfer the request currency, only if the funds are available and the recipient can receive it.
-      T::CurrencyWrapr::transfer(currency_id, &account_id, &destination_id, amount, true)?;
+      T::CurrencyTidefi::transfer(currency_id, &account_id, &destination_id, amount, true)?;
 
       // 4. Send event to the chain
       Self::deposit_event(Event::<T>::Transfer {
@@ -145,7 +145,7 @@ pub mod pallet {
       Ok(().into())
     }
 
-    /// Request wrapped asset withdrawal.
+    /// Submit asset withdrawal to the Quorum.
     ///
     /// - `currency_id`: The currency to withdraw.
     /// - `amount`: The amount to transfer
@@ -154,8 +154,8 @@ pub mod pallet {
     /// Emits `Withdrawal` event when successful.
     ///
     /// Weight: `O(1)`
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_withdrawal())]
-    pub fn request_withdrawal(
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::withdrawal())]
+    pub fn withdrawal(
       origin: OriginFor<T>,
       currency_id: CurrencyId,
       amount: Balance,
@@ -177,7 +177,7 @@ pub mod pallet {
       ensure!(currency_id != CurrencyId::Tide, Error::<T>::UnknownAsset);
 
       // 5. Make sure the account have enough funds
-      match T::CurrencyWrapr::can_withdraw(currency_id, &account_id, amount) {
+      match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {
         WithdrawConsequence::Success => {
           // Add withdrawal in queue
           let (withdrawal_id, _) = T::Quorum::add_new_withdrawal_in_queue(
@@ -203,7 +203,7 @@ pub mod pallet {
       }
     }
 
-    /// Request trade (swap) through the market makers.
+    /// Swap through the market makers.
     ///
     /// This will register a new request and will be queued for the oracle, do
     /// not expect an immediate response.
@@ -213,11 +213,11 @@ pub mod pallet {
     /// - `currency_id_to`: The currency to receive.
     /// - `amount_to`: The expected amount to receive with a 10% margin.
     ///
-    /// Emits `Trade` event when successful.
+    /// Emits `Swap` event when successful.
     ///
     /// Weight: `O(1)`
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::request_trade())]
-    pub fn request_trade(
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::swap())]
+    pub fn swap(
       origin: OriginFor<T>,
       currency_id_from: CurrencyId,
       amount_from: Balance,
@@ -248,10 +248,10 @@ pub mod pallet {
       ));
 
       // 6. Make sure the account have enough funds for the `asset_id_from`
-      match T::CurrencyWrapr::can_withdraw(currency_id_from, &account_id, amount_from) {
+      match T::CurrencyTidefi::can_withdraw(currency_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
           // 6. a) Add trade in queue
-          let (trade_id, _) = T::Oracle::add_new_trade_in_queue(
+          let (trade_id, _) = T::Oracle::add_new_swap_in_queue(
             account_id.clone(),
             currency_id_from,
             amount_from,
@@ -262,7 +262,7 @@ pub mod pallet {
           );
 
           // 6 b) Send event to the chain
-          Self::deposit_event(Event::<T>::Trade {
+          Self::deposit_event(Event::<T>::Swap {
             request_id: trade_id,
             account: account_id,
             currency_id_from,

@@ -22,7 +22,7 @@ use std::marker::PhantomData;
 use system::EnsureRoot;
 use tidefi_primitives::CurrencyId;
 
-use crate::pallet as pallet_wrapr;
+use crate::pallet as pallet_tidefi;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -41,7 +41,7 @@ frame_support::construct_runtime!(
     Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    Wrapr: pallet_wrapr::{Pallet, Call, Storage, Event<T>},
+    Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>},
     Fees: pallet_fees::{Pallet, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
@@ -133,11 +133,11 @@ parameter_types! {
   pub const FeesPalletId: PalletId = PalletId(*b"fees*pal");
 }
 
-impl pallet_wrapr::Config for Test {
+impl pallet_tidefi::Config for Test {
   type Event = Event;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type Quorum = Quorum;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   type Oracle = Oracle;
   type AssetRegistry = AssetRegistry;
 }
@@ -146,7 +146,7 @@ impl pallet_quorum::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_quorum::weights::SubstrateWeight<Test>;
   type QuorumPalletId = QuorumPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
   type AssetRegistry = AssetRegistry;
 }
@@ -162,7 +162,7 @@ impl pallet_oracle::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_oracle::weights::SubstrateWeight<Test>;
   type OraclePalletId = OraclePalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
   type Fees = Fees;
 }
@@ -175,7 +175,7 @@ impl pallet_asset_registry::Config for Test {
   type Event = Event;
   type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
 }
 
 impl pallet_sudo::Config for Test {
@@ -188,7 +188,7 @@ impl pallet_fees::Config for Test {
   type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
   type FeesPalletId = FeesPalletId;
-  type CurrencyWrapr = Adapter<AccountId>;
+  type CurrencyTidefi = Adapter<AccountId>;
   type UnixTime = Timestamp;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
 }

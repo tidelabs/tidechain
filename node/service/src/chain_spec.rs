@@ -234,15 +234,15 @@ fn hertel_testnet_genesis(
     technical_membership: Default::default(),
     treasury: Default::default(),
     // tidefi custom genesis
-    wrapr_quorum: hertel_runtime::WraprQuorumConfig {
+    quorum: hertel_runtime::QuorumConfig {
       enabled: true,
       account: quorum,
     },
-    wrapr_oracle: hertel_runtime::WraprOracleConfig {
+    oracle: hertel_runtime::OracleConfig {
       enabled: true,
       account: oracle,
     },
-    wrapr_asset_registry: hertel_runtime::WraprAssetRegistryConfig {
+    asset_registry: hertel_runtime::AssetRegistryConfig {
       // these assets are created on first initialization
       assets: helpers::get_assets_with_stakeholders(stakeholders, assets),
       // FIXME: Is the asset_registry owner should be the same account as root?
@@ -250,8 +250,8 @@ fn hertel_testnet_genesis(
       // this account can also create new wrapped asset on chain
       account: root,
     },
-    wrapr_security: Default::default(),
-    wrapr_fees: Default::default(),
+    security: Default::default(),
+    fees: Default::default(),
   }
 }
 
@@ -395,22 +395,22 @@ fn tidechain_testnet_genesis(
     technical_membership: Default::default(),
     treasury: Default::default(),
     // tidefi custom genesis
-    wrapr_quorum: tidechain_runtime::WraprQuorumConfig {
+    quorum: tidechain_runtime::QuorumConfig {
       enabled: true,
       account: quorum,
     },
-    wrapr_oracle: tidechain_runtime::WraprOracleConfig {
+    oracle: tidechain_runtime::OracleConfig {
       enabled: true,
       account: oracle,
     },
-    wrapr_asset_registry: tidechain_runtime::WraprAssetRegistryConfig {
+    asset_registry: tidechain_runtime::AssetRegistryConfig {
       // these assets are created on first initialization
       assets: helpers::get_assets_with_stakeholders(stakeholders, assets),
       // FIXME: Not sure if the owner should be the asset registry pallet itself?
       account: asset_registry,
     },
-    wrapr_security: Default::default(),
-    wrapr_fees: Default::default(),
+    security: Default::default(),
+    fees: Default::default(),
   }
 }
 

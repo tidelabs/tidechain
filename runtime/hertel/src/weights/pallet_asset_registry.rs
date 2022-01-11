@@ -44,7 +44,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_asset_registry`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_asset_registry::WeightInfo for WeightInfo<T> {
-	// Storage: WraprAssetRegistry AssetRegistryAccountId (r:1 w:0)
+	// Storage: AssetRegistry AssetRegistryAccountId (r:1 w:0)
 	fn set_status() -> Weight {
 		(25_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))

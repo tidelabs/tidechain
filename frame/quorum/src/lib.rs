@@ -53,8 +53,8 @@ pub mod pallet {
     /// Asset registry traits
     type AssetRegistry: AssetRegistryExt;
 
-    /// Currency wrapr
-    type CurrencyWrapr: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+    /// Tidechain currency wrapper
+    type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
@@ -181,7 +181,7 @@ pub mod pallet {
       );
 
       // 4. Mint the token
-      T::CurrencyWrapr::mint_into(currency_id, &account_id, mint_amount)?;
+      T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount)?;
 
       // 5. Send event on chain
       Self::deposit_event(Event::<T>::Minted {
@@ -230,7 +230,7 @@ pub mod pallet {
             );
 
             // 4. Remove the token from the account
-            T::CurrencyWrapr::burn_from(
+            T::CurrencyTidefi::burn_from(
               withdrawal.asset_id,
               &withdrawal.account_id,
               withdrawal.amount,
