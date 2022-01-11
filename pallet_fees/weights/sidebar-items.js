@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SubstrateWeight","Weights for `pallet_wrapr` using the Substrate node and recommended hardware."]],"trait":[["WeightInfo","Weight functions needed for `pallet_wrapr`."]]});
+initSidebarItems({"struct":[["SubstrateWeight","Weights for `pallet_tidefi` using the Substrate node and recommended hardware."]],"trait":[["WeightInfo","Weight functions needed for `pallet_tidefi`."]]});

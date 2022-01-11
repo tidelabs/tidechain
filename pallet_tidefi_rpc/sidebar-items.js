@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Error",""]],"mod":[["gen_client","The generated client module."]],"struct":[["Tidefi","A struct that implements the [`TidefiApi`]."],["TidefiApiClient","The Client."]],"trait":[["TidefiApi",""],["TidefiRuntimeApi",""]]});

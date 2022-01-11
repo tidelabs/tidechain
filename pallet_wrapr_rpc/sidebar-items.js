@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Error",""]],"mod":[["gen_client","The generated client module."]],"struct":[["Wrapr","A struct that implements the [`WraprApi`]."],["WraprApiClient","The Client."]],"trait":[["WraprApi",""],["WraprRuntimeApi",""]]});
