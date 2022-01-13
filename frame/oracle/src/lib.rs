@@ -398,7 +398,7 @@ pub mod pallet {
 
                         // 13. Emit market maker trade event on chain
                         Self::deposit_event(Event::<T>::SwapProcessed {
-                          request_id,
+                          request_id: mm.request_id,
                           initial_extrinsic_hash: market_maker_trade_intent.extrinsic_hash,
                           status: market_maker_trade_intent.status.clone(),
                           account_id: market_maker_trade_intent.account_id.clone(),
