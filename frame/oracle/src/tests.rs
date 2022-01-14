@@ -1,5 +1,5 @@
 use crate::{
-  mock::{new_test_ext, Adapter, Assets, Fees, Oracle, Origin, Test},
+  mock::{new_test_ext, Adapter, Assets, Event as MockEvent, Fees, Oracle, Origin, System, Test},
   pallet::*,
 };
 use frame_support::{
@@ -125,7 +125,7 @@ pub fn confirm_swap_partial_filling() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 1,
       ],
     );
 
@@ -139,7 +139,7 @@ pub fn confirm_swap_partial_filling() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 2,
       ],
     );
 
@@ -181,6 +181,36 @@ pub fn confirm_swap_partial_filling() {
       ],
     ));
 
+    // swap confirmation for bob (user)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 2u64.into(),
+      currency_from: CurrencyId::Tide,
+      currency_amount_from: 5_000_000_000_000,
+      currency_to: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_to: 10_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    }));
+
+    // swap confirmation for charlie (mm)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 3u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
+      ],
+    }));
+
     // BOB: make sure the CLIENT current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
     assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
@@ -212,6 +242,36 @@ pub fn confirm_swap_partial_filling() {
         },
       ],
     ));
+
+    // swap confirmation for bob (user)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_id,
+      status: SwapStatus::Completed,
+      account_id: 2u64.into(),
+      currency_from: CurrencyId::Tide,
+      currency_amount_from: 5_000_000_000_000,
+      currency_to: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_to: 10_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    }));
+
+    // swap confirmation for dave (second mm)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm2_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 4u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2,
+      ],
+    }));
 
     // BOB: make sure the CLIENT current trade is totally filled (completed)
     let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
@@ -340,7 +400,7 @@ pub fn confirm_swap_simple_with_fees() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 1,
       ],
     );
 
@@ -354,7 +414,7 @@ pub fn confirm_swap_simple_with_fees() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 2,
       ],
     );
 
@@ -402,6 +462,52 @@ pub fn confirm_swap_simple_with_fees() {
         },
       ],
     ));
+
+    // swap confirmation for bob (user)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_id,
+      status: SwapStatus::Completed,
+      account_id: 2u64.into(),
+      currency_from: CurrencyId::Tide,
+      currency_amount_from: 10_000_000_000_000,
+      currency_to: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_to: 20_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    }));
+
+    // swap confirmation for charlie (mm1)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 3u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
+      ],
+    }));
+
+    // swap confirmation for dave (mm2)
+    // the trade should be closed, because amount_from of the request is filled
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm2_id,
+      status: SwapStatus::Completed,
+      account_id: 4u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2,
+      ],
+    }));
 
     // BOB: make sure the CLIENT current trade is totally filled (completed)
     let trade_request_filled = Oracle::trades(trade_request_id).unwrap();

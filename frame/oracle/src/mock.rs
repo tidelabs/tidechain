@@ -261,21 +261,23 @@ where
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let mut t = system::GenesisConfig::default()
+  let mut storage = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
-    .assimilate_storage(&mut t)
+    .assimilate_storage(&mut storage)
     .unwrap();
   pallet_fees::GenesisConfig::<Test>::default()
-    .assimilate_storage(&mut t)
+    .assimilate_storage(&mut storage)
     .unwrap();
   pallet_oracle::GenesisConfig::<Test> {
     enabled: false,
     account: 1,
   }
-  .assimilate_storage(&mut t)
+  .assimilate_storage(&mut storage)
   .unwrap();
 
-  t.into()
+  let mut ext: sp_io::TestExternalities = storage.into();
+  ext.execute_with(|| System::set_block_number(1));
+  ext
 }
