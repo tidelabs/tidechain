@@ -6,6 +6,8 @@ use frame_support::{
   assert_noop, assert_ok,
   traits::fungibles::{Inspect, Mutate},
 };
+use frame_system::RawOrigin;
+use sp_runtime::Percent;
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
@@ -36,6 +38,20 @@ pub fn set_operational_status_works() {
 pub fn confirm_swap_partial_filling() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64.into());
+
+    assert_ok!(Fees::set_fees_percentage(
+      RawOrigin::Root.into(),
+      Percent::from_percent(0)
+    ));
+
+    assert_eq!(Fees::account_id(), 8246216774960574317);
+
+    // add 1 tide to fees account to make sure account is valid
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tide,
+      &Fees::account_id(),
+      1_000_000_000_000
+    ));
 
     let temp_asset_id = 1;
 
@@ -107,7 +123,7 @@ pub fn confirm_swap_partial_filling() {
       CurrencyId::Tide,
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
-      20000,
+      20_000,
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -165,6 +181,11 @@ pub fn confirm_swap_partial_filling() {
     assert_eq!(trade_request_mm.block_number, 0);
     assert_eq!(trade_request_mm2.block_number, 0);
 
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      20_000_000_000_000
+    );
+
     // partial filling
     assert_ok!(Oracle::confirm_swap(
       alice.clone(),
@@ -180,6 +201,11 @@ pub fn confirm_swap_partial_filling() {
         },
       ],
     ));
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      20_000_000_000_000 - 5_000_000_000_000
+    );
 
     // swap confirmation for bob (user)
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
@@ -243,6 +269,11 @@ pub fn confirm_swap_partial_filling() {
       ],
     ));
 
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      15_000_000_000_000 - 5_000_000_000_000
+    );
+
     // swap confirmation for bob (user)
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_id,
@@ -296,6 +327,38 @@ pub fn confirm_swap_partial_filling() {
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
     // 5 tide
     assert_eq!(trade_request_filled.amount_to_filled, 5_000_000_000_000);
+
+    // validate bob balance
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      10_000_000_000_000
+    );
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &2u64.into()),
+      20_000
+    );
+
+    // validate mm1 balance (5 tide + 1 initial)
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &3u64.into()),
+      5_000_000_000_000 + 1_000_000_000_000
+    );
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &3u64.into()),
+      1_000_000 - 10_000
+    );
+
+    // validate mm2 balance (5 tide + 1 initial)
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &4u64.into()),
+      5_000_000_000_000 + 1_000_000_000_000
+    );
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &4u64.into()),
+      1_000_000 - 10_000
+    );
   });
 }
 
