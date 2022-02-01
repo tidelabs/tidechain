@@ -187,7 +187,7 @@
 <span class="kw">use</span> <span class="ident">sp_blockchain::HeaderBackend</span>;
 <span class="kw">use</span> <span class="ident">sp_runtime</span>::{<span class="ident">generic::BlockId</span>, <span class="ident">traits::Block</span> <span class="kw">as</span> <span class="ident">BlockT</span>};
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">tidefi_primitives</span>::{<span class="ident">BalanceInfo</span>, <span class="ident">CurrencyId</span>, <span class="ident">CurrencyMetadata</span>, <span class="ident">Stake</span>};
+<span class="kw">use</span> <span class="ident">tidefi_primitives</span>::{<span class="ident">CurrencyBalance</span>, <span class="ident">BalanceInfo</span>, <span class="ident">CurrencyId</span>, <span class="ident">CurrencyMetadata</span>, <span class="ident">Stake</span>};
 
 <span class="attribute">#[<span class="ident">rpc</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">TidefiApi</span><span class="op">&lt;</span><span class="ident">BlockHash</span>, <span class="ident">AccountId</span><span class="op">&gt;</span> {
@@ -200,14 +200,14 @@
     <span class="ident">account_id</span>: <span class="ident">AccountId</span>,
     <span class="ident">asset_id</span>: <span class="ident">CurrencyId</span>,
     <span class="ident">at</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BlockHash</span><span class="op">&gt;</span>,
-  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BalanceInfo</span><span class="op">&gt;</span>;
+  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CurrencyBalance</span><span class="op">&lt;</span><span class="ident">BalanceInfo</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
   <span class="attribute">#[<span class="ident">rpc</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;tidefi_getAccountBalances&quot;</span>)]</span>
   <span class="kw">fn</span> <span class="ident">get_account_balances</span>(
     <span class="kw-2">&amp;</span><span class="self">self</span>,
     <span class="ident">account_id</span>: <span class="ident">AccountId</span>,
     <span class="ident">at</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BlockHash</span><span class="op">&gt;</span>,
-  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">CurrencyId</span>, <span class="ident">BalanceInfo</span>)<span class="op">&gt;</span><span class="op">&gt;</span>;
+  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">CurrencyId</span>, <span class="ident">CurrencyBalance</span><span class="op">&lt;</span><span class="ident">BalanceInfo</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span>;
 
   <span class="attribute">#[<span class="ident">rpc</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;tidefi_getAccountStakes&quot;</span>)]</span>
   <span class="kw">fn</span> <span class="ident">get_account_stakes</span>(
@@ -263,7 +263,7 @@
     <span class="ident">account_id</span>: <span class="ident">AccountId</span>,
     <span class="ident">asset_id</span>: <span class="ident">CurrencyId</span>,
     <span class="ident">at</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span><span class="op">&gt;</span><span class="ident">::Hash</span><span class="op">&gt;</span>,
-  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BalanceInfo</span><span class="op">&gt;</span> {
+  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CurrencyBalance</span><span class="op">&lt;</span><span class="ident">BalanceInfo</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">runtime_api</span>();
     <span class="kw">let</span> <span class="ident">at</span> <span class="op">=</span> <span class="ident">BlockId::hash</span>(<span class="ident">at</span>.<span class="ident">unwrap_or</span>(
       <span class="comment">// If the block hash is not supplied assume the best block.</span>
@@ -310,7 +310,7 @@
     <span class="kw-2">&amp;</span><span class="self">self</span>,
     <span class="ident">account_id</span>: <span class="ident">AccountId</span>,
     <span class="ident">at</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">Block</span> <span class="kw">as</span> <span class="ident">BlockT</span><span class="op">&gt;</span><span class="ident">::Hash</span><span class="op">&gt;</span>,
-  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">CurrencyId</span>, <span class="ident">BalanceInfo</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
+  ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">CurrencyId</span>, <span class="ident">CurrencyBalance</span><span class="op">&lt;</span><span class="ident">BalanceInfo</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">runtime_api</span>();
     <span class="kw">let</span> <span class="ident">at</span> <span class="op">=</span> <span class="ident">BlockId::hash</span>(<span class="ident">at</span>.<span class="ident">unwrap_or</span>(
       <span class="comment">// If the block hash is not supplied assume the best block.</span>
