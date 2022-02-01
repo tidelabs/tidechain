@@ -60,7 +60,7 @@ benchmarks! {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0,
          ]
-      );
+      ).unwrap();
 
       let mm_request = Pallet::<T>::add_new_swap_in_queue(mm_account_id,
          CurrencyId::Wrapped(2),
@@ -72,7 +72,7 @@ benchmarks! {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0,
          ]
-      );
+      ).unwrap();
 
    }: _(RawOrigin::Signed(user), user_request.0, vec![SwapConfirmation { request_id: mm_request.0, amount_to_receive: 1_000_000_000_000, amount_to_send: 1_000_000_000_000 }])
 }

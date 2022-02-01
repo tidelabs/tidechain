@@ -4,9 +4,10 @@ use frame_support::{
   parameter_types,
   traits::{
     fungible::{
-      Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
+      Inspect as FungibleInspect, InspectHold as FungibleInspectHold, Mutate as FungibleMutate,
+      MutateHold as FungibleMutateHold, Transfer as FungibleTransfer,
     },
-    fungibles::{Inspect, Mutate, Transfer},
+    fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
     ConstU128, ConstU32, GenesisBuild,
   },
   PalletId,
@@ -213,6 +214,57 @@ impl Inspect<AccountId> for Adapter<AccountId> {
     match asset {
       CurrencyId::Tide => Balances::can_withdraw(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
+    }
+  }
+}
+
+impl InspectHold<AccountId> for Adapter<AccountId> {
+  fn balance_on_hold(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::balance_on_hold(who),
+      CurrencyId::Wrapped(asset_id) => Assets::balance_on_hold(asset_id, who),
+    }
+  }
+  fn can_hold(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> bool {
+    match asset {
+      CurrencyId::Tide => Balances::can_hold(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::can_hold(asset_id, who, amount),
+    }
+  }
+}
+
+impl MutateHold<AccountId> for Adapter<AccountId> {
+  fn hold(asset: CurrencyId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
+    match asset {
+      CurrencyId::Tide => Balances::hold(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::hold(asset_id, who, amount),
+    }
+  }
+
+  fn release(
+    asset: CurrencyId,
+    who: &AccountId,
+    amount: Balance,
+    best_effort: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::release(who, amount, best_effort),
+      CurrencyId::Wrapped(asset_id) => Assets::release(asset_id, who, amount, best_effort),
+    }
+  }
+  fn transfer_held(
+    asset: CurrencyId,
+    source: &AccountId,
+    dest: &AccountId,
+    amount: Balance,
+    best_effort: bool,
+    on_hold: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::transfer_held(source, dest, amount, best_effort, on_hold),
+      CurrencyId::Wrapped(asset_id) => {
+        Assets::transfer_held(asset_id, source, dest, amount, best_effort, on_hold)
+      }
     }
   }
 }

@@ -22,14 +22,15 @@ pub mod pallet {
   use frame_support::{
     inherent::Vec,
     pallet_prelude::*,
-    traits::fungibles::{Inspect, Mutate, Transfer},
+    traits::fungibles::{Inspect, InspectHold, Mutate, Transfer},
     PalletId,
   };
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use sp_std::vec;
   use tidefi_primitives::{
-    pallet::AssetRegistryExt, AssetId, Balance, BalanceInfo, CurrencyId, CurrencyMetadata,
+    pallet::AssetRegistryExt, CurrencyBalance, AssetId, Balance, BalanceInfo, CurrencyId,
+    CurrencyMetadata,
   };
 
   /// Asset registry configuration
@@ -50,7 +51,8 @@ pub mod pallet {
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
-      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + InspectHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
 
   #[pallet::pallet]
@@ -279,9 +281,13 @@ pub mod pallet {
     pub fn get_account_balance(
       account_id: &T::AccountId,
       asset_id: CurrencyId,
-    ) -> Result<BalanceInfo, DispatchError> {
+    ) -> Result<CurrencyBalance<BalanceInfo>, DispatchError> {
       let balance = T::CurrencyTidefi::balance(asset_id, account_id);
-      Ok(BalanceInfo { amount: balance })
+      let reserved = T::CurrencyTidefi::balance_on_hold(asset_id, account_id);
+      Ok(CurrencyBalance::<BalanceInfo> {
+        available: BalanceInfo { amount: balance },
+        reserved: BalanceInfo { amount: reserved },
+      })
     }
 
     pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata)>, DispatchError> {
@@ -316,7 +322,7 @@ pub mod pallet {
 
     pub fn get_account_balances(
       account_id: &T::AccountId,
-    ) -> Result<Vec<(CurrencyId, BalanceInfo)>, DispatchError> {
+    ) -> Result<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>, DispatchError> {
       let mut final_balances = vec![(
         CurrencyId::Tide,
         Self::get_account_balance(account_id, CurrencyId::Tide)?,
@@ -325,8 +331,13 @@ pub mod pallet {
         .map(|(asset_id, balance)| {
           (
             CurrencyId::Wrapped(asset_id),
-            BalanceInfo {
-              amount: balance.balance,
+            CurrencyBalance::<BalanceInfo> {
+              available: BalanceInfo {
+                amount: balance.balance,
+              },
+              reserved: BalanceInfo {
+                amount: balance.reserved,
+              },
             },
           )
         })
