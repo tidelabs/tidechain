@@ -282,3 +282,50 @@ impl<T: Config<I>, I: 'static> fungibles::approvals::Mutate<<T as SystemConfig>:
     Self::do_transfer_approved(asset, owner, delegate, dest, amount)
   }
 }
+
+impl<T: Config<I>, I: 'static> fungibles::InspectHold<T::AccountId> for Pallet<T, I> {
+  fn balance_on_hold(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance {
+    Account::<T, I>::get(who, asset)
+      .map(|a| a.reserved)
+      .unwrap_or_default()
+  }
+
+  fn can_hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> bool {
+    Pallet::<T, I>::can_decrease(asset, who, amount, true)
+      .into_result()
+      .is_ok()
+  }
+}
+
+impl<T: Config<I>, I: 'static> fungibles::MutateHold<T::AccountId> for Pallet<T, I> {
+  fn hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+    Self::do_hold(asset, who, amount)?;
+    Ok(())
+  }
+
+  fn release(
+    asset: Self::AssetId,
+    who: &T::AccountId,
+    amount: Self::Balance,
+    _best_effort: bool,
+  ) -> Result<Self::Balance, DispatchError> {
+    Self::do_release(asset, who, amount)
+  }
+
+  // Transfer held funds to an account
+  fn transfer_held(
+    asset: Self::AssetId,
+    source: &T::AccountId,
+    dest: &T::AccountId,
+    amount: Self::Balance,
+    best_effort: bool,
+    on_hold: bool,
+  ) -> Result<Self::Balance, DispatchError> {
+    let f = TransferFlags {
+      keep_alive: true,
+      best_effort,
+      burn_dust: false,
+    };
+    Self::do_transfer_held(asset, source, dest, amount, false, on_hold, f)
+  }
+}

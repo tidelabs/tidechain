@@ -4,8 +4,9 @@ use crate::{
 };
 use frame_support::{
   assert_noop, assert_ok,
-  traits::fungibles::{Inspect, Mutate},
+  traits::fungibles::{Inspect, InspectHold, Mutate},
 };
+use sp_runtime::{traits::Zero, Percent};
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
@@ -41,6 +42,9 @@ pub fn confirm_swap_partial_filling() {
 
     assert_ok!(Oracle::set_status(alice.clone(), true));
     assert!(Oracle::status());
+
+    // set fee to 0%
+    assert_ok!(Fees::set_fees_percentage(Origin::root(), Percent::zero()));
 
     // add 1 tide to alice & all MMs
     assert_ok!(Adapter::mint_into(
@@ -93,6 +97,10 @@ pub fn confirm_swap_partial_filling() {
       3u64.into(),
       1_000_000
     ));
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &3u64.into()),
+      1_000_000
+    );
 
     assert_ok!(Assets::mint(
       alice.clone(),
@@ -107,19 +115,26 @@ pub fn confirm_swap_partial_filling() {
       CurrencyId::Tide,
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
-      20000,
+      20_000,
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
       ],
+    )
+    .unwrap();
+
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Tide, &2u64.into()),
+      // we burned 1 tide on start so it should contain 1.2 tide now
+      10_000_000_000_000
     );
 
     // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
     let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       3u64.into(),
       CurrencyId::Wrapped(temp_asset_id),
-      400000,
+      400_000,
       CurrencyId::Tide,
       200_000_000_000_000,
       0,
@@ -127,6 +142,16 @@ pub fn confirm_swap_partial_filling() {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
       ],
+    )
+    .unwrap();
+
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &3u64.into()),
+      400_000
+    );
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &3u64.into()),
+      600_000
     );
 
     // DAVE (MM): 8000 TEMP for 400 TIDE
@@ -141,6 +166,13 @@ pub fn confirm_swap_partial_filling() {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
       ],
+    )
+    .unwrap();
+
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &4u64.into()),
+      // we burned 1 tide on start so it should contain 1.2 tide now
+      800_000
     );
 
     // make sure our trade request is created correctly
@@ -213,21 +245,15 @@ pub fn confirm_swap_partial_filling() {
       ],
     ));
 
-    // BOB: make sure the CLIENT current trade is totally filled (completed)
-    let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
-    assert_eq!(trade_request_filled.status, SwapStatus::Completed);
+    // BOB: make sure the CLIENT current trade is deleted
+    assert!(Oracle::trades(trade_request_id).is_none());
 
-    // cant send another trade confirmation as the request should be marked as completed
-    // we do expect `InvalidRequestStatus`
+    // cant send another trade confirmation as the request should be deleted
+    // we do expect `InvalidRequestId`
     assert_noop!(
-      Oracle::confirm_swap(alice, trade_request_id, vec![],),
-      Error::<Test>::InvalidRequestStatus
+      Oracle::confirm_swap(alice.clone(), trade_request_id, vec![],),
+      Error::<Test>::InvalidRequestId
     );
-
-    // 10 tide
-    assert_eq!(trade_request_filled.amount_from_filled, 10_000_000_000_000);
-    // 200 TEMP
-    assert_eq!(trade_request_filled.amount_to_filled, 20_000);
 
     // DAVE: make sure the MM current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_mm2_id).unwrap();
@@ -236,6 +262,52 @@ pub fn confirm_swap_partial_filling() {
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
     // 5 tide
     assert_eq!(trade_request_filled.amount_to_filled, 5_000_000_000_000);
+
+    // cancel our mm's swap to release the funds
+    assert_ok!(Oracle::cancel_swap(alice.clone(), trade_request_mm_id,));
+    assert_ok!(Oracle::cancel_swap(alice, trade_request_mm2_id,));
+
+    // validate all balance
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      10_000_000_000_000
+    );
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &2u64.into()),
+      20_000
+    );
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Tide, &2u64.into()),
+      Zero::zero()
+    );
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &3u64.into()),
+      // swap + initial balance
+      5_000_000_000_000 + 1_000_000_000_000
+    );
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &3u64.into()),
+      1_000_000 - 10_000
+    );
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &3u64.into()),
+      Zero::zero()
+    );
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &4u64.into()),
+      // swap + initial balance
+      5_000_000_000_000 + 1_000_000_000_000
+    );
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &4u64.into()),
+      1_000_000 - 10_000
+    );
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &4u64.into()),
+      Zero::zero()
+    );
   });
 }
 
@@ -328,7 +400,8 @@ pub fn confirm_swap_simple_with_fees() {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
       ],
-    );
+    )
+    .unwrap();
 
     // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
     let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
@@ -342,7 +415,8 @@ pub fn confirm_swap_simple_with_fees() {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
       ],
-    );
+    )
+    .unwrap();
 
     // DAVE (MM): 100 TEMP for 5 TIDE
     let (trade_request_mm2_id, trade_request_mm2) = Oracle::add_new_swap_in_queue(
@@ -356,7 +430,8 @@ pub fn confirm_swap_simple_with_fees() {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
       ],
-    );
+    )
+    .unwrap();
 
     // make sure our trade request is created correctly
     assert_eq!(
@@ -403,13 +478,8 @@ pub fn confirm_swap_simple_with_fees() {
       ],
     ));
 
-    // BOB: make sure the CLIENT current trade is totally filled (completed)
-    let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
-    assert_eq!(trade_request_filled.status, SwapStatus::Completed);
-    // 10 tide
-    assert_eq!(trade_request_filled.amount_from_filled, 10_000_000_000_000);
-    // 200 TEMP
-    assert_eq!(trade_request_filled.amount_to_filled, 20_000);
+    // BOB: make sure the CLIENT current trade is deleted
+    assert!(Oracle::trades(trade_request_id).is_none());
 
     // CHARLIE: make sure the MM current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_mm_id).unwrap();
@@ -419,19 +489,8 @@ pub fn confirm_swap_simple_with_fees() {
     // 5 tide
     assert_eq!(trade_request_filled.amount_to_filled, 5_000_000_000_000);
 
-    // DAVE: make sure the MM current trade is totally filled (completed)
-    let trade_request_filled = Oracle::trades(trade_request_mm2_id).unwrap();
-    assert_eq!(trade_request_filled.status, SwapStatus::Completed);
-    // 100 TEMP
-    assert_eq!(trade_request_filled.amount_from_filled, 10_000);
-
-    // make sure all source tokens are filled as there is a slippage on the destination
-    assert_eq!(
-      trade_request_filled.amount_from_filled,
-      trade_request_filled.amount_from
-    );
-    // 5 tide
-    assert_eq!(trade_request_filled.amount_to_filled, 5_000_000_000_000);
+    // DAVE: make sure the MM current trade is totally filled (deleted)
+    assert!(Oracle::trades(trade_request_mm2_id).is_none());
 
     // make sure all balances match
     assert_eq!(
@@ -445,16 +504,16 @@ pub fn confirm_swap_simple_with_fees() {
       400
     );
 
-    // BOB Should have 10 tide remaining (started with 20)
+    // BOB Should have 9.8 tide remaining (started with 20), sent 10 tide and paid 2% fees
     assert_eq!(
       Adapter::balance(CurrencyId::Tide, &2u64.into()),
-      10_000_000_000_000
+      9_800_000_000_000
     );
 
-    // BOB Should have 196 TEMP (2% fee)
+    // BOB Should have 200 TEMP
     assert_eq!(
       Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &2u64.into()),
-      19600
+      20_000
     );
 
     // make sure fees are registered on chain

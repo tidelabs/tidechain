@@ -113,8 +113,10 @@ impl<Balance> ExistenceReason<Balance> {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct AssetAccount<Balance, DepositBalance, Extra> {
-  /// The balance.
+  /// The available balance.
   pub balance: Balance,
+  /// The reserved balance.
+  pub reserved: Balance,
   /// Whether the account is frozen.
   pub is_frozen: bool,
   /// The reason for the existence of the account.
