@@ -36,7 +36,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
-use tidefi_primitives::{CurrencyBalance, BalanceInfo, CurrencyMetadata, Stake};
+use tidefi_primitives::{BalanceInfo, CurrencyBalance, CurrencyMetadata, Stake};
 
 // Work around the issue that RUNTIME_API_VERSIONS is not public.
 pub(crate) const PRUNTIME_API_VERSIONS: ApisVec = RUNTIME_API_VERSIONS;

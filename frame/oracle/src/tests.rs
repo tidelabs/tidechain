@@ -130,6 +130,12 @@ pub fn confirm_swap_partial_filling() {
       10_000_000_000_000
     );
 
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tide, &2u64.into(), true),
+      // minted 20_000_000_000_000 on genesis
+      10_000_000_000_000
+    );
+
     // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
     let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       3u64.into(),
@@ -151,6 +157,16 @@ pub fn confirm_swap_partial_filling() {
     );
     assert_eq!(
       Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &3u64.into()),
+      600_000
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(temp_asset_id), &3u64.into(), true),
+      // minted 1_000_000 on genesis + 1 as keep alive cost
+      599_999
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(temp_asset_id), &3u64.into(), false),
+      // minted 1_000_000 on genesis (no keep-alive)
       600_000
     );
 

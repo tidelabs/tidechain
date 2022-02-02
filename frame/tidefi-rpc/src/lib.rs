@@ -7,7 +7,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use std::sync::Arc;
-use tidefi_primitives::{CurrencyBalance, BalanceInfo, CurrencyId, CurrencyMetadata, Stake};
+use tidefi_primitives::{BalanceInfo, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake};
 
 #[rpc]
 pub trait TidefiApi<BlockHash, AccountId> {
