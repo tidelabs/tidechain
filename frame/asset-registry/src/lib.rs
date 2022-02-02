@@ -29,7 +29,7 @@ pub mod pallet {
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use sp_std::vec;
   use tidefi_primitives::{
-    pallet::AssetRegistryExt, CurrencyBalance, AssetId, Balance, BalanceInfo, CurrencyId,
+    pallet::AssetRegistryExt, AssetId, Balance, BalanceInfo, CurrencyBalance, CurrencyId,
     CurrencyMetadata,
   };
 
@@ -282,7 +282,15 @@ pub mod pallet {
       account_id: &T::AccountId,
       asset_id: CurrencyId,
     ) -> Result<CurrencyBalance<BalanceInfo>, DispatchError> {
-      let balance = T::CurrencyTidefi::balance(asset_id, account_id);
+      // we use `reducible_balance` to return the real available value for the account
+      // we also force the `keep_alive`
+
+      // FIXME: Review the `keep_alive` system for TIDE & assets, we should probably have
+      // a user settings, where they can enable or force opting-out to keep-alive.
+      // that mean if they use all of their funds, the account is deleted from the chain
+      // and and will be re-created on next deposit. this could drain all persistent settings
+      // of the user as well
+      let balance = T::CurrencyTidefi::reducible_balance(asset_id, account_id, true);
       let reserved = T::CurrencyTidefi::balance_on_hold(asset_id, account_id);
       Ok(CurrencyBalance::<BalanceInfo> {
         available: BalanceInfo { amount: balance },

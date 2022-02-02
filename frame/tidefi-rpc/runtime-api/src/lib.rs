@@ -2,7 +2,7 @@
 use codec::Codec;
 use frame_support::inherent::Vec;
 use sp_runtime::DispatchError;
-use tidefi_primitives::{CurrencyBalance, BalanceInfo, CurrencyId, CurrencyMetadata, Stake};
+use tidefi_primitives::{BalanceInfo, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake};
 
 sp_api::decl_runtime_apis! {
     pub trait TidefiApi<AccountId> where AccountId: Codec,
