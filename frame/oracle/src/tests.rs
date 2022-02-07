@@ -546,3 +546,172 @@ pub fn confirm_swap_simple_with_fees() {
     assert_eq!(dave_fee.amount, 10_000);
   });
 }
+
+#[test]
+pub fn confirm_swap_ourself() {
+  new_test_ext().execute_with(|| {
+    let alice = Origin::signed(1u64.into());
+
+    let temp_asset_id = 1;
+
+    assert_ok!(Oracle::set_status(alice.clone(), true));
+    assert!(Oracle::status());
+
+    // set fee to 0%
+    assert_ok!(Fees::set_fees_percentage(Origin::root(), Percent::zero()));
+
+    // add 1 tide to alice & all MMs
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tide,
+      &1u64.into(),
+      1_000_000_000_000
+    ));
+
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tide,
+      &2u64.into(),
+      20_000_000_000_000
+    ));
+
+    // create TEMP asset
+    assert_ok!(Assets::force_create(
+      Origin::root(),
+      temp_asset_id,
+      1u64.into(),
+      true,
+      1
+    ));
+
+    // make TEMP asset as 2 decimals
+    assert_ok!(Assets::set_metadata(
+      alice.clone(),
+      temp_asset_id,
+      "TEMP".into(),
+      "TEMP".into(),
+      2
+    ));
+
+    // mint TEMP funds to the MMs
+    assert_ok!(Assets::mint(
+      alice.clone(),
+      temp_asset_id,
+      2u64.into(),
+      1_000_000
+    ));
+    assert_eq!(
+      Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &2u64.into()),
+      1_000_000
+    );
+
+    // BOB: 10 TIDE for 200 TEMP (20 TEMP/TIDE)
+    let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
+      2u64.into(),
+      CurrencyId::Tide,
+      10_000_000_000_000,
+      CurrencyId::Wrapped(temp_asset_id),
+      40_000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    )
+    .unwrap();
+
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Tide, &2u64.into()),
+      // we burned 1 tide on start so it should contain 1.2 tide now
+      10_000_000_000_000
+    );
+
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tide, &2u64.into(), true),
+      // minted 20_000_000_000_000 on genesis
+      10_000_000_000_000
+    );
+
+    // CHARLIE (MM): 4000 TEMP FOR 200 TIDE
+    let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
+      2u64.into(),
+      CurrencyId::Wrapped(temp_asset_id),
+      40_000,
+      CurrencyId::Tide,
+      10_000_000_000_000,
+      0,
+      [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    )
+    .unwrap();
+
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &2u64.into()),
+      40_000
+    );
+
+    // make sure our trade request is created correctly
+    assert_eq!(
+      trade_request_id,
+      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
+        .unwrap_or_default()
+    );
+    assert_eq!(trade_request.block_number, 0);
+
+    assert_eq!(
+      trade_request_mm_id,
+      Hash::from_str("0xe0424aac19ef997f1b76ac20d400aecc2ee0258d9eacb7013c3fcfa2e55bdc67")
+        .unwrap_or_default()
+    );
+
+    assert_eq!(trade_request.status, SwapStatus::Pending);
+    assert_eq!(trade_request_mm.status, SwapStatus::Pending);
+
+    assert_eq!(trade_request.block_number, 0);
+    assert_eq!(trade_request_mm.block_number, 0);
+
+    // partial filling
+    assert_ok!(Oracle::confirm_swap(
+      alice.clone(),
+      trade_request_id,
+      vec![
+        // charlie
+        SwapConfirmation {
+          request_id: trade_request_mm_id,
+          // 5 tide
+          amount_to_receive: 10_000_000_000_000,
+          amount_to_send: 40_000,
+        },
+      ],
+    ));
+
+    // BOB: make sure the CLIENT current trade is partially filled and correctly updated
+    assert!(Oracle::trades(trade_request_id).is_none());
+    assert!(Oracle::trades(trade_request_mm_id).is_none());
+
+    // cant send another trade confirmation as the request should be deleted
+    // we do expect `InvalidRequestId`
+    assert_noop!(
+      Oracle::confirm_swap(alice.clone(), trade_request_id, vec![],),
+      Error::<Test>::InvalidRequestId
+    );
+
+    // validate all balance
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tide, &2u64.into(), false),
+      20_000_000_000_000
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(temp_asset_id), &2u64.into(), false),
+      1_000_000
+    );
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Tide, &2u64.into()),
+      Zero::zero()
+    );
+    assert_eq!(
+      Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &2u64.into()),
+      Zero::zero()
+    );
+  });
+}

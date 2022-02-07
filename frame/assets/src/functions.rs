@@ -968,8 +968,24 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
       let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
 
-      // Skip if source == dest
+      // Unlock fund if transfer to itself
       if source == dest {
+        Account::<T, I>::try_mutate(&dest, id, |maybe_account| -> DispatchResult {
+          let d = maybe_account.as_mut().ok_or(Error::<T, I>::Unknown)?;
+          // Debit balance from source; this will not saturate since it's already checked in prep.
+          debug_assert!(d.reserved >= debit, "checked in prep; qed");
+          d.reserved = d.reserved.saturating_sub(debit);
+
+          // Calculate new balance; this will not saturate since it's already checked
+          // in prep.
+          debug_assert!(
+            d.balance.checked_add(&credit).is_some(),
+            "checked in prep; qed"
+          );
+          d.balance.saturating_accrue(credit);
+          Ok(())
+        })?;
+
         return Ok(());
       }
 
