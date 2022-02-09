@@ -12,11 +12,25 @@ pub use weights::*;
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
+pub(crate) const LOG_TARGET: &str = "tidefi::fees";
+
+// syntactic sugar for logging.
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: crate::LOG_TARGET,
+			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
+
 #[frame_support::pallet]
 pub mod pallet {
   use super::*;
   use frame_support::{
     inherent::Vec,
+    log,
     pallet_prelude::*,
     traits::{
       tokens::fungibles::{Inspect, Mutate, Transfer},
@@ -26,10 +40,13 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
 
-  use sp_runtime::{traits::AccountIdConversion, Percent, SaturatedConversion};
+  use sp_runtime::{
+    traits::{AccountIdConversion, Saturating},
+    Percent, SaturatedConversion,
+  };
   use tidefi_primitives::{
-    pallet::{FeesExt, SecurityExt},
-    ActiveEraInfo, Balance, BlockNumber, CurrencyId, EraIndex, Fee,
+    pallet::{FeesExt, SecurityExt, StakingExt},
+    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex,
   };
 
   #[pallet::config]
@@ -48,11 +65,26 @@ pub mod pallet {
     #[pallet::constant]
     type FeesPalletId: Get<PalletId>;
 
+    /// Number of sessions per era
+    #[pallet::constant]
+    type SessionsPerEra: Get<SessionIndex>;
+
+    /// Number of sessions to keep in archive
+    #[pallet::constant]
+    type SessionsArchive: Get<SessionIndex>;
+
+    /// Number of block per session
+    #[pallet::constant]
+    type BlocksPerSession: Get<Self::BlockNumber>;
+
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
 
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Tidefi stake traits
+    type Staking: StakingExt<Self::AccountId>;
 
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
@@ -74,10 +106,10 @@ pub mod pallet {
   #[pallet::getter(fn active_era)]
   pub type ActiveEra<T: Config> = StorageValue<_, ActiveEraInfo<T::BlockNumber>>;
 
-  /// The length of an era in block number.
+  /// The current session of the era.
   #[pallet::storage]
-  #[pallet::getter(fn era_length)]
-  pub type EraLength<T: Config> = StorageValue<_, T::BlockNumber>;
+  #[pallet::getter(fn current_session)]
+  pub type CurrentSession<T: Config> = StorageValue<_, SessionIndex, ValueQuery>;
 
   /// The percentage on each trade to be taken as a network fee
   #[pallet::storage]
@@ -96,6 +128,25 @@ pub mod pallet {
   #[pallet::getter(fn era_total_fees)]
   pub type EraTotalFees<T: Config> =
     StorageDoubleMap<_, Blake2_128Concat, EraIndex, Blake2_128Concat, CurrencyId, Fee, ValueQuery>;
+
+  /// Map from all stored sessions.
+  #[pallet::storage]
+  #[pallet::getter(fn stored_sessions)]
+  pub type StoredSessions<T: Config> = StorageMap<_, Blake2_128Concat, SessionIndex, ()>;
+
+  /// The total fees for the session.
+  /// If total hasn't been set or has been removed then 0 stake is returned.
+  #[pallet::storage]
+  #[pallet::getter(fn session_total_fees)]
+  pub type SessionTotalFees<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    SessionIndex,
+    Blake2_128Concat,
+    CurrencyId,
+    Fee,
+    ValueQuery,
+  >;
 
   /// Account fees for current era
   #[pallet::storage]
@@ -137,12 +188,15 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
+      CurrentSession::<T>::put(1);
       FeePercentageAmount::<T>::put(self.fee_percentage);
       DistributionPercentage::<T>::put(self.distribution_percentage);
       ActiveEra::<T>::put(ActiveEraInfo::<T::BlockNumber> {
         index: 1,
         // Set new active era start in next `on_finalize`. To guarantee usage of `Time`
         start_block: None,
+        start_session_index: None,
+        last_session_block: None,
         start: None,
       });
     }
@@ -151,10 +205,13 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    /// The fees get redistributed successfully
-    Rewarded(BlockNumber, CurrencyId, Balance),
     DistributionPercentageUpdated(Percent),
     FeesPercentageUpdated(Percent),
+    SessionEnded {
+      era_index: EraIndex,
+      session_index: SessionIndex,
+      session_fees_by_currency: Vec<(CurrencyId, Balance)>,
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -174,20 +231,75 @@ pub mod pallet {
         let real_block = T::Security::get_current_block_count();
         match active_era.start_block {
           Some(start_block) => {
-            let expected_end_block = start_block + Self::era_length().unwrap_or_default();
-            // end of era
-            if real_block >= expected_end_block {
-              // FIXME: Make sure end era doesnt break the chain
-              //let _ = Self::end_era(active_era);
+            // determine when the last session ended
+            let session_start_block = match active_era.last_session_block {
+              Some(last_session_block) => last_session_block,
+              None => start_block.clone(),
+            };
+
+            let expected_end_block_for_session =
+              session_start_block.saturating_add(T::BlocksPerSession::get());
+
+            // end of session
+            if real_block >= expected_end_block_for_session {
+              let current_session = CurrentSession::<T>::get();
+              log!(
+                info,
+                "Fees compound session #{} started in block #{:?}, and is now expired.",
+                current_session,
+                start_block
+              );
+
+              // get current session total trade / currency
+              let session_fees_by_currency: Vec<(CurrencyId, Balance)> =
+                SessionTotalFees::<T>::iter_prefix(current_session)
+                  .map(|(currency_id, fee)| (currency_id, fee.fee))
+                  .collect();
+
+              // notify the staking pallet that we are done with this session
+              // the compute can be done for all stakers
+              if let Err(err) =
+                T::Staking::on_session_end(current_session, session_fees_by_currency.clone())
+              {
+                log!(error, "Can't notify staking pallet {:?}", err);
+              }
+
+              // Emit end of session event on chain
+              Self::deposit_event(Event::<T>::SessionEnded {
+                era_index: active_era.index,
+                session_index: current_session,
+                session_fees_by_currency,
+              });
+
+              // increment our session
+              let new_session = current_session.saturating_add(1_u64);
+              CurrentSession::<T>::put(new_session);
+              StoredSessions::<T>::insert(current_session, ());
+              // record the session change for the era
+              active_era.last_session_block = Some(real_block);
+              ActiveEra::<T>::put(active_era);
+
+              // let expected_end_session_index_for_era = start_session_index.saturating_add(T::SessionsPerEra::get());
+
+              // if current_session >= expected_end_session_index_for_era {
+              // FIXME: Finalize tokenomics
+              // if let Err(err) = T::Staking::_end_era(current_session) {
+              //   log!(error, "Can't close the era {:?}", err);
+              // }
+              // }
+              // drain old sessions
+              Self::drain_old_sessions();
             }
           }
           None => {
             let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
             active_era.start = Some(now_as_millis_u64);
             active_era.start_block = Some(real_block);
+            active_era.start_session_index = Some(CurrentSession::<T>::get());
             // This write only ever happens once, we don't include it in the weight in
             // general
             ActiveEra::<T>::put(active_era);
+            log!(trace, "Initializing in block #{:?}", real_block);
           }
         }
       }
@@ -233,13 +345,26 @@ pub mod pallet {
   }
 
   impl<T: Config> Pallet<T> {
+    pub(crate) fn drain_old_sessions() {
+      let current_session = CurrentSession::<T>::get();
+      for (session, _) in StoredSessions::<T>::iter() {
+        if session < current_session.saturating_sub(T::SessionsArchive::get()) {
+          // delete the session
+          SessionTotalFees::<T>::remove_prefix(session, None);
+          StoredSessions::<T>::remove(session);
+        }
+      }
+    }
+
     pub fn start_era() {
       ActiveEra::<T>::mutate(|active_era| {
         let new_index = active_era.as_ref().map(|info| info.index + 1).unwrap_or(0);
         *active_era = Some(ActiveEraInfo::<T::BlockNumber> {
           index: new_index,
           // Set new active era start in next `on_finalize`. To guarantee usage of `Time`
+          start_session_index: None,
           start_block: None,
+          last_session_block: None,
           start: None,
         });
         new_index
@@ -312,6 +437,7 @@ pub mod pallet {
     ) -> Fee {
       match Self::active_era() {
         Some(current_era) => {
+          let current_session = CurrentSession::<T>::get();
           let new_fee = Fee {
             amount: total_amount_before_fees,
             fee: Self::fee_percentage() * total_amount_before_fees,
@@ -320,6 +446,23 @@ pub mod pallet {
           // Update fees pool for the current era / currency
           EraTotalFees::<T>::mutate_exists(
             current_era.index,
+            currency_id,
+            |current_currency_fee| {
+              *current_currency_fee = Some(
+                current_currency_fee
+                  .as_ref()
+                  .map(|current_fee| Fee {
+                    amount: current_fee.amount + new_fee.amount,
+                    fee: current_fee.fee + new_fee.fee,
+                  })
+                  .unwrap_or_else(|| new_fee.clone()),
+              );
+            },
+          );
+
+          // Update fees pool for the current session / currency
+          SessionTotalFees::<T>::mutate_exists(
+            current_session,
             currency_id,
             |current_currency_fee| {
               *current_currency_fee = Some(

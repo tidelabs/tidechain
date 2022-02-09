@@ -546,7 +546,7 @@ pub mod pallet {
       let request_id = T::Security::get_unique_id(account_id.clone());
       let swap = Swap {
         account_id: account_id.clone(),
-        token_from: asset_id_from.clone(),
+        token_from: asset_id_from,
         token_to: asset_id_to,
         amount_from,
         amount_from_filled: 0,

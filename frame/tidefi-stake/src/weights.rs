@@ -8,6 +8,8 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for `pallet_tidefi`.
 pub trait WeightInfo {
    fn stake() -> Weight;
+   fn do_next_unstake_operation() -> Weight;
+   fn do_next_compound_interest_operation() -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
@@ -19,4 +21,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
       .saturating_add(T::DbWeight::get().reads(6_u64))
       .saturating_add(T::DbWeight::get().writes(5_u64))
    }
+	fn do_next_unstake_operation() -> Weight {
+		100_000_000_u64
+			.saturating_add(T::DbWeight::get().reads(7_u64))
+			.saturating_add(T::DbWeight::get().writes(5_u64))
+	}   
+	fn do_next_compound_interest_operation() -> Weight {
+		100_000_000_u64
+			.saturating_add(T::DbWeight::get().reads(7_u64))
+			.saturating_add(T::DbWeight::get().writes(5_u64))
+	}   
 }
