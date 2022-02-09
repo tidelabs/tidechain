@@ -13,8 +13,8 @@ benchmarks! {
    stake {
       let caller: T::AccountId = whitelisted_caller();
       let balance = INITIAL_AMOUNT.saturating_mul(IA_MULTIPLIER.into());
-      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
-   }: _(RawOrigin::Signed(caller), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT, 1)
+      <T as Config>::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
+   }: _(RawOrigin::Signed(caller), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT, (14400_u32 * 15_u32).into())
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

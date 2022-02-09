@@ -251,6 +251,7 @@ fn hertel_testnet_genesis(
       account: root,
     },
     security: Default::default(),
+    tidefi_staking: Default::default(),
     fees: Default::default(),
   }
 }
@@ -410,6 +411,7 @@ fn tidechain_testnet_genesis(
       account: asset_registry,
     },
     security: Default::default(),
+    tidefi_staking: Default::default(),
     fees: Default::default(),
   }
 }

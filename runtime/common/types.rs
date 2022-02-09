@@ -37,7 +37,7 @@ pub use sp_runtime::traits::BlakeTwo256;
 
 pub use tidefi_primitives::{
   AccountId, AccountIndex, AssetId, Balance, BlockNumber, CurrencyId, Hash, Index, Moment,
-  Signature,
+  SessionIndex, Signature,
 };
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<

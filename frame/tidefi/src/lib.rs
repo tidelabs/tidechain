@@ -302,7 +302,7 @@ pub mod pallet {
       ensure!(T::Oracle::is_oracle_enabled(), Error::<T>::OraclePaused);
 
       // 3. Remove the swap request and release funds if needed
-      T::Oracle::remove_swap_from_queue(account_id.clone(), request_id)?;
+      T::Oracle::remove_swap_from_queue(account_id, request_id)?;
 
       // 4. Emit event on chain
       Self::deposit_event(Event::<T>::SwapCancelled { request_id });

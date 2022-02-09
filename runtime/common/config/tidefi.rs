@@ -16,10 +16,10 @@
 
 use crate::{
   constants::currency::{deposit, Adapter, CENTS, DOLLARS},
-  types::{AccountId, AssetId, Balance, BlockNumber},
+  types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
   AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
   FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security,
-  TidefiStakingPalletId, Timestamp,
+  TidefiStaking, TidefiStakingPalletId, Timestamp,
 };
 
 use frame_support::{
@@ -41,6 +41,18 @@ parameter_types! {
 
   // FIXME: Should be better than that as we have multiple basis
   pub const PeriodBasis: BlockNumber = 1000u32;
+  // Maximum of 10 stake / currency / user (to prevent bloat on-chain)
+  pub const StakeAccountCap: u32 = 10;
+  // Maximum unstake processed in queue
+  pub const UnstakeQueueCap: u32 = 100;
+  // Staking: Number of sessions per era
+  // ~ 1 month
+  pub const SessionsPerEra: SessionIndex = 720;
+  // Staking: Number of sessions to keep in archive
+  pub const SessionsArchive: SessionIndex = 5;
+  // Staking: Number of block per sessions
+  // ~ 5 mins
+  pub const BlocksPerSession: BlockNumber = 50;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -112,9 +124,11 @@ impl pallet_tidefi_stake::Config for Runtime {
   type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
-  type PeriodBasis = PeriodBasis;
+  type StakeAccountCap = StakeAccountCap;
+  type UnstakeQueueCap = UnstakeQueueCap;
   // Asset registry
   type AssetRegistry = AssetRegistry;
+  type Security = Security;
 }
 
 impl pallet_quorum::Config for Runtime {
@@ -160,6 +174,10 @@ impl pallet_fees::Config for Runtime {
   type FeesPalletId = FeesPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type UnixTime = Timestamp;
+  type SessionsPerEra = SessionsPerEra;
+  type SessionsArchive = SessionsArchive;
+  type BlocksPerSession = BlocksPerSession;
+  type Staking = TidefiStaking;
   // Security utils
   type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;

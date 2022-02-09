@@ -7,7 +7,9 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use std::sync::Arc;
-use tidefi_primitives::{BalanceInfo, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake};
+use tidefi_primitives::{
+  BalanceInfo, BlockNumber, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake,
+};
 
 #[rpc]
 pub trait TidefiApi<BlockHash, AccountId> {
@@ -34,7 +36,7 @@ pub trait TidefiApi<BlockHash, AccountId> {
     &self,
     account_id: AccountId,
     at: Option<BlockHash>,
-  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>>;
+  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo, BlockNumber>)>>;
 }
 
 /// A struct that implements the [`TidefiApi`].
@@ -99,7 +101,7 @@ where
     &self,
     account_id: AccountId,
     at: Option<<Block as BlockT>::Hash>,
-  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>> {
+  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo, BlockNumber>)>> {
     let api = self.client.runtime_api();
     let at = BlockId::hash(at.unwrap_or(
       // If the block hash is not supplied assume the best block.

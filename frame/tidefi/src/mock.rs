@@ -21,7 +21,7 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex};
 
 use crate::pallet as pallet_tidefi;
 
@@ -43,6 +43,7 @@ frame_support::construct_runtime!(
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>},
+    TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Storage, Event<T>},
     Fees: pallet_fees::{Pallet, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
@@ -132,6 +133,12 @@ parameter_types! {
   pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
   pub const FeesPalletId: PalletId = PalletId(*b"fees*pal");
+  pub const StakePalletId: PalletId = PalletId(*b"stak*pal");
+  pub const SessionsPerEra: SessionIndex = 10;
+  pub const SessionsArchive: SessionIndex = 2;
+  pub const BlocksPerSession: BlockNumber = 50;
+  pub const StakeAccountCap: u32 = 10;
+  pub const UnstakeQueueCap: u32 = 100;
 }
 
 impl pallet_tidefi::Config for Test {
@@ -190,8 +197,23 @@ impl pallet_fees::Config for Test {
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
   type FeesPalletId = FeesPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
-  type UnixTime = Timestamp;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type UnixTime = Timestamp;
+  type SessionsPerEra = SessionsPerEra;
+  type SessionsArchive = SessionsArchive;
+  type BlocksPerSession = BlocksPerSession;
+  type Staking = TidefiStaking;
+}
+
+impl pallet_tidefi_stake::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Test>;
+  type StakePalletId = StakePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type StakeAccountCap = StakeAccountCap;
+  type UnstakeQueueCap = UnstakeQueueCap;
+  type AssetRegistry = AssetRegistry;
+  type Security = Security;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

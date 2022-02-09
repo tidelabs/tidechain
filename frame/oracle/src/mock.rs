@@ -21,7 +21,7 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -37,11 +37,13 @@ frame_support::construct_runtime!(
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
+    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
     Fees: pallet_fees::{Pallet, Storage, Event<T>},
+    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
+    TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
@@ -123,7 +125,14 @@ impl pallet_balances::Config for Test {
 parameter_types! {
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const FeesPalletId: PalletId = PalletId(*b"wrpr*pab");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
+  pub const StakePalletId: PalletId = PalletId(*b"stak*pal");
   pub const MinimumPeriod: u64 = 5;
+  pub const SessionsPerEra: SessionIndex = 10;
+  pub const SessionsArchive: SessionIndex = 2;
+  pub const BlocksPerSession: BlockNumber = 50;
+  pub const StakeAccountCap: u32 = 10;
+  pub const UnstakeQueueCap: u32 = 100;
 }
 
 impl pallet_oracle::Config for Test {
@@ -139,16 +148,36 @@ impl pallet_security::Config for Test {
   type Event = Event;
 }
 
+impl pallet_tidefi_stake::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Test>;
+  type StakePalletId = StakePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type StakeAccountCap = StakeAccountCap;
+  type UnstakeQueueCap = UnstakeQueueCap;
+  type AssetRegistry = AssetRegistry;
+  type Security = Security;
+}
+
+impl pallet_asset_registry::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+}
+
 impl pallet_fees::Config for Test {
   type Event = Event;
-  type FeesPalletId = FeesPalletId;
-  type UnixTime = Timestamp;
-  // Wrapped currency
-  type CurrencyTidefi = Adapter<AccountId>;
-  // Security utils
   type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
+  type FeesPalletId = TidefiPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type UnixTime = Timestamp;
+  type SessionsPerEra = SessionsPerEra;
+  type SessionsArchive = SessionsArchive;
+  type BlocksPerSession = BlocksPerSession;
+  type Staking = TidefiStaking;
 }
 
 impl pallet_timestamp::Config for Test {
