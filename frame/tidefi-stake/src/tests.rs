@@ -18,8 +18,10 @@ const FIFTEEN_DAYS: BlockNumber = 14400 * 15;
 pub fn check_genesis_config() {
   new_test_ext().execute_with(|| {
     assert_eq!(
-      TidefiStaking::staking_rewards(14400 * 15),
-      Some(Percent::from_parts(2))
+      TidefiStaking::staking_rewards()
+        .into_iter()
+        .find(|(duration, _)| *duration == 14400 * 15),
+      Some((14400 * 15, Percent::from_parts(2)))
     );
   });
 }
