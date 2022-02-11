@@ -91,7 +91,7 @@ pub mod pallet {
   #[pallet::storage]
   #[pallet::getter(fn staking_rewards)]
   pub type StakingPeriodRewards<T: Config> =
-    StorageMap<_, Blake2_128Concat, T::BlockNumber, Percent>;
+    StorageValue<_, Vec<(T::BlockNumber, Percent)>, ValueQuery>;
 
   /// The last session we should compound the account interests.
   #[pallet::storage]
@@ -163,9 +163,7 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
-      for (how_many_blocks, reward_percent) in &self.staking_periods {
-        StakingPeriodRewards::<T>::insert(*how_many_blocks, *reward_percent);
-      }
+      StakingPeriodRewards::<T>::put(self.staking_periods.clone());
     }
   }
 
@@ -265,7 +263,10 @@ pub mod pallet {
 
       // 2. Make sure the duration exist on chain
       ensure!(
-        Self::staking_rewards(duration).is_some(),
+        StakingPeriodRewards::<T>::get()
+          .into_iter()
+          .find(|(iter_duration, _)| *iter_duration == duration)
+          .is_some(),
         Error::<T>::InvalidDuration
       );
 
@@ -372,7 +373,12 @@ pub mod pallet {
                     // loop trough all stake for this currency for this account
                     let mut final_stake = staking_details.clone();
                     for active_stake in final_stake.as_mut().iter_mut() {
-                      let available_reward = StakingPeriodRewards::<T>::get(active_stake.duration)
+                      // FIXME: we could probably find the closest reward
+                      // but in theory this should never happens
+                      let available_reward = StakingPeriodRewards::<T>::get()
+                        .into_iter()
+                        .find(|(duration, _)| *duration == active_stake.duration)
+                        .map(|(_, reward)| reward)
                         .unwrap_or_else(Percent::zero)
                         * session_fee_for_currency;
 
