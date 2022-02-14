@@ -23,7 +23,7 @@ macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
 			target: crate::LOG_TARGET,
-			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+			concat!("[{:?}] 💸 ", $patter), T::Security::get_current_block_count() $(, $values)*
 		)
 	};
 }
@@ -63,6 +63,10 @@ pub mod pallet {
     #[pallet::constant]
     type StakeAccountCap: Get<u32>;
 
+    /// Number of block to wait before unstake if forced.
+    #[pallet::constant]
+    type BlocksForceUnstake: Get<Self::BlockNumber>;
+
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
 
@@ -93,6 +97,11 @@ pub mod pallet {
   pub type StakingPeriodRewards<T: Config> =
     StorageValue<_, Vec<(T::BlockNumber, Percent)>, ValueQuery>;
 
+  /// The percentage of fee when unstake is done before the ending.
+  #[pallet::storage]
+  #[pallet::getter(fn unstake_fee)]
+  pub type UnstakeFee<T: Config> = StorageValue<_, Percent, ValueQuery>;
+
   /// The last session we should compound the account interests.
   #[pallet::storage]
   #[pallet::getter(fn interest_compound_last_session)]
@@ -101,8 +110,11 @@ pub mod pallet {
   /// Manage which we should pay off to.
   #[pallet::storage]
   #[pallet::getter(fn unstake_queue)]
-  pub type UnstakeQueue<T: Config> =
-    StorageValue<_, BoundedVec<(T::AccountId, CurrencyId, Hash), T::UnstakeQueueCap>, ValueQuery>;
+  pub type UnstakeQueue<T: Config> = StorageValue<
+    _,
+    BoundedVec<(T::AccountId, Hash, T::BlockNumber), T::UnstakeQueueCap>,
+    ValueQuery,
+  >;
 
   /// Map from all pending stored sessions.
   // When all stake that are bounded for this sessions are compounded, they got removed from the map.
@@ -141,7 +153,7 @@ pub mod pallet {
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
     pub staking_periods: Vec<(T::BlockNumber, Percent)>,
-    pub runtime_marker: PhantomData<T>,
+    pub unstake_fee: Percent,
   }
 
   #[cfg(feature = "std")]
@@ -149,7 +161,8 @@ pub mod pallet {
     fn default() -> Self {
       // at 6 sec block length, we do ~ 14400 blocks / day
       Self {
-        runtime_marker: PhantomData,
+        // 1%
+        unstake_fee: Percent::from_parts(1),
         staking_periods: vec![
           ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
           ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
@@ -164,6 +177,7 @@ pub mod pallet {
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
       StakingPeriodRewards::<T>::put(self.staking_periods.clone());
+      UnstakeFee::<T>::put(self.unstake_fee.clone());
     }
   }
 
@@ -177,13 +191,18 @@ pub mod pallet {
       currency_id: CurrencyId,
       amount: Balance,
     },
+    /// The assets unstaking has been queued
+    UnstakeQueued {
+      request_id: Hash,
+      account_id: T::AccountId,
+    },
     /// The assets get `unstaked` successfully
     Unstaked {
       request_id: Hash,
       account_id: T::AccountId,
       currency_id: CurrencyId,
-      initial_amount: Balance,
-      final_amount: Balance,
+      initial_balance: Balance,
+      final_balance: Balance,
     },
   }
 
@@ -196,6 +215,14 @@ pub mod pallet {
     UnstakeQueueCapExceeded,
     /// Insufficient balance
     InsufficientBalance,
+    /// Invalid stake request ID
+    InvalidStakeId,
+    /// Stake is not ready
+    StakingNotReady,
+    /// Something went wrong with fees transfer
+    TransferFeesFailed,
+    /// Something went wrong with funds transfer
+    TransferFailed,
   }
 
   #[pallet::hooks]
@@ -203,6 +230,8 @@ pub mod pallet {
     /// Try to compute when chain is idle
     fn on_idle(_n: BlockNumberFor<T>, mut remaining_weight: Weight) -> Weight {
       let do_next_compound_interest_operation_weight =
+        <T as frame_system::Config>::DbWeight::get().reads_writes(6, 6);
+      let do_next_unstake_operation_weight =
         <T as frame_system::Config>::DbWeight::get().reads_writes(6, 6);
 
       // security if loop is get jammed somehow or prevent any overflow in tests
@@ -226,12 +255,32 @@ pub mod pallet {
               break;
             }
           };
+        } else if remaining_weight > do_next_unstake_operation_weight
+          && !Self::unstake_queue().is_empty()
+        {
+          match Self::do_next_unstake_operation(remaining_weight) {
+            Ok((real_weight_consumed, should_continue)) => {
+              remaining_weight -= real_weight_consumed;
+
+              if !should_continue {
+                break;
+              }
+            }
+            Err(err) => {
+              log!(error, "Unstake queue failed {:?}", err);
+              break;
+            }
+          };
         } else {
           break;
         }
 
         current_iter += 1;
         if current_iter >= max_iter {
+          log!(
+            warn,
+            "Max iter reached; something is wrong with `on_idle` logic; overflow prevented"
+          );
           break;
         }
       }
@@ -291,7 +340,7 @@ pub mod pallet {
       })?;
 
       // 5. Insert the new staking
-      let initial_block = <frame_system::Pallet<T>>::block_number();
+      let initial_block = T::Security::get_current_block_count();
       AccountStakes::<T>::mutate(account_id.clone(), |stake| -> DispatchResult {
         stake
           .try_push(Stake {
@@ -316,12 +365,133 @@ pub mod pallet {
 
       Ok(().into())
     }
+
+    /// Unstake
+    ///
+    /// - `stake_id`: Unique Stake ID
+    /// - `force_unstake`: Unstake with extra fees, even if the staking is not expired
+    ///
+    /// Emits `Unstaked` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::unstake())]
+    pub fn unstake(
+      origin: OriginFor<T>,
+      stake_id: Hash,
+      force_unstake: bool,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure the transaction is signed
+      let account_id = ensure_signed(origin)?;
+
+      // 2. Get Staking request for this user
+      let stake =
+        Self::get_account_stake(&account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
+
+      // 3. Check the expiration and if we are forcing it (queue)
+      let expected_block_expiration = stake.initial_block + stake.duration;
+      let staking_is_ready =
+        expected_block_expiration <= T::Security::get_current_block_count() || force_unstake;
+      let staking_is_forced =
+        expected_block_expiration > T::Security::get_current_block_count() && force_unstake;
+
+      ensure!(staking_is_ready, Error::<T>::StakingNotReady);
+
+      // FIXME: Validate not already queued
+
+      // we should add to unstaking queue and take immeditately the extra fees
+      // for the queue storage
+      if staking_is_forced {
+        // take the fee
+        // FIXME: would be great to convert to TIDE
+        let unstaking_fee = Self::unstake_fee() * stake.initial_balance;
+        T::CurrencyTidefi::can_withdraw(stake.currency_id, &account_id, unstaking_fee)
+          .into_result()
+          .map_err(|_| Error::<T>::InsufficientBalance)?;
+
+        UnstakeQueue::<T>::try_append((
+          account_id.clone(),
+          stake_id,
+          T::Security::get_current_block_count() + T::BlocksForceUnstake::get(),
+        ))
+        .map_err(|_| Error::<T>::UnstakeQueueCapExceeded)?;
+
+        // FIXME: transfer to DEX wallet
+        T::CurrencyTidefi::transfer(
+          stake.currency_id,
+          &account_id,
+          &Self::account_id(),
+          unstaking_fee,
+          true,
+        )
+        .map_err(|_| Error::<T>::TransferFeesFailed)?;
+
+        Self::deposit_event(Event::<T>::UnstakeQueued {
+          request_id: stake_id,
+          account_id,
+        });
+      } else {
+        // we can process to unstaking immediately
+        Self::process_unstake(&account_id, stake_id)?;
+        Self::deposit_event(Event::<T>::Unstaked {
+          request_id: stake_id,
+          account_id,
+          currency_id: stake.currency_id,
+          initial_balance: stake.initial_balance,
+          final_balance: stake.principal,
+        });
+      }
+
+      Ok(().into())
+    }
   }
 
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::StakePalletId::get().into_account()
+    }
+
+    fn get_account_stake(
+      account_id: &T::AccountId,
+      stake_id: Hash,
+    ) -> Option<Stake<Balance, T::BlockNumber>> {
+      AccountStakes::<T>::get(account_id)
+        .into_iter()
+        .find(|stake| stake.unique_id == stake_id)
+    }
+
+    fn process_unstake(account_id: &T::AccountId, stake_id: Hash) -> DispatchResult {
+      let current_stake =
+        Self::get_account_stake(&account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
+      AccountStakes::<T>::try_mutate_exists(account_id, |account_stakes| match account_stakes {
+        None => Err(Error::<T>::InvalidStakeId),
+        Some(stakes) => {
+          T::CurrencyTidefi::can_withdraw(
+            current_stake.currency_id,
+            &Self::account_id(),
+            current_stake.principal,
+          )
+          .into_result()
+          .map_err(|_| Error::<T>::InsufficientBalance)?;
+
+          T::CurrencyTidefi::transfer(
+            current_stake.currency_id,
+            &Self::account_id(),
+            &account_id,
+            current_stake.principal,
+            false,
+          )
+          .map_err(|_| Error::<T>::TransferFailed)?;
+
+          stakes.retain(|stake| stake.unique_id != stake_id);
+          if stakes.is_empty() {
+            *account_stakes = None;
+          }
+          Ok(())
+        }
+      })?;
+
+      Ok(())
     }
 
     // FIXME: require more tests to prevent any blocking on-chain
@@ -436,27 +606,37 @@ pub mod pallet {
     }
 
     #[inline]
-    pub fn do_next_unstake_operation() -> Result<(), DispatchError> {
+    pub fn do_next_unstake_operation(max_weight: Weight) -> Result<(Weight, bool), DispatchError> {
+      let weight_per_iteration = <T as frame_system::Config>::DbWeight::get().reads_writes(2, 2);
       // cost one more get but add a little security
       if Self::unstake_queue().is_empty() {
-        return Ok(());
+        return Ok((weight_per_iteration, false));
       }
 
-      // get the front of the queue.
-      // let (account_id, currency_id, unique_hash) = &Self::unstake_queue()[0];
+      let max_iterations = if weight_per_iteration == 0 {
+        100
+      } else {
+        max_weight / weight_per_iteration
+      };
 
-      // get the staking details
-      // AccountStakes::<T>::try_mutate(account_id, |all_stakes| -> DispatchResult { Ok(()) })?;
+      let mut current_iterations = 0;
+      UnstakeQueue::<T>::try_mutate(|q| -> DispatchResult {
+        for (pos, (account_id, stake_id, expiration)) in q.clone().iter().enumerate() {
+          if *expiration <= T::Security::get_current_block_count() {
+            Self::process_unstake(&account_id, *stake_id)?;
+            q.remove(pos);
+          }
+          current_iterations += 1;
 
-      // remove unstake request from queue
-      Self::pop_unstake_task();
+          if current_iterations >= max_iterations {
+            break;
+          }
+        }
 
-      Ok(())
-    }
+        Ok(())
+      })?;
 
-    #[inline]
-    fn pop_unstake_task() {
-      UnstakeQueue::<T>::mutate(|v| v.remove(0));
+      Ok((current_iterations * weight_per_iteration, false))
     }
 
     // Get all stakes for the account, serialized for quick RPC call

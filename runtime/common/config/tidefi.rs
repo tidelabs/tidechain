@@ -53,6 +53,9 @@ parameter_types! {
   // Staking: Number of block per sessions
   // ~ 5 mins
   pub const BlocksPerSession: BlockNumber = 50;
+  // Staking: Number of blocks to wait before unstaking when we force-unstake.
+  pub const BlocksForceUnstake: BlockNumber = 14_400;
+
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -126,6 +129,7 @@ impl pallet_tidefi_stake::Config for Runtime {
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
   type UnstakeQueueCap = UnstakeQueueCap;
+  type BlocksForceUnstake = BlocksForceUnstake;
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type Security = Security;

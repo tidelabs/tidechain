@@ -1,5 +1,5 @@
 use crate::{
-  mock::{new_test_ext, Adapter, Origin, System, Test, TidefiStaking},
+  mock::{new_test_ext, Adapter, Origin, Security, System, Test, TidefiStaking},
   Error,
 };
 use sp_runtime::Percent;
@@ -7,7 +7,10 @@ use tidefi_primitives::BlockNumber;
 
 use frame_support::{
   assert_noop, assert_ok,
-  traits::{fungibles::Mutate, Hooks},
+  traits::{
+    fungibles::{Inspect, Mutate},
+    Hooks,
+  },
 };
 use tidefi_primitives::{pallet::StakingExt, CurrencyId};
 
@@ -93,6 +96,152 @@ pub fn should_stake_native_asset() {
         .initial_balance
         == 1_000_000_000_000
     );
+  });
+}
+
+#[test]
+pub fn should_stake_and_unstake() {
+  new_test_ext().execute_with(|| {
+    let alice = 1u64;
+    let alice_origin = Origin::signed(alice);
+
+    // mint token to user
+    Adapter::mint_into(CurrencyId::Tide, &alice, 1_000_000_000_000_000)
+      .expect("Unable to mint token");
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &1u64),
+      1_000_000_000_000_000
+    );
+
+    assert_ok!(TidefiStaking::stake(
+      alice_origin.clone(),
+      CurrencyId::Tide,
+      1_000_000_000_000,
+      FIFTEEN_DAYS
+    ));
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &1u64),
+      1_000_000_000_000_000 - 1_000_000_000_000
+    );
+
+    let stake_id = TidefiStaking::account_stakes(alice)
+      .first()
+      .unwrap()
+      .unique_id;
+
+    // make sure the staking pool has been updated
+    assert_eq!(
+      TidefiStaking::staking_pool(CurrencyId::Tide),
+      Some(1_000_000_000_000)
+    );
+
+    // make sure the staking has been recorded in the storage
+    assert!(TidefiStaking::account_stakes(alice).len() == 1);
+    assert!(
+      TidefiStaking::account_stakes(alice)
+        .first()
+        .unwrap()
+        .initial_balance
+        == 1_000_000_000_000
+    );
+
+    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
+      *n = FIFTEEN_DAYS + 1;
+      *n
+    });
+
+    assert_eq!(Security::current_block_number(), FIFTEEN_DAYS + 1);
+    assert_ok!(TidefiStaking::unstake(alice_origin, stake_id, false));
+    assert!(TidefiStaking::account_stakes(alice).len() == 0);
+    // balance is returned
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &1u64),
+      1_000_000_000_000_000
+    );
+  });
+}
+
+#[test]
+pub fn should_stake_and_unstake_queue() {
+  new_test_ext().execute_with(|| {
+    let alice = 1u64;
+    let alice_origin = Origin::signed(alice);
+    let initial_stake = 1_000_000_000_000;
+    let initial_mint = 1_000_000_000_000_000;
+
+    // mint token to user
+    Adapter::mint_into(CurrencyId::Tide, &alice, initial_mint).expect("Unable to mint token");
+
+    assert_eq!(Adapter::balance(CurrencyId::Tide, &1u64), initial_mint);
+
+    assert_ok!(TidefiStaking::stake(
+      alice_origin.clone(),
+      CurrencyId::Tide,
+      initial_stake,
+      FIFTEEN_DAYS
+    ));
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &1u64),
+      initial_mint - initial_stake
+    );
+
+    let stake_id = TidefiStaking::account_stakes(alice)
+      .first()
+      .unwrap()
+      .unique_id;
+
+    // make sure the staking pool has been updated
+    assert_eq!(
+      TidefiStaking::staking_pool(CurrencyId::Tide),
+      Some(initial_stake)
+    );
+
+    // make sure the staking has been recorded in the storage
+    assert!(TidefiStaking::account_stakes(alice).len() == 1);
+    assert!(
+      TidefiStaking::account_stakes(alice)
+        .first()
+        .unwrap()
+        .initial_balance
+        == initial_stake
+    );
+
+    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
+      *n = FIFTEEN_DAYS - 1_000;
+      *n
+    });
+
+    assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 1_000);
+    assert_ok!(TidefiStaking::unstake(alice_origin, stake_id, true));
+    assert!(TidefiStaking::account_stakes(alice).len() == 1);
+
+    let unstake_fee = TidefiStaking::unstake_fee() * initial_stake;
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &1u64),
+      initial_mint - initial_stake - unstake_fee
+    );
+    // 1 % of 1_000_000_000_000 = 10_000_000_000
+    assert_eq!(unstake_fee, 10_000_000_000);
+
+    // BlocksForceUnstake is set to 10, so let skip at least 10 blocks
+    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
+      *n = FIFTEEN_DAYS - 1_000 + 11;
+      *n
+    });
+    assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 1_000 + 11);
+
+    assert!(TidefiStaking::unstake_queue().len() == 1);
+
+    // run on idle hook
+    assert_eq!(
+      TidefiStaking::on_idle(1, 1_000_000_000_000_000),
+      1_000_000_000_000_000
+    );
+
+    assert!(TidefiStaking::unstake_queue().len() == 0);
   });
 }
 

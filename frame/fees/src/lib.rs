@@ -234,7 +234,7 @@ pub mod pallet {
             // determine when the last session ended
             let session_start_block = match active_era.last_session_block {
               Some(last_session_block) => last_session_block,
-              None => start_block.clone(),
+              None => start_block,
             };
 
             let expected_end_block_for_session =
