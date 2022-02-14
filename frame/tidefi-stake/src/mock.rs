@@ -96,6 +96,7 @@ parameter_types! {
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
+  pub const BlocksForceUnstake: BlockNumber = 10;
   pub const MinimumPeriod: u64 = 5;
   pub const StakeAccountCap: u32 = 10;
   pub const UnstakeQueueCap: u32 = 100;
@@ -148,6 +149,7 @@ impl pallet_tidefi_stake::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
   type UnstakeQueueCap = UnstakeQueueCap;
+  type BlocksForceUnstake = BlocksForceUnstake;
   type AssetRegistry = AssetRegistry;
   type Security = Security;
 }

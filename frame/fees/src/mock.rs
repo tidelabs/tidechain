@@ -170,6 +170,7 @@ parameter_types! {
   pub const SessionsPerEra: SessionIndex = 10;
   pub const SessionsArchive: SessionIndex = 2;
   pub const BlocksPerSession: BlockNumber = 50;
+  pub const BlocksForceUnstake: BlockNumber = 10;
   pub const StakeAccountCap: u32 = 10;
   pub const UnstakeQueueCap: u32 = 100;
 }
@@ -195,6 +196,7 @@ impl pallet_tidefi_stake::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
   type UnstakeQueueCap = UnstakeQueueCap;
+  type BlocksForceUnstake = BlocksForceUnstake;
   type AssetRegistry = AssetRegistry;
   type Security = Security;
 }

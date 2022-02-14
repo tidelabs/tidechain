@@ -54,6 +54,11 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+	fn unstake() -> Weight {
+		(91_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(7 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
 	fn do_next_unstake_operation() -> Weight {
 		(100_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
