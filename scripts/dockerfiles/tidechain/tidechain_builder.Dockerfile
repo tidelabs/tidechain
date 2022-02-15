@@ -1,5 +1,5 @@
 # This is the build stage for Tidechain. Here we create the binary in a temporary image.
-FROM docker.io/paritytech/ci-linux:production as builder
+FROM docker.io/tidelabs/tidechain-ci:latest as builder
 
 WORKDIR /tidechain
 COPY . /tidechain
