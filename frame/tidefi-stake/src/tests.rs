@@ -259,6 +259,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     let bob_origin = Origin::signed(bob);
 
     let initial_stake = 1_000_000_000_000;
+    let initial_stake_bob = initial_stake / 4;
     let initial_mint = 1_000_000_000_000_000;
 
     // mint token to user
@@ -310,7 +311,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert_ok!(TidefiStaking::stake(
       bob_origin.clone(),
       CurrencyId::Tide,
-      initial_stake / 4,
+      initial_stake_bob,
       FIFTEEN_DAYS
     ));
 
@@ -322,7 +323,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert_ok!(TidefiStaking::stake(
       bob_origin.clone(),
       CurrencyId::Tide,
-      initial_stake / 4,
+      initial_stake_bob,
       FIFTEEN_DAYS * 2
     ));
 
@@ -350,6 +351,8 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert_eq!(TidefiStaking::account_stakes(bob).len(), 2);
 
     let unstake_fee = TidefiStaking::unstake_fee() * initial_stake;
+    let unstake_fee_bob = TidefiStaking::unstake_fee() * initial_stake_bob;
+
     assert_eq!(
       Adapter::balance(CurrencyId::Tide, &1u64),
       initial_mint - initial_stake - unstake_fee
@@ -395,6 +398,18 @@ pub fn should_stake_multiple_and_unstake_queue() {
     );
 
     assert!(TidefiStaking::unstake_queue().is_empty());
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &1u64),
+      initial_mint - unstake_fee
+    );
+
+    assert!(TidefiStaking::account_stakes(bob).len() == 1);
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64),
+      // we still have a stake active
+      initial_mint - unstake_fee_bob - initial_stake_bob
+    );
   });
 }
 
