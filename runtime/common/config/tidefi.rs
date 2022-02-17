@@ -104,28 +104,24 @@ impl pallet_assets::Config for Runtime {
   // The amount of funds that must be reserved for a non-provider asset account to be
   // maintained.
   type AssetAccountDeposit = ConstU128<0>;
-  // FIXME: Use local weight
-  type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
   type Extra = ();
+  type WeightInfo = crate::weights::pallet_assets::WeightInfo<Runtime>;
 }
 
 impl pallet_tidefi::Config for Runtime {
   type Event = Event;
   type Quorum = Quorum;
   type Oracle = Oracle;
-  // FIXME: Use local weight
-  type WeightInfo = pallet_tidefi::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   // Asset registry
   type AssetRegistry = AssetRegistry;
+  type WeightInfo = crate::weights::pallet_tidefi::WeightInfo<Runtime>;
 }
 
 impl pallet_tidefi_stake::Config for Runtime {
   type Event = Event;
   type StakePalletId = TidefiStakingPalletId;
-  // FIXME: Use local weight
-  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
@@ -134,32 +130,31 @@ impl pallet_tidefi_stake::Config for Runtime {
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type Security = Security;
+  type WeightInfo = crate::weights::pallet_tidefi_stake::WeightInfo<Runtime>;
 }
 
 impl pallet_quorum::Config for Runtime {
   type Event = Event;
   type QuorumPalletId = QuorumPalletId;
-  // FIXME: Use local weight
-  type WeightInfo = pallet_quorum::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   // Security utils
   type Security = Security;
   // Asset registry
   type AssetRegistry = AssetRegistry;
+  type WeightInfo = crate::weights::pallet_quorum::WeightInfo<Runtime>;
 }
 
 impl pallet_oracle::Config for Runtime {
   type Event = Event;
   type OraclePalletId = OraclePalletId;
-  // FIXME: Use local weight
-  type WeightInfo = pallet_oracle::weights::SubstrateWeight<Runtime>;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   // Fees management
   type Fees = Fees;
   // Security utils
   type Security = Security;
+  type WeightInfo = crate::weights::pallet_oracle::WeightInfo<Runtime>;
 }
 
 impl pallet_security::Config for Runtime {
@@ -168,10 +163,10 @@ impl pallet_security::Config for Runtime {
 
 impl pallet_asset_registry::Config for Runtime {
   type Event = Event;
-  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Runtime>;
   type AssetRegistryPalletId = AssetRegistryPalletId;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
+  type WeightInfo = crate::weights::pallet_asset_registry::WeightInfo<Runtime>;
 }
 
 impl pallet_fees::Config for Runtime {

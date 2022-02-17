@@ -21,7 +21,7 @@
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("hertel-dev"), DB CACHE: 128
 
 // Executed Command:
-// ./target/release/tidechain
+// target/release/tidechain
 // benchmark
 // --chain=hertel-dev
 // --steps=50
@@ -32,7 +32,7 @@
 // --wasm-execution=compiled
 // --heap-pages=4096
 // --header=./file_header.txt
-// --output=./runtime/hertel/src/weights/pallet_tidefi_stake.rs
+// --output=./runtime/hertel/src/weights/
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -56,7 +56,7 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	// Storage: TidefiStaking InterestCompoundLastSession (r:1 w:0)
 	// Storage: TidefiStaking CounterForAccountStakes (r:1 w:1)
 	fn stake() -> Weight {
-		(140_000_000 as Weight)
+		(126_572_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
@@ -67,7 +67,7 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	// Storage: Assets Account (r:2 w:2)
 	// Storage: TidefiStaking UnstakeQueue (r:1 w:1)
 	fn unstake() -> Weight {
-		(97_000_000 as Weight)
+		(93_547_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
