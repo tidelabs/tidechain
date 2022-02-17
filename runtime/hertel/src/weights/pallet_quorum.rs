@@ -26,7 +26,7 @@
 // --chain=hertel-dev
 // --steps=50
 // --repeat=20
-// --pallet=pallet_quorum
+// --pallet=*
 // --extrinsic=*
 // --execution=wasm
 // --wasm-execution=compiled
@@ -47,13 +47,13 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum QuorumAccountId (r:1 w:0)
 	// Storage: Quorum QuorumStatus (r:0 w:1)
 	fn set_status() -> Weight {
-		(19_799_000 as Weight)
+		(20_385_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Quorum QuorumAccountId (r:1 w:1)
 	fn set_account_id() -> Weight {
-		(22_811_000 as Weight)
+		(21_415_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -64,7 +64,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
 	fn confirm_withdrawal() -> Weight {
-		(71_481_000 as Weight)
+		(72_908_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -72,7 +72,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum QuorumStatus (r:1 w:0)
 	// Storage: Quorum QuorumAccountId (r:1 w:0)
 	fn mint() -> Weight {
-		(60_258_000 as Weight)
+		(69_006_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
 }
