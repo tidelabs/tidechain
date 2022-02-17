@@ -17,6 +17,8 @@ pub use pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "tidefi::staking";
 
+pub mod migrations;
+
 // syntactic sugar for logging.
 #[macro_export]
 macro_rules! log {
@@ -227,6 +229,10 @@ pub mod pallet {
 
   #[pallet::hooks]
   impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+    fn on_runtime_upgrade() -> frame_support::weights::Weight {
+      migrations::migrate_to_v1::<T, Self>()
+    }
+
     /// Try to compute when chain is idle
     fn on_idle(_n: BlockNumberFor<T>, mut remaining_weight: Weight) -> Weight {
       let do_next_compound_interest_operation_weight =
