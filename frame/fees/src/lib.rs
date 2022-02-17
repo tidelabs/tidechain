@@ -9,6 +9,8 @@ mod tests;
 pub mod weights;
 pub use weights::*;
 
+mod migrations;
+
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
@@ -20,7 +22,7 @@ macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
 			target: crate::LOG_TARGET,
-			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+			concat!("[{:?}] 💸 ", $patter), T::Security::get_current_block_count() $(, $values)*
 		)
 	};
 }
@@ -34,7 +36,7 @@ pub mod pallet {
     pallet_prelude::*,
     traits::{
       tokens::fungibles::{Inspect, Mutate, Transfer},
-      UnixTime,
+      StorageVersion, UnixTime,
     },
     PalletId,
   };
@@ -48,6 +50,9 @@ pub mod pallet {
     pallet::{FeesExt, SecurityExt, StakingExt},
     ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex,
   };
+
+  /// The current storage version.
+  const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -97,6 +102,7 @@ pub mod pallet {
 
   #[pallet::pallet]
   #[pallet::generate_store(pub (super) trait Store)]
+  #[pallet::storage_version(STORAGE_VERSION)]
   pub struct Pallet<T>(_);
 
   /// The active era information, it holds index and start.
@@ -221,6 +227,10 @@ pub mod pallet {
   // hooks
   #[pallet::hooks]
   impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+    fn on_runtime_upgrade() -> frame_support::weights::Weight {
+      migrations::migrate_to_v1::<T, Self>()
+    }
+
     fn on_initialize(_now: T::BlockNumber) -> Weight {
       // just return the weight of the on_finalize.
       T::DbWeight::get().reads(2)

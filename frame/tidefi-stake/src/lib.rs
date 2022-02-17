@@ -17,7 +17,7 @@ pub use pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "tidefi::staking";
 
-pub mod migrations;
+mod migrations;
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -37,7 +37,10 @@ pub mod pallet {
     inherent::Vec,
     log,
     pallet_prelude::*,
-    traits::tokens::fungibles::{Inspect, Mutate, Transfer},
+    traits::{
+      tokens::fungibles::{Inspect, Mutate, Transfer},
+      StorageVersion,
+    },
     BoundedVec, PalletId,
   };
   use frame_system::pallet_prelude::*;
@@ -46,6 +49,9 @@ pub mod pallet {
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake,
   };
+
+  /// The current storage version.
+  const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -86,6 +92,7 @@ pub mod pallet {
 
   #[pallet::pallet]
   #[pallet::generate_store(pub (super) trait Store)]
+  #[pallet::storage_version(STORAGE_VERSION)]
   pub struct Pallet<T>(_);
 
   /// Staking pool
