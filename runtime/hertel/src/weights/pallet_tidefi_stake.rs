@@ -26,7 +26,7 @@
 // --chain=hertel-dev
 // --steps=50
 // --repeat=20
-// --pallet=*
+// --pallet=pallet_tidefi_stake
 // --extrinsic=*
 // --execution=wasm
 // --wasm-execution=compiled
@@ -56,7 +56,7 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	// Storage: TidefiStaking InterestCompoundLastSession (r:1 w:0)
 	// Storage: TidefiStaking CounterForAccountStakes (r:1 w:1)
 	fn stake() -> Weight {
-		(117_562_000 as Weight)
+		(126_572_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
@@ -67,7 +67,7 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 	// Storage: Assets Account (r:2 w:2)
 	// Storage: TidefiStaking UnstakeQueue (r:1 w:1)
 	fn unstake() -> Weight {
-		(97_000_000 as Weight)
+		(93_547_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
