@@ -54,7 +54,8 @@ parameter_types! {
   // ~ 5 mins
   pub const BlocksPerSession: BlockNumber = 50;
   // Staking: Number of blocks to wait before unstaking when we force-unstake.
-  pub const BlocksForceUnstake: BlockNumber = 14_400;
+  // FIXME: Should be reverted to `14_400`
+  pub const BlocksForceUnstake: BlockNumber = 100;
 
 }
 

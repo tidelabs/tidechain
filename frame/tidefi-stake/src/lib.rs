@@ -17,6 +17,8 @@ pub use pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "tidefi::staking";
 
+mod migrations;
+
 // syntactic sugar for logging.
 #[macro_export]
 macro_rules! log {
@@ -35,7 +37,10 @@ pub mod pallet {
     inherent::Vec,
     log,
     pallet_prelude::*,
-    traits::tokens::fungibles::{Inspect, Mutate, Transfer},
+    traits::{
+      tokens::fungibles::{Inspect, Mutate, Transfer},
+      StorageVersion,
+    },
     BoundedVec, PalletId,
   };
   use frame_system::pallet_prelude::*;
@@ -44,6 +49,9 @@ pub mod pallet {
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake,
   };
+
+  /// The current storage version.
+  const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -84,6 +92,7 @@ pub mod pallet {
 
   #[pallet::pallet]
   #[pallet::generate_store(pub (super) trait Store)]
+  #[pallet::storage_version(STORAGE_VERSION)]
   pub struct Pallet<T>(_);
 
   /// Staking pool
@@ -164,6 +173,8 @@ pub mod pallet {
         // 1%
         unstake_fee: Percent::from_parts(1),
         staking_periods: vec![
+          // FIXME: Remove the 15 minutes after our tests
+          (150_u32.into(), Percent::from_parts(1)),
           ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
           ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
           ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
@@ -227,6 +238,10 @@ pub mod pallet {
 
   #[pallet::hooks]
   impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+    fn on_runtime_upgrade() -> frame_support::weights::Weight {
+      migrations::migrate_to_v1::<T, Self>()
+    }
+
     /// Try to compute when chain is idle
     fn on_idle(_n: BlockNumberFor<T>, mut remaining_weight: Weight) -> Weight {
       let do_next_compound_interest_operation_weight =
@@ -320,40 +335,8 @@ pub mod pallet {
       );
 
       // create unique hash
-      let unique_stake_request_id = <T as Config>::Security::get_unique_id(account_id.clone());
-
-      // 3. Transfer the funds into the staking pool
-      T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount)
-        .into_result()
-        .map_err(|_| Error::<T>::InsufficientBalance)?;
-
-      T::CurrencyTidefi::transfer(currency_id, &account_id, &Self::account_id(), amount, false)?;
-
-      // 4. Update our `StakingPool` storage
-      StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
-        if let Some(b) = balance {
-          *balance = Some(b.checked_add(amount).ok_or(ArithmeticError::Overflow)?);
-        } else {
-          *balance = Some(amount)
-        }
-        Ok(())
-      })?;
-
-      // 5. Insert the new staking
-      let initial_block = T::Security::get_current_block_count();
-      AccountStakes::<T>::mutate(account_id.clone(), |stake| -> DispatchResult {
-        stake
-          .try_push(Stake {
-            currency_id,
-            unique_id: unique_stake_request_id,
-            last_session_index_compound: InterestCompoundLastSession::<T>::get(),
-            initial_block,
-            initial_balance: amount,
-            principal: amount,
-            duration,
-          })
-          .map_err(|_| DispatchError::Other("Invalid stake; eqd"))
-      })?;
+      let unique_stake_request_id =
+        Self::add_account_stake(&account_id, currency_id, amount, duration)?;
 
       // 6. Emit event on chain
       Self::deposit_event(Event::<T>::Staked {
@@ -451,6 +434,51 @@ pub mod pallet {
       <T as pallet::Config>::StakePalletId::get().into_account()
     }
 
+    pub fn add_account_stake(
+      account_id: &T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+      duration: T::BlockNumber,
+    ) -> Result<Hash, DispatchError> {
+      // create unique hash
+      let unique_stake_request_id = <T as Config>::Security::get_unique_id(account_id.clone());
+
+      // 3. Transfer the funds into the staking pool
+      T::CurrencyTidefi::can_withdraw(currency_id, account_id, amount)
+        .into_result()
+        .map_err(|_| Error::<T>::InsufficientBalance)?;
+
+      T::CurrencyTidefi::transfer(currency_id, account_id, &Self::account_id(), amount, false)?;
+
+      // 4. Update our `StakingPool` storage
+      StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
+        if let Some(b) = balance {
+          *balance = Some(b.checked_add(amount).ok_or(ArithmeticError::Overflow)?);
+        } else {
+          *balance = Some(amount)
+        }
+        Ok(())
+      })?;
+
+      // 5. Insert the new staking
+      let initial_block = T::Security::get_current_block_count();
+      AccountStakes::<T>::mutate(account_id.clone(), |stake| -> DispatchResult {
+        stake
+          .try_push(Stake {
+            currency_id,
+            unique_id: unique_stake_request_id,
+            last_session_index_compound: InterestCompoundLastSession::<T>::get(),
+            initial_block,
+            initial_balance: amount,
+            principal: amount,
+            duration,
+          })
+          .map_err(|_| DispatchError::Other("Invalid stake; eqd"))
+      })?;
+
+      Ok(unique_stake_request_id)
+    }
+
     fn get_account_stake(
       account_id: &T::AccountId,
       stake_id: Hash,
@@ -483,10 +511,12 @@ pub mod pallet {
           )
           .map_err(|_| Error::<T>::TransferFailed)?;
 
-          stakes.retain(|stake| stake.unique_id != stake_id);
-          if stakes.is_empty() {
+          if stakes.len() > 1 {
+            stakes.retain(|stake| stake.unique_id != stake_id);
+          } else {
             *account_stakes = None;
           }
+
           Ok(())
         }
       })?;
@@ -608,35 +638,56 @@ pub mod pallet {
     #[inline]
     pub fn do_next_unstake_operation(max_weight: Weight) -> Result<(Weight, bool), DispatchError> {
       let weight_per_iteration = <T as frame_system::Config>::DbWeight::get().reads_writes(2, 2);
-      // cost one more get but add a little security
-      if Self::unstake_queue().is_empty() {
+      let unstake_queue = Self::unstake_queue();
+      if unstake_queue.is_empty() {
         return Ok((weight_per_iteration, false));
       }
 
+      log!(
+        trace,
+        "Running next queued unstake operation with a queue size of {}.",
+        unstake_queue.len()
+      );
+
       let max_iterations = if weight_per_iteration == 0 {
-        100
+        1
       } else {
         max_weight / weight_per_iteration
       };
 
-      let mut current_iterations = 0;
-      UnstakeQueue::<T>::try_mutate(|q| -> DispatchResult {
-        for (pos, (account_id, stake_id, expiration)) in q.clone().iter().enumerate() {
-          if *expiration <= T::Security::get_current_block_count() {
-            Self::process_unstake(&account_id, *stake_id)?;
-            q.remove(pos);
-          }
-          current_iterations += 1;
+      let mut keep_going_in_loop = Some(0);
+      let mut total_weight = weight_per_iteration;
+      while let Some(current_iterations) = keep_going_in_loop {
+        Self::do_unstake_queue_front()?;
 
-          if current_iterations >= max_iterations {
-            break;
-          }
+        total_weight += weight_per_iteration;
+        if current_iterations >= max_iterations || current_iterations >= unstake_queue.len() as u64
+        {
+          keep_going_in_loop = None;
+        } else {
+          keep_going_in_loop = Some(current_iterations + 1);
         }
+      }
 
-        Ok(())
-      })?;
+      Ok((total_weight, false))
+    }
 
-      Ok((current_iterations * weight_per_iteration, false))
+    fn do_unstake_queue_front() -> Result<(), DispatchError> {
+      let unstake_queue = Self::unstake_queue();
+      if unstake_queue.is_empty() {
+        return Ok(());
+      }
+
+      let (account_id, stake_id, expiration) = &unstake_queue[0];
+
+      if T::Security::get_current_block_count() < *expiration {
+        return Ok(());
+      }
+
+      Self::process_unstake(&account_id, *stake_id)?;
+      UnstakeQueue::<T>::mutate(|v| v.remove(0));
+
+      Ok(())
     }
 
     // Get all stakes for the account, serialized for quick RPC call

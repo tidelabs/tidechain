@@ -60,4 +60,15 @@ impl<T: frame_system::Config> pallet_tidefi_stake::WeightInfo for WeightInfo<T> 
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
+	// Storage: TidefiStaking AccountStakes (r:1 w:0)
+	// Storage: Security CurrentBlockCount (r:1 w:0)
+	// Storage: TidefiStaking UnstakeFee (r:1 w:0)
+	// Storage: Assets Asset (r:1 w:1)
+	// Storage: Assets Account (r:2 w:2)
+	// Storage: TidefiStaking UnstakeQueue (r:1 w:1)
+	fn unstake() -> Weight {
+		(97_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(7 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
 }
