@@ -335,40 +335,8 @@ pub mod pallet {
       );
 
       // create unique hash
-      let unique_stake_request_id = <T as Config>::Security::get_unique_id(account_id.clone());
-
-      // 3. Transfer the funds into the staking pool
-      T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount)
-        .into_result()
-        .map_err(|_| Error::<T>::InsufficientBalance)?;
-
-      T::CurrencyTidefi::transfer(currency_id, &account_id, &Self::account_id(), amount, false)?;
-
-      // 4. Update our `StakingPool` storage
-      StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
-        if let Some(b) = balance {
-          *balance = Some(b.checked_add(amount).ok_or(ArithmeticError::Overflow)?);
-        } else {
-          *balance = Some(amount)
-        }
-        Ok(())
-      })?;
-
-      // 5. Insert the new staking
-      let initial_block = T::Security::get_current_block_count();
-      AccountStakes::<T>::mutate(account_id.clone(), |stake| -> DispatchResult {
-        stake
-          .try_push(Stake {
-            currency_id,
-            unique_id: unique_stake_request_id,
-            last_session_index_compound: InterestCompoundLastSession::<T>::get(),
-            initial_block,
-            initial_balance: amount,
-            principal: amount,
-            duration,
-          })
-          .map_err(|_| DispatchError::Other("Invalid stake; eqd"))
-      })?;
+      let unique_stake_request_id =
+        Self::add_account_stake(&account_id, currency_id, amount, duration)?;
 
       // 6. Emit event on chain
       Self::deposit_event(Event::<T>::Staked {
@@ -464,6 +432,51 @@ pub mod pallet {
   impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
       <T as pallet::Config>::StakePalletId::get().into_account()
+    }
+
+    pub fn add_account_stake(
+      account_id: &T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+      duration: T::BlockNumber,
+    ) -> Result<Hash, DispatchError> {
+      // create unique hash
+      let unique_stake_request_id = <T as Config>::Security::get_unique_id(account_id.clone());
+
+      // 3. Transfer the funds into the staking pool
+      T::CurrencyTidefi::can_withdraw(currency_id, account_id, amount)
+        .into_result()
+        .map_err(|_| Error::<T>::InsufficientBalance)?;
+
+      T::CurrencyTidefi::transfer(currency_id, account_id, &Self::account_id(), amount, false)?;
+
+      // 4. Update our `StakingPool` storage
+      StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
+        if let Some(b) = balance {
+          *balance = Some(b.checked_add(amount).ok_or(ArithmeticError::Overflow)?);
+        } else {
+          *balance = Some(amount)
+        }
+        Ok(())
+      })?;
+
+      // 5. Insert the new staking
+      let initial_block = T::Security::get_current_block_count();
+      AccountStakes::<T>::mutate(account_id.clone(), |stake| -> DispatchResult {
+        stake
+          .try_push(Stake {
+            currency_id,
+            unique_id: unique_stake_request_id,
+            last_session_index_compound: InterestCompoundLastSession::<T>::get(),
+            initial_block,
+            initial_balance: amount,
+            principal: amount,
+            duration,
+          })
+          .map_err(|_| DispatchError::Other("Invalid stake; eqd"))
+      })?;
+
+      Ok(unique_stake_request_id)
     }
 
     fn get_account_stake(
