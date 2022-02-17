@@ -316,7 +316,6 @@ impl MutateHold<AccountId> for Adapter<AccountId> {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
@@ -329,10 +328,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
-  pallet_assets::GenesisConfig::<Test> {
-    assets: vec![(4294967295, alice, true, 1)],
-    metadata: vec![(4294967295, "Test".into(), "TEST".into(), 6)],
-    accounts: vec![],
+  pallet_asset_registry::GenesisConfig::<Test> {
+    assets: vec![(
+      CurrencyId::Wrapped(2),
+      "Test".into(),
+      "TEST".into(),
+      8,
+      vec![],
+    )],
+    account: 0,
   }
   .assimilate_storage(&mut t)
   .unwrap();

@@ -400,10 +400,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
   pallet_asset_registry::GenesisConfig::<Test> {
     assets: vec![(
-      CurrencyId::Wrapped(4294967295),
+      CurrencyId::Wrapped(2),
       "Test".into(),
       "TEST".into(),
-      6,
+      8,
       vec![],
     )],
     account: 0,

@@ -14,7 +14,7 @@ use frame_support::{
 };
 use tidefi_primitives::{pallet::StakingExt, CurrencyId};
 
-const TEST_TOKEN: u32 = 4294967295;
+const TEST_TOKEN: u32 = 2;
 const FIFTEEN_DAYS: BlockNumber = 14400 * 15;
 
 #[test]

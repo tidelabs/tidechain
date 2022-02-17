@@ -6,7 +6,7 @@ use frame_system::RawOrigin;
 use tidefi_primitives::CurrencyId;
 const INITIAL_AMOUNT: u128 = 500_000_000_000_000;
 const IA_MULTIPLIER: u32 = 2;
-const TEST_TOKEN: u32 = 4294967295;
+const TEST_TOKEN: u32 = 2;
 
 benchmarks! {
    withdrawal {
