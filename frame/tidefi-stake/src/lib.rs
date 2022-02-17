@@ -166,6 +166,8 @@ pub mod pallet {
         // 1%
         unstake_fee: Percent::from_parts(1),
         staking_periods: vec![
+          // FIXME: Remove the 15 minutes after our tests
+          (150_u32.into(), Percent::from_parts(1)),
           ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
           ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
           ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
@@ -489,10 +491,12 @@ pub mod pallet {
           )
           .map_err(|_| Error::<T>::TransferFailed)?;
 
-          stakes.retain(|stake| stake.unique_id != stake_id);
-          if stakes.is_empty() {
+          if stakes.len() > 1 {
+            stakes.retain(|stake| stake.unique_id != stake_id);
+          } else {
             *account_stakes = None;
           }
+
           Ok(())
         }
       })?;
@@ -614,35 +618,56 @@ pub mod pallet {
     #[inline]
     pub fn do_next_unstake_operation(max_weight: Weight) -> Result<(Weight, bool), DispatchError> {
       let weight_per_iteration = <T as frame_system::Config>::DbWeight::get().reads_writes(2, 2);
-      // cost one more get but add a little security
-      if Self::unstake_queue().is_empty() {
+      let unstake_queue = Self::unstake_queue();
+      if unstake_queue.is_empty() {
         return Ok((weight_per_iteration, false));
       }
 
+      log!(
+        trace,
+        "Running next queued unstake operation with a queue size of {}.",
+        unstake_queue.len()
+      );
+
       let max_iterations = if weight_per_iteration == 0 {
-        100
+        1
       } else {
         max_weight / weight_per_iteration
       };
 
-      let mut current_iterations = 0;
-      UnstakeQueue::<T>::try_mutate(|q| -> DispatchResult {
-        for (pos, (account_id, stake_id, expiration)) in q.clone().iter().enumerate() {
-          if *expiration <= T::Security::get_current_block_count() {
-            Self::process_unstake(&account_id, *stake_id)?;
-            q.remove(pos);
-          }
-          current_iterations += 1;
+      let mut keep_going_in_loop = Some(0);
+      let mut total_weight = weight_per_iteration;
+      while let Some(current_iterations) = keep_going_in_loop {
+        Self::do_unstake_queue_front()?;
 
-          if current_iterations >= max_iterations {
-            break;
-          }
+        total_weight += weight_per_iteration;
+        if current_iterations >= max_iterations || current_iterations >= unstake_queue.len() as u64
+        {
+          keep_going_in_loop = None;
+        } else {
+          keep_going_in_loop = Some(current_iterations + 1);
         }
+      }
 
-        Ok(())
-      })?;
+      Ok((total_weight, false))
+    }
 
-      Ok((current_iterations * weight_per_iteration, false))
+    fn do_unstake_queue_front() -> Result<(), DispatchError> {
+      let unstake_queue = Self::unstake_queue();
+      if unstake_queue.is_empty() {
+        return Ok(());
+      }
+
+      let (account_id, stake_id, expiration) = &unstake_queue[0];
+
+      if T::Security::get_current_block_count() < *expiration {
+        return Ok(());
+      }
+
+      Self::process_unstake(&account_id, *stake_id)?;
+      UnstakeQueue::<T>::mutate(|v| v.remove(0));
+
+      Ok(())
     }
 
     // Get all stakes for the account, serialized for quick RPC call
