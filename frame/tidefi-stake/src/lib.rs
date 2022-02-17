@@ -17,6 +17,8 @@ pub use pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "tidefi::staking";
 
+mod migrations;
+
 // syntactic sugar for logging.
 #[macro_export]
 macro_rules! log {
@@ -35,7 +37,10 @@ pub mod pallet {
     inherent::Vec,
     log,
     pallet_prelude::*,
-    traits::tokens::fungibles::{Inspect, Mutate, Transfer},
+    traits::{
+      tokens::fungibles::{Inspect, Mutate, Transfer},
+      StorageVersion,
+    },
     BoundedVec, PalletId,
   };
   use frame_system::pallet_prelude::*;
@@ -44,6 +49,9 @@ pub mod pallet {
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake,
   };
+
+  /// The current storage version.
+  const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -84,6 +92,7 @@ pub mod pallet {
 
   #[pallet::pallet]
   #[pallet::generate_store(pub (super) trait Store)]
+  #[pallet::storage_version(STORAGE_VERSION)]
   pub struct Pallet<T>(_);
 
   /// Staking pool
@@ -229,6 +238,10 @@ pub mod pallet {
 
   #[pallet::hooks]
   impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+    fn on_runtime_upgrade() -> frame_support::weights::Weight {
+      migrations::migrate_to_v1::<T, Self>()
+    }
+
     /// Try to compute when chain is idle
     fn on_idle(_n: BlockNumberFor<T>, mut remaining_weight: Weight) -> Weight {
       let do_next_compound_interest_operation_weight =
