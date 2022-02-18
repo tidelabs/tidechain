@@ -573,26 +573,28 @@ pub mod pallet {
                     // loop trough all stake for this currency for this account
                     let mut final_stake = staking_details.clone();
                     for active_stake in final_stake.as_mut().iter_mut() {
-                      // FIXME: we could probably find the closest reward
-                      // but in theory this should never happens
-                      let available_reward = StakingPeriodRewards::<T>::get()
-                        .into_iter()
-                        .find(|(duration, _)| *duration == active_stake.duration)
-                        .map(|(_, reward)| reward)
-                        .unwrap_or_else(Percent::zero)
-                        * session_fee_for_currency;
+                      if T::Security::get_current_block_count()
+                        <= current_stake.initial_block + current_stake.duration
+                      {
+                        // FIXME: we could probably find the closest reward
+                        // but in theory this should never happens
+                        let available_reward = StakingPeriodRewards::<T>::get()
+                          .into_iter()
+                          .find(|(duration, _)| *duration == active_stake.duration)
+                          .map(|(_, reward)| reward)
+                          .unwrap_or_else(Percent::zero)
+                          * session_fee_for_currency;
 
-                      // calculate proportional reward base on the stake pool
-                      let staking_pool_percentage = Perquintill::from_rational(
-                        active_stake.initial_balance,
-                        staking_pool_for_this_currency,
-                      );
+                        // calculate proportional reward base on the stake pool
+                        let staking_pool_percentage = Perquintill::from_rational(
+                          active_stake.initial_balance,
+                          staking_pool_for_this_currency,
+                        );
 
-                      let proportional_reward = staking_pool_percentage * available_reward;
-
-                      active_stake.principal =
-                        active_stake.principal.saturating_add(proportional_reward);
-
+                        let proportional_reward = staking_pool_percentage * available_reward;
+                        active_stake.principal =
+                          active_stake.principal.saturating_add(proportional_reward);
+                      }
                       // update the last session index for this stake
                       active_stake.last_session_index_compound = session_to_index;
 
