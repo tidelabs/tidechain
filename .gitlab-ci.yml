@@ -153,18 +153,23 @@ test-build-linux-stable:
     - if: $CI_COMMIT_BRANCH =~ /^chore/ # Chore
     - if: $CI_COMMIT_BRANCH =~ /^fix/ # Fix
   script:
+    - cargo install cargo-deb
     - ./scripts/gitlab/test_linux_stable.sh
     # we're using the bin built here, instead of having a parallel `build-linux-release`
     # disputes feature is needed for zombie-net parachains malus test
     - time cargo build --release --verbose --bin tidechain
+    - time cargo deb --no-build
     - sccache -s
     # pack artifacts
     - mkdir -p ./artifacts
     - VERSION="${CI_COMMIT_REF_NAME}" # will be tag or branch name
     - mv ./target/release/tidechain ./artifacts/.
+    - mv ./target/debian/tidechain_*_amd64.deb ./artifacts/tidechain.deb
     - pushd artifacts
     - sha256sum tidechain | tee tidechain.sha256
     - shasum -c tidechain.sha256
+    - sha256sum tidechain.deb | tee tidechain.deb.sha256
+    - shasum -c tidechain.deb.sha256
     - popd
     - EXTRATAG="$(./artifacts/tidechain --version |
       sed -n -r 's/^tidechain ([0-9.]+.*-[0-9a-f]{7,13})-.*$/\1/p')"
@@ -292,6 +297,8 @@ publish-s3-release: &publish-s3
   rules:
     # publishing binaries nightly
     - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_REF_NAME == "dev"
+    - if: $CI_COMMIT_REF_NAME =~ /^v[0-9]+\.[0-9]+.*$/ # i.e. v1.0, v2.1rc1
   before_script:
     - test -s ./artifacts/VERSION || exit 1
     - test -s ./artifacts/EXTRATAG || exit 1
@@ -315,6 +322,11 @@ publish-s3-release: &publish-s3
       |
       |  - https://releases.tidefi.io/${PREFIX}/${EXTRATAG}/tidechain
       |  - https://releases.tidefi.io/${PREFIX}/${VERSION}/tidechain
+      |
+      |  tidechain packages paths:
+      |
+      |  - https://releases.tidefi.io/${PREFIX}/${EXTRATAG}/tidechain.deb
+      |  - https://releases.tidefi.io/${PREFIX}/${VERSION}/tidechain.deb
       |
       EOM
   after_script:
