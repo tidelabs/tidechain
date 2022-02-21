@@ -57,13 +57,13 @@ Note that compilation is a memory intensive process. We recommend having 4 GiB o
 #### Build from Source with Docker
 
 You can also build from source using
-[Parity CI docker image](https://github.com/paritytech/scripts/tree/master/dockerfiles/ci-linux):
+[Tidechain CI docker image](https://hub.docker.com/r/tidelabs/tidechain-ci):
 
 ```bash
 git checkout <latest tagged release>
 docker run --rm -it -w /shellhere/tidechain \
                     -v $(pwd):/tidechain/polkadot \
-                    paritytech/ci-linux:production cargo build --release
+                    tidelabs/tidechain-ci:latest cargo build --release
 sudo chown -R $(id -u):$(id -g) target/
 ```
 
