@@ -308,8 +308,6 @@ pub fn confirm_swap_partial_filling() {
       15_000_000_000_000 - 5_000_000_000_000
     );
 
-    println!("EVENTS {:?}", System::events());
-
     // swap confirmation for bob (user)
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_id,
