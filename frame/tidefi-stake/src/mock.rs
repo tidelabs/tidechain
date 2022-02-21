@@ -18,11 +18,11 @@ use sp_core::H256;
 use sp_runtime::{
   generic::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult,
+  DispatchError, DispatchResult, Percent,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::{BlockNumber, CurrencyId};
+use tidefi_primitives::{BlockNumber, CurrencyId, StakeCurrencyMeta};
 
 use crate::pallet as pallet_tidefi_stake;
 
@@ -324,9 +324,28 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
-  pallet_tidefi_stake::GenesisConfig::<Test>::default()
-    .assimilate_storage(&mut t)
-    .unwrap();
+  pallet_tidefi_stake::GenesisConfig::<Test> {
+    unstake_fee: Percent::from_parts(1),
+    staking_periods: vec![
+      // FIXME: Remove the 15 minutes after our tests
+      (150_u32.into(), Percent::from_parts(1)),
+      ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+      ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+      ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+      ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+    ],
+    staking_meta: vec![(
+      CurrencyId::Wrapped(2),
+      StakeCurrencyMeta {
+        // 0.00000100 BTC
+        minimum_amount: 100,
+        // 5 btc
+        maximum_amount: 500_000_000,
+      },
+    )],
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
 
   pallet_asset_registry::GenesisConfig::<Test> {
     assets: vec![(

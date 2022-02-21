@@ -47,7 +47,7 @@ pub mod pallet {
   use sp_runtime::{traits::AccountIdConversion, ArithmeticError, Percent, Perquintill};
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
-    Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake,
+    Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta,
   };
 
   /// The current storage version.
@@ -106,6 +106,12 @@ pub mod pallet {
   pub type StakingPeriodRewards<T: Config> =
     StorageValue<_, Vec<(T::BlockNumber, Percent)>, ValueQuery>;
 
+  /// Staking metadata defined by the council (minimum and maximum stake amount)
+  #[pallet::storage]
+  #[pallet::getter(fn staking_meta)]
+  pub type StakingCurrencyMeta<T: Config> =
+    StorageMap<_, Blake2_128Concat, CurrencyId, StakeCurrencyMeta<Balance>>;
+
   /// The percentage of fee when unstake is done before the ending.
   #[pallet::storage]
   #[pallet::getter(fn unstake_fee)]
@@ -162,6 +168,7 @@ pub mod pallet {
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
     pub staking_periods: Vec<(T::BlockNumber, Percent)>,
+    pub staking_meta: Vec<(CurrencyId, StakeCurrencyMeta<Balance>)>,
     pub unstake_fee: Percent,
   }
 
@@ -180,6 +187,7 @@ pub mod pallet {
           ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
           ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
         ],
+        staking_meta: Vec::new(),
       }
     }
   }
@@ -189,6 +197,10 @@ pub mod pallet {
     fn build(&self) {
       StakingPeriodRewards::<T>::put(self.staking_periods.clone());
       UnstakeFee::<T>::put(self.unstake_fee.clone());
+
+      for (currency_id, staking_meta) in self.staking_meta.clone() {
+        StakingCurrencyMeta::<T>::insert(currency_id, staking_meta);
+      }
     }
   }
 
@@ -234,6 +246,10 @@ pub mod pallet {
     TransferFeesFailed,
     /// Something went wrong with funds transfer
     TransferFailed,
+    /// The staked amount is below the minimum stake amount for this currency.
+    AmountTooSmall,
+    /// The staked amount is above the maximum stake amount for this currency.
+    AmountTooLarge,
   }
 
   #[pallet::hooks]
@@ -334,11 +350,23 @@ pub mod pallet {
         Error::<T>::InvalidDuration
       );
 
+      // 3. If we have the metadata of this currency, make sure the amount isn't too low or too high
+      if let Some(currency_meta) = StakingCurrencyMeta::<T>::get(currency_id) {
+        ensure!(
+          amount >= currency_meta.minimum_amount,
+          Error::<T>::AmountTooSmall
+        );
+        ensure!(
+          amount <= currency_meta.maximum_amount,
+          Error::<T>::AmountTooLarge
+        );
+      }
+
       // create unique hash
       let unique_stake_request_id =
         Self::add_account_stake(&account_id, currency_id, amount, duration)?;
 
-      // 6. Emit event on chain
+      // 4. Emit event on chain
       Self::deposit_event(Event::<T>::Staked {
         request_id: unique_stake_request_id,
         account_id,

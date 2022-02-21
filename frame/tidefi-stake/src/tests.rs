@@ -43,14 +43,15 @@ pub fn should_stake_wrapped_asset() {
     assert_ok!(TidefiStaking::stake(
       alice_origin,
       CurrencyId::Wrapped(TEST_TOKEN),
-      1_000_000_000,
+      // maximum amount
+      500_000_000,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated
     assert_eq!(
       TidefiStaking::staking_pool(CurrencyId::Wrapped(TEST_TOKEN)),
-      Some(1_000_000_000)
+      Some(500_000_000)
     );
 
     // make sure the staking has been recorded in the storage
@@ -60,7 +61,29 @@ pub fn should_stake_wrapped_asset() {
         .first()
         .unwrap()
         .initial_balance
-        == 1_000_000_000
+        == 500_000_000
+    );
+  });
+}
+
+#[test]
+pub fn should_fails_amount_too_small() {
+  new_test_ext().execute_with(|| {
+    let alice = 1u64;
+    let alice_origin = Origin::signed(alice);
+
+    // mint token to user
+    Adapter::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &alice, 1_000_000_000_000)
+      .expect("Unable to mint token");
+
+    assert_noop!(
+      TidefiStaking::stake(
+        alice_origin,
+        CurrencyId::Wrapped(TEST_TOKEN),
+        10,
+        FIFTEEN_DAYS
+      ),
+      Error::<Test>::AmountTooSmall,
     );
   });
 }
