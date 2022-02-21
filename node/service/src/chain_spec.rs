@@ -12,11 +12,13 @@ use sp_core::{blake2_256, crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
-  Perbill,
+  Perbill, Percent,
 };
 use strum::IntoEnumIterator;
 // Tidechain primitives
-use tidefi_primitives::{assets, AccountId, AssetId, Balance, Block, CurrencyId, Signature};
+use tidefi_primitives::{
+  assets, AccountId, AssetId, Balance, Block, CurrencyId, Signature, StakeCurrencyMeta,
+};
 
 #[cfg(feature = "tidechain-native")]
 const TIDECHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
@@ -254,7 +256,7 @@ fn hertel_testnet_genesis(
       account: root,
     },
     security: Default::default(),
-    tidefi_staking: Default::default(),
+    tidefi_staking: crate::tidefi_staking_genesis!(hertel_runtime),
     fees: Default::default(),
   }
 }
@@ -414,7 +416,7 @@ fn tidechain_testnet_genesis(
       account: asset_registry,
     },
     security: Default::default(),
-    tidefi_staking: Default::default(),
+    tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
     fees: Default::default(),
   }
 }
@@ -852,6 +854,35 @@ fn tidechain_local_testnet_config_genesis(wasm_binary: &[u8]) -> tidechain_runti
 mod helpers {
   use super::*;
   type AccountPublic = <Signature as Verify>::Signer;
+
+  // syntactic sugar for tidefi staking genesis config.
+  #[macro_export]
+  macro_rules! tidefi_staking_genesis {
+    ($runtime:tt) => {
+      $runtime::TidefiStakingConfig {
+        staking_periods: vec![
+          // FIXME: Remove the 15 minutes after our tests
+          (150_u32.into(), Percent::from_parts(1)),
+          ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+          ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+          ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+          ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+        ],
+        staking_meta: assets::Asset::iter()
+          .map(|asset| {
+            (
+              asset.currency_id(),
+              StakeCurrencyMeta {
+                minimum_amount: asset.default_minimum_stake_amount(),
+                maximum_amount: asset.default_maximum_stake_amount(),
+              },
+            )
+          })
+          .collect(),
+        unstake_fee: Percent::from_parts(1),
+      }
+    };
+  }
 
   /// Helper function to generate a crypto pair from seed
   pub(crate) fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
