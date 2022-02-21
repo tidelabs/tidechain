@@ -5,7 +5,7 @@ ARG VCS_REF
 ARG BUILD_DATE
 ARG IMAGE_NAME
 
-LABEL com.semantic-network.image.authors="devops-team@semantic-network.com" \
+LABEL com.semantic-network.image.authors="ops@semantic-network.com" \
 	com.semantic-network.image.vendor="Semantic Network" \
 	com.semantic-network.image.title="${IMAGE_NAME}" \
 	com.semantic-network.image.description="Tidechain" \

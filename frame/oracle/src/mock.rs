@@ -4,9 +4,10 @@ use frame_support::{
   parameter_types,
   traits::{
     fungible::{
-      Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
+      Inspect as FungibleInspect, InspectHold as FungibleInspectHold, Mutate as FungibleMutate,
+      MutateHold as FungibleMutateHold, Transfer as FungibleTransfer,
     },
-    fungibles::{Inspect, Mutate, Transfer},
+    fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
     ConstU128, ConstU32, GenesisBuild,
   },
   PalletId,
@@ -20,7 +21,7 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -36,11 +37,13 @@ frame_support::construct_runtime!(
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
+    AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
     Fees: pallet_fees::{Pallet, Storage, Event<T>},
+    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
+    TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
 
@@ -122,7 +125,15 @@ impl pallet_balances::Config for Test {
 parameter_types! {
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const FeesPalletId: PalletId = PalletId(*b"wrpr*pab");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
+  pub const StakePalletId: PalletId = PalletId(*b"stak*pal");
   pub const MinimumPeriod: u64 = 5;
+  pub const SessionsPerEra: SessionIndex = 10;
+  pub const SessionsArchive: SessionIndex = 2;
+  pub const BlocksPerSession: BlockNumber = 50;
+  pub const BlocksForceUnstake: BlockNumber = 10;
+  pub const StakeAccountCap: u32 = 10;
+  pub const UnstakeQueueCap: u32 = 100;
 }
 
 impl pallet_oracle::Config for Test {
@@ -138,16 +149,37 @@ impl pallet_security::Config for Test {
   type Event = Event;
 }
 
+impl pallet_tidefi_stake::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Test>;
+  type StakePalletId = StakePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type StakeAccountCap = StakeAccountCap;
+  type UnstakeQueueCap = UnstakeQueueCap;
+  type BlocksForceUnstake = BlocksForceUnstake;
+  type AssetRegistry = AssetRegistry;
+  type Security = Security;
+}
+
+impl pallet_asset_registry::Config for Test {
+  type Event = Event;
+  type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Test>;
+  type AssetRegistryPalletId = AssetRegistryPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+}
+
 impl pallet_fees::Config for Test {
   type Event = Event;
-  type FeesPalletId = FeesPalletId;
-  type UnixTime = Timestamp;
-  // Wrapped currency
-  type CurrencyTidefi = Adapter<AccountId>;
-  // Security utils
   type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
+  type FeesPalletId = TidefiPalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
+  type UnixTime = Timestamp;
+  type SessionsPerEra = SessionsPerEra;
+  type SessionsArchive = SessionsArchive;
+  type BlocksPerSession = BlocksPerSession;
+  type Staking = TidefiStaking;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -217,6 +249,57 @@ impl Inspect<AccountId> for Adapter<AccountId> {
   }
 }
 
+impl InspectHold<AccountId> for Adapter<AccountId> {
+  fn balance_on_hold(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::balance_on_hold(who),
+      CurrencyId::Wrapped(asset_id) => Assets::balance_on_hold(asset_id, who),
+    }
+  }
+  fn can_hold(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> bool {
+    match asset {
+      CurrencyId::Tide => Balances::can_hold(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::can_hold(asset_id, who, amount),
+    }
+  }
+}
+
+impl MutateHold<AccountId> for Adapter<AccountId> {
+  fn hold(asset: CurrencyId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
+    match asset {
+      CurrencyId::Tide => Balances::hold(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::hold(asset_id, who, amount),
+    }
+  }
+
+  fn release(
+    asset: CurrencyId,
+    who: &AccountId,
+    amount: Balance,
+    best_effort: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::release(who, amount, best_effort),
+      CurrencyId::Wrapped(asset_id) => Assets::release(asset_id, who, amount, best_effort),
+    }
+  }
+  fn transfer_held(
+    asset: CurrencyId,
+    source: &AccountId,
+    dest: &AccountId,
+    amount: Balance,
+    best_effort: bool,
+    on_hold: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::transfer_held(source, dest, amount, best_effort, on_hold),
+      CurrencyId::Wrapped(asset_id) => {
+        Assets::transfer_held(asset_id, source, dest, amount, best_effort, on_hold)
+      }
+    }
+  }
+}
+
 impl Mutate<AccountId> for Adapter<AccountId> {
   fn mint_into(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
     match asset {
@@ -273,6 +356,28 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_oracle::GenesisConfig::<Test> {
     enabled: false,
     account: 1,
+  }
+  .assimilate_storage(&mut storage)
+  .unwrap();
+
+  pallet_asset_registry::GenesisConfig::<Test> {
+    assets: vec![
+      (
+        CurrencyId::Wrapped(2),
+        "Test".into(),
+        "TEST".into(),
+        8,
+        vec![],
+      ),
+      (
+        CurrencyId::Wrapped(3),
+        "Test".into(),
+        "TEST".into(),
+        16,
+        vec![],
+      ),
+    ],
+    account: 0,
   }
   .assimilate_storage(&mut storage)
   .unwrap();

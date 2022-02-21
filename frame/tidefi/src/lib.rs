@@ -22,7 +22,7 @@ pub mod pallet {
     inherent::Vec,
     pallet_prelude::*,
     traits::tokens::{
-      fungibles::{Inspect, Mutate, Transfer},
+      fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
       WithdrawConsequence,
     },
   };
@@ -54,7 +54,9 @@ pub mod pallet {
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
-      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + InspectHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + MutateHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
 
   #[pallet::pallet]
@@ -89,6 +91,8 @@ pub mod pallet {
       amount_to: Balance,
       extrinsic_hash: [u8; 32],
     },
+    /// User cancelled the initial swap and the funds has been released
+    SwapCancelled { request_id: Hash },
   }
 
   // Errors inform users that something went wrong.
@@ -231,7 +235,7 @@ pub mod pallet {
       let account_id = ensure_signed(origin)?;
 
       // 2. Make sure the oracle is enabled
-      ensure!(T::Oracle::is_oracle_enabled(), Error::<T>::QuorumPaused);
+      ensure!(T::Oracle::is_oracle_enabled(), Error::<T>::OraclePaused);
 
       // 3. Make sure the `currency_id_from` is not disabled
       ensure!(
@@ -262,7 +266,7 @@ pub mod pallet {
             amount_to,
             <frame_system::Pallet<T>>::block_number(),
             extrinsic_hash,
-          );
+          )?;
 
           // 6 b) Send event to the chain
           Self::deposit_event(Event::<T>::Swap {
@@ -281,6 +285,32 @@ pub mod pallet {
         WithdrawConsequence::UnknownAsset => Err(Error::<T>::UnknownAsset.into()),
         _ => Err(Error::<T>::UnknownError.into()),
       }
+    }
+
+    /// Cancel swap and release funds.
+    ///
+    /// This will cancel a swap request and release remaining funds, if the swap is partially filled.
+    ///
+    /// - `request_id`: The request ID to cancel.
+    ///
+    /// Emits `SwapCancelled` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::swap())]
+    pub fn cancel_swap(origin: OriginFor<T>, request_id: Hash) -> DispatchResultWithPostInfo {
+      // 1. Make sure the transaction is signed
+      let account_id = ensure_signed(origin)?;
+
+      // 2. Make sure the oracle is enabled
+      ensure!(T::Oracle::is_oracle_enabled(), Error::<T>::OraclePaused);
+
+      // 3. Remove the swap request and release funds if needed
+      T::Oracle::remove_swap_from_queue(account_id, request_id)?;
+
+      // 4. Emit event on chain
+      Self::deposit_event(Event::<T>::SwapCancelled { request_id });
+
+      Ok(().into())
     }
   }
 }

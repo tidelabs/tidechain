@@ -36,7 +36,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
-use tidefi_primitives::{BalanceInfo, CurrencyMetadata, Stake};
+use tidefi_primitives::{BalanceInfo, BlockNumber, CurrencyBalance, CurrencyMetadata, Stake};
 
 // Work around the issue that RUNTIME_API_VERSIONS is not public.
 pub(crate) const PRUNTIME_API_VERSIONS: ApisVec = RUNTIME_API_VERSIONS;
@@ -197,7 +197,6 @@ impl_runtime_apis! {
        }
    }
 
-
    impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
        Block,
        Balance,
@@ -227,13 +226,13 @@ impl_runtime_apis! {
      fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata)>, DispatchError> {
        AssetRegistry::get_assets()
      }
-     fn get_account_balance(account_id: AccountId, asset_id: CurrencyId) -> Result<BalanceInfo, DispatchError> {
+     fn get_account_balance(account_id: AccountId, asset_id: CurrencyId) -> Result<CurrencyBalance<BalanceInfo>, DispatchError> {
        AssetRegistry::get_account_balance(&account_id, asset_id)
      }
-     fn get_account_balances(account_id: AccountId) -> Result<Vec<(CurrencyId, BalanceInfo)>, DispatchError> {
+     fn get_account_balances(account_id: AccountId) -> Result<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>, DispatchError> {
        AssetRegistry::get_account_balances(&account_id)
      }
-     fn get_account_stakes(account_id: AccountId) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>, DispatchError> {
+     fn get_account_stakes(account_id: AccountId) -> Result<Vec<(CurrencyId, Stake<BalanceInfo, BlockNumber>)>, DispatchError> {
        Ok(TidefiStaking::get_account_stakes(&account_id))
      }
    }

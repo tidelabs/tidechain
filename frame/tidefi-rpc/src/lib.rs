@@ -7,7 +7,9 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use std::sync::Arc;
-use tidefi_primitives::{BalanceInfo, CurrencyId, CurrencyMetadata, Stake};
+use tidefi_primitives::{
+  BalanceInfo, BlockNumber, CurrencyBalance, CurrencyId, CurrencyMetadata, Stake,
+};
 
 #[rpc]
 pub trait TidefiApi<BlockHash, AccountId> {
@@ -20,21 +22,21 @@ pub trait TidefiApi<BlockHash, AccountId> {
     account_id: AccountId,
     asset_id: CurrencyId,
     at: Option<BlockHash>,
-  ) -> Result<BalanceInfo>;
+  ) -> Result<CurrencyBalance<BalanceInfo>>;
 
   #[rpc(name = "tidefi_getAccountBalances")]
   fn get_account_balances(
     &self,
     account_id: AccountId,
     at: Option<BlockHash>,
-  ) -> Result<Vec<(CurrencyId, BalanceInfo)>>;
+  ) -> Result<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>>;
 
   #[rpc(name = "tidefi_getAccountStakes")]
   fn get_account_stakes(
     &self,
     account_id: AccountId,
     at: Option<BlockHash>,
-  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>>;
+  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo, BlockNumber>)>>;
 }
 
 /// A struct that implements the [`TidefiApi`].
@@ -83,7 +85,7 @@ where
     account_id: AccountId,
     asset_id: CurrencyId,
     at: Option<<Block as BlockT>::Hash>,
-  ) -> Result<BalanceInfo> {
+  ) -> Result<CurrencyBalance<BalanceInfo>> {
     let api = self.client.runtime_api();
     let at = BlockId::hash(at.unwrap_or(
       // If the block hash is not supplied assume the best block.
@@ -99,7 +101,7 @@ where
     &self,
     account_id: AccountId,
     at: Option<<Block as BlockT>::Hash>,
-  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo>)>> {
+  ) -> Result<Vec<(CurrencyId, Stake<BalanceInfo, BlockNumber>)>> {
     let api = self.client.runtime_api();
     let at = BlockId::hash(at.unwrap_or(
       // If the block hash is not supplied assume the best block.
@@ -130,7 +132,7 @@ where
     &self,
     account_id: AccountId,
     at: Option<<Block as BlockT>::Hash>,
-  ) -> Result<Vec<(CurrencyId, BalanceInfo)>> {
+  ) -> Result<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>> {
     let api = self.client.runtime_api();
     let at = BlockId::hash(at.unwrap_or(
       // If the block hash is not supplied assume the best block.

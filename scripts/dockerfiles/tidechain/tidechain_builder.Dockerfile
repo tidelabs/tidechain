@@ -1,5 +1,5 @@
 # This is the build stage for Tidechain. Here we create the binary in a temporary image.
-FROM docker.io/paritytech/ci-linux:production as builder
+FROM docker.io/tidelabs/tidechain-ci:latest as builder
 
 WORKDIR /tidechain
 COPY . /tidechain
@@ -11,7 +11,7 @@ FROM docker.io/library/ubuntu:20.04
 
 LABEL description="Multistage Docker image for Tidechain" \
 	com.semantic-network.image.type="builder" \
-	com.semantic-network.image.authors="devops-team@semantic-network.com" \
+	com.semantic-network.image.authors="ops@semantic-network.com" \
 	com.semantic-network.image.vendor="Semantic Network" \
 	com.semantic-network.image.description="Tidechain" \
 	com.semantic-network.image.source="https://github.com/tide-labs/tidechain/blob/${VCS_REF}/scripts/dockerfiles/tidechain/tidechain_builder.Dockerfile" \

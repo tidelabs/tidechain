@@ -304,6 +304,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       id,
       AssetAccountOf::<T, I> {
         balance: Zero::zero(),
+        reserved: Zero::zero(),
         is_frozen: false,
         reason,
         extra: T::Extra::default(),
@@ -406,6 +407,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
             ensure!(amount >= details.min_balance, TokenError::BelowMinimum);
             *maybe_account = Some(AssetAccountOf::<T, I> {
               balance: amount,
+              reserved: Zero::zero(),
               reason: Self::new_account(beneficiary, details, None)?,
               is_frozen: false,
               extra: T::Extra::default(),
@@ -575,6 +577,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
           maybe_account @ None => {
             *maybe_account = Some(AssetAccountOf::<T, I> {
               balance: credit,
+              reserved: Zero::zero(),
               is_frozen: false,
               reason: Self::new_account(dest, details, None)?,
               extra: T::Extra::default(),
@@ -850,5 +853,241 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       });
       Ok(())
     })
+  }
+
+  /// Hold some funds in an account.
+  pub(super) fn do_hold(
+    id: T::AssetId,
+    target: &T::AccountId,
+    amount: T::Balance,
+  ) -> Result<T::Balance, DispatchError> {
+    if amount.is_zero() {
+      return Ok(amount);
+    }
+
+    let actual = Self::prep_debit(
+      id,
+      target,
+      amount,
+      DebitFlags {
+        best_effort: true,
+        keep_alive: true,
+      },
+    )?;
+    Account::<T, I>::try_mutate(target, id, |maybe_account| -> DispatchResult {
+      let mut account = maybe_account.take().ok_or(Error::<T, I>::NoAccount)?;
+      debug_assert!(account.balance >= actual, "checked in prep; qed");
+      // Make the debit.
+      account.balance = account.balance.saturating_sub(actual);
+      // Update the reserved balance.
+      account.reserved = account.reserved.saturating_add(actual);
+
+      *maybe_account = Some(account);
+      Ok(())
+    })?;
+    Ok(actual)
+  }
+
+  /// Release some funds in an account.
+  pub(super) fn do_release(
+    id: T::AssetId,
+    target: &T::AccountId,
+    amount: T::Balance,
+  ) -> Result<T::Balance, DispatchError> {
+    if amount.is_zero() {
+      return Ok(amount);
+    }
+
+    Account::<T, I>::try_mutate(target, id, |maybe_account| -> DispatchResult {
+      let mut account = maybe_account.take().ok_or(Error::<T, I>::NoAccount)?;
+
+      account
+        .reserved
+        .checked_sub(&amount)
+        .ok_or(Error::<T, I>::Unapproved)?;
+
+      // Make the credit.
+      account.balance = account.balance.saturating_add(amount);
+      // Update the reserved balance.
+      account.reserved = account.reserved.saturating_sub(amount);
+
+      *maybe_account = Some(account);
+      Ok(())
+    })?;
+    Ok(amount)
+  }
+
+  pub(super) fn prep_debit_held(
+    id: T::AssetId,
+    target: &T::AccountId,
+    amount: T::Balance,
+    f: DebitFlags,
+  ) -> Result<T::Balance, DispatchError> {
+    let actual = Self::reducible_balance_held(id, target)?.min(amount);
+    ensure!(f.best_effort || actual >= amount, Error::<T, I>::BalanceLow);
+
+    let conseq = Self::can_decrease_held(id, target, actual, f.keep_alive);
+    let actual = match conseq.into_result() {
+      Ok(dust) => actual.saturating_add(dust), //< guaranteed by reducible_balance
+      Err(e) => {
+        debug_assert!(false, "passed from reducible_balance; qed");
+        return Err(e);
+      }
+    };
+
+    Ok(actual)
+  }
+
+  /// Transfer held funds
+  pub(super) fn do_transfer_held(
+    id: T::AssetId,
+    source: &T::AccountId,
+    dest: &T::AccountId,
+    amount: T::Balance,
+    _best_effort: bool,
+    _on_hold: bool,
+    f: TransferFlags,
+  ) -> Result<T::Balance, DispatchError> {
+    // Early exist if no-op.
+    if amount.is_zero() {
+      Self::deposit_event(Event::Transferred {
+        asset_id: id,
+        from: source.clone(),
+        to: dest.clone(),
+        amount,
+      });
+      return Ok(amount);
+    }
+
+    // Figure out the debit and credit, together with side-effects.
+    let debit = Self::prep_debit_held(id, source, amount, f.into())?;
+    let (credit, maybe_burn) = Self::prep_credit(id, dest, amount, debit, f.burn_dust)?;
+
+    let mut source_account = Account::<T, I>::get(&source, id).ok_or(Error::<T, I>::NoAccount)?;
+
+    Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
+      let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+
+      // Unlock fund if transfer to itself
+      if source == dest {
+        Account::<T, I>::try_mutate(&dest, id, |maybe_account| -> DispatchResult {
+          let d = maybe_account.as_mut().ok_or(Error::<T, I>::Unknown)?;
+          // Debit balance from source; this will not saturate since it's already checked in prep.
+          debug_assert!(d.reserved >= debit, "checked in prep; qed");
+          d.reserved = d.reserved.saturating_sub(debit);
+
+          // Calculate new balance; this will not saturate since it's already checked
+          // in prep.
+          debug_assert!(
+            d.balance.checked_add(&credit).is_some(),
+            "checked in prep; qed"
+          );
+          d.balance.saturating_accrue(credit);
+          Ok(())
+        })?;
+
+        return Ok(());
+      }
+
+      // Burn any dust if needed.
+      if let Some(burn) = maybe_burn {
+        // Debit dust from supply; this will not saturate since it's already checked in
+        // prep.
+        debug_assert!(details.supply >= burn, "checked in prep; qed");
+        details.supply = details.supply.saturating_sub(burn);
+      }
+
+      // Debit balance from source; this will not saturate since it's already checked in prep.
+      debug_assert!(source_account.reserved >= debit, "checked in prep; qed");
+      source_account.reserved = source_account.reserved.saturating_sub(debit);
+
+      Account::<T, I>::try_mutate(&dest, id, |maybe_account| -> DispatchResult {
+        match maybe_account {
+          Some(ref mut account) => {
+            // Calculate new balance; this will not saturate since it's already checked
+            // in prep.
+            debug_assert!(
+              account.balance.checked_add(&credit).is_some(),
+              "checked in prep; qed"
+            );
+            account.balance.saturating_accrue(credit);
+          }
+          maybe_account @ None => {
+            *maybe_account = Some(AssetAccountOf::<T, I> {
+              balance: credit,
+              reserved: Zero::zero(),
+              is_frozen: false,
+              reason: Self::new_account(dest, details, None)?,
+              extra: T::Extra::default(),
+            });
+          }
+        }
+        Ok(())
+      })?;
+
+      Account::<T, I>::insert(&source, id, &source_account);
+      Ok(())
+    })?;
+
+    Self::deposit_event(Event::Transferred {
+      asset_id: id,
+      from: source.clone(),
+      to: dest.clone(),
+      amount: credit,
+    });
+    Ok(credit)
+  }
+
+  pub(super) fn reducible_balance_held(
+    id: T::AssetId,
+    who: &T::AccountId,
+  ) -> Result<T::Balance, DispatchError> {
+    let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+    ensure!(!details.is_frozen, Error::<T, I>::Frozen);
+
+    let account = Account::<T, I>::get(who, id).ok_or(Error::<T, I>::NoAccount)?;
+    ensure!(!account.is_frozen, Error::<T, I>::Frozen);
+
+    Ok(account.reserved)
+  }
+
+  pub(super) fn can_decrease_held(
+    id: T::AssetId,
+    who: &T::AccountId,
+    amount: T::Balance,
+    _keep_alive: bool,
+  ) -> WithdrawConsequence<T::Balance> {
+    use WithdrawConsequence::*;
+    let details = match Asset::<T, I>::get(id) {
+      Some(details) => details,
+      None => return UnknownAsset,
+    };
+    if details.supply.checked_sub(&amount).is_none() {
+      return Underflow;
+    }
+    if details.is_frozen {
+      return Frozen;
+    }
+    if amount.is_zero() {
+      return Success;
+    }
+    let account = match Account::<T, I>::get(who, id) {
+      Some(a) => a,
+      None => return NoFunds,
+    };
+    if account.is_frozen {
+      return Frozen;
+    }
+
+    // if we try to release the same amount than we have
+    if account.reserved == amount {
+      return Success;
+    }
+
+    if account.reserved.checked_sub(&amount).is_some() {
+      Success
+    } else {
+      NoFunds
+    }
   }
 }

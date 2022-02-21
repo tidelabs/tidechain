@@ -1,25 +1,24 @@
 #![allow(dead_code)]
-use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
   parameter_types,
   traits::{
     fungible::{
-      Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
+      Inspect as FungibleInspect, InspectHold as FungibleInspectHold, Mutate as FungibleMutate,
+      MutateHold as FungibleMutateHold, Transfer as FungibleTransfer,
     },
-    fungibles::{Inspect, Mutate, Transfer},
+    fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
     ConstU128, ConstU32, GenesisBuild,
   },
   PalletId,
 };
 use frame_system as system;
 #[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_runtime::{
-  testing::Header,
+  generic::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, RuntimeDebug,
+  DispatchError, DispatchResult,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
@@ -30,35 +29,7 @@ use crate::pallet as pallet_tidefi_stake;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Balance = u128;
-
-#[derive(
-  Encode,
-  Decode,
-  scale_info::TypeInfo,
-  Default,
-  Eq,
-  PartialEq,
-  Copy,
-  Clone,
-  RuntimeDebug,
-  PartialOrd,
-  Ord,
-  MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize, Hash))]
-pub struct AccountId(pub u64);
-
-impl sp_std::fmt::Display for AccountId {
-  fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
-    write!(f, "{}", self.0)
-  }
-}
-
-impl From<u64> for AccountId {
-  fn from(account_id: u64) -> Self {
-    Self(account_id)
-  }
-}
+type AccountId = u64;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -70,13 +41,15 @@ frame_support::construct_runtime!(
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
-    TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Storage, Event<T>},
+    TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
     AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
   }
 );
 
 parameter_types! {
-  pub const BlockHashCount: u64 = 250;
+  pub const BlockHashCount: u32 = 250;
   pub const SS58Prefix: u8 = 42;
 }
 
@@ -88,12 +61,12 @@ impl system::Config for Test {
   type Origin = Origin;
   type Call = Call;
   type Index = u64;
-  type BlockNumber = u64;
+  type BlockNumber = BlockNumber;
   type Hash = H256;
   type Hashing = BlakeTwo256;
   type AccountId = AccountId;
   type Lookup = IdentityLookup<Self::AccountId>;
-  type Header = Header;
+  type Header = Header<BlockNumber, BlakeTwo256>;
   type Event = Event;
   type BlockHashCount = BlockHashCount;
   type Version = ();
@@ -106,6 +79,7 @@ impl system::Config for Test {
   type OnSetCode = ();
   type MaxConsumers = ConstU32<16>;
 }
+
 pub const TIDE: Balance = 1_000_000_000_000;
 parameter_types! {
   pub const ExistentialDeposit: Balance = TIDE;
@@ -119,6 +93,13 @@ parameter_types! {
   pub const StringLimit: u32 = 50;
   pub const MetadataDepositBase: u64 = 1;
   pub const MetadataDepositPerByte: u64 = 1;
+  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
+  pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
+  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
+  pub const BlocksForceUnstake: BlockNumber = 256;
+  pub const MinimumPeriod: u64 = 5;
+  pub const StakeAccountCap: u32 = 10;
+  pub const UnstakeQueueCap: u32 = 100;
 }
 
 impl pallet_assets::Config for Test {
@@ -150,11 +131,15 @@ impl pallet_balances::Config for Test {
   type WeightInfo = ();
 }
 
-parameter_types! {
-  pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
-  pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
-  pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
-  pub const PeriodBasis: BlockNumber = 1000u32;
+impl pallet_timestamp::Config for Test {
+  type Moment = u64;
+  type OnTimestampSet = ();
+  type MinimumPeriod = MinimumPeriod;
+  type WeightInfo = ();
+}
+
+impl pallet_security::Config for Test {
+  type Event = Event;
 }
 
 impl pallet_tidefi_stake::Config for Test {
@@ -162,8 +147,11 @@ impl pallet_tidefi_stake::Config for Test {
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type StakePalletId = TidefiPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
-  type PeriodBasis = PeriodBasis;
+  type StakeAccountCap = StakeAccountCap;
+  type UnstakeQueueCap = UnstakeQueueCap;
+  type BlocksForceUnstake = BlocksForceUnstake;
   type AssetRegistry = AssetRegistry;
+  type Security = Security;
 }
 
 impl pallet_asset_registry::Config for Test {
@@ -275,20 +263,80 @@ where
   }
 }
 
+impl InspectHold<AccountId> for Adapter<AccountId> {
+  fn balance_on_hold(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
+    match asset {
+      CurrencyId::Tide => Balances::balance_on_hold(who),
+      CurrencyId::Wrapped(asset_id) => Assets::balance_on_hold(asset_id, who),
+    }
+  }
+  fn can_hold(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> bool {
+    match asset {
+      CurrencyId::Tide => Balances::can_hold(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::can_hold(asset_id, who, amount),
+    }
+  }
+}
+
+impl MutateHold<AccountId> for Adapter<AccountId> {
+  fn hold(asset: CurrencyId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
+    match asset {
+      CurrencyId::Tide => Balances::hold(who, amount),
+      CurrencyId::Wrapped(asset_id) => Assets::hold(asset_id, who, amount),
+    }
+  }
+
+  fn release(
+    asset: CurrencyId,
+    who: &AccountId,
+    amount: Balance,
+    best_effort: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::release(who, amount, best_effort),
+      CurrencyId::Wrapped(asset_id) => Assets::release(asset_id, who, amount, best_effort),
+    }
+  }
+  fn transfer_held(
+    asset: CurrencyId,
+    source: &AccountId,
+    dest: &AccountId,
+    amount: Balance,
+    best_effort: bool,
+    on_hold: bool,
+  ) -> Result<Balance, DispatchError> {
+    match asset {
+      CurrencyId::Tide => Balances::transfer_held(source, dest, amount, best_effort, on_hold),
+      CurrencyId::Wrapped(asset_id) => {
+        Assets::transfer_held(asset_id, source, dest, amount, best_effort, on_hold)
+      }
+    }
+  }
+}
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let _alice = 1u64;
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
+
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
 
-  pallet_assets::GenesisConfig::<Test> {
-    assets: vec![(4294967295, AccountId(1), true, 1)],
-    metadata: vec![(4294967295, "Test".into(), "TEST".into(), 6)],
-    accounts: vec![],
+  pallet_tidefi_stake::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+  pallet_asset_registry::GenesisConfig::<Test> {
+    assets: vec![(
+      CurrencyId::Wrapped(2),
+      "Test".into(),
+      "TEST".into(),
+      8,
+      vec![],
+    )],
+    account: 0,
   }
   .assimilate_storage(&mut t)
   .unwrap();

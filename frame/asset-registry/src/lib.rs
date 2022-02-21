@@ -22,14 +22,15 @@ pub mod pallet {
   use frame_support::{
     inherent::Vec,
     pallet_prelude::*,
-    traits::fungibles::{Inspect, Mutate, Transfer},
+    traits::fungibles::{Inspect, InspectHold, Mutate, Transfer},
     PalletId,
   };
   use frame_system::{pallet_prelude::*, RawOrigin};
   use sp_runtime::traits::{AccountIdConversion, StaticLookup};
   use sp_std::vec;
   use tidefi_primitives::{
-    pallet::AssetRegistryExt, AssetId, Balance, BalanceInfo, CurrencyId, CurrencyMetadata,
+    pallet::AssetRegistryExt, AssetId, Balance, BalanceInfo, CurrencyBalance, CurrencyId,
+    CurrencyMetadata,
   };
 
   /// Asset registry configuration
@@ -50,7 +51,8 @@ pub mod pallet {
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
-      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + InspectHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
 
   #[pallet::pallet]
@@ -279,9 +281,21 @@ pub mod pallet {
     pub fn get_account_balance(
       account_id: &T::AccountId,
       asset_id: CurrencyId,
-    ) -> Result<BalanceInfo, DispatchError> {
-      let balance = T::CurrencyTidefi::balance(asset_id, account_id);
-      Ok(BalanceInfo { amount: balance })
+    ) -> Result<CurrencyBalance<BalanceInfo>, DispatchError> {
+      // we use `reducible_balance` to return the real available value for the account
+      // we also force the `keep_alive`
+
+      // FIXME: Review the `keep_alive` system for TIDE & assets, we should probably have
+      // a user settings, where they can enable or force opting-out to keep-alive.
+      // that mean if they use all of their funds, the account is deleted from the chain
+      // and and will be re-created on next deposit. this could drain all persistent settings
+      // of the user as well
+      let balance = T::CurrencyTidefi::reducible_balance(asset_id, account_id, true);
+      let reserved = T::CurrencyTidefi::balance_on_hold(asset_id, account_id);
+      Ok(CurrencyBalance::<BalanceInfo> {
+        available: BalanceInfo { amount: balance },
+        reserved: BalanceInfo { amount: reserved },
+      })
     }
 
     pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata)>, DispatchError> {
@@ -316,7 +330,7 @@ pub mod pallet {
 
     pub fn get_account_balances(
       account_id: &T::AccountId,
-    ) -> Result<Vec<(CurrencyId, BalanceInfo)>, DispatchError> {
+    ) -> Result<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>, DispatchError> {
       let mut final_balances = vec![(
         CurrencyId::Tide,
         Self::get_account_balance(account_id, CurrencyId::Tide)?,
@@ -325,8 +339,13 @@ pub mod pallet {
         .map(|(asset_id, balance)| {
           (
             CurrencyId::Wrapped(asset_id),
-            BalanceInfo {
-              amount: balance.balance,
+            CurrencyBalance::<BalanceInfo> {
+              available: BalanceInfo {
+                amount: balance.balance,
+              },
+              reserved: BalanceInfo {
+                amount: balance.reserved,
+              },
             },
           )
         })

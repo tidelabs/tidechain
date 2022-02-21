@@ -84,7 +84,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 1010,
+  spec_version: 1030,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -202,7 +202,7 @@ construct_runtime!(
         Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>} = 50,
 
         // Tidefi staking module (assets)
-        TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Storage, Event<T>} = 51,
+        TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>} = 51,
 
         // Quorum module
         Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>} = 52,

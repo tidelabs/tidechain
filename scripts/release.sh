@@ -20,7 +20,7 @@ git checkout release
 echo '[+] Pulling latest version of the release branch from github'
 git pull
 echo '[+] Attempting to merge the release-candidate branch to the release branch'
-git merge "$version"
+git merge "release-$version"
 echo '[+] Tagging the release'
 git tag -s -m "$version" "$version"
 echo '[+] Pushing the release branch and tag to Github. A new release will be created shortly'

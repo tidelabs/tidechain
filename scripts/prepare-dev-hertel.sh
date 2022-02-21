@@ -45,7 +45,12 @@ generate_address_and_account_id() {
 
 # INVESTORS (ONLY TIDEs)
 for i in $(seq 1 $I_NUM); do
-	INVESTORS+="(CurrencyId::Tide,\n$(generate_address_and_account_id investors$i stash)\n// 1_000 TIDE\nassets::Asset::Tide.saturating_mul(1_000)),\n"
+	ADDRESS=$(generate_address_and_account_id investor$i stash)
+	INVESTORS+="(assets::Asset::Tide.currency_id(),\n$ADDRESS\n// 10_000 TIDE\nassets::Asset::Tide.saturating_mul(10_000)),\n"
+	INVESTORS+="(assets::Asset::Tether.currency_id(),\n$ADDRESS\n// 10_000 USDT\nassets::Asset::Tether.saturating_mul(10_000)),\n"
+	INVESTORS+="(assets::Asset::USDCoin.currency_id(),\n$ADDRESS\n// 10_000 USDC\nassets::Asset::USDCoin.saturating_mul(10_000)),\n"
+	INVESTORS+="(assets::Asset::Bitcoin.currency_id(),\n$ADDRESS\n// 10_000 BTC\nassets::Asset::Bitcoin.saturating_mul(10_000)),\n"
+	INVESTORS+="(assets::Asset::Ethereum.currency_id(),\n$ADDRESS\n// 10_000 ETH\nassets::Asset::Ethereum.saturating_mul(10_000)),\n"
 done
 
 # DEVS (TIDEs & CURRENCIES)
