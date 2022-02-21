@@ -24,6 +24,9 @@ const TIDECHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/
 #[cfg(feature = "hertel-native")]
 const HERTEL_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
+#[cfg(feature = "hertel-native")]
+const DEFAULT_PROTOCOL_ID: &str = "tide";
+
 /// Node `ChainSpec` extensions.
 ///
 /// Additional parameters for some Substrate core modules,
@@ -433,7 +436,7 @@ pub fn hertel_development_config() -> Result<HertelChainSpec, String> {
     move || hertel_development_config_genesis(wasm_binary),
     vec![],
     None,
-    None,
+    Some(DEFAULT_PROTOCOL_ID),
     Some(properties),
     Default::default(),
   ))
@@ -451,13 +454,13 @@ pub fn hertel_local_testnet_config() -> Result<HertelChainSpec, String> {
   let boot_nodes = vec![];
 
   Ok(HertelChainSpec::from_genesis(
-    "Development",
-    "hertel_dev",
+    "Hertel Local Testnet",
+    "hertel_local_testnet",
     ChainType::Local,
     move || hertel_local_testnet_config_genesis(wasm_binary),
     boot_nodes,
     None,
-    None,
+    Some(DEFAULT_PROTOCOL_ID),
     Some(properties),
     Default::default(),
   ))
@@ -475,16 +478,16 @@ pub fn hertel_staging_testnet_config() -> Result<HertelChainSpec, String> {
   let boot_nodes = vec![];
 
   Ok(HertelChainSpec::from_genesis(
-    "Development",
-    "hertel_dev",
-    ChainType::Development,
+    "Hertel Staging Testnet",
+    "hertel_staging_testnet",
+    ChainType::Live,
     move || hertel_staging_testnet_config_genesis(wasm_binary),
     boot_nodes,
     Some(
       TelemetryEndpoints::new(vec![(HERTEL_STAGING_TELEMETRY_URL.to_string(), 0)])
         .expect("Discovery Staging telemetry url is valid; qed"),
     ),
-    None,
+    Some(DEFAULT_PROTOCOL_ID),
     Some(properties),
     Default::default(),
   ))
@@ -508,7 +511,7 @@ pub fn tidechain_development_config() -> Result<TidechainChainSpec, String> {
     move || tidechain_development_config_genesis(wasm_binary),
     vec![],
     None,
-    None,
+    Some(DEFAULT_PROTOCOL_ID),
     Some(properties),
     Default::default(),
   ))
@@ -528,16 +531,16 @@ pub fn tidechain_staging_testnet_config() -> Result<TidechainChainSpec, String> 
   let boot_nodes = vec![];
 
   Ok(TidechainChainSpec::from_genesis(
-    "Development",
-    "tidechain_local",
-    ChainType::Local,
+    "Tidechain Staging Testnet",
+    "tidechain_staging_testnet",
+    ChainType::Live,
     move || tidechain_staging_testnet_config_genesis(wasm_binary),
     boot_nodes,
     Some(
       TelemetryEndpoints::new(vec![(TIDECHAIN_STAGING_TELEMETRY_URL.to_string(), 0)])
         .expect("Tidechain Staging telemetry url is valid; qed"),
     ),
-    None,
+    Some(DEFAULT_PROTOCOL_ID),
     Some(properties),
     Default::default(),
   ))
@@ -557,13 +560,13 @@ pub fn tidechain_local_testnet_config() -> Result<TidechainChainSpec, String> {
   let boot_nodes = vec![];
 
   Ok(TidechainChainSpec::from_genesis(
-    "Development",
+    "Local Testnet",
     "tidechain_local_testnet",
-    ChainType::Development,
+    ChainType::Local,
     move || tidechain_local_testnet_config_genesis(wasm_binary),
     boot_nodes,
     None,
-    None,
+    Some(DEFAULT_PROTOCOL_ID),
     Some(properties),
     Default::default(),
   ))
