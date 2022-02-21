@@ -1,11 +1,12 @@
 use crate::{
-  mock::{new_test_ext, Adapter, Assets, Fees, Oracle, Origin, Test},
+  mock::{new_test_ext, Adapter, Assets, Event as MockEvent, Fees, Oracle, Origin, System, Test},
   pallet::*,
 };
 use frame_support::{
   assert_noop, assert_ok,
   traits::fungibles::{Inspect, InspectHold, Mutate},
 };
+use frame_system::RawOrigin;
 use sp_runtime::{traits::Zero, Percent};
 use std::str::FromStr;
 use tidefi_primitives::{
@@ -38,13 +39,24 @@ pub fn confirm_swap_partial_filling() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
 
+    assert_ok!(Fees::set_fees_percentage(
+      RawOrigin::Root.into(),
+      Percent::from_percent(0)
+    ));
+
+    assert_eq!(Fees::account_id(), 8246216774960574317);
+
+    // add 1 tide to fees account to make sure account is valid
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tide,
+      &Fees::account_id(),
+      1_000_000_000_000
+    ));
+
     let temp_asset_id = 1;
 
     assert_ok!(Oracle::set_status(alice.clone(), true));
     assert!(Oracle::status());
-
-    // set fee to 0%
-    assert_ok!(Fees::set_fees_percentage(Origin::root(), Percent::zero()));
 
     // add 1 tide to alice & all MMs
     assert_ok!(Adapter::mint_into(
@@ -136,7 +148,7 @@ pub fn confirm_swap_partial_filling() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 1,
       ],
     )
     .unwrap();
@@ -170,7 +182,7 @@ pub fn confirm_swap_partial_filling() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 2,
       ],
     )
     .unwrap();
@@ -203,6 +215,11 @@ pub fn confirm_swap_partial_filling() {
     assert_eq!(trade_request_mm.block_number, 0);
     assert_eq!(trade_request_mm2.block_number, 0);
 
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      20_000_000_000_000
+    );
+
     // partial filling
     assert_ok!(Oracle::confirm_swap(
       alice.clone(),
@@ -218,6 +235,41 @@ pub fn confirm_swap_partial_filling() {
         },
       ],
     ));
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      20_000_000_000_000 - 5_000_000_000_000
+    );
+
+    // swap confirmation for bob (user)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 2u64.into(),
+      currency_from: CurrencyId::Tide,
+      currency_amount_from: 5_000_000_000_000,
+      currency_to: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_to: 10_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    }));
+
+    // swap confirmation for charlie (mm)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 3u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
+      ],
+    }));
 
     // BOB: make sure the CLIENT current trade is partially filled and correctly updated
     let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
@@ -250,6 +302,41 @@ pub fn confirm_swap_partial_filling() {
         },
       ],
     ));
+
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      15_000_000_000_000 - 5_000_000_000_000
+    );
+
+    // swap confirmation for bob (user)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_id,
+      status: SwapStatus::Completed,
+      account_id: 2u64.into(),
+      currency_from: CurrencyId::Tide,
+      currency_amount_from: 5_000_000_000_000,
+      currency_to: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_to: 10_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    }));
+
+    // swap confirmation for dave (second mm)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm2_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 4u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2,
+      ],
+    }));
 
     // BOB: make sure the CLIENT current trade is deleted
     assert!(Oracle::trades(trade_request_id).is_none());
@@ -409,7 +496,7 @@ pub fn confirm_swap_simple_with_fees() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 1,
       ],
     )
     .unwrap();
@@ -424,7 +511,7 @@ pub fn confirm_swap_simple_with_fees() {
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
+        0, 2,
       ],
     )
     .unwrap();
@@ -473,6 +560,52 @@ pub fn confirm_swap_simple_with_fees() {
         },
       ],
     ));
+
+    // swap confirmation for bob (user)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_id,
+      status: SwapStatus::Completed,
+      account_id: 2u64.into(),
+      currency_from: CurrencyId::Tide,
+      currency_amount_from: 10_000_000_000_000,
+      currency_to: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_to: 20_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0,
+      ],
+    }));
+
+    // swap confirmation for charlie (mm1)
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm_id,
+      status: SwapStatus::PartiallyFilled,
+      account_id: 3u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
+      ],
+    }));
+
+    // swap confirmation for dave (mm2)
+    // the trade should be closed, because amount_from of the request is filled
+    System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
+      request_id: trade_request_mm2_id,
+      status: SwapStatus::Completed,
+      account_id: 4u64.into(),
+      currency_from: CurrencyId::Wrapped(temp_asset_id),
+      currency_amount_from: 10_000,
+      currency_to: CurrencyId::Tide,
+      currency_amount_to: 5_000_000_000_000,
+      initial_extrinsic_hash: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2,
+      ],
+    }));
 
     // BOB: make sure the CLIENT current trade is deleted
     assert!(Oracle::trades(trade_request_id).is_none());

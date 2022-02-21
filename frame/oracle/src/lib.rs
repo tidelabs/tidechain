@@ -252,6 +252,10 @@ pub mod pallet {
               }
             }
 
+            if trade.amount_from == trade.amount_from_filled {
+              trade.status = SwapStatus::Completed;
+            }
+
             // FIXME: Add slippage check for partial fill
             // the best would probably get the average value for 1 token, then do the check for 1:1 with provided slippage calculation
             // 7. b) Maximum of 10% slippage for the `amount_to`
@@ -303,6 +307,13 @@ pub mod pallet {
 
                     market_maker_trade_intent.amount_from_filled += mm.amount_to_send;
                     market_maker_trade_intent.amount_to_filled += mm.amount_to_receive;
+
+                    if market_maker_trade_intent.amount_from_filled
+                      == market_maker_trade_intent.amount_from
+                    {
+                      // completed fill
+                      market_maker_trade_intent.status = SwapStatus::Completed;
+                    }
 
                     // 11. d) Transfer funds from the requester to the market makers
                     let amount_and_fee =
