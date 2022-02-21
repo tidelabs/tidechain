@@ -272,15 +272,24 @@ pub fn confirm_swap_partial_filling() {
     }));
 
     // BOB: make sure the CLIENT current trade is partially filled and correctly updated
-    let trade_request_filled = Oracle::trades(trade_request_id).unwrap();
+    let trade_request_filled = Oracle::swaps(trade_request_id).unwrap();
     assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
+
+    let trade_request_account = Oracle::account_swaps(2u64).unwrap();
+    assert_eq!(
+      trade_request_account
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_id),
+      Some(&(trade_request_id, SwapStatus::PartiallyFilled))
+    );
+
     // 5 tide
     assert_eq!(trade_request_filled.amount_from_filled, 5_000_000_000_000);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_to_filled, 10_000);
 
     // CHARLIE: make sure the MM current trade is partially filled and correctly updated
-    let trade_request_filled = Oracle::trades(trade_request_mm_id).unwrap();
+    let trade_request_filled = Oracle::swaps(trade_request_mm_id).unwrap();
     assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
@@ -339,7 +348,14 @@ pub fn confirm_swap_partial_filling() {
     }));
 
     // BOB: make sure the CLIENT current trade is deleted
-    assert!(Oracle::trades(trade_request_id).is_none());
+    assert!(Oracle::swaps(trade_request_id).is_none());
+    let trade_request_account = Oracle::account_swaps(2u64).unwrap();
+    assert_eq!(
+      trade_request_account
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_id),
+      None
+    );
 
     // cant send another trade confirmation as the request should be deleted
     // we do expect `InvalidRequestId`
@@ -349,7 +365,7 @@ pub fn confirm_swap_partial_filling() {
     );
 
     // DAVE: make sure the MM current trade is partially filled and correctly updated
-    let trade_request_filled = Oracle::trades(trade_request_mm2_id).unwrap();
+    let trade_request_filled = Oracle::swaps(trade_request_mm2_id).unwrap();
     assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
@@ -534,6 +550,30 @@ pub fn confirm_swap_simple_with_fees() {
     assert_eq!(trade_request_mm.status, SwapStatus::Pending);
     assert_eq!(trade_request_mm2.status, SwapStatus::Pending);
 
+    assert_eq!(
+      Oracle::account_swaps(2u64)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_id),
+      Some(&(trade_request_id, SwapStatus::Pending))
+    );
+
+    assert_eq!(
+      Oracle::account_swaps(3u64)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_mm_id),
+      Some(&(trade_request_mm_id, SwapStatus::Pending))
+    );
+
+    assert_eq!(
+      Oracle::account_swaps(4u64)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_mm2_id),
+      Some(&(trade_request_mm2_id, SwapStatus::Pending))
+    );
+
     assert_eq!(trade_request.block_number, 0);
     assert_eq!(trade_request_mm.block_number, 0);
 
@@ -608,10 +648,25 @@ pub fn confirm_swap_simple_with_fees() {
     }));
 
     // BOB: make sure the CLIENT current trade is deleted
-    assert!(Oracle::trades(trade_request_id).is_none());
+    assert!(Oracle::swaps(trade_request_id).is_none());
+    assert_eq!(
+      Oracle::account_swaps(2u64)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_id),
+      None
+    );
 
     // CHARLIE: make sure the MM current trade is partially filled and correctly updated
-    let trade_request_filled = Oracle::trades(trade_request_mm_id).unwrap();
+    assert_eq!(
+      Oracle::account_swaps(3u64)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_mm_id),
+      Some(&(trade_request_mm_id, SwapStatus::PartiallyFilled))
+    );
+
+    let trade_request_filled = Oracle::swaps(trade_request_mm_id).unwrap();
     assert_eq!(trade_request_filled.status, SwapStatus::PartiallyFilled);
     // 100 TEMP
     assert_eq!(trade_request_filled.amount_from_filled, 10_000);
@@ -619,7 +674,14 @@ pub fn confirm_swap_simple_with_fees() {
     assert_eq!(trade_request_filled.amount_to_filled, 5_000_000_000_000);
 
     // DAVE: make sure the MM current trade is totally filled (deleted)
-    assert!(Oracle::trades(trade_request_mm2_id).is_none());
+    assert!(Oracle::swaps(trade_request_mm2_id).is_none());
+    assert_eq!(
+      Oracle::account_swaps(4u64)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == trade_request_mm2_id),
+      None
+    );
 
     // make sure all balances match
     assert_eq!(
@@ -791,8 +853,8 @@ pub fn confirm_swap_ourself() {
     ));
 
     // BOB: make sure the CLIENT current trade is partially filled and correctly updated
-    assert!(Oracle::trades(trade_request_id).is_none());
-    assert!(Oracle::trades(trade_request_mm_id).is_none());
+    assert!(Oracle::swaps(trade_request_id).is_none());
+    assert!(Oracle::swaps(trade_request_mm_id).is_none());
 
     // cant send another trade confirmation as the request should be deleted
     // we do expect `InvalidRequestId`

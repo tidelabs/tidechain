@@ -27,6 +27,7 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
+  use sp_std::vec;
   use tidefi_primitives::{
     pallet::{FeesExt, OracleExt, SecurityExt},
     AssetId, Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus,
@@ -77,9 +78,15 @@ pub mod pallet {
 
   /// Mapping of pending Swaps
   #[pallet::storage]
-  #[pallet::getter(fn trades)]
+  #[pallet::getter(fn swaps)]
   pub type Swaps<T: Config> =
     StorageMap<_, Blake2_128Concat, Hash, Swap<T::AccountId, T::BlockNumber>>;
+
+  /// Mapping of pending Swaps by AccountId
+  #[pallet::storage]
+  #[pallet::getter(fn account_swaps)]
+  pub type AccountSwaps<T: Config> =
+    CountedStorageMap<_, Blake2_128Concat, T::AccountId, Vec<(Hash, SwapStatus)>>;
 
   /// Genesis configuration
   #[pallet::genesis_config]
@@ -412,7 +419,19 @@ pub mod pallet {
                     if market_maker_trade_intent.amount_from
                       == market_maker_trade_intent.amount_from_filled
                     {
+                      Self::try_delete_account_swap(
+                        &market_maker_trade_intent.account_id,
+                        mm.request_id,
+                      )
+                      .map_err(|_| Error::<T>::UnknownError)?;
                       *mm_trade_request = None;
+                    } else {
+                      Self::try_update_account_swap_status(
+                        &market_maker_trade_intent.account_id,
+                        mm.request_id,
+                        market_maker_trade_intent.status.clone(),
+                      )
+                      .map_err(|_| Error::<T>::UnknownError)?;
                     }
 
                     Ok(())
@@ -436,7 +455,16 @@ pub mod pallet {
             // 16. close the trade if it's complete (we don't use the amount_to compare as there is a slippage to validate)
             if trade.amount_from == trade.amount_from_filled {
               // delete the trade request
+              Self::try_delete_account_swap(&trade.account_id, request_id)
+                .map_err(|_| Error::<T>::UnknownError)?;
               *trade_request = None;
+            } else {
+              Self::try_update_account_swap_status(
+                &trade.account_id,
+                request_id,
+                trade.status.clone(),
+              )
+              .map_err(|_| Error::<T>::UnknownError)?;
             }
           }
         }
@@ -536,6 +564,41 @@ pub mod pallet {
         Err(Error::<T>::OraclePaused.into())
       }
     }
+
+    // delete the `AccountSwaps` storage where the tidefi
+    // app subscribe to get latest trade status
+    fn try_delete_account_swap(
+      account_id: &T::AccountId,
+      request_id: Hash,
+    ) -> Result<(), DispatchError> {
+      AccountSwaps::<T>::try_mutate_exists(account_id, |account_swaps| match account_swaps {
+        Some(swaps) => {
+          swaps.retain(|(swap_id, _)| *swap_id != request_id);
+          Ok(())
+        }
+        None => Ok(()),
+      })
+    }
+
+    fn try_update_account_swap_status(
+      account_id: &T::AccountId,
+      request_id: Hash,
+      swap_status: SwapStatus,
+    ) -> Result<(), DispatchError> {
+      AccountSwaps::<T>::try_mutate_exists(account_id, |account_swaps| match account_swaps {
+        Some(swaps) => match swaps
+          .iter_mut()
+          .find(|(swap_request, _)| *swap_request == request_id)
+        {
+          Some((_, status)) => {
+            *status = swap_status;
+            Ok(())
+          }
+          None => Ok(()),
+        },
+        None => Ok(()),
+      })
+    }
   }
 
   // implement the `OracleExt` functions
@@ -577,6 +640,12 @@ pub mod pallet {
       )?;
 
       Swaps::<T>::insert(request_id, swap.clone());
+
+      AccountSwaps::<T>::mutate(account_id, |account_swaps| match account_swaps {
+        Some(swaps) => swaps.push((request_id, SwapStatus::Pending)),
+        None => *account_swaps = Some(vec![(request_id, SwapStatus::Pending)]),
+      });
+
       Ok((request_id, swap))
     }
 
@@ -610,6 +679,9 @@ pub mod pallet {
           .map_err(|_| Error::<T>::ReleaseFailed)?;
 
           // delete the swap from the storage
+          Self::try_delete_account_swap(&swap_intent.account_id, request_id)
+            .map_err(|_| Error::<T>::UnknownError)?;
+
           *swap = None;
 
           Ok(())
