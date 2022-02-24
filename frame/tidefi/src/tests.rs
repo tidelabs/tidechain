@@ -3,6 +3,7 @@ use crate::{
   pallet::*,
 };
 use frame_support::{assert_ok, traits::fungibles::Mutate};
+use sp_runtime::Permill;
 use std::str::FromStr;
 use tidefi_primitives::{CurrencyId, Hash, SwapType};
 
@@ -78,6 +79,9 @@ pub fn request_swap_event() {
         14, 87, 81, 192, 38, 229, 67, 178, 232, 171, 46, 176, 96, 153, 218, 161, 209, 229, 223, 71,
         119, 143, 119, 135, 250, 171, 69, 205, 241, 47, 227, 168,
       ],
+      slippage_tolerance: Permill::zero(),
+      swap_type: SwapType::Limit,
+      is_market_maker: false,
     }));
   })
 }
