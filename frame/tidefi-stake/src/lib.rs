@@ -213,6 +213,7 @@ pub mod pallet {
       account_id: T::AccountId,
       currency_id: CurrencyId,
       amount: Balance,
+      duration: T::BlockNumber,
     },
     /// The assets unstaking has been queued
     UnstakeQueued {
@@ -372,6 +373,7 @@ pub mod pallet {
         account_id,
         currency_id,
         amount,
+        duration,
       });
 
       Ok(().into())
