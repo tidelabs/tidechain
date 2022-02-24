@@ -40,11 +40,10 @@ pub mod pallet {
     },
     PalletId,
   };
-  use frame_system::pallet_prelude::*;
 
   use sp_runtime::{
     traits::{AccountIdConversion, Saturating},
-    Percent, SaturatedConversion,
+    Percent, Permill, SaturatedConversion,
   };
   use tidefi_primitives::{
     pallet::{FeesExt, SecurityExt, StakingExt},
@@ -82,6 +81,18 @@ pub mod pallet {
     #[pallet::constant]
     type BlocksPerSession: Get<Self::BlockNumber>;
 
+    /// Number of sessions to keep in archive
+    #[pallet::constant]
+    type FeeAmount: Get<Permill>;
+
+    /// Number of sessions to keep in archive
+    #[pallet::constant]
+    type MarketMakerFeeAmount: Get<Permill>;
+
+    /// Number of sessions to keep in archive
+    #[pallet::constant]
+    type DistributionPercentage: Get<Permill>;
+
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
 
@@ -116,17 +127,6 @@ pub mod pallet {
   #[pallet::storage]
   #[pallet::getter(fn current_session)]
   pub type CurrentSession<T: Config> = StorageValue<_, SessionIndex, ValueQuery>;
-
-  /// The percentage on each trade to be taken as a network fee
-  #[pallet::storage]
-  #[pallet::getter(fn fee_percentage)]
-  pub type FeePercentageAmount<T: Config> = StorageValue<_, Percent, ValueQuery>;
-
-  /// The percentage of all fees for the each asset to re-distribute based on
-  /// the trading volume for each account
-  #[pallet::storage]
-  #[pallet::getter(fn distribution_percentage)]
-  pub type DistributionPercentage<T: Config> = StorageValue<_, Percent, ValueQuery>;
 
   /// The total fees for the era.
   /// If total hasn't been set or has been removed then 0 stake is returned.
@@ -170,11 +170,6 @@ pub mod pallet {
   /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
-    /// The percentage on each trade to be taken as a network fee. Default is 2%.
-    pub fee_percentage: Percent,
-    /// The percentage of all fees for the each asset to re-distribute based on
-    /// the trading volume for each account. Default is 20%.
-    pub distribution_percentage: Percent,
     pub runtime_marker: PhantomData<T>,
   }
 
@@ -182,10 +177,6 @@ pub mod pallet {
   impl<T: Config> Default for GenesisConfig<T> {
     fn default() -> Self {
       Self {
-        // Default network fee
-        fee_percentage: Percent::from_parts(2),
-        // Default distribution percentage
-        distribution_percentage: Percent::from_parts(20),
         runtime_marker: PhantomData,
       }
     }
@@ -195,8 +186,6 @@ pub mod pallet {
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
       CurrentSession::<T>::put(1);
-      FeePercentageAmount::<T>::put(self.fee_percentage);
-      DistributionPercentage::<T>::put(self.distribution_percentage);
       ActiveEra::<T>::put(ActiveEraInfo::<T::BlockNumber> {
         index: 1,
         // Set new active era start in next `on_finalize`. To guarantee usage of `Time`
@@ -211,7 +200,6 @@ pub mod pallet {
   #[pallet::event]
   #[pallet::generate_deposit(pub (super) fn deposit_event)]
   pub enum Event<T: Config> {
-    DistributionPercentageUpdated(Percent),
     FeesPercentageUpdated(Percent),
     SessionEnded {
       era_index: EraIndex,
@@ -317,43 +305,6 @@ pub mod pallet {
     }
   }
 
-  #[pallet::call]
-  impl<T: Config> Pallet<T> {
-    #[pallet::weight(0)]
-    pub fn set_distribution_percentage(
-      origin: OriginFor<T>,
-      percentage: Percent,
-    ) -> DispatchResultWithPostInfo {
-      // 1. Make sure this is signed by `account_id`
-      T::ForceOrigin::ensure_origin(origin)?;
-
-      // 2. Update oracle status
-      DistributionPercentage::<T>::set(percentage);
-
-      // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::DistributionPercentageUpdated(percentage));
-
-      Ok(().into())
-    }
-
-    #[pallet::weight(0)]
-    pub fn set_fees_percentage(
-      origin: OriginFor<T>,
-      percentage: Percent,
-    ) -> DispatchResultWithPostInfo {
-      // 1. Make sure this is signed by `account_id`
-      T::ForceOrigin::ensure_origin(origin)?;
-
-      // 2. Update oracle status
-      FeePercentageAmount::<T>::set(percentage);
-
-      // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::FeesPercentageUpdated(percentage));
-
-      Ok(().into())
-    }
-  }
-
   impl<T: Config> Pallet<T> {
     pub(crate) fn drain_old_sessions() {
       let current_session = CurrentSession::<T>::get();
@@ -397,7 +348,7 @@ pub mod pallet {
           // The amount of tokens in each monthly distribution will
           // be equal to `DistributionPercentage` of `CurrencyId` trading revenue (fees collected).
           let revenue_for_current_currency =
-            Self::distribution_percentage() * total_fees_collected_for_currency;
+            T::DistributionPercentage::get() * total_fees_collected_for_currency;
 
           // distribute to all accounts
           for (account_id, account_fee_for_currency) in AccountFees::<T>::iter_prefix(currency_id) {
@@ -433,10 +384,20 @@ pub mod pallet {
     // we do not use the currency for now as all asset have same fees
     // but if we need to update in the future, we could simply use the currency id
     // and update the storage
-    fn calculate_swap_fees(_currency_id: CurrencyId, total_amount_before_fees: Balance) -> Fee {
+    fn calculate_swap_fees(
+      _currency_id: CurrencyId,
+      total_amount_before_fees: Balance,
+      is_market_maker: bool,
+    ) -> Fee {
+      let fee = if is_market_maker {
+        T::MarketMakerFeeAmount::get()
+      } else {
+        T::FeeAmount::get()
+      } * total_amount_before_fees;
+
       Fee {
         amount: total_amount_before_fees,
-        fee: Self::fee_percentage() * total_amount_before_fees,
+        fee,
       }
     }
 
@@ -444,13 +405,20 @@ pub mod pallet {
       account_id: T::AccountId,
       currency_id: CurrencyId,
       total_amount_before_fees: Balance,
+      is_market_maker: bool,
     ) -> Fee {
       match Self::active_era() {
         Some(current_era) => {
           let current_session = CurrentSession::<T>::get();
+          let fee = if is_market_maker {
+            T::MarketMakerFeeAmount::get()
+          } else {
+            T::FeeAmount::get()
+          } * total_amount_before_fees;
+
           let new_fee = Fee {
             amount: total_amount_before_fees,
-            fee: Self::fee_percentage() * total_amount_before_fees,
+            fee,
           };
 
           // Update fees pool for the current era / currency

@@ -10,6 +10,8 @@ pub trait WeightInfo {
    fn set_status() -> Weight;
    fn set_account_id() -> Weight;
    fn confirm_swap() -> Weight;
+   fn add_market_maker() -> Weight;
+   fn remove_market_maker() -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
@@ -20,6 +22,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
           .saturating_add(T::DbWeight::get().reads(6_u64))
           .saturating_add(T::DbWeight::get().writes(5_u64))
   }
+  fn add_market_maker() -> Weight {
+      61_000_300_u64
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
+   fn remove_market_maker() -> Weight {
+      61_000_300_u64
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
   fn set_account_id() -> Weight {
       62_000_300_u64
        .saturating_add(T::DbWeight::get().reads(6_u64))

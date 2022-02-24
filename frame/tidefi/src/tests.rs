@@ -4,7 +4,7 @@ use crate::{
 };
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use std::str::FromStr;
-use tidefi_primitives::{CurrencyId, Hash};
+use tidefi_primitives::{CurrencyId, Hash, SwapType};
 
 #[test]
 pub fn request_swap_event() {
@@ -59,6 +59,8 @@ pub fn request_swap_event() {
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
       20_000,
+      SwapType::Limit,
+      None
     ));
 
     // swap confirmation for bob (user)

@@ -75,4 +75,14 @@ impl<T: frame_system::Config> pallet_oracle::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(25 as Weight))
 			.saturating_add(T::DbWeight::get().writes(19 as Weight))
 	}
+	fn add_market_maker() -> Weight {
+      61_000_300_u64
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
+   fn remove_market_maker() -> Weight {
+      61_000_300_u64
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
 }

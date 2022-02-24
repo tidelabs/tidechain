@@ -28,7 +28,7 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::u32_trait::{_2, _3};
-use sp_runtime::traits::AccountIdConversion;
+use sp_runtime::{traits::AccountIdConversion, Permill};
 
 parameter_types! {
   pub const ApprovalDeposit: Balance = 10 * CENTS;
@@ -38,9 +38,6 @@ parameter_types! {
   // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
   pub const MetadataDepositBase: Balance = deposit(1, 68);
   pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-
-  // FIXME: Should be better than that as we have multiple basis
-  pub const PeriodBasis: BlockNumber = 1000u32;
   // Maximum of 10 stake / currency / user (to prevent bloat on-chain)
   pub const StakeAccountCap: u32 = 10;
   // Maximum unstake processed in queue
@@ -56,7 +53,12 @@ parameter_types! {
   // Staking: Number of blocks to wait before unstaking when we force-unstake.
   // FIXME: Should be reverted to `14_400`
   pub const BlocksForceUnstake: BlockNumber = 100;
-
+  // 20 basis point
+  pub const FeeAmount: Permill = Permill::from_perthousand(20);
+  // 10 basis point
+  pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
+  // 20 %
+  pub const DistributionPercentage: Permill = Permill::from_percent(20);
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -178,6 +180,12 @@ impl pallet_fees::Config for Runtime {
   type SessionsArchive = SessionsArchive;
   type BlocksPerSession = BlocksPerSession;
   type Staking = TidefiStaking;
+  // Swap fee for users
+  type FeeAmount = FeeAmount;
+  // Swap fees for market makers
+  type MarketMakerFeeAmount = MarketMakerFeeAmount;
+  // Redistribution percentage
+  type DistributionPercentage = DistributionPercentage;
   // Security utils
   type Security = Security;
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
