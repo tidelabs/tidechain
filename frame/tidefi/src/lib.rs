@@ -28,9 +28,10 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_io::hashing::blake2_256;
+  use sp_runtime::Permill;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, OracleExt, QuorumExt},
-    Balance, CurrencyId, Hash,
+    Balance, CurrencyId, Hash, SwapType,
   };
 
   /// Tidefi configuration
@@ -90,6 +91,9 @@ pub mod pallet {
       currency_id_to: CurrencyId,
       amount_to: Balance,
       extrinsic_hash: [u8; 32],
+      slippage_tolerance: Permill,
+      swap_type: SwapType,
+      is_market_maker: bool,
     },
     /// User cancelled the initial swap and the funds has been released
     SwapCancelled { request_id: Hash },
@@ -230,6 +234,8 @@ pub mod pallet {
       amount_from: Balance,
       currency_id_to: CurrencyId,
       amount_to: Balance,
+      swap_type: SwapType,
+      slippage_tolerance: Option<Permill>,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the transaction is signed
       let account_id = ensure_signed(origin)?;
@@ -254,10 +260,15 @@ pub mod pallet {
         <frame_system::Pallet<T>>::extrinsic_index().ok_or(Error::<T>::UnknownError)?,
       ));
 
-      // 6. Make sure the account have enough funds for the `asset_id_from`
+      // 6. Validate if the user is a market maker when the swap is requested to allocate the correct fees
+      let is_market_maker = T::Oracle::is_market_maker(account_id.clone())?;
+
+      // 7. Make sure the account have enough funds for the `asset_id_from`
       match T::CurrencyTidefi::can_withdraw(currency_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
-          // 6. a) Add trade in queue
+          let real_slippage_tolerance = slippage_tolerance.unwrap_or(Permill::zero());
+
+          // 7. a) Add trade in queue
           let (trade_id, _) = T::Oracle::add_new_swap_in_queue(
             account_id.clone(),
             currency_id_from,
@@ -266,9 +277,12 @@ pub mod pallet {
             amount_to,
             <frame_system::Pallet<T>>::block_number(),
             extrinsic_hash,
+            is_market_maker,
+            swap_type.clone(),
+            real_slippage_tolerance,
           )?;
 
-          // 6 b) Send event to the chain
+          // 7 b) Send event to the chain
           Self::deposit_event(Event::<T>::Swap {
             request_id: trade_id,
             account: account_id,
@@ -277,6 +291,9 @@ pub mod pallet {
             currency_id_to,
             amount_to,
             extrinsic_hash,
+            swap_type,
+            is_market_maker,
+            slippage_tolerance: real_slippage_tolerance,
           });
 
           Ok(().into())

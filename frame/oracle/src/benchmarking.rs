@@ -6,8 +6,8 @@ use super::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
 use frame_system::{self, RawOrigin};
-use sp_runtime::traits::StaticLookup;
-use tidefi_primitives::{pallet::OracleExt, CurrencyId, SwapConfirmation};
+use sp_runtime::{traits::StaticLookup, Permill};
+use tidefi_primitives::{pallet::OracleExt, CurrencyId, SwapConfirmation, SwapType};
 
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;
@@ -36,6 +36,15 @@ benchmarks! {
       let user = pre_set_auth::<T>();
       let caller: T::AccountId = whitelisted_caller();
    }: _(RawOrigin::Signed(user), caller)
+   add_market_maker {
+      let user = pre_set_auth::<T>();
+      let caller: T::AccountId = whitelisted_caller();
+   }: _(RawOrigin::Signed(user), caller)
+   remove_market_maker {
+      let user = pre_set_auth::<T>();
+      let caller: T::AccountId = whitelisted_caller();
+      MarketMakers::<T>::insert(caller.clone(), true);
+   }: _(RawOrigin::Signed(user), caller)
    confirm_swap {
       let user = pre_set_auth::<T>();
       let account_id: T::AccountId = account("user", USER_ID, SEED);
@@ -56,7 +65,10 @@ benchmarks! {
          [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0,
-         ]
+         ],
+         false,
+         SwapType::Limit,
+         Permill::from_percent(2),
       ).unwrap();
 
       let mm_request = Pallet::<T>::add_new_swap_in_queue(mm_account_id,
@@ -68,7 +80,10 @@ benchmarks! {
          [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0,
-         ]
+         ],
+         false,
+         SwapType::Limit,
+         Permill::from_percent(2),
       ).unwrap();
 
    }: _(RawOrigin::Signed(user), user_request.0, vec![SwapConfirmation { request_id: mm_request.0, amount_to_receive: 1_000_000_000_000, amount_to_send: 1_000_000_000_000 }])

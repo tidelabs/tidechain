@@ -17,7 +17,7 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult,
+  DispatchError, DispatchResult, Permill,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
@@ -140,6 +140,12 @@ parameter_types! {
   pub const BlocksForceUnstake: BlockNumber = 10;
   pub const StakeAccountCap: u32 = 10;
   pub const UnstakeQueueCap: u32 = 100;
+  // 20 basis point
+  pub const FeeAmount: Permill = Permill::from_perthousand(20);
+  // 10 basis point
+  pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
+  // 20 %
+  pub const DistributionPercentage: Permill = Permill::from_percent(20);
 }
 
 impl pallet_tidefi::Config for Test {
@@ -203,6 +209,9 @@ impl pallet_fees::Config for Test {
   type SessionsPerEra = SessionsPerEra;
   type SessionsArchive = SessionsArchive;
   type BlocksPerSession = BlocksPerSession;
+  type FeeAmount = FeeAmount;
+  type MarketMakerFeeAmount = MarketMakerFeeAmount;
+  type DistributionPercentage = DistributionPercentage;
   type Staking = TidefiStaking;
 }
 
@@ -394,6 +403,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_oracle::GenesisConfig::<Test> {
     enabled: true,
     account: 0,
+    market_makers: Vec::new(),
   }
   .assimilate_storage(&mut storage)
   .unwrap();

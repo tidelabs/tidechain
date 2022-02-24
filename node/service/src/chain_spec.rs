@@ -246,6 +246,28 @@ fn hertel_testnet_genesis(
     oracle: hertel_runtime::OracleConfig {
       enabled: true,
       account: oracle,
+      market_makers: vec![
+        //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
+        hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
+        //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
+        hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
+        //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
+        hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
+        //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
+        hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
+        //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
+        hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+        //5EPTgRuaMcWTH88BfmZQKymiJ41eKJc9goQC7VeRGwGnMGbK
+        hex!["66c6683ad9c6b1940d9d74691cdc0cfd4e760357d7427185e73f1c420d2ce464"].into(),
+        //5GKxcqHFndxDH8qdpK6311Qco4MLJJZJeY8ZSFjjN6w31goH
+        hex!["bc934e6e40cd8207bc9bc72fb8c1c2cb3266ef7caac69f6e18cb5792ab859f62"].into(),
+        //5CXeo6fy34CuZgmbkSjy7vjqrv9DojqmQmqCrHwANxwPqC9Q
+        hex!["148d51dee87e09b75f8487aaf72aecda9b107f577e184da1d065d14bf02bc542"].into(),
+        //5FQyxubtnNEpjcTWWRygJStchrQoSKc9r6ohPUv93WPMechq
+        hex!["942bd4d3c1de0dbd822551f572762e194e52664bb94686c96c0679a899147506"].into(),
+        //5FKuzgFppRcJqs1bYQvrDJ9DrKZaXqrwKggWBk4DyfpXFvoo
+        hex!["904e3dea6bcdc6cb523f52cbdedad53c24bbd95692ec690154b0f2c7f0abc55c"].into(),
+      ],
     },
     asset_registry: hertel_runtime::AssetRegistryConfig {
       // these assets are created on first initialization
@@ -408,6 +430,7 @@ fn tidechain_testnet_genesis(
     oracle: tidechain_runtime::OracleConfig {
       enabled: true,
       account: oracle,
+      market_makers: Vec::new(),
     },
     asset_registry: tidechain_runtime::AssetRegistryConfig {
       // these assets are created on first initialization
@@ -1176,6 +1199,356 @@ mod helpers {
         assets::Asset::Ethereum.currency_id(),
         //5G6T8M1unQRmZwbNs5xyJpiZgmBPTqQo1xrEympG3Y4GMY7A
         hex!["b245d70b5528570848768e4892bb52f3ca4978957c443df6421760f8a72fab5e"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5CJtCCvQcJLRmWUYFQbyuRzczKLhqS12aQHEVbsNrMtZ2Eoo
+        hex!["0ad03b8cccca0980fb8c0e7469c909f26cf3c36f7a48bd18ffd907728e248434"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5CJtCCvQcJLRmWUYFQbyuRzczKLhqS12aQHEVbsNrMtZ2Eoo
+        hex!["0ad03b8cccca0980fb8c0e7469c909f26cf3c36f7a48bd18ffd907728e248434"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5CJtCCvQcJLRmWUYFQbyuRzczKLhqS12aQHEVbsNrMtZ2Eoo
+        hex!["0ad03b8cccca0980fb8c0e7469c909f26cf3c36f7a48bd18ffd907728e248434"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5CJtCCvQcJLRmWUYFQbyuRzczKLhqS12aQHEVbsNrMtZ2Eoo
+        hex!["0ad03b8cccca0980fb8c0e7469c909f26cf3c36f7a48bd18ffd907728e248434"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5CJtCCvQcJLRmWUYFQbyuRzczKLhqS12aQHEVbsNrMtZ2Eoo
+        hex!["0ad03b8cccca0980fb8c0e7469c909f26cf3c36f7a48bd18ffd907728e248434"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5FA6JuLx8geeWMUvKuTf3LRZNY7sqYwLrtmVZ2wKWRos9nHv
+        hex!["88d0823558e2d1784938d2adee2524d311c71396ca014660d52354623283ee65"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5FA6JuLx8geeWMUvKuTf3LRZNY7sqYwLrtmVZ2wKWRos9nHv
+        hex!["88d0823558e2d1784938d2adee2524d311c71396ca014660d52354623283ee65"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5FA6JuLx8geeWMUvKuTf3LRZNY7sqYwLrtmVZ2wKWRos9nHv
+        hex!["88d0823558e2d1784938d2adee2524d311c71396ca014660d52354623283ee65"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5FA6JuLx8geeWMUvKuTf3LRZNY7sqYwLrtmVZ2wKWRos9nHv
+        hex!["88d0823558e2d1784938d2adee2524d311c71396ca014660d52354623283ee65"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5FA6JuLx8geeWMUvKuTf3LRZNY7sqYwLrtmVZ2wKWRos9nHv
+        hex!["88d0823558e2d1784938d2adee2524d311c71396ca014660d52354623283ee65"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5GmiWrcsDvQjbQ4sbKSycRS7dZ3AkxuB12iJC2vn9cZBXSpu
+        hex!["d03836376dc9d289ce6b0e01442eec48188a4ea9a00064f95d8fd800f853c111"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5GmiWrcsDvQjbQ4sbKSycRS7dZ3AkxuB12iJC2vn9cZBXSpu
+        hex!["d03836376dc9d289ce6b0e01442eec48188a4ea9a00064f95d8fd800f853c111"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5GmiWrcsDvQjbQ4sbKSycRS7dZ3AkxuB12iJC2vn9cZBXSpu
+        hex!["d03836376dc9d289ce6b0e01442eec48188a4ea9a00064f95d8fd800f853c111"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5GmiWrcsDvQjbQ4sbKSycRS7dZ3AkxuB12iJC2vn9cZBXSpu
+        hex!["d03836376dc9d289ce6b0e01442eec48188a4ea9a00064f95d8fd800f853c111"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5GmiWrcsDvQjbQ4sbKSycRS7dZ3AkxuB12iJC2vn9cZBXSpu
+        hex!["d03836376dc9d289ce6b0e01442eec48188a4ea9a00064f95d8fd800f853c111"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5CJ1ADipRQcLonHR8paMQ3kC7Rs76s7vPfaP7fWea2fBgnTm
+        hex!["0a246f9ff97b425735144a1162db84211e8953fad997a4906877a4c7dcb62f22"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5CJ1ADipRQcLonHR8paMQ3kC7Rs76s7vPfaP7fWea2fBgnTm
+        hex!["0a246f9ff97b425735144a1162db84211e8953fad997a4906877a4c7dcb62f22"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5CJ1ADipRQcLonHR8paMQ3kC7Rs76s7vPfaP7fWea2fBgnTm
+        hex!["0a246f9ff97b425735144a1162db84211e8953fad997a4906877a4c7dcb62f22"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5CJ1ADipRQcLonHR8paMQ3kC7Rs76s7vPfaP7fWea2fBgnTm
+        hex!["0a246f9ff97b425735144a1162db84211e8953fad997a4906877a4c7dcb62f22"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5CJ1ADipRQcLonHR8paMQ3kC7Rs76s7vPfaP7fWea2fBgnTm
+        hex!["0a246f9ff97b425735144a1162db84211e8953fad997a4906877a4c7dcb62f22"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5F92rg6xcfyCKxfpbkNNwC9bouURZPSzQRCJWGoX47Myz4PH
+        hex!["8801a45cc54e90766bac513b5b40771ffceb96fc45236480b69d7c7ccd01d75e"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5F92rg6xcfyCKxfpbkNNwC9bouURZPSzQRCJWGoX47Myz4PH
+        hex!["8801a45cc54e90766bac513b5b40771ffceb96fc45236480b69d7c7ccd01d75e"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5F92rg6xcfyCKxfpbkNNwC9bouURZPSzQRCJWGoX47Myz4PH
+        hex!["8801a45cc54e90766bac513b5b40771ffceb96fc45236480b69d7c7ccd01d75e"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5F92rg6xcfyCKxfpbkNNwC9bouURZPSzQRCJWGoX47Myz4PH
+        hex!["8801a45cc54e90766bac513b5b40771ffceb96fc45236480b69d7c7ccd01d75e"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5F92rg6xcfyCKxfpbkNNwC9bouURZPSzQRCJWGoX47Myz4PH
+        hex!["8801a45cc54e90766bac513b5b40771ffceb96fc45236480b69d7c7ccd01d75e"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5Dco6bBWGNj62JxoUDSZ5nxFyXv8iEUcXqYzYRRYzBD5KtVB
+        hex!["44b5b9d3a8474560f6705eb9a2fa5875fdf3e8bef27352da679814043537d323"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5Dco6bBWGNj62JxoUDSZ5nxFyXv8iEUcXqYzYRRYzBD5KtVB
+        hex!["44b5b9d3a8474560f6705eb9a2fa5875fdf3e8bef27352da679814043537d323"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5Dco6bBWGNj62JxoUDSZ5nxFyXv8iEUcXqYzYRRYzBD5KtVB
+        hex!["44b5b9d3a8474560f6705eb9a2fa5875fdf3e8bef27352da679814043537d323"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5Dco6bBWGNj62JxoUDSZ5nxFyXv8iEUcXqYzYRRYzBD5KtVB
+        hex!["44b5b9d3a8474560f6705eb9a2fa5875fdf3e8bef27352da679814043537d323"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5Dco6bBWGNj62JxoUDSZ5nxFyXv8iEUcXqYzYRRYzBD5KtVB
+        hex!["44b5b9d3a8474560f6705eb9a2fa5875fdf3e8bef27352da679814043537d323"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5FWkciyXUqmvqsv4d8DGJ1rCufcWFqjsbc2ScWSTKJUy3F1n
+        hex!["98925ed611afe810efef0e3da011e25ed6704769de1b3b962840c4d04f55933f"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5FWkciyXUqmvqsv4d8DGJ1rCufcWFqjsbc2ScWSTKJUy3F1n
+        hex!["98925ed611afe810efef0e3da011e25ed6704769de1b3b962840c4d04f55933f"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5FWkciyXUqmvqsv4d8DGJ1rCufcWFqjsbc2ScWSTKJUy3F1n
+        hex!["98925ed611afe810efef0e3da011e25ed6704769de1b3b962840c4d04f55933f"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5FWkciyXUqmvqsv4d8DGJ1rCufcWFqjsbc2ScWSTKJUy3F1n
+        hex!["98925ed611afe810efef0e3da011e25ed6704769de1b3b962840c4d04f55933f"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5FWkciyXUqmvqsv4d8DGJ1rCufcWFqjsbc2ScWSTKJUy3F1n
+        hex!["98925ed611afe810efef0e3da011e25ed6704769de1b3b962840c4d04f55933f"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5DSNW8JyKnL8ffQyW5c1rLcNkprkSmRH84ZqHci8vNsRbKrH
+        hex!["3cc27afba8905755c9243e61cfdfc46c2bfbc697eb2728d55b7f1b924e947762"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5DSNW8JyKnL8ffQyW5c1rLcNkprkSmRH84ZqHci8vNsRbKrH
+        hex!["3cc27afba8905755c9243e61cfdfc46c2bfbc697eb2728d55b7f1b924e947762"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5DSNW8JyKnL8ffQyW5c1rLcNkprkSmRH84ZqHci8vNsRbKrH
+        hex!["3cc27afba8905755c9243e61cfdfc46c2bfbc697eb2728d55b7f1b924e947762"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5DSNW8JyKnL8ffQyW5c1rLcNkprkSmRH84ZqHci8vNsRbKrH
+        hex!["3cc27afba8905755c9243e61cfdfc46c2bfbc697eb2728d55b7f1b924e947762"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5DSNW8JyKnL8ffQyW5c1rLcNkprkSmRH84ZqHci8vNsRbKrH
+        hex!["3cc27afba8905755c9243e61cfdfc46c2bfbc697eb2728d55b7f1b924e947762"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5HYsxrjNuqE9y4X4ubZgu9heVTSLq3s5xheEEEXgf9PH4xXk
+        hex!["f2aa0f922382ad8a828044bb95702a1280d8f38263f28fc15e267ac9481fff5c"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5HYsxrjNuqE9y4X4ubZgu9heVTSLq3s5xheEEEXgf9PH4xXk
+        hex!["f2aa0f922382ad8a828044bb95702a1280d8f38263f28fc15e267ac9481fff5c"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5HYsxrjNuqE9y4X4ubZgu9heVTSLq3s5xheEEEXgf9PH4xXk
+        hex!["f2aa0f922382ad8a828044bb95702a1280d8f38263f28fc15e267ac9481fff5c"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5HYsxrjNuqE9y4X4ubZgu9heVTSLq3s5xheEEEXgf9PH4xXk
+        hex!["f2aa0f922382ad8a828044bb95702a1280d8f38263f28fc15e267ac9481fff5c"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5HYsxrjNuqE9y4X4ubZgu9heVTSLq3s5xheEEEXgf9PH4xXk
+        hex!["f2aa0f922382ad8a828044bb95702a1280d8f38263f28fc15e267ac9481fff5c"].into(),
+        // 10_000 ETH
+        assets::Asset::Ethereum.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tide.currency_id(),
+        //5DLNXC7EiC4Dr7ZpSHrrZrCFwdtdURA6uXg4HxCANa9w1s6x
+        hex!["382f11df7a878f1242d98603699b115aed13abc9e6bfa425c5492436336c4c26"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Tether.currency_id(),
+        //5DLNXC7EiC4Dr7ZpSHrrZrCFwdtdURA6uXg4HxCANa9w1s6x
+        hex!["382f11df7a878f1242d98603699b115aed13abc9e6bfa425c5492436336c4c26"].into(),
+        // 10_000 USDT
+        assets::Asset::Tether.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::USDCoin.currency_id(),
+        //5DLNXC7EiC4Dr7ZpSHrrZrCFwdtdURA6uXg4HxCANa9w1s6x
+        hex!["382f11df7a878f1242d98603699b115aed13abc9e6bfa425c5492436336c4c26"].into(),
+        // 10_000 USDC
+        assets::Asset::USDCoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Bitcoin.currency_id(),
+        //5DLNXC7EiC4Dr7ZpSHrrZrCFwdtdURA6uXg4HxCANa9w1s6x
+        hex!["382f11df7a878f1242d98603699b115aed13abc9e6bfa425c5492436336c4c26"].into(),
+        // 10_000 BTC
+        assets::Asset::Bitcoin.saturating_mul(10_000),
+      ),
+      (
+        assets::Asset::Ethereum.currency_id(),
+        //5DLNXC7EiC4Dr7ZpSHrrZrCFwdtdURA6uXg4HxCANa9w1s6x
+        hex!["382f11df7a878f1242d98603699b115aed13abc9e6bfa425c5492436336c4c26"].into(),
         // 10_000 ETH
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),

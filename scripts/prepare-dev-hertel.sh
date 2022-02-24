@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 # numbers of investors
-I_NUM=5
+I_NUM=15
 # numbers of devs
 D_NUM=10
 
@@ -43,7 +43,7 @@ generate_address_and_account_id() {
 	printf "//$ADDRESS\nhex![\"${ACCOUNT#'0x'}\"].$INTO(),"
 }
 
-# INVESTORS (ONLY TIDEs)
+# INVESTORS
 for i in $(seq 1 $I_NUM); do
 	ADDRESS=$(generate_address_and_account_id investor$i stash)
 	INVESTORS+="(assets::Asset::Tide.currency_id(),\n$ADDRESS\n// 10_000 TIDE\nassets::Asset::Tide.saturating_mul(10_000)),\n"
@@ -53,7 +53,7 @@ for i in $(seq 1 $I_NUM); do
 	INVESTORS+="(assets::Asset::Ethereum.currency_id(),\n$ADDRESS\n// 10_000 ETH\nassets::Asset::Ethereum.saturating_mul(10_000)),\n"
 done
 
-# DEVS (TIDEs & CURRENCIES)
+# DEVS
 for i in $(seq 1 $D_NUM); do
 	ADDRESS=$(generate_address_and_account_id dev$i stash)
 	DEVS+="(assets::Asset::Tide.currency_id(),\n$ADDRESS\n// 1_000_000 TIDE\nassets::Asset::Tide.saturating_mul(1_000_000)),\n"
@@ -61,10 +61,13 @@ for i in $(seq 1 $D_NUM); do
 	DEVS+="(assets::Asset::USDCoin.currency_id(),\n$ADDRESS\n// 1_000_000 USDC\nassets::Asset::USDCoin.saturating_mul(1_000_000)),\n"
 	DEVS+="(assets::Asset::Bitcoin.currency_id(),\n$ADDRESS\n// 1_000_000 BTC\nassets::Asset::Bitcoin.saturating_mul(1_000_000)),\n"
 	DEVS+="(assets::Asset::Ethereum.currency_id(),\n$ADDRESS\n// 1_000_000 ETH\nassets::Asset::Ethereum.saturating_mul(1_000_000)),\n"
+
+	MARKET_MAKERS+="$ADDRESS\n"
 done
 
 # FAUCET
 FAUCET="(CurrencyId::Tide,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TIDE\nassets::Asset::Tide.saturating_mul(10_000)),\n"
 
+printf "\nvec![\n$MARKET_MAKERS]"
 printf "\nvec![\n"
 printf "// faucet\n$FAUCET// investors\n$INVESTORS\n// devs\n$DEVS]"
