@@ -366,6 +366,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_oracle::GenesisConfig::<Test> {
     enabled: false,
     account: 1,
+    market_makers: Vec::new(),
   }
   .assimilate_storage(&mut storage)
   .unwrap();

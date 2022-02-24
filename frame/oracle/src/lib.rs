@@ -258,7 +258,6 @@ pub mod pallet {
               let allowed_slippage = mm_trade_request.slippage.deconstruct() as f64 / 1_000_000_f64;
               let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
               let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
-
               ensure!(
                 minimum_per_token <= pay_per_token_offered,
                 Error::MarketMakerOverflow
@@ -304,10 +303,21 @@ pub mod pallet {
               Error::Overflow
             );
 
-            if trade.amount_from_filled < trade.amount_from {
-              trade.status = SwapStatus::PartiallyFilled;
-            } else if trade.amount_from_filled == trade.amount_from {
+            let amount_from_with_max_slippage = trade
+              .amount_from
+              .saturating_add(trade.slippage * trade.amount_from);
+            let amount_from_with_min_slippage = trade
+              .amount_from
+              .saturating_sub(trade.slippage * trade.amount_from);
+
+            // if the amount filled, is within our slippage value of the amount_from, we mark this
+            // swap as closed
+            if trade.amount_from_filled >= amount_from_with_min_slippage
+              && trade.amount_from_filled <= amount_from_with_max_slippage
+            {
               trade.status = SwapStatus::Completed;
+            } else {
+              trade.status = SwapStatus::PartiallyFilled;
             }
 
             // 10. Make sure the requester can deposit the new asset before initializing trade process
@@ -343,22 +353,29 @@ pub mod pallet {
                       return Err(Error::<T>::InvalidMarketMakerRequest);
                     }
 
-                    if mm.amount_to_send
-                      < (market_maker_trade_intent.amount_from
-                        - market_maker_trade_intent.amount_from_filled)
-                    {
-                      // partial fill
-                      market_maker_trade_intent.status = SwapStatus::PartiallyFilled;
-                    }
-
                     market_maker_trade_intent.amount_from_filled += mm.amount_to_send;
                     market_maker_trade_intent.amount_to_filled += mm.amount_to_receive;
 
-                    if market_maker_trade_intent.amount_from_filled
-                      == market_maker_trade_intent.amount_from
+                    // calculate fill ratio based on the slippage
+                    let amount_from_with_max_slippage =
+                      market_maker_trade_intent.amount_from.saturating_add(
+                        market_maker_trade_intent.slippage * market_maker_trade_intent.amount_from,
+                      );
+                    let amount_from_with_min_slippage =
+                      market_maker_trade_intent.amount_from.saturating_sub(
+                        market_maker_trade_intent.slippage * market_maker_trade_intent.amount_from,
+                      );
+
+                    // if the amount filled, is within our slippage value of the amount_from, we mark this
+                    // swap as closed
+                    if market_maker_trade_intent.amount_from_filled >= amount_from_with_min_slippage
+                      && market_maker_trade_intent.amount_from_filled
+                        <= amount_from_with_max_slippage
                     {
                       // completed fill
                       market_maker_trade_intent.status = SwapStatus::Completed;
+                    } else {
+                      market_maker_trade_intent.status = SwapStatus::PartiallyFilled;
                     }
 
                     // 11. d) Transfer funds from the requester to the market makers
@@ -461,8 +478,9 @@ pub mod pallet {
                     });
 
                     // 14. Delete the intent if it's completed or if it's a market order
-                    if market_maker_trade_intent.amount_from_filled
-                      >= market_maker_trade_intent.amount_from
+
+                    // release order if its within slippage values
+                    if market_maker_trade_intent.status == SwapStatus::Completed
                       || market_maker_trade_intent.swap_type == SwapType::Market
                     {
                       Self::try_delete_account_swap(
@@ -470,48 +488,8 @@ pub mod pallet {
                         mm.request_id,
                       )
                       .map_err(|_| Error::<T>::UnknownError)?;
-
-                      // release the remaining funds
-                      let amount_with_max_slippage =
-                        market_maker_trade_intent.amount_from.saturating_add(
-                          market_maker_trade_intent.slippage
-                            * market_maker_trade_intent.amount_from,
-                        );
-
-                      // real fees required
-                      let real_fees_amount = T::Fees::calculate_swap_fees(
-                        market_maker_trade_intent.token_from,
-                        market_maker_trade_intent.amount_from_filled,
-                        market_maker_trade_intent.is_market_maker,
-                      );
-                      let fees_with_slippage = T::Fees::calculate_swap_fees(
-                        market_maker_trade_intent.token_from,
-                        amount_with_max_slippage,
-                        market_maker_trade_intent.is_market_maker,
-                      );
-
-                      let amount_to_release = market_maker_trade_intent
-                        .amount_from
-                        // slippage
-                        .saturating_add(
-                          market_maker_trade_intent.slippage
-                            * market_maker_trade_intent.amount_from,
-                        )
-                        // reduce filled amount
-                        .saturating_sub(market_maker_trade_intent.amount_from_filled)
-                        // reduce un-needed locked fee
-                        .saturating_add(
-                          fees_with_slippage.fee.saturating_sub(real_fees_amount.fee),
-                        );
-
-                      T::CurrencyTidefi::release(
-                        market_maker_trade_intent.token_from,
-                        &market_maker_trade_intent.account_id,
-                        amount_to_release,
-                        false,
-                      )
-                      .map_err(|_| Error::<T>::ReleaseFailed)?;
-
+                      Self::swap_release_funds(&market_maker_trade_intent)
+                        .map_err(|_| Error::<T>::ReleaseFailed)?;
                       *mm_trade_request = None;
                     } else {
                       Self::try_update_account_swap_status(
@@ -541,44 +519,10 @@ pub mod pallet {
             });
 
             // 16. close the trade if it's complete or is a market order
-            if trade.amount_from_filled >= trade.amount_from || trade.swap_type == SwapType::Market
-            {
-              // delete the trade request
+            if trade.status == SwapStatus::Completed || trade.swap_type == SwapType::Market {
               Self::try_delete_account_swap(&trade.account_id, request_id)
                 .map_err(|_| Error::<T>::UnknownError)?;
-
-              // release the remaining funds
-              let amount_with_max_slippage = trade
-                .amount_from
-                .saturating_add(trade.slippage * trade.amount_from);
-              // real fees required
-              let real_fees_amount = T::Fees::calculate_swap_fees(
-                trade.token_from,
-                trade.amount_from_filled,
-                trade.is_market_maker,
-              );
-              let fees_with_slippage = T::Fees::calculate_swap_fees(
-                trade.token_from,
-                amount_with_max_slippage,
-                trade.is_market_maker,
-              );
-
-              let amount_to_release = trade
-                .amount_from
-                // slippage
-                .saturating_add(trade.slippage * trade.amount_from)
-                // reduce filled amount
-                .saturating_sub(trade.amount_from_filled)
-                // reduce un-needed locked fee
-                .saturating_add(fees_with_slippage.fee.saturating_sub(real_fees_amount.fee));
-
-              T::CurrencyTidefi::release(
-                trade.token_from,
-                &trade.account_id,
-                amount_to_release,
-                false,
-              )
-              .map_err(|_| Error::<T>::ReleaseFailed)?;
+              Self::swap_release_funds(&trade).map_err(|_| Error::<T>::ReleaseFailed)?;
 
               *trade_request = None;
             } else {
@@ -730,6 +674,43 @@ pub mod pallet {
 
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
+    fn swap_release_funds(trade: &Swap<T::AccountId, T::BlockNumber>) -> Result<(), DispatchError> {
+      // release the remaining funds
+      let amount_with_max_slippage = trade
+        .amount_from
+        .saturating_add(trade.slippage * trade.amount_from);
+      // real fees required
+      let real_fees_amount = T::Fees::calculate_swap_fees(
+        trade.token_from,
+        trade.amount_from_filled,
+        trade.is_market_maker,
+      );
+      let fees_with_slippage = T::Fees::calculate_swap_fees(
+        trade.token_from,
+        amount_with_max_slippage,
+        trade.is_market_maker,
+      );
+
+      let amount_to_release = trade
+        .amount_from
+        // slippage
+        .saturating_add(trade.slippage * trade.amount_from)
+        // reduce filled amount
+        .saturating_sub(trade.amount_from_filled)
+        // reduce un-needed locked fee
+        .saturating_add(fees_with_slippage.fee.saturating_sub(real_fees_amount.fee));
+
+      T::CurrencyTidefi::release(
+        trade.token_from,
+        &trade.account_id,
+        amount_to_release,
+        false,
+      )
+      .map_err(|_| Error::<T>::ReleaseFailed)?;
+
+      Ok(())
+    }
+
     fn ensure_not_paused() -> Result<(), DispatchError> {
       if Self::is_oracle_enabled() {
         Ok(())
