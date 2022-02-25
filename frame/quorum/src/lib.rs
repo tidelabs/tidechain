@@ -215,8 +215,8 @@ pub mod pallet {
       );
 
       // 4. Add `Amber` and `Red` to watch list
-      if compliance_level.clone() == ComplianceLevel::Amber
-        || compliance_level.clone() == ComplianceLevel::Red
+      if compliance_level == ComplianceLevel::Amber
+        || compliance_level == ComplianceLevel::Red
       {
         Self::add_account_watch_list(
           &account_id,
@@ -229,8 +229,8 @@ pub mod pallet {
       }
 
       // 5. Mint `Green` and `Amber`
-      if compliance_level.clone() == ComplianceLevel::Green
-        || compliance_level.clone() == ComplianceLevel::Amber
+      if compliance_level == ComplianceLevel::Green
+        || compliance_level == ComplianceLevel::Amber
       {
         T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount)?;
         Self::deposit_event(Event::<T>::Minted {

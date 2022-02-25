@@ -7,7 +7,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whiteli
 use frame_support::traits::fungibles::Mutate;
 use frame_system::{self, RawOrigin};
 use sp_runtime::traits::StaticLookup;
-use tidefi_primitives::{pallet::QuorumExt, CurrencyId};
+use tidefi_primitives::{pallet::QuorumExt, ComplianceLevel, CurrencyId};
 
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;
@@ -47,7 +47,7 @@ benchmarks! {
    mint {
       let caller: T::AccountId = whitelisted_caller();
       let user = pre_set_auth::<T>();
-   }: _(RawOrigin::Signed(user), caller, CurrencyId::Tide, 1_000_000_000_000_000)
+   }: _(RawOrigin::Signed(user), caller, CurrencyId::Tide, 1_000_000_000_000_000, Vec::new(), ComplianceLevel::Green)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

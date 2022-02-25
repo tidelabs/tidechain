@@ -10,20 +10,20 @@ use tidefi_primitives::{CurrencyId, Hash, SwapType};
 #[test]
 pub fn request_swap_event() {
   new_test_ext().execute_with(|| {
-    let alice = Origin::signed(1u64.into());
+    let alice = Origin::signed(1u64);
     let temp_asset_id = 1;
 
     // add 1 tide to alice & all MMs
     assert_ok!(Adapter::mint_into(
       CurrencyId::Tide,
-      &1u64.into(),
+      &1u64,
       1_000_000_000_000
     ));
 
     // add 20 tides to bob
     assert_ok!(Adapter::mint_into(
       CurrencyId::Tide,
-      &2u64.into(),
+      &2u64,
       20_000_000_000_000
     ));
 
@@ -31,7 +31,7 @@ pub fn request_swap_event() {
     assert_ok!(Assets::force_create(
       Origin::root(),
       temp_asset_id,
-      1u64.into(),
+      1u64,
       true,
       1
     ));
@@ -47,15 +47,15 @@ pub fn request_swap_event() {
 
     // mint TEMP funds to bob
     assert_ok!(Assets::mint(
-      alice.clone(),
+      alice,
       temp_asset_id,
-      2u64.into(),
+      2u64,
       1_000_000
     ));
 
     // Submit request
     assert_ok!(Tidefi::swap(
-      Origin::signed(2u64.into()),
+      Origin::signed(2u64),
       CurrencyId::Tide,
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
@@ -70,7 +70,7 @@ pub fn request_swap_event() {
         "0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e",
       )
       .unwrap_or_default(),
-      account: 2u64.into(),
+      account: 2u64,
       currency_id_from: CurrencyId::Tide,
       amount_from: 10_000_000_000_000,
       currency_id_to: CurrencyId::Wrapped(temp_asset_id),
