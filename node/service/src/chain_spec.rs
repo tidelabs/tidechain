@@ -112,14 +112,15 @@ fn hertel_testnet_genesis(
   const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 2 * 1_000_000_000_000;
-  // Get Quorum Account ID (if multisig)
-  let quorum = helpers::get_quorum_address(quorums.clone());
   // Treasury Account Id
   let treasury_account: AccountId = hertel_runtime::TreasuryPalletId::get().into_account();
   // Fees Account Id
   let fees_account: AccountId = hertel_runtime::FeesPalletId::get().into_account();
   // Get all TIDE from our stakeholders
   let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
+
+  // default threshold set to 60%
+  let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
 
   let mut total_claims: u128 = 0;
   for (_, balance) in &claims {
@@ -241,7 +242,8 @@ fn hertel_testnet_genesis(
     // tidefi custom genesis
     quorum: hertel_runtime::QuorumConfig {
       enabled: true,
-      account: quorum,
+      members: quorums,
+      threshold: quorum_threshold,
     },
     oracle: hertel_runtime::OracleConfig {
       enabled: true,
@@ -303,8 +305,10 @@ fn tidechain_testnet_genesis(
   const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 2 * 1_000_000_000_000;
-  // Get Quorum Account ID (if multisig)
-  let quorum = helpers::get_quorum_address(quorums.clone());
+
+  // default threshold set to 60%
+  let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
+  
   // Treasury Account Id
   let treasury_account: AccountId = tidechain_runtime::TreasuryPalletId::get().into_account();
   // Fees Account Id
@@ -425,7 +429,8 @@ fn tidechain_testnet_genesis(
     // tidefi custom genesis
     quorum: tidechain_runtime::QuorumConfig {
       enabled: true,
-      account: quorum,
+      members: quorums,
+      threshold: quorum_threshold,
     },
     oracle: tidechain_runtime::OracleConfig {
       enabled: true,
@@ -975,20 +980,6 @@ mod helpers {
         )
       })
       .collect()
-  }
-
-  pub(crate) fn get_quorum_address(quorums: Vec<AccountId>) -> AccountId {
-    if quorums.len() > 1 {
-      // threshold (60%)
-      let threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
-      // create multisig from the quorum accounts provided
-      let mut signatories = quorums;
-      signatories.sort();
-      let entropy = (b"modlpy/utilisuba", &signatories, threshold).using_encoded(blake2_256);
-      AccountId::decode(&mut &entropy[..]).unwrap_or_default()
-    } else {
-      quorums.first().unwrap().clone()
-    }
   }
 
   pub fn get_all_assets() -> Vec<(AssetId, Vec<u8>, Vec<u8>, u8)> {

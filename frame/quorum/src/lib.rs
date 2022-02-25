@@ -25,13 +25,11 @@ pub mod pallet {
     PalletId,
   };
   use frame_system::pallet_prelude::*;
-  #[cfg(feature = "std")]
-  use sp_runtime::traits::AccountIdConversion;
   use sp_std::vec;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, QuorumExt, SecurityExt},
-    AssetId, Balance, ComplianceLevel, CurrencyId, Hash, WatchList, WatchListAction, Withdrawal,
-    WithdrawalStatus,
+    AssetId, Balance, ComplianceLevel, CurrencyId, Hash, Mint, ProposalStatus, ProposalType,
+    ProposalVotes, WatchList, WatchListAction, Withdrawal,
   };
 
   #[pallet::config]
@@ -45,6 +43,14 @@ pub mod pallet {
     /// Pallet ID
     #[pallet::constant]
     type QuorumPalletId: Get<PalletId>;
+
+    /// Proposals capacity
+    #[pallet::constant]
+    type ProposalsCap: Get<u32>;
+
+    /// Proposals lifetime
+    #[pallet::constant]
+    type ProposalLifetime: Get<Self::BlockNumber>;
 
     /// Weights
     type WeightInfo: WeightInfo;
@@ -70,17 +76,6 @@ pub mod pallet {
   #[pallet::getter(fn status)]
   pub(super) type QuorumStatus<T: Config> = StorageValue<_, bool, ValueQuery>;
 
-  /// Quorum Account ID
-  #[pallet::storage]
-  #[pallet::getter(fn account_id)]
-  pub type QuorumAccountId<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
-
-  /// Mapping of pending Withdrawals
-  #[pallet::storage]
-  #[pallet::getter(fn withdrawals)]
-  pub type Withdrawals<T: Config> =
-    StorageMap<_, Blake2_128Concat, Hash, Withdrawal<T::AccountId, T::BlockNumber>>;
-
   /// Quorum public keys for all chains
   #[pallet::storage]
   #[pallet::getter(fn public_keys)]
@@ -100,14 +95,40 @@ pub mod pallet {
   pub type AccountWatchList<T: Config> =
     StorageMap<_, Blake2_128Concat, T::AccountId, Vec<WatchList<T::BlockNumber>>>;
 
+  /// The threshold required for a proposal to process
+  #[pallet::storage]
+  #[pallet::getter(fn threshold)]
+  pub type Threshold<T: Config> = StorageValue<_, u16, ValueQuery>;
+
+  /// Set of proposals for the Quorum
+  #[pallet::storage]
+  #[pallet::getter(fn proposals)]
+  pub type Proposals<T: Config> = StorageValue<
+    _,
+    BoundedVec<(Hash, ProposalType<T::AccountId, T::BlockNumber>), T::ProposalsCap>,
+    ValueQuery,
+  >;
+
+  /// Set of Votes for each proposal
+  #[pallet::storage]
+  #[pallet::getter(fn proposal_votes)]
+  pub type Votes<T: Config> =
+    StorageMap<_, Blake2_128Concat, Hash, ProposalVotes<T::AccountId, T::BlockNumber>>;
+
+  /// Set of active quorum members
+  #[pallet::storage]
+  #[pallet::getter(fn members)]
+  pub type Members<T: Config> = CountedStorageMap<_, Blake2_128Concat, T::AccountId, bool>;
+
   /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
     /// Quorum status
     pub enabled: bool,
-    /// Quorum Account ID. Multisig is supported.
-    /// This account will be able to confirm deposit / withdrawal on-chain.
-    pub account: T::AccountId,
+    /// Quorum members
+    pub members: Vec<T::AccountId>,
+    /// Quorum threshold to process a proposal
+    pub threshold: u16,
   }
 
   #[cfg(feature = "std")]
@@ -116,9 +137,8 @@ pub mod pallet {
       Self {
         // Quorum is enabled by default
         enabled: true,
-        // We use pallet account ID by default,
-        // but should always be set in the genesis config.
-        account: T::QuorumPalletId::get().into_account(),
+        members: Vec::new(),
+        threshold: 1,
       }
     }
   }
@@ -126,8 +146,11 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
+      Threshold::<T>::put(self.threshold);
       QuorumStatus::<T>::put(self.enabled);
-      QuorumAccountId::<T>::put(self.account.clone());
+      for account_id in self.members.clone() {
+        Members::<T>::insert(account_id, true);
+      }
     }
   }
 
@@ -140,6 +163,7 @@ pub mod pallet {
     AccountChanged { account_id: T::AccountId },
     /// Quorum minted token to the account
     Minted {
+      proposal_id: Hash,
       account_id: T::AccountId,
       currency_id: CurrencyId,
       amount: Balance,
@@ -157,11 +181,38 @@ pub mod pallet {
     },
     /// Quorum burned token to the account
     Burned {
-      request_id: Hash,
+      proposal_id: Hash,
       account_id: T::AccountId,
       currency_id: CurrencyId,
       amount: Balance,
     },
+
+    /// Member voted for a proposal
+    VoteFor {
+      account_id: T::AccountId,
+      proposal_id: Hash,
+    },
+
+    /// Member voted against a proposal
+    VoteAgainst {
+      account_id: T::AccountId,
+      proposal_id: Hash,
+    },
+
+    /// Proposal has been processed successfully
+    ProposalApproved { proposal_id: Hash },
+
+    /// Proposal has been rejected
+    ProposalRejected { proposal_id: Hash },
+
+    /// Account added as quorum member
+    MemberAdded { account_id: T::AccountId },
+
+    /// Account removed as quorum member
+    MemberRemoved { account_id: T::AccountId },
+
+    /// The threshold has been updated
+    ThresholdUpdated { threshold: u16 },
   }
 
   // Errors inform users that something went wrong.
@@ -179,197 +230,294 @@ pub mod pallet {
     Conflict,
     /// Unable to burn token.
     BurnFailed,
+    /// Proposals cap exceeded, try again later.
+    ProposalsCapExceeded,
+    /// No proposal with the ID was found
+    ProposalDoesNotExist,
+    /// Cannot complete proposal, needs more votes
+    ProposalNotComplete,
+    /// Proposal has either failed or succeeded
+    ProposalAlreadyComplete,
+    /// Lifetime of proposal has been exceeded
+    ProposalExpired,
+    /// Member already voted for this proposal
+    MemberAlreadyVoted,
+    /// Unknown member
+    UnknownMember,
+    /// Mint failed
+    MintFailed,
   }
 
   #[pallet::call]
   impl<T: Config> Pallet<T> {
-    /// Quorum have confirmation and make a new deposit for the asset.
-    ///
-    /// - `account_id`: Account Id to be deposited
-    /// - `currency_id`: the currency ID
-    /// - `mint_amount`: the amount to be deposited
-    ///
-    /// Emits `Minted` event when successful.
-    ///
-    /// Weight: `O(1)`
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::mint())]
-    pub fn mint(
-      origin: OriginFor<T>,
-      account_id: T::AccountId,
-      currency_id: CurrencyId,
-      mint_amount: Balance,
-      transaction_id: Vec<u8>,
-      compliance_level: ComplianceLevel,
-    ) -> DispatchResultWithPostInfo {
-      // 1. Make sure the quorum/chain is not paused
-      Self::ensure_not_paused()?;
-
-      // 2. Make sure the request is signed by `account_id`
-      let sender = ensure_signed(origin)?;
-      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
-
-      // 3. Make sure the currency_id exist and is enabled
-      ensure!(
-        T::AssetRegistry::is_currency_enabled(currency_id),
-        Error::<T>::AssetDisabled
-      );
-
-      // 4. Add `Amber` and `Red` to watch list
-      if compliance_level == ComplianceLevel::Amber
-        || compliance_level == ComplianceLevel::Red
-      {
-        Self::add_account_watch_list(
-          &account_id,
-          currency_id,
-          mint_amount,
-          compliance_level.clone(),
-          transaction_id.clone(),
-          WatchListAction::Mint,
-        );
-      }
-
-      // 5. Mint `Green` and `Amber`
-      if compliance_level == ComplianceLevel::Green
-        || compliance_level == ComplianceLevel::Amber
-      {
-        T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount)?;
-        Self::deposit_event(Event::<T>::Minted {
-          account_id,
-          currency_id,
-          amount: mint_amount,
-          transaction_id,
-          compliance_level,
-        });
-      }
-
-      Ok(().into())
-    }
-
-    /// Quorum have confirmation and process the withdrawal on-chain for the wrapped asset.
-    ///
-    /// This mean that the asset (example BTC) got processed by the quorum and the coin(s)
-    /// have been sent in the BTC chain to the external address
-    /// provided in the initial request.
-    ///
-    /// - `request_id`: Unique request ID.
-    ///
-    /// Emits `Minted` event when successful.
-    ///
-    /// Weight: `O(1)`
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::confirm_withdrawal())]
-    pub fn confirm_withdrawal(
-      origin: OriginFor<T>,
-      request_id: Hash,
-    ) -> DispatchResultWithPostInfo {
-      // 1. Make sure the quorum/chain is not paused
-      Self::ensure_not_paused()?;
-
-      // 2. Make sure the request is signed by `account_id`
-      let sender = ensure_signed(origin)?;
-      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
-
-      // 3. Make sure the `request_id` exist
-      Withdrawals::<T>::try_mutate_exists(request_id, |withdrawal| {
-        match withdrawal {
-          None => {
-            return Err(Error::<T>::InvalidRequestId);
-          }
-          Some(withdrawal) => {
-            // 3. Make sure the currency_id exist and is enabled
-            ensure!(
-              T::AssetRegistry::is_currency_enabled(withdrawal.asset_id),
-              Error::<T>::AssetDisabled
-            );
-
-            // 4. Remove the token from the account
-            T::CurrencyTidefi::burn_from(
-              withdrawal.asset_id,
-              &withdrawal.account_id,
-              withdrawal.amount,
-            )
-            .map_err(|_| Error::<T>::BurnFailed)?;
-
-            // 5. Emit the event on chain
-            Self::deposit_event(Event::<T>::Burned {
-              request_id,
-              account_id: withdrawal.account_id.clone(),
-              currency_id: withdrawal.asset_id,
-              amount: withdrawal.amount,
-            });
-          }
-        }
-
-        // it deletes the item if mutated to a None.
-        // FIXME: Should we update the status and keep a reference in our storage?
-        *withdrawal = None;
-        Ok(())
-      })?;
-
-      // don't take tx fees on success
-      Ok(Pays::No.into())
-    }
-
-    /// Change Quorum status.
-    ///
-    /// - `is_enabled`: Is the quorum enabled?
-    ///
-    /// Emits `StatusChanged` event when successful.
-    ///
-    /// Weight: `O(1)`
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
-    pub fn set_status(origin: OriginFor<T>, quorum_enabled: bool) -> DispatchResultWithPostInfo {
-      // 1. Make sure the request is signed by `account_id`
-      let sender = ensure_signed(origin)?;
-      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
-
-      // 2. Update quorum status
-      QuorumStatus::<T>::put(quorum_enabled);
-
-      // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::StatusChanged {
-        is_enabled: quorum_enabled,
-      });
-
-      // don't take tx fees on success
-      Ok(Pays::No.into())
-    }
-
-    /// Quorum change the account ID who can confirm withdrawal
-    /// and mint new token on-chain.
-    ///
-    /// Make sure to have access to the `account_id` otherwise
-    /// only `root` will be able to update the quorum account.
-    ///
-    /// - `new_account_id`: The new Quorum account id.
-    ///
-    /// Emits `AccountChanged` event when successful.
-    ///
-    /// Weight: `O(1)`
+    /// Quorum member submit proposal
     #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
-    pub fn set_account_id(
+    pub fn submit_proposal(
       origin: OriginFor<T>,
-      new_account_id: T::AccountId,
+      proposal: ProposalType<T::AccountId, T::BlockNumber>,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;
-      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
-      // 2. Update quorum account id
-      QuorumAccountId::<T>::put(new_account_id.clone());
+      // 2. Make sure this is a quorum member
+      ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
 
-      // 3. Emit event on chain
-      Self::deposit_event(Event::<T>::AccountChanged {
-        account_id: new_account_id,
-      });
+      // 3. Add the proposal in queue
+      let unique_id = T::Security::get_unique_id(sender.clone());
+      Proposals::<T>::try_append((unique_id, proposal))
+        .map_err(|_| Error::<T>::ProposalsCapExceeded)?;
 
-      // don't take tx fees on success
+      // Don't take tx fees on success
+      Ok(Pays::No.into())
+    }
+
+    /// Quorum member acknowledge to a proposal
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
+    pub fn acknowledge_proposal(
+      origin: OriginFor<T>,
+      proposal: Hash,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure the request is signed by `account_id`
+      let sender = ensure_signed(origin)?;
+
+      // 2. Make sure this is a quorum member
+      ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
+
+      // 3. Register vote
+      Self::vote_for(sender, proposal)?;
+
+      // Don't take tx fees on success
+      Ok(Pays::No.into())
+    }
+
+    /// Quorum member reject a proposal
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
+    pub fn reject_proposal(origin: OriginFor<T>, proposal: Hash) -> DispatchResultWithPostInfo {
+      // 1. Make sure the request is signed by `account_id`
+      let sender = ensure_signed(origin)?;
+
+      // 2. Make sure this is a quorum member
+      ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
+
+      // 3. Register vote
+      Self::vote_against(sender, proposal)?;
+
+      // Don't take tx fees on success
       Ok(Pays::No.into())
     }
   }
 
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
-    fn ensure_not_paused() -> Result<(), DispatchError> {
+    // Make sure the account id is part of the quorum set list
+    fn is_member(who: &T::AccountId) -> bool {
+      Self::members(who).unwrap_or(false)
+    }
+
+    // Register a vote for the proposal
+    fn vote_for(who: T::AccountId, proposal_id: Hash) -> Result<(), DispatchError> {
+      Self::commit_vote(who, proposal_id, true)?;
+      Self::try_resolve_proposal(proposal_id)?;
+      Ok(())
+    }
+
+    // Register a vote against the proposal
+    fn vote_against(who: T::AccountId, proposal_id: Hash) -> Result<(), DispatchError> {
+      Self::commit_vote(who, proposal_id, false)?;
+      Self::try_resolve_proposal(proposal_id)?;
+      Ok(())
+    }
+
+    // Record the vote in the storage
+    fn commit_vote(who: T::AccountId, proposal_id: Hash, in_favour: bool) -> DispatchResult {
+      let block_number = <frame_system::Pallet<T>>::block_number();
+      let mut votes = Votes::<T>::get(proposal_id).unwrap_or_else(|| {
+        let mut v = ProposalVotes::default();
+        v.expiry = block_number + T::ProposalLifetime::get();
+        v
+      });
+
+      ensure!(
+        votes.status == ProposalStatus::Initiated,
+        Error::<T>::ProposalAlreadyComplete
+      );
+      ensure!(votes.expiry <= block_number, Error::<T>::ProposalExpired);
+      ensure!(
+        !votes.votes_for.contains(&who) || !votes.votes_against.contains(&who),
+        Error::<T>::MemberAlreadyVoted
+      );
+
+      if in_favour {
+        votes.votes_for.push(who.clone());
+        Self::deposit_event(Event::<T>::VoteFor {
+          account_id: who,
+          proposal_id,
+        });
+      } else {
+        votes.votes_against.push(who.clone());
+        Self::deposit_event(Event::<T>::VoteAgainst {
+          account_id: who,
+          proposal_id,
+        });
+      }
+
+      Votes::<T>::insert(proposal_id, votes);
+
+      Ok(())
+    }
+
+    fn try_resolve_proposal(proposal_id: Hash) -> Result<(), Error<T>> {
+      Votes::<T>::mutate_exists(proposal_id, |proposal_votes| match proposal_votes {
+        Some(votes) => {
+          let block_number = <frame_system::Pallet<T>>::block_number();
+          ensure!(
+            votes.status == ProposalStatus::Initiated,
+            Error::<T>::ProposalAlreadyComplete
+          );
+          ensure!(votes.expiry <= block_number, Error::<T>::ProposalExpired);
+
+          let threshold = Self::threshold();
+          let total_members = Members::<T>::count() as u16;
+          let status = if votes.votes_for.len() >= threshold as usize {
+            votes.status = ProposalStatus::Approved;
+            ProposalStatus::Approved
+          } else if total_members >= threshold
+            && votes.votes_against.len() as u16 + threshold > total_members
+          {
+            votes.status = ProposalStatus::Rejected;
+            ProposalStatus::Rejected
+          } else {
+            ProposalStatus::Initiated
+          };
+
+          *proposal_votes = Some(votes.clone());
+
+          match status {
+            ProposalStatus::Approved => {
+              Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
+              Self::process_proposal(proposal_id)?;
+              Ok(())
+            }
+            ProposalStatus::Rejected => {
+              Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
+              // delete proposal
+              *proposal_votes = None;
+              Ok(())
+            }
+            _ => Ok(()),
+          }
+        }
+        None => Err(Error::<T>::ProposalDoesNotExist),
+      })
+    }
+
+    // Process the original proposal
+    fn process_proposal(request_id: Hash) -> Result<(), Error<T>> {
+      let proposals = Proposals::<T>::get();
+      let (_, proposal) = proposals
+        .iter()
+        .find(|(hash, _)| *hash == request_id)
+        .ok_or(Error::<T>::ProposalDoesNotExist)?;
+
+      match proposal {
+        ProposalType::Mint(mint) => Self::process_mint(request_id, mint),
+        ProposalType::Withdrawal(withdrawal) => Self::process_withdrawal(request_id, withdrawal),
+        ProposalType::AddQuorumMember(account_id) => Self::register_quorum_member(account_id),
+        ProposalType::RemoveQuorumMember(account_id) => Self::unregister_quorum_member(account_id),
+        ProposalType::UpdateThreshold(threshold) => Self::update_threshold(*threshold),
+      }
+    }
+
+    fn process_withdrawal(
+      proposal_id: Hash,
+      item: &Withdrawal<T::AccountId, T::BlockNumber>,
+    ) -> Result<(), Error<T>> {
+      // 1. Make sure the currency_id exist and is enabled
+      ensure!(
+        T::AssetRegistry::is_currency_enabled(item.asset_id),
+        Error::<T>::AssetDisabled
+      );
+
+      // 2. Remove the token from the account
+      T::CurrencyTidefi::burn_from(item.asset_id, &item.account_id, item.amount)
+        .map_err(|_| Error::<T>::BurnFailed)?;
+
+      // 3. Emit the event on chain
+      Self::deposit_event(Event::<T>::Burned {
+        proposal_id,
+        account_id: item.account_id.clone(),
+        currency_id: item.asset_id,
+        amount: item.amount,
+      });
+
+      Ok(())
+    }
+
+    fn process_mint(proposal_id: Hash, item: &Mint<T::AccountId>) -> Result<(), Error<T>> {
+      // 1. Make sure the currency_id exist and is enabled
+      ensure!(
+        T::AssetRegistry::is_currency_enabled(item.currency_id),
+        Error::<T>::AssetDisabled
+      );
+
+      // 2. Add `Amber` and `Red` to watch list
+      if item.compliance_level == ComplianceLevel::Amber
+        || item.compliance_level == ComplianceLevel::Red
+      {
+        Self::add_account_watch_list(
+          &item.account_id,
+          item.currency_id,
+          item.mint_amount,
+          item.compliance_level.clone(),
+          item.transaction_id.clone(),
+          WatchListAction::Mint,
+        );
+      }
+
+      // 3. Mint `Green` and `Amber`
+      if item.compliance_level == ComplianceLevel::Green
+        || item.compliance_level == ComplianceLevel::Amber
+      {
+        T::CurrencyTidefi::mint_into(item.currency_id, &item.account_id, item.mint_amount)
+          .map_err(|_| Error::<T>::MintFailed)?;
+
+        Self::deposit_event(Event::<T>::Minted {
+          proposal_id,
+          account_id: item.account_id.clone(),
+          currency_id: item.currency_id,
+          amount: item.mint_amount,
+          transaction_id: item.transaction_id.clone(),
+          compliance_level: item.compliance_level.clone(),
+        });
+      }
+
+      Ok(())
+    }
+
+    fn register_quorum_member(account_id: &T::AccountId) -> Result<(), Error<T>> {
+      Members::<T>::insert(account_id, true);
+      Self::deposit_event(Event::<T>::MemberAdded {
+        account_id: account_id.clone(),
+      });
+      Ok(())
+    }
+
+    fn unregister_quorum_member(account_id: &T::AccountId) -> Result<(), Error<T>> {
+      ensure!(Self::is_member(&account_id), Error::<T>::UnknownMember);
+      Members::<T>::remove(account_id);
+      Self::deposit_event(Event::<T>::MemberRemoved {
+        account_id: account_id.clone(),
+      });
+      Ok(())
+    }
+
+    fn update_threshold(threshold: u16) -> Result<(), Error<T>> {
+      Threshold::<T>::put(threshold);
+      Self::deposit_event(Event::<T>::ThresholdUpdated { threshold });
+      Ok(())
+    }
+
+    fn _ensure_not_paused() -> Result<(), DispatchError> {
       if Self::is_quorum_enabled() {
         Ok(())
       } else {
@@ -427,22 +575,21 @@ pub mod pallet {
       asset_id: CurrencyId,
       amount: Balance,
       external_address: Vec<u8>,
-    ) -> (Hash, Withdrawal<T::AccountId, T::BlockNumber>) {
-      let request_id = T::Security::get_unique_id(account_id.clone());
-      let withdrawal = Withdrawal {
-        account_id,
-        amount,
-        asset_id,
-        external_address,
-        status: WithdrawalStatus::Pending,
-        block_number: <frame_system::Pallet<T>>::block_number(),
-      };
+    ) -> Result<(), DispatchError> {
+      let unique_id = T::Security::get_unique_id(account_id.clone());
+      Proposals::<T>::try_append((
+        unique_id,
+        ProposalType::Withdrawal(Withdrawal {
+          account_id,
+          amount,
+          asset_id,
+          external_address,
+          block_number: <frame_system::Pallet<T>>::block_number(),
+        }),
+      ))
+      .map_err(|_| Error::<T>::ProposalsCapExceeded)?;
 
-      // insert in our queue
-      Withdrawals::<T>::insert(request_id, withdrawal.clone());
-
-      // return values
-      (request_id, withdrawal)
+      Ok(())
     }
   }
 }

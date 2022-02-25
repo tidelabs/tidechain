@@ -80,6 +80,10 @@ parameter_types! {
   pub const ExistentialDeposit: Balance = TIDE;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
+  // Maximum proposals in queue for the quorum, to limit the vector size and optimization
+  pub const ProposalsCap: u32 = 1000;
+  // The lifetime of a proposal by the quorum members
+  pub const ProposalLifetime: u64 = 100;
 }
 
 parameter_types! {
@@ -131,6 +135,8 @@ impl pallet_quorum::Config for Test {
   type Security = Security;
   type CurrencyTidefi = Adapter<AccountId>;
   type AssetRegistry = AssetRegistry;
+  type ProposalsCap = ProposalsCap;
+  type ProposalLifetime = ProposalLifetime;
 }
 
 impl pallet_security::Config for Test {
@@ -307,7 +313,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
   pallet_quorum::GenesisConfig::<Test> {
     enabled: false,
-    account: 1,
+    members: vec![1],
+    threshold: 1,
   }
   .assimilate_storage(&mut t)
   .unwrap();

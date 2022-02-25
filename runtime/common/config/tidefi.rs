@@ -59,6 +59,10 @@ parameter_types! {
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
+  // Maximum proposals in queue for the quorum, to limit the vector size and optimization
+  pub const ProposalsCap: u32 = 1000;
+  // The lifetime of a proposal by the quorum members
+  pub const ProposalLifetime: BlockNumber = 100;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -144,6 +148,8 @@ impl pallet_quorum::Config for Runtime {
   type Security = Security;
   // Asset registry
   type AssetRegistry = AssetRegistry;
+  type ProposalsCap = ProposalsCap;
+  type ProposalLifetime = ProposalLifetime;
   type WeightInfo = crate::weights::pallet_quorum::WeightInfo<Runtime>;
 }
 
