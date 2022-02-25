@@ -27,9 +27,11 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
+  use sp_std::vec;
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, QuorumExt, SecurityExt},
-    AssetId, Balance, CurrencyId, Hash, Withdrawal, WithdrawalStatus,
+    AssetId, Balance, ComplianceLevel, CurrencyId, Hash, WatchList, WatchListAction, Withdrawal,
+    WithdrawalStatus,
   };
 
   #[pallet::config]
@@ -79,6 +81,25 @@ pub mod pallet {
   pub type Withdrawals<T: Config> =
     StorageMap<_, Blake2_128Concat, Hash, Withdrawal<T::AccountId, T::BlockNumber>>;
 
+  /// Quorum public keys for all chains
+  #[pallet::storage]
+  #[pallet::getter(fn public_keys)]
+  pub type PublicKeys<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    T::AccountId,
+    Blake2_128Concat,
+    AssetId,
+    Vec<u8>,
+    ValueQuery,
+  >;
+
+  /// Set of active transaction to watch
+  #[pallet::storage]
+  #[pallet::getter(fn account_watch_list)]
+  pub type AccountWatchList<T: Config> =
+    StorageMap<_, Blake2_128Concat, T::AccountId, Vec<WatchList<T::BlockNumber>>>;
+
   /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
@@ -122,6 +143,17 @@ pub mod pallet {
       account_id: T::AccountId,
       currency_id: CurrencyId,
       amount: Balance,
+      transaction_id: Vec<u8>,
+      compliance_level: ComplianceLevel,
+    },
+    /// A new transaction has been added to the watch list
+    WatchTransactionAdded {
+      account_id: T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+      compliance_level: ComplianceLevel,
+      transaction_id: Vec<u8>,
+      watch_action: WatchListAction,
     },
     /// Quorum burned token to the account
     Burned {
@@ -166,6 +198,8 @@ pub mod pallet {
       account_id: T::AccountId,
       currency_id: CurrencyId,
       mint_amount: Balance,
+      transaction_id: Vec<u8>,
+      compliance_level: ComplianceLevel,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the quorum/chain is not paused
       Self::ensure_not_paused()?;
@@ -180,15 +214,33 @@ pub mod pallet {
         Error::<T>::AssetDisabled
       );
 
-      // 4. Mint the token
-      T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount)?;
+      // 4. Add `Amber` and `Red` to watch list
+      if compliance_level.clone() == ComplianceLevel::Amber
+        || compliance_level.clone() == ComplianceLevel::Red
+      {
+        Self::add_account_watch_list(
+          &account_id,
+          currency_id,
+          mint_amount,
+          compliance_level.clone(),
+          transaction_id.clone(),
+          WatchListAction::Mint,
+        );
+      }
 
-      // 5. Send event on chain
-      Self::deposit_event(Event::<T>::Minted {
-        account_id,
-        currency_id,
-        amount: mint_amount,
-      });
+      // 5. Mint `Green` and `Amber`
+      if compliance_level.clone() == ComplianceLevel::Green
+        || compliance_level.clone() == ComplianceLevel::Amber
+      {
+        T::CurrencyTidefi::mint_into(currency_id, &account_id, mint_amount)?;
+        Self::deposit_event(Event::<T>::Minted {
+          account_id,
+          currency_id,
+          amount: mint_amount,
+          transaction_id,
+          compliance_level,
+        });
+      }
 
       Ok(().into())
     }
@@ -323,6 +375,42 @@ pub mod pallet {
       } else {
         Err(Error::<T>::QuorumPaused.into())
       }
+    }
+
+    fn add_account_watch_list(
+      account_id: &T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
+      compliance_level: ComplianceLevel,
+      transaction_id: Vec<u8>,
+      watch_action: WatchListAction,
+    ) {
+      let block_number = <frame_system::Pallet<T>>::block_number();
+      let watch_list = WatchList {
+        amount,
+        block_number,
+        compliance_level: compliance_level.clone(),
+        currency_id,
+        watch_action: watch_action.clone(),
+        transaction_id: transaction_id.clone(),
+      };
+
+      AccountWatchList::<T>::mutate_exists(
+        account_id,
+        |account_watch_list| match account_watch_list {
+          Some(current_watch_list) => current_watch_list.push(watch_list),
+          None => AccountWatchList::<T>::insert(account_id, vec![watch_list]),
+        },
+      );
+
+      Self::deposit_event(Event::<T>::WatchTransactionAdded {
+        account_id: account_id.clone(),
+        currency_id,
+        amount,
+        compliance_level,
+        watch_action,
+        transaction_id,
+      });
     }
   }
 
