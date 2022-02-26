@@ -249,7 +249,7 @@ pub mod pallet {
   #[pallet::call]
   impl<T: Config> Pallet<T> {
     /// Quorum member submit proposal
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::submit_proposal())]
     pub fn submit_proposal(
       origin: OriginFor<T>,
       proposal: ProposalType<T::AccountId, T::BlockNumber>,
@@ -273,7 +273,7 @@ pub mod pallet {
     }
 
     /// Quorum member acknowledge to a proposal
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::acknowledge_proposal())]
     pub fn acknowledge_proposal(
       origin: OriginFor<T>,
       proposal: Hash,
@@ -292,7 +292,7 @@ pub mod pallet {
     }
 
     /// Quorum member reject a proposal
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_account_id())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::reject_proposal())]
     pub fn reject_proposal(origin: OriginFor<T>, proposal: Hash) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;

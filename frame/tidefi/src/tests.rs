@@ -46,12 +46,7 @@ pub fn request_swap_event() {
     ));
 
     // mint TEMP funds to bob
-    assert_ok!(Assets::mint(
-      alice,
-      temp_asset_id,
-      2u64,
-      1_000_000
-    ));
+    assert_ok!(Assets::mint(alice, temp_asset_id, 2u64, 1_000_000));
 
     // Submit request
     assert_ok!(Tidefi::swap(

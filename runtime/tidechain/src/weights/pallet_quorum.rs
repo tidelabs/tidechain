@@ -44,35 +44,19 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_quorum`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
-	// Storage: Quorum QuorumAccountId (r:1 w:0)
-	// Storage: Quorum QuorumStatus (r:0 w:1)
-	fn set_status() -> Weight {
-		(20_385_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	// Storage: Quorum QuorumAccountId (r:1 w:1)
-	fn set_account_id() -> Weight {
-		(21_415_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	// Storage: Security ChainStatus (r:1 w:0)
-	// Storage: Quorum QuorumStatus (r:1 w:0)
-	// Storage: Quorum QuorumAccountId (r:1 w:0)
-	// Storage: Quorum Withdrawals (r:1 w:1)
-	// Storage: Assets Asset (r:1 w:1)
-	// Storage: Assets Account (r:1 w:1)
-	fn confirm_withdrawal() -> Weight {
-		(72_908_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-	}
-	// Storage: Security ChainStatus (r:1 w:0)
-	// Storage: Quorum QuorumStatus (r:1 w:0)
-	// Storage: Quorum QuorumAccountId (r:1 w:0)
-	fn mint() -> Weight {
-		(69_006_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-	}
+	fn submit_proposal() -> Weight {
+      61_000_300_u64
+          .saturating_add(T::DbWeight::get().reads(6_u64))
+          .saturating_add(T::DbWeight::get().writes(5_u64))
+  }
+  fn acknowledge_proposal() -> Weight {
+      62_000_300_u64
+       .saturating_add(T::DbWeight::get().reads(6_u64))
+       .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
+   fn reject_proposal() -> Weight {
+      63_000_400_u64
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
 }

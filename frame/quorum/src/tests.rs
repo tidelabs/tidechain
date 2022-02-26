@@ -1,26 +1,32 @@
 use crate::{
   mock::{new_test_ext, Origin, Quorum, Test},
-  Error,
+  pallet::*,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::assert_ok;
+use tidefi_primitives::{ComplianceLevel, CurrencyId, Hash, Mint, ProposalType};
 
 #[test]
-pub fn check_genesis_config() {
+pub fn should_submit_proposal() {
   new_test_ext().execute_with(|| {
-    assert!(!Quorum::status());
+    assert!(Members::<Test>::contains_key(1));
   });
 }
 
 #[test]
-pub fn set_migration_operational_status_works() {
+pub fn should_vote_for_mint() {
   new_test_ext().execute_with(|| {
-    assert_ok!(Quorum::set_status(Origin::signed(1), true));
-    assert_noop!(
-      Quorum::set_status(Origin::signed(2), false),
-      Error::<Test>::AccessDenied,
-    );
-    assert!(Quorum::status());
-    assert_ok!(Quorum::set_status(Origin::signed(1), false));
-    assert!(!Quorum::status());
+    let alice = Origin::signed(1u64);
+    assert!(Members::<Test>::contains_key(1));
+    let proposal = ProposalType::Mint(Mint {
+      account_id: 1,
+      currency_id: CurrencyId::Tide,
+      mint_amount: 1_000_000_000_000,
+      transaction_id: Vec::new(),
+      compliance_level: ComplianceLevel::Green,
+    });
+
+    let proposal_id = Hash::zero();
+    assert_ok!(Proposals::<Test>::try_append((proposal_id, proposal)));
+    assert_ok!(Quorum::acknowledge_proposal(alice, proposal_id));
   });
 }
