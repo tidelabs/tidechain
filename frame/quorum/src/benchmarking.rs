@@ -3,7 +3,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 use super::*;
 
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller, Vec};
 use frame_system::{self, RawOrigin};
 use tidefi_primitives::{ComplianceLevel, CurrencyId, Hash, Mint, ProposalType};
 
