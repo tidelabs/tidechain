@@ -200,19 +200,19 @@ pub mod pallet {
     },
 
     /// Proposal has been processed successfully
+    ProposalSubmitted { proposal_id: Hash },
+
+    /// Proposal has been processed successfully
     ProposalApproved { proposal_id: Hash },
 
     /// Proposal has been rejected
     ProposalRejected { proposal_id: Hash },
 
-    /// Account added as quorum member
-    MemberAdded { account_id: T::AccountId },
-
-    /// Account removed as quorum member
-    MemberRemoved { account_id: T::AccountId },
-
-    /// The threshold has been updated
-    ThresholdUpdated { threshold: u16 },
+    /// The quorum configuration has been updated
+    ConfigurationUpdated {
+      members: Vec<T::AccountId>,
+      threshold: u16,
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -242,8 +242,6 @@ pub mod pallet {
     ProposalExpired,
     /// Member already voted for this proposal
     MemberAlreadyVoted,
-    /// Unknown member
-    UnknownMember,
     /// Mint failed
     MintFailed,
   }
@@ -263,9 +261,12 @@ pub mod pallet {
       ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
 
       // 3. Add the proposal in queue
-      let unique_id = T::Security::get_unique_id(sender.clone());
-      Proposals::<T>::try_append((unique_id, proposal))
+      let proposal_id = T::Security::get_unique_id(sender.clone());
+      Proposals::<T>::try_append((proposal_id, proposal))
         .map_err(|_| Error::<T>::ProposalsCapExceeded)?;
+
+      // 4. Emit event on chain
+      Self::deposit_event(Event::<T>::ProposalSubmitted { proposal_id });
 
       // Don't take tx fees on success
       Ok(Pays::No.into())
@@ -341,7 +342,7 @@ pub mod pallet {
         votes.status == ProposalStatus::Initiated,
         Error::<T>::ProposalAlreadyComplete
       );
-      ensure!(votes.expiry <= block_number, Error::<T>::ProposalExpired);
+      ensure!(votes.expiry >= block_number, Error::<T>::ProposalExpired);
       ensure!(
         !votes.votes_for.contains(&who) || !votes.votes_against.contains(&who),
         Error::<T>::MemberAlreadyVoted
@@ -374,7 +375,7 @@ pub mod pallet {
             votes.status == ProposalStatus::Initiated,
             Error::<T>::ProposalAlreadyComplete
           );
-          ensure!(votes.expiry <= block_number, Error::<T>::ProposalExpired);
+          ensure!(votes.expiry >= block_number, Error::<T>::ProposalExpired);
 
           let threshold = Self::threshold();
           let total_members = Members::<T>::count() as u16;
@@ -391,16 +392,17 @@ pub mod pallet {
           };
 
           *proposal_votes = Some(votes.clone());
-
           match status {
             ProposalStatus::Approved => {
               Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
               Self::process_proposal(proposal_id)?;
+              Self::delete_proposal(proposal_id)?;
+              *proposal_votes = None;
               Ok(())
             }
             ProposalStatus::Rejected => {
               Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
-              // delete proposal
+              Self::delete_proposal(proposal_id)?;
               *proposal_votes = None;
               Ok(())
             }
@@ -422,9 +424,9 @@ pub mod pallet {
       match proposal {
         ProposalType::Mint(mint) => Self::process_mint(request_id, mint),
         ProposalType::Withdrawal(withdrawal) => Self::process_withdrawal(request_id, withdrawal),
-        ProposalType::AddQuorumMember(account_id) => Self::register_quorum_member(account_id),
-        ProposalType::RemoveQuorumMember(account_id) => Self::unregister_quorum_member(account_id),
-        ProposalType::UpdateThreshold(threshold) => Self::update_threshold(*threshold),
+        ProposalType::UpdateConfiguration(members, threshold) => {
+          Self::update_configuration(members, *threshold)
+        }
       }
     }
 
@@ -494,27 +496,26 @@ pub mod pallet {
       Ok(())
     }
 
-    fn register_quorum_member(account_id: &T::AccountId) -> Result<(), Error<T>> {
-      Members::<T>::insert(account_id, true);
-      Self::deposit_event(Event::<T>::MemberAdded {
-        account_id: account_id.clone(),
-      });
-      Ok(())
-    }
+    fn update_configuration(members: &Vec<T::AccountId>, threshold: u16) -> Result<(), Error<T>> {
+      Members::<T>::remove_all();
+      for account in members {
+        Members::<T>::insert(account, true);
+      }
 
-    fn unregister_quorum_member(account_id: &T::AccountId) -> Result<(), Error<T>> {
-      ensure!(Self::is_member(&account_id), Error::<T>::UnknownMember);
-      Members::<T>::remove(account_id);
-      Self::deposit_event(Event::<T>::MemberRemoved {
-        account_id: account_id.clone(),
-      });
-      Ok(())
-    }
-
-    fn update_threshold(threshold: u16) -> Result<(), Error<T>> {
       Threshold::<T>::put(threshold);
-      Self::deposit_event(Event::<T>::ThresholdUpdated { threshold });
+
+      Self::deposit_event(Event::<T>::ConfigurationUpdated {
+        threshold,
+        members: members.clone(),
+      });
       Ok(())
+    }
+
+    fn delete_proposal(proposal_id: Hash) -> Result<(), Error<T>> {
+      Proposals::<T>::mutate(|proposals| {
+        proposals.retain(|(found_proposal_id, _)| *found_proposal_id != proposal_id);
+        Ok(())
+      })
     }
 
     fn _ensure_not_paused() -> Result<(), DispatchError> {

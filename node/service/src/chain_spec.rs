@@ -1,4 +1,3 @@
-use codec::{Decode, Encode};
 use hex_literal::hex;
 use itertools::Itertools;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -8,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
-use sp_core::{blake2_256, crypto::UncheckedInto, sr25519, Pair, Public};
+use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
@@ -308,7 +307,7 @@ fn tidechain_testnet_genesis(
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
-  
+
   // Treasury Account Id
   let treasury_account: AccountId = tidechain_runtime::TreasuryPalletId::get().into_account();
   // Fees Account Id

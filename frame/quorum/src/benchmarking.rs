@@ -19,7 +19,8 @@ fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 fn pre_set_auth<T: Config>() -> T::AccountId {
   let user: T::AccountId = account("admin", ADMIN_ID, SEED);
-  QuorumAccountId::<T>::put(user.clone());
+  Members::<T>::insert(user.clone(), true);
+  Threshold::<T>::put(1_u16);
   QuorumStatus::<T>::put(true);
   user
 }
