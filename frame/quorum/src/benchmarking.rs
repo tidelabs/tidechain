@@ -74,8 +74,14 @@ benchmarks! {
       Votes::<T>::insert(proposal_id, ProposalVotes::default());
    }: _(RawOrigin::Signed(user), proposal_id)
    submit_public_keys {
+      // test with 100 assets
+      let k in 0 .. 100;
+      let mut all_keys = vec![];
+      for i in 0..k {
+         all_keys.push((i as u32, "new_pubkey".as_bytes().to_vec()));
+      }
       let user = pre_set_auth::<T>();
-   }: _(RawOrigin::Signed(user), vec![(1_u32, "new_pubkey".as_bytes().to_vec())])
+   }: _(RawOrigin::Signed(user), all_keys)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);
