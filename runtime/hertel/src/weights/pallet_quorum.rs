@@ -59,4 +59,14 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
+   fn eval_proposal_state() -> Weight {
+        64_000_400_u64
+        .saturating_add(T::DbWeight::get().reads(6_u64))
+        .saturating_add(T::DbWeight::get().writes(5_u64))
+    }
+    fn submit_public_keys() -> Weight {
+        65_000_400_u64
+           .saturating_add(T::DbWeight::get().reads(6_u64))
+           .saturating_add(T::DbWeight::get().writes(5_u64))
+    }
 }

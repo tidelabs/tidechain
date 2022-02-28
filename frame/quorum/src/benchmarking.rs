@@ -5,7 +5,9 @@ use super::*;
 
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller, Vec};
 use frame_system::{self, RawOrigin};
-use tidefi_primitives::{ComplianceLevel, CurrencyId, Hash, Mint, ProposalType};
+use tidefi_primitives::{
+  pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
+};
 
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;
@@ -18,6 +20,7 @@ fn pre_set_auth<T: Config>() -> T::AccountId {
   let user: T::AccountId = account("admin", ADMIN_ID, SEED);
   Members::<T>::remove_all();
   Members::<T>::insert(&user, true);
+  PublicKeys::<T>::insert(&user, 1, "pubkey".as_bytes());
   Threshold::<T>::put(1);
   user
 }
@@ -33,7 +36,12 @@ fn create_proposal<T: Config>() -> Hash {
   });
 
   let proposal_id = Hash::zero();
-  Proposals::<T>::try_append((proposal_id, proposal)).unwrap();
+  Proposals::<T>::try_append((
+    proposal_id,
+    T::Security::get_current_block_count(),
+    proposal,
+  ))
+  .unwrap();
 
   proposal_id
 }
