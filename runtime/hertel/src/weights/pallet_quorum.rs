@@ -92,9 +92,10 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: Quorum Members (r:1 w:0)
 	// Storage: Quorum PublicKeys (r:0 w:1)
-	fn submit_public_keys() -> Weight {
-		(18_896_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
+   fn submit_public_keys(k: u32) -> Weight {
+      65_000_400_u64
+         .saturating_add((2_000 as Weight).saturating_mul(k as Weight))
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
 }
