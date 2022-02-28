@@ -11,7 +11,7 @@ pub trait WeightInfo {
    fn acknowledge_proposal() -> Weight;
    fn reject_proposal() -> Weight;
    fn eval_proposal_state() -> Weight;
-   fn submit_public_keys() -> Weight;
+   fn submit_public_keys(_k: u32) -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
@@ -37,7 +37,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
-   fn submit_public_keys() -> Weight {
+   fn submit_public_keys(_k: u32) -> Weight {
       65_000_400_u64
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))

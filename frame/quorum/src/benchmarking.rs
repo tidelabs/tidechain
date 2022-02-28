@@ -3,10 +3,12 @@
 #![cfg(feature = "runtime-benchmarks")]
 use super::*;
 
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller, Vec};
+use frame_benchmarking::{
+  account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller, Vec,
+};
 use frame_system::{self, RawOrigin};
 use tidefi_primitives::{
-  pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
+  pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType, ProposalVotes,
 };
 
 const SEED: u32 = 0;
@@ -66,6 +68,14 @@ benchmarks! {
       let user = pre_set_auth::<T>();
       let proposal_id = create_proposal::<T>();
    }: _(RawOrigin::Signed(user), proposal_id)
+   eval_proposal_state {
+      let user = pre_set_auth::<T>();
+      let proposal_id = create_proposal::<T>();
+      Votes::<T>::insert(proposal_id, ProposalVotes::default());
+   }: _(RawOrigin::Signed(user), proposal_id)
+   submit_public_keys {
+      let user = pre_set_auth::<T>();
+   }: _(RawOrigin::Signed(user), vec![(1_u32, "new_pubkey".as_bytes().to_vec())])
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

@@ -350,7 +350,7 @@ pub mod pallet {
     }
 
     /// Quorum member submit his own public keys
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::submit_public_keys())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::submit_public_keys(public_keys.len() as u32))]
     pub fn submit_public_keys(
       origin: OriginFor<T>,
       public_keys: Vec<(AssetId, Vec<u8>)>,
