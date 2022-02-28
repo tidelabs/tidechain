@@ -452,7 +452,8 @@ pub mod pallet {
       weight_used
     }
 
-    fn create_shuffle(len: usize) -> Vec<usize> {
+    // Create a shuffled vector the size of `len` with random keys
+    pub(crate) fn create_shuffle(len: usize) -> Vec<usize> {
       // Create a shuffled order for use to iterate through.
       // Not a great random seed, but good enough for our purposes.
       let seed = frame_system::Pallet::<T>::parent_hash();
