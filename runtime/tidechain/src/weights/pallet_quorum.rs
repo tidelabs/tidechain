@@ -44,29 +44,29 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_quorum`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
-	fn submit_proposal() -> Weight {
-      61_000_300_u64
-          .saturating_add(T::DbWeight::get().reads(6_u64))
-          .saturating_add(T::DbWeight::get().writes(5_u64))
-  }
-  fn acknowledge_proposal() -> Weight {
-      62_000_300_u64
-       .saturating_add(T::DbWeight::get().reads(6_u64))
-       .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
-   fn reject_proposal() -> Weight {
-      63_000_400_u64
+    fn submit_proposal() -> Weight {
+        61_000_300_u64
+            .saturating_add(T::DbWeight::get().reads(6_u64))
+            .saturating_add(T::DbWeight::get().writes(5_u64))
+    }
+    fn acknowledge_proposal() -> Weight {
+        62_000_300_u64
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
-   fn eval_proposal_state() -> Weight {
+     }
+     fn reject_proposal() -> Weight {
+        63_000_400_u64
+           .saturating_add(T::DbWeight::get().reads(6_u64))
+           .saturating_add(T::DbWeight::get().writes(5_u64))
+     }
+     fn eval_proposal_state() -> Weight {
         64_000_400_u64
-        .saturating_add(T::DbWeight::get().reads(6_u64))
-        .saturating_add(T::DbWeight::get().writes(5_u64))
-    }
-    fn submit_public_keys() -> Weight {
+           .saturating_add(T::DbWeight::get().reads(6_u64))
+           .saturating_add(T::DbWeight::get().writes(5_u64))
+     }
+     fn submit_public_keys(_k: u32) -> Weight {
         65_000_400_u64
            .saturating_add(T::DbWeight::get().reads(6_u64))
            .saturating_add(T::DbWeight::get().writes(5_u64))
-     }    
+     } 
 }
