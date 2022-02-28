@@ -44,29 +44,57 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_quorum`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
-   fn submit_proposal() -> Weight {
-      61_000_300_u64
-          .saturating_add(T::DbWeight::get().reads(6_u64))
-          .saturating_add(T::DbWeight::get().writes(5_u64))
-  }
-  fn acknowledge_proposal() -> Weight {
-      62_000_300_u64
-       .saturating_add(T::DbWeight::get().reads(6_u64))
-       .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
-   fn reject_proposal() -> Weight {
-      63_000_400_u64
-         .saturating_add(T::DbWeight::get().reads(6_u64))
-         .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
-   fn eval_proposal_state() -> Weight {
-      64_000_400_u64
-         .saturating_add(T::DbWeight::get().reads(6_u64))
-         .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
-   fn submit_public_keys(_k: u32) -> Weight {
-      65_000_400_u64
-         .saturating_add(T::DbWeight::get().reads(6_u64))
-         .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
+	// Storage: Quorum Members (r:1 w:0)
+	// Storage: Quorum PublicKeys (r:2 w:0)
+	// Storage: Security CurrentBlockCount (r:1 w:0)
+	// Storage: Security Nonce (r:1 w:1)
+	// Storage: System ParentHash (r:1 w:0)
+	// Storage: Quorum Proposals (r:1 w:1)
+	fn submit_proposal() -> Weight {
+		(57_571_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(7 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	// Storage: Quorum Members (r:1 w:0)
+	// Storage: Quorum PublicKeys (r:2 w:0)
+	// Storage: Security CurrentBlockCount (r:1 w:0)
+	// Storage: Quorum Votes (r:1 w:1)
+	// Storage: Quorum CounterForVotes (r:1 w:1)
+	// Storage: Quorum Threshold (r:1 w:0)
+	// Storage: Quorum CounterForMembers (r:1 w:0)
+	// Storage: Quorum Proposals (r:1 w:1)
+	fn acknowledge_proposal() -> Weight {
+		(124_316_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	// Storage: Quorum Members (r:1 w:0)
+	// Storage: Quorum PublicKeys (r:2 w:0)
+	// Storage: Security CurrentBlockCount (r:1 w:0)
+	// Storage: Quorum Votes (r:1 w:1)
+	// Storage: Quorum CounterForVotes (r:1 w:1)
+	// Storage: Quorum Threshold (r:1 w:0)
+	// Storage: Quorum CounterForMembers (r:1 w:0)
+	// Storage: Quorum Proposals (r:1 w:1)
+	fn reject_proposal() -> Weight {
+		(76_304_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	// Storage: Quorum Votes (r:1 w:1)
+	// Storage: Security CurrentBlockCount (r:1 w:0)
+	// Storage: Quorum Threshold (r:1 w:0)
+	// Storage: Quorum CounterForMembers (r:1 w:0)
+	fn eval_proposal_state() -> Weight {
+		(20_355_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Quorum Members (r:1 w:0)
+	// Storage: Quorum PublicKeys (r:0 w:1)
+	fn submit_public_keys() -> Weight {
+		(18_896_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
 }
