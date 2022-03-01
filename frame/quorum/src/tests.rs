@@ -11,9 +11,9 @@ use tidefi_primitives::{
 pub fn should_submit_proposal() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
-    PublicKeys::<Test>::insert(1, 1, "pubkey".as_bytes());
+    PublicKeys::<Test>::insert(1, vec![(1u64, "pubkey".as_bytes().to_vec())]);
     assert!(Members::<Test>::contains_key(1));
-    assert_eq!(PublicKeys::<Test>::get(1, 1), "pubkey".as_bytes());
+    assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
 
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
@@ -30,9 +30,9 @@ pub fn should_submit_proposal() {
 pub fn should_vote_for_mint() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
-    PublicKeys::<Test>::insert(1, 1, "pubkey".as_bytes());
+    PublicKeys::<Test>::insert(1, vec![(1u64, "pubkey".as_bytes().to_vec())]);
     assert!(Members::<Test>::contains_key(1));
-    assert_eq!(PublicKeys::<Test>::get(1, 1), "pubkey".as_bytes());
+    assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
       currency_id: CurrencyId::Tide,
@@ -55,9 +55,9 @@ pub fn should_vote_for_mint() {
 pub fn should_remove_expired() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1_u64);
-    PublicKeys::<Test>::insert(1, 1, "pubkey".as_bytes());
+    PublicKeys::<Test>::insert(1, vec![(1u64, "pubkey".as_bytes().to_vec())]);
     assert!(Members::<Test>::contains_key(1));
-    assert_eq!(PublicKeys::<Test>::get(1, 1), "pubkey".as_bytes());
+    assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
       currency_id: CurrencyId::Tide,

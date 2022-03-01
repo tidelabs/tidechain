@@ -22,7 +22,7 @@ fn pre_set_auth<T: Config>() -> T::AccountId {
   let user: T::AccountId = account("admin", ADMIN_ID, SEED);
   Members::<T>::remove_all();
   Members::<T>::insert(&user, true);
-  PublicKeys::<T>::insert(&user, 1, "pubkey".as_bytes());
+  PublicKeys::<T>::insert(1, vec![(user.clone(), "pubkey".as_bytes().to_vec())]);
   Threshold::<T>::put(1);
   user
 }

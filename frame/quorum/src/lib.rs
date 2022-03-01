@@ -97,15 +97,8 @@ pub mod pallet {
   /// Quorum public keys for all chains
   #[pallet::storage]
   #[pallet::getter(fn public_keys)]
-  pub type PublicKeys<T: Config> = StorageDoubleMap<
-    _,
-    Blake2_128Concat,
-    T::AccountId,
-    Blake2_128Concat,
-    AssetId,
-    Vec<u8>,
-    ValueQuery,
-  >;
+  pub type PublicKeys<T: Config> =
+    StorageMap<_, Blake2_128Concat, AssetId, Vec<(T::AccountId, Vec<u8>)>, ValueQuery>;
 
   /// Set of active transaction to watch
   #[pallet::storage]
@@ -138,7 +131,7 @@ pub mod pallet {
   #[pallet::storage]
   #[pallet::getter(fn proposal_votes)]
   pub type Votes<T: Config> =
-    CountedStorageMap<_, Blake2_128Concat, Hash, ProposalVotes<T::AccountId, T::BlockNumber>>;
+    StorageMap<_, Blake2_128Concat, Hash, ProposalVotes<T::AccountId, T::BlockNumber>>;
 
   /// Set of active quorum members
   #[pallet::storage]
@@ -362,11 +355,11 @@ pub mod pallet {
       ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
 
       // 3. Delete all existing public keys of this member
-      PublicKeys::<T>::remove_prefix(&sender, None);
+      Self::delete_public_keys_for_account(&sender)?;
 
       // 4. Register new public keys
       for (asset_id, public_key) in public_keys {
-        PublicKeys::<T>::insert(&sender, asset_id, public_key);
+        Self::add_public_keys_for_asset(&sender, asset_id, public_key)?;
       }
 
       // Don't take tx fees on success
@@ -452,6 +445,31 @@ pub mod pallet {
       weight_used
     }
 
+    // Delete all member public keys
+    fn delete_public_keys_for_account(who: &T::AccountId) -> Result<(), DispatchError> {
+      for asset_id in PublicKeys::<T>::iter_keys() {
+        PublicKeys::<T>::mutate(asset_id, |public_keys| {
+          public_keys.retain(|(account_id, _)| *account_id != *who);
+        });
+      }
+      Ok(())
+    }
+
+    // Add member public key for a specific asset id
+    fn add_public_keys_for_asset(
+      who: &T::AccountId,
+      asset_id: AssetId,
+      public_key: Vec<u8>,
+    ) -> Result<(), DispatchError> {
+      PublicKeys::<T>::mutate(asset_id, |public_keys| {
+        // Prevent duplicate for the same member / asset id pubkey
+        public_keys.retain(|(account_id, _)| *account_id != *who);
+        // Add new public key
+        public_keys.push((who.clone(), public_key));
+      });
+      Ok(())
+    }
+
     // Create a shuffled vector the size of `len` with random keys
     pub(crate) fn create_shuffle(len: usize) -> Vec<usize> {
       // Create a shuffled order for use to iterate through.
@@ -479,7 +497,16 @@ pub mod pallet {
 
     // Make sure the account id is part of the quorum set list and have public key set
     fn is_member_and_ready(who: &T::AccountId) -> bool {
-      Self::members(who).unwrap_or(false) && PublicKeys::<T>::iter_key_prefix(who).count() > 0
+      let at_least_one_public_key = PublicKeys::<T>::iter_values()
+        .find(|assets| {
+          assets
+            .iter()
+            .find(|(account_id, _)| account_id == who)
+            .is_some()
+        })
+        .is_some();
+
+      Self::members(who).unwrap_or(false) && at_least_one_public_key
     }
 
     // Register a vote for the proposal
