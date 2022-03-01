@@ -51,7 +51,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: System ParentHash (r:1 w:0)
 	// Storage: Quorum Proposals (r:1 w:1)
 	fn submit_proposal() -> Weight {
-		(57_571_000 as Weight)
+		(54_697_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -64,7 +64,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum CounterForMembers (r:1 w:0)
 	// Storage: Quorum Proposals (r:1 w:1)
 	fn acknowledge_proposal() -> Weight {
-		(124_316_000 as Weight)
+		(123_195_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -77,7 +77,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum CounterForMembers (r:1 w:0)
 	// Storage: Quorum Proposals (r:1 w:1)
 	fn reject_proposal() -> Weight {
-		(76_304_000 as Weight)
+		(74_553_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -86,16 +86,17 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum Threshold (r:1 w:0)
 	// Storage: Quorum CounterForMembers (r:1 w:0)
 	fn eval_proposal_state() -> Weight {
-		(20_355_000 as Weight)
+		(20_204_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Quorum Members (r:1 w:0)
 	// Storage: Quorum PublicKeys (r:0 w:1)
-   fn submit_public_keys(k: u32) -> Weight {
-      65_000_400_u64
-         .saturating_add((2_000 as Weight).saturating_mul(k as Weight))
-         .saturating_add(T::DbWeight::get().reads(6_u64))
-         .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
+	fn submit_public_keys(k: u32, ) -> Weight {
+		(13_828_000 as Weight)
+			// Standard Error: 11_000
+			.saturating_add((2_888_000 as Weight).saturating_mul(k as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(k as Weight)))
+	}
 }
