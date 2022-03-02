@@ -37,7 +37,6 @@ use frame_support::{
   weights::{DispatchClass, Weight},
 };
 use frame_system::EnsureRoot;
-use sp_core::u32_trait::{_2, _3, _4};
 use sp_runtime::{
   curve::PiecewiseLinear,
   traits::{OpaqueKeys, TrailingZeroInput},
@@ -47,8 +46,6 @@ use sp_runtime::{
 
 use sp_std::prelude::*;
 
-pub const MAX_NOMINATIONS: u32 =
-  <NposCompactSolution16 as sp_npos_elections::NposSolution>::LIMIT as u32;
 /// Maximum number of iterations for balancing that will be executed in the embedded miner of
 /// pallet-election-provider-multi-phase.
 pub const MINER_MAX_ITERATIONS: u32 = 10;
@@ -252,6 +249,8 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type DataProvider = Staking;
   type Solution = NposCompactSolution16;
   type Fallback = pallet_election_provider_multi_phase::NoFallback<Self>;
+  type GovernanceFallback =
+    frame_election_provider_support::onchain::OnChainSequentialPhragmen<Self>;
   type Solver = frame_election_provider_support::SequentialPhragmen<
     AccountId,
     pallet_election_provider_multi_phase::SolutionAccuracyOf<Self>,
@@ -260,7 +259,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type BenchmarkingConfig = BenchmarkConfigMultiPhase;
   type ForceOrigin = EnsureOneOf<
     EnsureRoot<AccountId>,
-    pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollectiveInstance>,
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
   type VoterSnapshotPerBlock = VoterSnapshotPerBlock;
   type WeightInfo = crate::weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
@@ -312,12 +311,14 @@ parameter_types! {
    // Six sessions in an era (6 hours).
    pub const SessionsPerEra: sp_staking::SessionIndex = 6;
    // 28 eras for unbonding (7 days).
-   pub const BondingDuration: pallet_staking::EraIndex = 28;
+   pub const BondingDuration: sp_staking::EraIndex = 28;
    // 27 eras in which slashes can be cancelled (slightly less than 7 days).
-   pub const SlashDeferDuration: pallet_staking::EraIndex = 27;
+   pub const SlashDeferDuration: sp_staking::EraIndex = 27;
    pub const RewardCurve: &'static PiecewiseLinear<'static> = &REWARD_CURVE;
    pub const MaxNominatorRewardedPerValidator: u32 = 256;
    pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
+   // 16
+  pub const MaxNominations: u32 = <NposCompactSolution16 as sp_npos_elections::NposSolution>::LIMIT as u32;
 }
 
 /// A reasonable benchmarking config for staking pallet.
@@ -328,7 +329,7 @@ impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
 }
 
 impl pallet_staking::Config for Runtime {
-  const MAX_NOMINATIONS: u32 = MAX_NOMINATIONS;
+  type MaxNominations = MaxNominations;
   type Currency = Balances;
   type UnixTime = Timestamp;
   type CurrencyToVote = U128CurrencyToVote;
@@ -345,7 +346,7 @@ impl pallet_staking::Config for Runtime {
   /// A super-majority of the council can cancel the slash.
   type SlashCancelOrigin = EnsureOneOf<
     EnsureRoot<AccountId>,
-    pallet_collective::EnsureProportionAtLeast<_3, _4, AccountId, CouncilCollectiveInstance>,
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 3, 4>,
   >;
   type SessionInterface = Self;
   type EraPayout = pallet_staking::ConvertCurve<RewardCurve>;

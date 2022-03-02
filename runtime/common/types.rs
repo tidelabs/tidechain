@@ -23,7 +23,6 @@ use frame_support::{
   weights::{constants::WEIGHT_PER_SECOND, DispatchClass, Weight},
 };
 use frame_system::EnsureRoot;
-use sp_core::u32_trait::{_1, _2};
 use sp_runtime::{generic, Perbill};
 use static_assertions::const_assert;
 
@@ -91,7 +90,7 @@ parameter_types! {
 
 pub type EnsureRootOrHalfCouncil = EnsureOneOf<
   EnsureRoot<AccountId>,
-  pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollectiveInstance>,
+  pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollectiveInstance, 1, 2>,
 >;
 
 pub type CurrencyToVote = frame_support::traits::U128CurrencyToVote;

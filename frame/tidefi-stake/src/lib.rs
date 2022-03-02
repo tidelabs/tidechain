@@ -71,6 +71,10 @@ pub mod pallet {
     #[pallet::constant]
     type StakeAccountCap: Get<u32>;
 
+    /// Maximum number of periods defined
+    #[pallet::constant]
+    type StakingRewardCap: Get<u32>;
+
     /// Number of block to wait before unstake if forced.
     #[pallet::constant]
     type BlocksForceUnstake: Get<Self::BlockNumber>;
@@ -104,7 +108,7 @@ pub mod pallet {
   #[pallet::storage]
   #[pallet::getter(fn staking_rewards)]
   pub type StakingPeriodRewards<T: Config> =
-    StorageValue<_, Vec<(T::BlockNumber, Percent)>, ValueQuery>;
+    StorageValue<_, BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap>, ValueQuery>;
 
   /// Staking metadata defined by the council (minimum and maximum stake amount)
   #[pallet::storage]
@@ -195,7 +199,29 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
-      StakingPeriodRewards::<T>::put(self.staking_periods.clone());
+      let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = vec![
+        (T::BlockNumber::from(150_u32), Percent::from_parts(1)),
+        (
+          T::BlockNumber::from(14400_u32 * 15_u32),
+          Percent::from_parts(2),
+        ),
+        (
+          T::BlockNumber::from(14400_u32 * 30_u32),
+          Percent::from_parts(3),
+        ),
+        (
+          T::BlockNumber::from(14400_u32 * 60_u32),
+          Percent::from_parts(4),
+        ),
+        (
+          T::BlockNumber::from(14400_u32 * 90_u32),
+          Percent::from_parts(5),
+        ),
+      ]
+      .try_into()
+      .expect("too much periods");
+
+      StakingPeriodRewards::<T>::put(bounded_periods);
       UnstakeFee::<T>::put(self.unstake_fee.clone());
 
       for (currency_id, staking_meta) in self.staking_meta.clone() {

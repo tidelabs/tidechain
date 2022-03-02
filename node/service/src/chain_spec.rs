@@ -4,7 +4,7 @@ use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::{Deserialize, Serialize};
-use serde_json::map::Map;
+use serde_json::json;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
@@ -451,11 +451,15 @@ fn tidechain_testnet_genesis(
 /// Development config (single validator Alice)
 #[cfg(feature = "hertel-native")]
 pub fn hertel_development_config() -> Result<HertelChainSpec, String> {
-  let mut properties = Map::new();
-
-  properties.insert("tokenSymbol".into(), "TIDE".into());
-  properties.insert("tokenDecimals".into(), 12.into());
-
+  let properties = Some(
+    json!({
+      "tokenDecimals": 12,
+      "tokenSymbol": "TIDE"
+    })
+    .as_object()
+    .expect("Map given; qed")
+    .clone(),
+  );
   let wasm_binary = hertel_runtime::WASM_BINARY.ok_or("Hertel development wasm not available")?;
 
   Ok(HertelChainSpec::from_genesis(
@@ -466,7 +470,8 @@ pub fn hertel_development_config() -> Result<HertelChainSpec, String> {
     vec![],
     None,
     Some(DEFAULT_PROTOCOL_ID),
-    Some(properties),
+    None,
+    properties,
     Default::default(),
   ))
 }
@@ -474,10 +479,15 @@ pub fn hertel_development_config() -> Result<HertelChainSpec, String> {
 /// Hertel local testnet config.
 #[cfg(feature = "hertel-native")]
 pub fn hertel_local_testnet_config() -> Result<HertelChainSpec, String> {
-  let mut properties = Map::new();
-
-  properties.insert("tokenSymbol".into(), "TIDE".into());
-  properties.insert("tokenDecimals".into(), 12.into());
+  let properties = Some(
+    json!({
+      "tokenDecimals": 12,
+      "tokenSymbol": "TIDE"
+    })
+    .as_object()
+    .expect("Map given; qed")
+    .clone(),
+  );
   let wasm_binary = hertel_runtime::WASM_BINARY.ok_or("Hertel development wasm not available")?;
 
   let boot_nodes = vec![];
@@ -490,7 +500,8 @@ pub fn hertel_local_testnet_config() -> Result<HertelChainSpec, String> {
     boot_nodes,
     None,
     Some(DEFAULT_PROTOCOL_ID),
-    Some(properties),
+    None,
+    properties,
     Default::default(),
   ))
 }
@@ -498,10 +509,15 @@ pub fn hertel_local_testnet_config() -> Result<HertelChainSpec, String> {
 /// Hertel staging testnet config.
 #[cfg(feature = "hertel-native")]
 pub fn hertel_staging_testnet_config() -> Result<HertelChainSpec, String> {
-  let mut properties = Map::new();
-
-  properties.insert("tokenSymbol".into(), "TIDE".into());
-  properties.insert("tokenDecimals".into(), 12.into());
+  let properties = Some(
+    json!({
+      "tokenDecimals": 12,
+      "tokenSymbol": "TIDE"
+    })
+    .as_object()
+    .expect("Map given; qed")
+    .clone(),
+  );
   let wasm_binary = hertel_runtime::WASM_BINARY.ok_or("Hertel development wasm not available")?;
 
   let boot_nodes = vec![];
@@ -517,7 +533,8 @@ pub fn hertel_staging_testnet_config() -> Result<HertelChainSpec, String> {
         .expect("Discovery Staging telemetry url is valid; qed"),
     ),
     Some(DEFAULT_PROTOCOL_ID),
-    Some(properties),
+    None,
+    properties,
     Default::default(),
   ))
 }
@@ -525,10 +542,15 @@ pub fn hertel_staging_testnet_config() -> Result<HertelChainSpec, String> {
 /// Development config (single validator Alice)
 #[cfg(feature = "tidechain-native")]
 pub fn tidechain_development_config() -> Result<TidechainChainSpec, String> {
-  let mut properties = Map::new();
-
-  properties.insert("tokenSymbol".into(), "TIDE".into());
-  properties.insert("tokenDecimals".into(), 12.into());
+  let properties = Some(
+    json!({
+      "tokenDecimals": 12,
+      "tokenSymbol": "TIDE"
+    })
+    .as_object()
+    .expect("Map given; qed")
+    .clone(),
+  );
 
   let wasm_binary =
     tidechain_runtime::WASM_BINARY.ok_or("Tidechain development wasm not available")?;
@@ -541,7 +563,8 @@ pub fn tidechain_development_config() -> Result<TidechainChainSpec, String> {
     vec![],
     None,
     Some(DEFAULT_PROTOCOL_ID),
-    Some(properties),
+    None,
+    properties,
     Default::default(),
   ))
 }
@@ -549,10 +572,15 @@ pub fn tidechain_development_config() -> Result<TidechainChainSpec, String> {
 /// Tidechain local testnet config.
 #[cfg(feature = "tidechain-native")]
 pub fn tidechain_staging_testnet_config() -> Result<TidechainChainSpec, String> {
-  let mut properties = Map::new();
-
-  properties.insert("tokenSymbol".into(), "TIDE".into());
-  properties.insert("tokenDecimals".into(), 12.into());
+  let properties = Some(
+    json!({
+      "tokenDecimals": 12,
+      "tokenSymbol": "TIDE"
+    })
+    .as_object()
+    .expect("Map given; qed")
+    .clone(),
+  );
 
   let wasm_binary =
     tidechain_runtime::WASM_BINARY.ok_or("Tidechain development wasm not available")?;
@@ -570,7 +598,8 @@ pub fn tidechain_staging_testnet_config() -> Result<TidechainChainSpec, String> 
         .expect("Tidechain Staging telemetry url is valid; qed"),
     ),
     Some(DEFAULT_PROTOCOL_ID),
-    Some(properties),
+    None,
+    properties,
     Default::default(),
   ))
 }
@@ -578,10 +607,15 @@ pub fn tidechain_staging_testnet_config() -> Result<TidechainChainSpec, String> 
 /// Tidechain staging testnet config.
 #[cfg(feature = "tidechain-native")]
 pub fn tidechain_local_testnet_config() -> Result<TidechainChainSpec, String> {
-  let mut properties = Map::new();
-
-  properties.insert("tokenSymbol".into(), "TIDE".into());
-  properties.insert("tokenDecimals".into(), 12.into());
+  let properties = Some(
+    json!({
+      "tokenDecimals": 12,
+      "tokenSymbol": "TIDE"
+    })
+    .as_object()
+    .expect("Map given; qed")
+    .clone(),
+  );
 
   let wasm_binary =
     tidechain_runtime::WASM_BINARY.ok_or("Tidechain development wasm not available")?;
@@ -596,7 +630,8 @@ pub fn tidechain_local_testnet_config() -> Result<TidechainChainSpec, String> {
     boot_nodes,
     None,
     Some(DEFAULT_PROTOCOL_ID),
-    Some(properties),
+    None,
+    properties,
     Default::default(),
   ))
 }

@@ -2,6 +2,7 @@ use super::*;
 use frame_support::{
   log,
   traits::{Get, GetStorageVersion, PalletInfoAccess, StorageVersion},
+  BoundedVec,
 };
 use sp_runtime::Percent;
 use sp_std::vec;
@@ -22,7 +23,7 @@ pub fn migrate_to_v1<T: Config, P: GetStorageVersion + PalletInfoAccess>(
     AccountStakes::<T>::remove_all();
 
     // set default staking periods
-    StakingPeriodRewards::<T>::put(vec![
+    let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = vec![
       (T::BlockNumber::from(150_u32), Percent::from_parts(1)),
       (
         T::BlockNumber::from(14400_u32 * 15_u32),
@@ -40,7 +41,11 @@ pub fn migrate_to_v1<T: Config, P: GetStorageVersion + PalletInfoAccess>(
         T::BlockNumber::from(14400_u32 * 90_u32),
         Percent::from_parts(5),
       ),
-    ]);
+    ]
+    .try_into()
+    .expect("too much periods");
+
+    StakingPeriodRewards::<T>::put(bounded_periods);
 
     // set defaut staking fee (1%)
     UnstakeFee::<T>::put(Percent::from_parts(1));

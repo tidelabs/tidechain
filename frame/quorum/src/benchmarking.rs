@@ -6,6 +6,7 @@ use super::*;
 use frame_benchmarking::{
   account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller, Vec,
 };
+use frame_support::BoundedVec;
 use frame_system::{self, RawOrigin};
 use tidefi_primitives::{
   pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType, ProposalVotes,
@@ -22,7 +23,18 @@ fn pre_set_auth<T: Config>() -> T::AccountId {
   let user: T::AccountId = account("admin", ADMIN_ID, SEED);
   Members::<T>::remove_all();
   Members::<T>::insert(&user, true);
-  PublicKeys::<T>::insert(1, vec![(user.clone(), "pubkey".as_bytes().to_vec())]);
+  let public_key: BoundedVec<u8, <T as pallet::Config>::StringLimit> =
+    "pubkey".as_bytes().to_vec().try_into().unwrap();
+  let public_keys: BoundedVec<
+    (
+      T::AccountId,
+      BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+    ),
+    <T as pallet::Config>::PubkeyLimitPerAsset,
+  > = vec![(user.clone(), public_key)].try_into().unwrap();
+
+  PublicKeys::<T>::insert(1, public_keys);
+
   Threshold::<T>::put(1);
   user
 }
@@ -33,7 +45,7 @@ fn create_proposal<T: Config>() -> Hash {
     account_id,
     currency_id: CurrencyId::Tide,
     mint_amount: 1_000_000_000_000,
-    transaction_id: Vec::new(),
+    transaction_id: Default::default(),
     compliance_level: ComplianceLevel::Green,
   });
 
