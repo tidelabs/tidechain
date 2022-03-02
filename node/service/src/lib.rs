@@ -8,7 +8,7 @@ pub use tidechain_client::{
 
 #[cfg(feature = "full-node")]
 use {
-  sc_client_api::{ExecutorProvider, BlockBackend},
+  sc_client_api::{BlockBackend, ExecutorProvider},
   sc_executor::NativeElseWasmExecutor,
   sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
   sc_service::{
@@ -352,14 +352,20 @@ where
   // Note: GrandPa is pushed before the Tidechain-specific protocols. This doesn't change
   // anything in terms of behaviour, but makes the logs more consistent with the other
   // Substrate nodes.
-	let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
-		&client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
-		&config.chain_spec,
-	);  
+  let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
+    &client
+      .block_hash(0)
+      .ok()
+      .flatten()
+      .expect("Genesis block exists; qed"),
+    &config.chain_spec,
+  );
   config
     .network
     .extra_sets
-    .push(sc_finality_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+    .push(sc_finality_grandpa::grandpa_peers_set_config(
+      grandpa_protocol_name.clone(),
+    ));
 
   let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
     backend.clone(),

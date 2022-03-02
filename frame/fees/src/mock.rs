@@ -180,7 +180,7 @@ parameter_types! {
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
   // Maximum number of staking period the chain can support
-  pub const StakingRewardCap: u32 = 10;  
+  pub const StakingRewardCap: u32 = 10;
 }
 
 impl pallet_fees::Config for Test {
