@@ -64,7 +64,7 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::types::{AccountId, Balance};
+  use crate::types::AccountId;
   use frame_support::{
     parameter_types,
     traits::{ConstU32, FindAuthor},
