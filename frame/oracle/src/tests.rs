@@ -273,7 +273,7 @@ pub fn confirm_swap_partial_filling() {
     assert_eq!(trade_request_mm2.block_number, 0);
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      Adapter::balance(CurrencyId::Tide, &2u64),
       20_000_000_000_000
     );
 
@@ -295,7 +295,7 @@ pub fn confirm_swap_partial_filling() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      Adapter::balance(CurrencyId::Tide, &2u64),
       bob_initial_balance
         // reduce 2% slippage
         .saturating_sub(5_000_000_000_000)
@@ -307,7 +307,7 @@ pub fn confirm_swap_partial_filling() {
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_id,
       status: SwapStatus::PartiallyFilled,
-      account_id: 2u64.into(),
+      account_id: 2u64,
       currency_from: CurrencyId::Tide,
       currency_amount_from: 5_000_000_000_000,
       currency_to: CurrencyId::Wrapped(temp_asset_id),
@@ -322,7 +322,7 @@ pub fn confirm_swap_partial_filling() {
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_mm_id,
       status: SwapStatus::PartiallyFilled,
-      account_id: 3u64.into(),
+      account_id: 3u64,
       currency_from: CurrencyId::Wrapped(temp_asset_id),
       currency_amount_from: partial_filling_amount_charlie,
       currency_to: CurrencyId::Tide,
@@ -381,7 +381,7 @@ pub fn confirm_swap_partial_filling() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tide, &2u64.into()),
+      Adapter::balance(CurrencyId::Tide, &2u64),
       bob_initial_balance
         .saturating_sub(10_000_000_000_000)
         // reduce 0.2% network fee
@@ -392,7 +392,7 @@ pub fn confirm_swap_partial_filling() {
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_id,
       status: SwapStatus::Completed,
-      account_id: 2u64.into(),
+      account_id: 2u64,
       currency_from: CurrencyId::Tide,
       currency_amount_from: 5_000_000_000_000,
       currency_to: CurrencyId::Wrapped(temp_asset_id),
@@ -407,7 +407,7 @@ pub fn confirm_swap_partial_filling() {
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_mm2_id,
       status: SwapStatus::PartiallyFilled,
-      account_id: 4u64.into(),
+      account_id: 4u64,
       currency_from: CurrencyId::Wrapped(temp_asset_id),
       currency_amount_from: partial_filling_amount_charlie,
       currency_to: CurrencyId::Tide,
@@ -699,7 +699,7 @@ pub fn confirm_swap_with_fees() {
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_id,
       status: SwapStatus::Completed,
-      account_id: 2u64.into(),
+      account_id: 2u64,
       currency_from: CurrencyId::Tide,
       currency_amount_from: 10_000_000_000_000,
       currency_to: CurrencyId::Wrapped(temp_asset_id),
@@ -714,7 +714,7 @@ pub fn confirm_swap_with_fees() {
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_mm_id,
       status: SwapStatus::PartiallyFilled,
-      account_id: 3u64.into(),
+      account_id: 3u64,
       currency_from: CurrencyId::Wrapped(temp_asset_id),
       currency_amount_from: 10_000,
       currency_to: CurrencyId::Tide,
@@ -730,7 +730,7 @@ pub fn confirm_swap_with_fees() {
     System::assert_has_event(MockEvent::Oracle(Event::SwapProcessed {
       request_id: trade_request_mm2_id,
       status: SwapStatus::Completed,
-      account_id: 4u64.into(),
+      account_id: 4u64,
       currency_from: CurrencyId::Wrapped(temp_asset_id),
       currency_amount_from: 10_000,
       currency_to: CurrencyId::Tide,

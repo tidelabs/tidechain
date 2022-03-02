@@ -146,6 +146,10 @@ parameter_types! {
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
+  // Maximum proposals in queue for the quorum, to limit the vector size and optimization
+  pub const ProposalsCap: u32 = 1000;
+  // The lifetime of a proposal by the quorum members
+  pub const ProposalLifetime: BlockNumber = 100;
 }
 
 impl pallet_tidefi::Config for Test {
@@ -164,6 +168,8 @@ impl pallet_quorum::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
   type AssetRegistry = AssetRegistry;
+  type ProposalsCap = ProposalsCap;
+  type ProposalLifetime = ProposalLifetime;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -395,7 +401,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
   pallet_quorum::GenesisConfig::<Test> {
     enabled: true,
-    account: 0,
+    members: vec![0],
+    threshold: 1,
   }
   .assimilate_storage(&mut storage)
   .unwrap();

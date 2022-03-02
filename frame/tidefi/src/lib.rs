@@ -76,7 +76,6 @@ pub mod pallet {
     },
     /// Event emitted when widthdraw is initialized.
     Withdrawal {
-      request_id: Hash,
       account: T::AccountId,
       currency_id: CurrencyId,
       amount: Balance,
@@ -191,15 +190,14 @@ pub mod pallet {
       match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {
         WithdrawConsequence::Success => {
           // Add withdrawal in queue
-          let (withdrawal_id, _) = T::Quorum::add_new_withdrawal_in_queue(
+          T::Quorum::add_new_withdrawal_in_queue(
             account_id.clone(),
             currency_id,
             amount,
             external_address.clone(),
-          );
+          )?;
           // Send event to the chain
           Self::deposit_event(Event::<T>::Withdrawal {
-            request_id: withdrawal_id,
             account: account_id,
             currency_id,
             amount,

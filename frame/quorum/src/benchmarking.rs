@@ -3,15 +3,16 @@
 #![cfg(feature = "runtime-benchmarks")]
 use super::*;
 
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::traits::fungibles::Mutate;
+use frame_benchmarking::{
+  account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller, Vec,
+};
 use frame_system::{self, RawOrigin};
-use sp_runtime::traits::StaticLookup;
-use tidefi_primitives::{pallet::QuorumExt, CurrencyId};
+use tidefi_primitives::{
+  pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType, ProposalVotes,
+};
 
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;
-const USER_ID: u32 = 2;
 
 fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
   frame_system::Pallet::<T>::assert_last_event(generic_event.into());
@@ -19,35 +20,68 @@ fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 fn pre_set_auth<T: Config>() -> T::AccountId {
   let user: T::AccountId = account("admin", ADMIN_ID, SEED);
-  QuorumAccountId::<T>::put(user.clone());
-  QuorumStatus::<T>::put(true);
+  Members::<T>::remove_all();
+  Members::<T>::insert(&user, true);
+  PublicKeys::<T>::insert(1, vec![(user.clone(), "pubkey".as_bytes().to_vec())]);
+  Threshold::<T>::put(1);
   user
 }
 
+fn create_proposal<T: Config>() -> Hash {
+  let account_id: T::AccountId = whitelisted_caller();
+  let proposal = ProposalType::Mint(Mint {
+    account_id,
+    currency_id: CurrencyId::Tide,
+    mint_amount: 1_000_000_000_000,
+    transaction_id: Vec::new(),
+    compliance_level: ComplianceLevel::Green,
+  });
+
+  let proposal_id = Hash::zero();
+  Proposals::<T>::try_append((
+    proposal_id,
+    T::Security::get_current_block_count(),
+    proposal,
+  ))
+  .unwrap();
+
+  proposal_id
+}
+
 benchmarks! {
-   set_status {
+   submit_proposal {
       let user = pre_set_auth::<T>();
-   }: _(RawOrigin::Signed(user), true)
-   set_account_id {
+      let account_id: T::AccountId = whitelisted_caller();
+      let proposal = ProposalType::Mint(Mint {
+         account_id,
+         currency_id: CurrencyId::Tide,
+         mint_amount: 1_000_000_000_000,
+         transaction_id: Vec::new(),
+         compliance_level: ComplianceLevel::Green,
+      });
+   }: _(RawOrigin::Signed(user), proposal)
+   acknowledge_proposal {
       let user = pre_set_auth::<T>();
-      let caller: T::AccountId = whitelisted_caller();
-   }: _(RawOrigin::Signed(user), caller)
-   confirm_withdrawal {
+      let proposal_id = create_proposal::<T>();
+   }: _(RawOrigin::Signed(user), proposal_id)
+   reject_proposal {
       let user = pre_set_auth::<T>();
-      let account_id: T::AccountId = account("user", USER_ID, SEED);
-      let user_lookup = T::Lookup::unlookup(account_id.clone());
-      let caller_lookup = T::Lookup::unlookup(user.clone());
-
-      pallet_assets::Pallet::<T>::force_create(RawOrigin::Root.into(), 1, caller_lookup.clone(), true, 1).expect("Unable to create assets");
-      pallet_assets::Pallet::<T>::force_set_metadata(RawOrigin::Root.into(), 1, "Test".into(), "TST".into(), 6, false).expect("Unable to update assets");
-      T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(1), &account_id, 3_000_000_000_000).expect("Unable to mint token");
-      let request = Pallet::<T>::add_new_withdrawal_in_queue(account_id, CurrencyId::Wrapped(1), 1_000_000_000_000, "0x9126fFd76a7e02B875326D5C5b4EDFfc20C7B553".into());
-
-   }: _(RawOrigin::Signed(user), request.0)
-   mint {
-      let caller: T::AccountId = whitelisted_caller();
+      let proposal_id = create_proposal::<T>();
+   }: _(RawOrigin::Signed(user), proposal_id)
+   eval_proposal_state {
       let user = pre_set_auth::<T>();
-   }: _(RawOrigin::Signed(user), caller, CurrencyId::Tide, 1_000_000_000_000_000)
+      let proposal_id = create_proposal::<T>();
+      Votes::<T>::insert(proposal_id, ProposalVotes::default());
+   }: _(RawOrigin::Signed(user), proposal_id)
+   submit_public_keys {
+      // test with 100 assets
+      let k in 0 .. 100;
+      let mut all_keys = vec![];
+      for i in 0..k {
+         all_keys.push((i as u32, "new_pubkey".as_bytes().to_vec()));
+      }
+      let user = pre_set_auth::<T>();
+   }: _(RawOrigin::Signed(user), all_keys)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

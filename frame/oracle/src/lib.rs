@@ -488,7 +488,7 @@ pub mod pallet {
                         mm.request_id,
                       )
                       .map_err(|_| Error::<T>::UnknownError)?;
-                      Self::swap_release_funds(&market_maker_trade_intent)
+                      Self::swap_release_funds(market_maker_trade_intent)
                         .map_err(|_| Error::<T>::ReleaseFailed)?;
                       *mm_trade_request = None;
                     } else {
@@ -522,7 +522,7 @@ pub mod pallet {
             if trade.status == SwapStatus::Completed || trade.swap_type == SwapType::Market {
               Self::try_delete_account_swap(&trade.account_id, request_id)
                 .map_err(|_| Error::<T>::UnknownError)?;
-              Self::swap_release_funds(&trade).map_err(|_| Error::<T>::ReleaseFailed)?;
+              Self::swap_release_funds(trade).map_err(|_| Error::<T>::ReleaseFailed)?;
 
               *trade_request = None;
             } else {
