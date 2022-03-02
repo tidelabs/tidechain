@@ -27,7 +27,6 @@ use frame_support::{
   traits::{ConstU128, EnsureOneOf, EnsureOrigin},
 };
 use frame_system::{EnsureRoot, RawOrigin};
-use sp_core::u32_trait::{_2, _3};
 use sp_runtime::{traits::AccountIdConversion, Permill};
 
 parameter_types! {
@@ -63,6 +62,18 @@ parameter_types! {
   pub const ProposalsCap: u32 = 1000;
   // The lifetime of a proposal by the quorum members
   pub const ProposalLifetime: BlockNumber = 100;
+  // Maximum number of staking period the chain can support
+  pub const StakingRewardCap: u32 = 10;
+  // The maximum size of a string
+  pub const StringLimit: u32 = 255;
+  // The number of votes maximum per proposal, should alway be higher than the proposals threshold
+  pub const VotesLimit: u32 = 10;
+  // The maximum number of account the watchlist can contains
+  pub const WatchListLimit: u32 = 10000;
+  // The maximum number of pubkey each asset can have, should alway be more more than the current quorum active member set
+  pub const PubkeyLimitPerAsset: u32 = 10;
+  // The number of swap each account can have in queue
+  pub const SwapLimitByAccount: u32 = 100;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -136,6 +147,7 @@ impl pallet_tidefi_stake::Config for Runtime {
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type Security = Security;
+  type StakingRewardCap = StakingRewardCap;
   type WeightInfo = crate::weights::pallet_tidefi_stake::WeightInfo<Runtime>;
 }
 
@@ -150,6 +162,10 @@ impl pallet_quorum::Config for Runtime {
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
   type ProposalLifetime = ProposalLifetime;
+  type StringLimit = StringLimit;
+  type VotesLimit = VotesLimit;
+  type WatchListLimit = WatchListLimit;
+  type PubkeyLimitPerAsset = PubkeyLimitPerAsset;
   type WeightInfo = crate::weights::pallet_quorum::WeightInfo<Runtime>;
 }
 
@@ -162,6 +178,7 @@ impl pallet_oracle::Config for Runtime {
   type Fees = Fees;
   // Security utils
   type Security = Security;
+  type SwapLimitByAccount = SwapLimitByAccount;
   type WeightInfo = crate::weights::pallet_oracle::WeightInfo<Runtime>;
 }
 
@@ -197,6 +214,6 @@ impl pallet_fees::Config for Runtime {
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
   type ForceOrigin = EnsureOneOf<
     EnsureRoot<AccountId>,
-    pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollectiveInstance>,
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
 }

@@ -100,6 +100,7 @@ parameter_types! {
   pub const MinimumPeriod: u64 = 5;
   pub const StakeAccountCap: u32 = 10;
   pub const UnstakeQueueCap: u32 = 100;
+  pub const StakingRewardCap: u32 = 100;
 }
 
 impl pallet_assets::Config for Test {
@@ -150,6 +151,7 @@ impl pallet_tidefi_stake::Config for Test {
   type StakeAccountCap = StakeAccountCap;
   type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
+  type StakingRewardCap = StakingRewardCap;
   type AssetRegistry = AssetRegistry;
   type Security = Security;
 }

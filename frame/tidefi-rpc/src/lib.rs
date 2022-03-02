@@ -14,7 +14,10 @@ use tidefi_primitives::{
 #[rpc]
 pub trait TidefiApi<BlockHash, AccountId> {
   #[rpc(name = "tidefi_getAssets")]
-  fn get_assets(&self, at: Option<BlockHash>) -> Result<Vec<(CurrencyId, CurrencyMetadata)>>;
+  fn get_assets(
+    &self,
+    at: Option<BlockHash>,
+  ) -> Result<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>>;
 
   #[rpc(name = "tidefi_getAccountBalance")]
   fn get_account_balance(
@@ -116,7 +119,7 @@ where
   fn get_assets(
     &self,
     at: Option<<Block as BlockT>::Hash>,
-  ) -> Result<Vec<(CurrencyId, CurrencyMetadata)>> {
+  ) -> Result<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>> {
     let api = self.client.runtime_api();
     let at = BlockId::hash(at.unwrap_or(
       // If the block hash is not supplied assume the best block.

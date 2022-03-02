@@ -52,6 +52,10 @@ pub mod pallet {
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
 
+    /// The maximum number of active swaps per account id
+    #[pallet::constant]
+    type SwapLimitByAccount: Get<u32>;
+
     /// Fees traits
     type Fees: FeesExt<Self::AccountId>;
 
@@ -86,8 +90,12 @@ pub mod pallet {
   /// Mapping of pending Swaps by AccountId
   #[pallet::storage]
   #[pallet::getter(fn account_swaps)]
-  pub type AccountSwaps<T: Config> =
-    CountedStorageMap<_, Blake2_128Concat, T::AccountId, Vec<(Hash, SwapStatus)>>;
+  pub type AccountSwaps<T: Config> = CountedStorageMap<
+    _,
+    Blake2_128Concat,
+    T::AccountId,
+    BoundedVec<(Hash, SwapStatus), T::SwapLimitByAccount>,
+  >;
 
   /// Set of active market makers
   #[pallet::storage]
@@ -195,6 +203,8 @@ pub mod pallet {
     MarketMakerNoFunds,
     /// Market Makers cannot deposit source funds of the trade
     MarketMakerCantDeposit,
+    /// Swaps cap reached for this account id
+    SwapOverflow,
     /// Unknown Error.
     UnknownError,
   }
@@ -808,10 +818,20 @@ pub mod pallet {
 
       Swaps::<T>::insert(request_id, swap.clone());
 
-      AccountSwaps::<T>::mutate(account_id, |account_swaps| match account_swaps {
-        Some(swaps) => swaps.push((request_id, SwapStatus::Pending)),
-        None => *account_swaps = Some(vec![(request_id, SwapStatus::Pending)]),
-      });
+      AccountSwaps::<T>::try_mutate(account_id, |account_swaps| match account_swaps {
+        Some(swaps) => swaps
+          .try_push((request_id, SwapStatus::Pending))
+          .map_err(|_| Error::<T>::SwapOverflow),
+        None => {
+          let empty_bounded_vec: BoundedVec<(Hash, SwapStatus), T::SwapLimitByAccount> =
+            vec![(request_id, SwapStatus::Pending)]
+              .try_into()
+              .map_err(|_| Error::<T>::UnknownError)?;
+
+          *account_swaps = Some(empty_bounded_vec);
+          Ok(())
+        }
+      })?;
 
       Ok((request_id, swap))
     }

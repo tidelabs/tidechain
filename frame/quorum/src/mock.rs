@@ -80,18 +80,23 @@ parameter_types! {
   pub const ExistentialDeposit: Balance = TIDE;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
+  pub const AssetDeposit: u64 = 1;
+  pub const ApprovalDeposit: u64 = 1;
+  pub const MetadataDepositBase: u64 = 1;
+  pub const MetadataDepositPerByte: u64 = 1;
+
   // Maximum proposals in queue for the quorum, to limit the vector size and optimization
   pub const ProposalsCap: u32 = 1000;
   // The lifetime of a proposal by the quorum members
   pub const ProposalLifetime: u64 = 100;
-}
-
-parameter_types! {
-  pub const AssetDeposit: u64 = 1;
-  pub const ApprovalDeposit: u64 = 1;
-  pub const StringLimit: u32 = 50;
-  pub const MetadataDepositBase: u64 = 1;
-  pub const MetadataDepositPerByte: u64 = 1;
+  // The maximum size of a string
+  pub const StringLimit: u32 = 255;
+  // The number of votes maximum per proposal, should alway be higher than the proposals threshold
+  pub const VotesLimit: u32 = 10;
+  // The maximum number of account the watchlist can contains
+  pub const WatchListLimit: u32 = 10000;
+  // The maximum number of pubkey each asset can have, should alway be more more than the current quorum active member set
+  pub const PubkeyLimitPerAsset: u32 = 10;
 }
 
 impl pallet_assets::Config for Test {
@@ -137,6 +142,10 @@ impl pallet_quorum::Config for Test {
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
   type ProposalLifetime = ProposalLifetime;
+  type StringLimit = StringLimit;
+  type VotesLimit = VotesLimit;
+  type WatchListLimit = WatchListLimit;
+  type PubkeyLimitPerAsset = PubkeyLimitPerAsset;
 }
 
 impl pallet_security::Config for Test {

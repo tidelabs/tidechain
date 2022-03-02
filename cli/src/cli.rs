@@ -1,19 +1,16 @@
-use sc_cli::RunCmd;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct Cli {
-  #[structopt(subcommand)]
+  #[clap(subcommand)]
   pub subcommand: Option<Subcommand>,
 
-  #[structopt(flatten)]
+  #[clap(flatten)]
   pub run: RunCmd,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub enum Subcommand {
-  /// Key management CLI utilities
-  Key(sc_cli::KeySubcommand),
   /// Build a chain specification.
   BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -35,16 +32,36 @@ pub enum Subcommand {
   /// Revert the chain to a previous state.
   Revert(sc_cli::RevertCmd),
 
-  #[structopt(name = "export-builtin-wasm", setting = structopt::clap::AppSettings::Hidden)]
   ExportBuiltinWasm(ExportBuiltinWasmCommand),
 
   /// The custom benchmark subcommmand benchmarking runtime pallets.
-  #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
   Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+
+  /// Key management CLI utilities
+  #[clap(subcommand)]
+  Key(sc_cli::KeySubcommand),
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+pub struct RunCmd {
+  #[clap(flatten)]
+  pub base: sc_cli::RunCmd,
+
+  /// Force using Kusama native runtime.
+  #[clap(long = "force-hertel")]
+  pub force_hertel: bool,
+
+  /// Setup a GRANDPA scheduled voting pause.
+  ///
+  /// This parameter takes two values, namely a block number and a delay (in
+  /// blocks). After the given block number is finalized the GRANDPA voter
+  /// will temporarily stop voting for new blocks until the given delay has
+  /// elapsed (i.e. until a block at height `pause_block + delay` is imported).
+  #[clap(long = "grandpa-pause", number_of_values(2))]
+  pub grandpa_pause: Vec<u32>,
+}
+
+#[derive(Debug, Parser)]
 pub struct ExportBuiltinWasmCommand {
-  #[structopt()]
   pub folder: String,
 }

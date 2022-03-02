@@ -1,8 +1,11 @@
 use crate::{
-  mock::{new_test_ext, Origin, ProposalLifetime, Quorum, Security, System, Test},
+  mock::{
+    new_test_ext, Origin, ProposalLifetime, PubkeyLimitPerAsset, Quorum, Security, StringLimit,
+    System, Test,
+  },
   pallet::*,
 };
-use frame_support::{assert_ok, traits::Hooks};
+use frame_support::{assert_ok, traits::Hooks, BoundedVec};
 use tidefi_primitives::{
   pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
 };
@@ -11,7 +14,10 @@ use tidefi_primitives::{
 pub fn should_submit_proposal() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
-    PublicKeys::<Test>::insert(1, vec![(1u64, "pubkey".as_bytes().to_vec())]);
+    let public_key: BoundedVec<u8, StringLimit> = "pubkey".as_bytes().to_vec().try_into().unwrap();
+    let public_keys: BoundedVec<(u64, BoundedVec<u8, StringLimit>), PubkeyLimitPerAsset> =
+      vec![(1u64, public_key)].try_into().unwrap();
+    PublicKeys::<Test>::insert(1, public_keys);
     assert!(Members::<Test>::contains_key(1));
     assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
 
@@ -30,14 +36,17 @@ pub fn should_submit_proposal() {
 pub fn should_vote_for_mint() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
-    PublicKeys::<Test>::insert(1, vec![(1u64, "pubkey".as_bytes().to_vec())]);
+    let public_key: BoundedVec<u8, StringLimit> = "pubkey".as_bytes().to_vec().try_into().unwrap();
+    let public_keys: BoundedVec<(u64, BoundedVec<u8, StringLimit>), PubkeyLimitPerAsset> =
+      vec![(1u64, public_key)].try_into().unwrap();
+    PublicKeys::<Test>::insert(1, public_keys);
     assert!(Members::<Test>::contains_key(1));
     assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
       currency_id: CurrencyId::Tide,
       mint_amount: 1_000_000_000_000,
-      transaction_id: Vec::new(),
+      transaction_id: Default::default(),
       compliance_level: ComplianceLevel::Green,
     });
 
@@ -55,14 +64,17 @@ pub fn should_vote_for_mint() {
 pub fn should_remove_expired() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1_u64);
-    PublicKeys::<Test>::insert(1, vec![(1u64, "pubkey".as_bytes().to_vec())]);
+    let public_key: BoundedVec<u8, StringLimit> = "pubkey".as_bytes().to_vec().try_into().unwrap();
+    let public_keys: BoundedVec<(u64, BoundedVec<u8, StringLimit>), PubkeyLimitPerAsset> =
+      vec![(1u64, public_key)].try_into().unwrap();
+    PublicKeys::<Test>::insert(1, public_keys);
     assert!(Members::<Test>::contains_key(1));
     assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
       currency_id: CurrencyId::Tide,
       mint_amount: 1_000_000_000_000,
-      transaction_id: Vec::new(),
+      transaction_id: Default::default(),
       compliance_level: ComplianceLevel::Green,
     });
     assert_ok!(Quorum::submit_proposal(alice, proposal));

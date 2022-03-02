@@ -93,7 +93,6 @@ parameter_types! {
 parameter_types! {
   pub const AssetDeposit: u64 = 1;
   pub const ApprovalDeposit: u64 = 1;
-  pub const StringLimit: u32 = 50;
   pub const MetadataDepositBase: u64 = 1;
   pub const MetadataDepositPerByte: u64 = 1;
 }
@@ -150,6 +149,18 @@ parameter_types! {
   pub const ProposalsCap: u32 = 1000;
   // The lifetime of a proposal by the quorum members
   pub const ProposalLifetime: BlockNumber = 100;
+  // The maximum size of a string
+  pub const StringLimit: u32 = 255;
+  // The number of votes maximum per proposal, should alway be higher than the proposals threshold
+  pub const VotesLimit: u32 = 10;
+  // The maximum number of account the watchlist can contains
+  pub const WatchListLimit: u32 = 10000;
+  // The maximum number of pubkey each asset can have, should alway be more more than the current quorum active member set
+  pub const PubkeyLimitPerAsset: u32 = 10;
+  // The number of swap each account can have in queue
+  pub const SwapLimitByAccount: u32 = 100;
+  // Maximum number of staking period the chain can support
+  pub const StakingRewardCap: u32 = 10;
 }
 
 impl pallet_tidefi::Config for Test {
@@ -170,6 +181,10 @@ impl pallet_quorum::Config for Test {
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
   type ProposalLifetime = ProposalLifetime;
+  type StringLimit = StringLimit;
+  type VotesLimit = VotesLimit;
+  type WatchListLimit = WatchListLimit;
+  type PubkeyLimitPerAsset = PubkeyLimitPerAsset;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -185,6 +200,7 @@ impl pallet_oracle::Config for Test {
   type OraclePalletId = OraclePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
+  type SwapLimitByAccount = SwapLimitByAccount;
   type Fees = Fees;
 }
 
@@ -230,6 +246,7 @@ impl pallet_tidefi_stake::Config for Test {
   type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
   type AssetRegistry = AssetRegistry;
+  type StakingRewardCap = StakingRewardCap;
   type Security = Security;
 }
 

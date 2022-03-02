@@ -28,7 +28,6 @@ use frame_support::{
   traits::{EnsureOneOf, LockIdentifier, U128CurrencyToVote},
 };
 use frame_system::EnsureRoot;
-use sp_core::u32_trait::{_4, _5};
 use sp_runtime::{Percent, Permill};
 use static_assertions::const_assert;
 
@@ -117,6 +116,7 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 parameter_types! {
    pub const ProposalBond: Permill = Permill::from_percent(5);
    pub const ProposalBondMinimum: Balance = 100 * TIDE;
+   pub const ProposalBondMaximum: Balance = 100_000 * TIDE;
    pub const SpendPeriod: BlockNumber = 24 * DAYS;
    pub const Burn: Permill = Permill::from_percent(1);
    pub const TipCountdown: BlockNumber = DAYS;
@@ -137,13 +137,14 @@ impl pallet_treasury::Config for Runtime {
   type Currency = Balances;
   type ApproveOrigin = EnsureOneOf<
     EnsureRoot<AccountId>,
-    pallet_collective::EnsureProportionAtLeast<_4, _5, AccountId, CouncilCollectiveInstance>,
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 4, 5>,
   >;
   type RejectOrigin = EnsureRootOrHalfCouncil;
   type Event = Event;
   type OnSlash = ();
   type ProposalBond = ProposalBond;
   type ProposalBondMinimum = ProposalBondMinimum;
+  type ProposalBondMaximum = ProposalBondMaximum;
   type SpendPeriod = SpendPeriod;
   type Burn = Burn;
   type BurnDestination = ();

@@ -32,7 +32,6 @@ macro_rules! log {
 pub mod pallet {
   use super::*;
   use frame_support::{
-    inherent::Vec,
     log,
     pallet_prelude::*,
     traits::fungibles::{Inspect, Mutate, Transfer},
@@ -43,7 +42,7 @@ pub mod pallet {
     rand_core::{RngCore, SeedableRng},
     ChaChaRng,
   };
-  use sp_std::vec;
+  use sp_std::{vec, vec::Vec};
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, QuorumExt, SecurityExt},
     AssetId, Balance, ComplianceLevel, CurrencyId, Hash, Mint, ProposalStatus, ProposalType,
@@ -76,6 +75,22 @@ pub mod pallet {
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
 
+    /// The maximum length of string (public keys etc..)
+    #[pallet::constant]
+    type StringLimit: Get<u32>;
+
+    /// The maximum number of votes per proposals
+    #[pallet::constant]
+    type VotesLimit: Get<u32>;
+
+    /// The maximum number of votes per proposals
+    #[pallet::constant]
+    type WatchListLimit: Get<u32>;
+
+    /// The pubkey per asset (should always be more than current member size)
+    #[pallet::constant]
+    type PubkeyLimitPerAsset: Get<u32>;
+
     /// Asset registry traits
     type AssetRegistry: AssetRegistryExt;
 
@@ -97,14 +112,32 @@ pub mod pallet {
   /// Quorum public keys for all chains
   #[pallet::storage]
   #[pallet::getter(fn public_keys)]
-  pub type PublicKeys<T: Config> =
-    StorageMap<_, Blake2_128Concat, AssetId, Vec<(T::AccountId, Vec<u8>)>, ValueQuery>;
+  pub type PublicKeys<T: Config> = StorageMap<
+    _,
+    Blake2_128Concat,
+    AssetId,
+    BoundedVec<
+      (
+        T::AccountId,
+        BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+      ),
+      T::PubkeyLimitPerAsset,
+    >,
+    ValueQuery,
+  >;
 
   /// Set of active transaction to watch
   #[pallet::storage]
   #[pallet::getter(fn account_watch_list)]
-  pub type AccountWatchList<T: Config> =
-    StorageMap<_, Blake2_128Concat, T::AccountId, Vec<WatchList<T::BlockNumber>>>;
+  pub type AccountWatchList<T: Config> = StorageMap<
+    _,
+    Blake2_128Concat,
+    T::AccountId,
+    BoundedVec<
+      WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
+      <T as pallet::Config>::WatchListLimit,
+    >,
+  >;
 
   /// The threshold required for a proposal to process
   #[pallet::storage]
@@ -120,7 +153,12 @@ pub mod pallet {
       (
         Hash,
         T::BlockNumber,
-        ProposalType<T::AccountId, T::BlockNumber>,
+        ProposalType<
+          T::AccountId,
+          T::BlockNumber,
+          BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+          BoundedVec<T::AccountId, <T as pallet::Config>::VotesLimit>,
+        >,
       ),
       T::ProposalsCap,
     >,
@@ -130,8 +168,12 @@ pub mod pallet {
   /// Set of Votes for each proposal
   #[pallet::storage]
   #[pallet::getter(fn proposal_votes)]
-  pub type Votes<T: Config> =
-    StorageMap<_, Blake2_128Concat, Hash, ProposalVotes<T::AccountId, T::BlockNumber>>;
+  pub type Votes<T: Config> = StorageMap<
+    _,
+    Blake2_128Concat,
+    Hash,
+    ProposalVotes<T::BlockNumber, BoundedVec<T::AccountId, T::VotesLimit>>,
+  >;
 
   /// Set of active quorum members
   #[pallet::storage]
@@ -257,6 +299,24 @@ pub mod pallet {
     MemberAlreadyVoted,
     /// Mint failed
     MintFailed,
+    /// Invalid proposal
+    BadProposal,
+    /// Invalid public key
+    BadPublicKey,
+    /// Invalid transaction id
+    BadTransactionId,
+    /// Invalid external address
+    BadExternalAddress,
+    /// Watchlist cap reached
+    WatchlistOverflow,
+    /// Members cap reached
+    MembersOverflow,
+    /// Votes cap reached for this proposal
+    VotesOverflow,
+    /// Public keys cap reached for this asset id
+    PublicKeysOverflow,
+    // Unknown error
+    UnknownError,
   }
 
   #[pallet::hooks]
@@ -273,7 +333,7 @@ pub mod pallet {
     #[pallet::weight(<T as pallet::Config>::WeightInfo::submit_proposal())]
     pub fn submit_proposal(
       origin: OriginFor<T>,
-      proposal: ProposalType<T::AccountId, T::BlockNumber>,
+      proposal: ProposalType<T::AccountId, T::BlockNumber, Vec<u8>, Vec<T::AccountId>>,
     ) -> DispatchResultWithPostInfo {
       // 1. Make sure the request is signed by `account_id`
       let sender = ensure_signed(origin)?;
@@ -284,6 +344,42 @@ pub mod pallet {
       // 3. Add the proposal in queue
       let current_block = T::Security::get_current_block_count();
       let proposal_id = T::Security::get_unique_id(sender.clone());
+
+      // Transform the proposal type to use bounded vector
+      let proposal: ProposalType<
+        T::AccountId,
+        T::BlockNumber,
+        BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+        BoundedVec<T::AccountId, <T as pallet::Config>::VotesLimit>,
+      > = match proposal {
+        ProposalType::Mint(mint) => ProposalType::Mint(Mint {
+          account_id: mint.account_id,
+          currency_id: mint.currency_id,
+          mint_amount: mint.mint_amount,
+          transaction_id: mint
+            .transaction_id
+            .try_into()
+            .map_err(|_| Error::<T>::BadTransactionId)?,
+          compliance_level: mint.compliance_level,
+        }),
+        ProposalType::Withdrawal(withdrawal) => ProposalType::Withdrawal(Withdrawal {
+          account_id: withdrawal.account_id,
+          asset_id: withdrawal.asset_id,
+          amount: withdrawal.amount,
+          external_address: withdrawal
+            .external_address
+            .try_into()
+            .map_err(|_| Error::<T>::BadExternalAddress)?,
+          block_number: withdrawal.block_number,
+        }),
+        ProposalType::UpdateConfiguration(members, threshold) => ProposalType::UpdateConfiguration(
+          members
+            .try_into()
+            .map_err(|_| Error::<T>::MembersOverflow)?,
+          threshold,
+        ),
+      };
+
       Proposals::<T>::try_append((proposal_id, current_block, proposal))
         .map_err(|_| Error::<T>::ProposalsCapExceeded)?;
 
@@ -461,13 +557,18 @@ pub mod pallet {
       asset_id: AssetId,
       public_key: Vec<u8>,
     ) -> Result<(), DispatchError> {
-      PublicKeys::<T>::mutate(asset_id, |public_keys| {
+      let final_public_key = public_key
+        .try_into()
+        .map_err(|_| Error::<T>::BadPublicKey)?;
+      PublicKeys::<T>::try_mutate(asset_id, |public_keys| {
         // Prevent duplicate for the same member / asset id pubkey
         public_keys.retain(|(account_id, _)| *account_id != *who);
         // Add new public key
-        public_keys.push((who.clone(), public_key));
-      });
-      Ok(())
+        public_keys
+          .try_push((who.clone(), final_public_key))
+          .map_err(|_| Error::<T>::PublicKeysOverflow)?;
+        Ok(())
+      })
     }
 
     // Create a shuffled vector the size of `len` with random keys
@@ -527,7 +628,8 @@ pub mod pallet {
     fn commit_vote(who: T::AccountId, proposal_id: Hash, in_favour: bool) -> DispatchResult {
       let block_number = T::Security::get_current_block_count();
       let mut votes = Votes::<T>::get(proposal_id).unwrap_or_else(|| {
-        let mut v = ProposalVotes::default();
+        let mut v =
+          ProposalVotes::<T::BlockNumber, BoundedVec<T::AccountId, T::VotesLimit>>::default();
         v.expiry = block_number + T::ProposalLifetime::get();
         v
       });
@@ -543,13 +645,20 @@ pub mod pallet {
       );
 
       if in_favour {
-        votes.votes_for.push(who.clone());
+        votes
+          .votes_for
+          .try_push(who.clone())
+          .map_err(|_| Error::<T>::VotesOverflow)?;
         Self::deposit_event(Event::<T>::VoteFor {
           account_id: who,
           proposal_id,
         });
       } else {
-        votes.votes_against.push(who.clone());
+        votes
+          .votes_against
+          .try_push(who.clone())
+          .map_err(|_| Error::<T>::VotesOverflow)?;
+
         Self::deposit_event(Event::<T>::VoteAgainst {
           account_id: who,
           proposal_id,
@@ -631,7 +740,15 @@ pub mod pallet {
     // Process the original proposal call
     pub fn get_proposal(
       proposal_id: Hash,
-    ) -> Result<ProposalType<T::AccountId, T::BlockNumber>, Error<T>> {
+    ) -> Result<
+      ProposalType<
+        T::AccountId,
+        T::BlockNumber,
+        BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+        BoundedVec<T::AccountId, <T as pallet::Config>::VotesLimit>,
+      >,
+      Error<T>,
+    > {
       let proposals = Proposals::<T>::get();
       let proposal = proposals
         .iter()
@@ -644,7 +761,11 @@ pub mod pallet {
     // Process withdrawal
     fn process_withdrawal(
       proposal_id: Hash,
-      item: &Withdrawal<T::AccountId, T::BlockNumber>,
+      item: &Withdrawal<
+        T::AccountId,
+        T::BlockNumber,
+        BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+      >,
     ) -> Result<(), Error<T>> {
       // 1. Make sure the currency_id exist and is enabled
       ensure!(
@@ -668,7 +789,10 @@ pub mod pallet {
     }
 
     // Process mint
-    fn process_mint(proposal_id: Hash, item: &Mint<T::AccountId>) -> Result<(), Error<T>> {
+    fn process_mint(
+      proposal_id: Hash,
+      item: &Mint<T::AccountId, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
+    ) -> Result<(), Error<T>> {
       // 1. Make sure the currency_id exist and is enabled
       ensure!(
         T::AssetRegistry::is_currency_enabled(item.currency_id),
@@ -684,9 +808,9 @@ pub mod pallet {
           item.currency_id,
           item.mint_amount,
           item.compliance_level.clone(),
-          item.transaction_id.clone(),
+          item.transaction_id.clone().to_vec(),
           WatchListAction::Mint,
-        );
+        )?;
       }
 
       // 3. Mint `Green` and `Amber`
@@ -701,7 +825,7 @@ pub mod pallet {
           account_id: item.account_id.clone(),
           currency_id: item.currency_id,
           amount: item.mint_amount,
-          transaction_id: item.transaction_id.clone(),
+          transaction_id: item.transaction_id.clone().to_vec(),
           compliance_level: item.compliance_level.clone(),
         });
       }
@@ -755,8 +879,12 @@ pub mod pallet {
       compliance_level: ComplianceLevel,
       transaction_id: Vec<u8>,
       watch_action: WatchListAction,
-    ) {
+    ) -> Result<(), Error<T>> {
       let block_number = T::Security::get_current_block_count();
+      let transaction_id: BoundedVec<u8, <T as pallet::Config>::StringLimit> = transaction_id
+        .try_into()
+        .map_err(|_| Error::<T>::BadTransactionId)?;
+
       let watch_list = WatchList {
         amount,
         block_number,
@@ -769,8 +897,25 @@ pub mod pallet {
       AccountWatchList::<T>::mutate_exists(
         account_id,
         |account_watch_list| match account_watch_list {
-          Some(current_watch_list) => current_watch_list.push(watch_list),
-          None => AccountWatchList::<T>::insert(account_id, vec![watch_list]),
+          Some(current_watch_list) => {
+            current_watch_list
+              .try_push(watch_list)
+              // FIXME: Remove unwrap
+              .map_err(|_| Error::<T>::WatchlistOverflow)
+              .unwrap();
+          }
+          None => {
+            let empty_bounded_vec: BoundedVec<
+              WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
+              <T as pallet::Config>::WatchListLimit,
+            > = vec![watch_list]
+              .try_into()
+              // FIXME: Remove unwrap
+              .map_err(|_| Error::<T>::UnknownError)
+              .unwrap();
+
+            AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
+          }
         },
       );
 
@@ -780,8 +925,10 @@ pub mod pallet {
         amount,
         compliance_level,
         watch_action,
-        transaction_id,
+        transaction_id: transaction_id.to_vec(),
       });
+
+      Ok(())
     }
   }
 
@@ -801,6 +948,11 @@ pub mod pallet {
     ) -> Result<(), DispatchError> {
       let unique_id = T::Security::get_unique_id(account_id.clone());
       let block_number = T::Security::get_current_block_count();
+
+      let external_address: BoundedVec<u8, <T as pallet::Config>::StringLimit> = external_address
+        .try_into()
+        .map_err(|_| Error::<T>::BadExternalAddress)?;
+
       Proposals::<T>::try_append((
         unique_id,
         block_number,

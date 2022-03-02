@@ -179,6 +179,8 @@ parameter_types! {
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
+  // Maximum number of staking period the chain can support
+  pub const StakingRewardCap: u32 = 10;
 }
 
 impl pallet_fees::Config for Test {
@@ -207,6 +209,7 @@ impl pallet_tidefi_stake::Config for Test {
   type UnstakeQueueCap = UnstakeQueueCap;
   type BlocksForceUnstake = BlocksForceUnstake;
   type AssetRegistry = AssetRegistry;
+  type StakingRewardCap = StakingRewardCap;
   type Security = Security;
 }
 

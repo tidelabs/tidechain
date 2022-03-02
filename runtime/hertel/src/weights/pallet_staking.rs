@@ -415,4 +415,11 @@ impl<T: frame_system::Config> pallet_staking::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+	// Storage: Staking MinCommission (r:1 w:0)
+	// Storage: Staking Validators (r:1 w:1)
+	fn force_apply_min_commission() -> Weight {
+		(6_737_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
 }

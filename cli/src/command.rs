@@ -128,7 +128,7 @@ pub fn run() -> Result<(), Error> {
 
   match &cli.subcommand {
     None => {
-      let runner = cli.create_runner(&cli.run).map_err(Error::from)?;
+      let runner = cli.create_runner(&cli.run.base).map_err(Error::from)?;
       let chain_spec = &runner.config().chain_spec;
 
       set_default_ss58_version(chain_spec);

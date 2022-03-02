@@ -298,7 +298,7 @@ pub mod pallet {
       })
     }
 
-    pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata)>, DispatchError> {
+    pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>, DispatchError> {
       let mut final_assets = vec![(
         CurrencyId::Tide,
         CurrencyMetadata {

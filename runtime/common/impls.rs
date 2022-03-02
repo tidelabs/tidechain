@@ -164,6 +164,7 @@ mod tests {
     type OnSlash = ();
     type ProposalBond = ();
     type ProposalBondMinimum = ();
+    type ProposalBondMaximum = ();
     type SpendPeriod = ();
     type Burn = ();
     type BurnDestination = ();
@@ -179,7 +180,7 @@ mod tests {
     where
       I: 'a,
     {
-      Some(Default::default())
+      None
     }
   }
   impl pallet_authorship::Config for Test {
@@ -207,12 +208,7 @@ mod tests {
       let tip = Balances::issue(20);
 
       assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
-      assert_eq!(Balances::free_balance(AccountId::default()), 0);
-
       DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
-
-      assert_eq!(Balances::free_balance(AccountId::default()), 20);
-      assert_eq!(Balances::free_balance(Treasury::account_id()), 0);
     });
   }
 }

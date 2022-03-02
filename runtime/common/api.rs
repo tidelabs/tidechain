@@ -223,7 +223,7 @@ impl_runtime_apis! {
 
    // Tidefi Custom API
    impl pallet_tidefi_rpc_runtime_api::TidefiApi<Block, AccountId> for Runtime {
-     fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata)>, DispatchError> {
+     fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>, DispatchError> {
        AssetRegistry::get_assets()
      }
      fn get_account_balance(account_id: AccountId, asset_id: CurrencyId) -> Result<CurrencyBalance<BalanceInfo>, DispatchError> {
