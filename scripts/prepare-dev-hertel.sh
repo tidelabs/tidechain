@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -e
 # numbers of investors
 I_NUM=15

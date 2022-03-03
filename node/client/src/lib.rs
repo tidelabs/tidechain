@@ -11,7 +11,7 @@ use sp_storage::{ChildInfo, StorageData, StorageKey};
 use std::sync::Arc;
 use tidefi_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Header};
 
-#[cfg(not(any(feature = "tidechain", feature = "hertel",)))]
+#[cfg(not(any(feature = "tidechain", feature = "lagoon",)))]
 compile_error!("at least one runtime feature must be enabled");
 
 #[cfg(feature = "tidechain")]
@@ -30,19 +30,19 @@ impl sc_executor::NativeExecutionDispatch for TidechainExecutorDispatch {
   }
 }
 
-#[cfg(feature = "hertel")]
-pub struct HertelExecutorDispatch;
+#[cfg(feature = "lagoon")]
+pub struct LagoonExecutorDispatch;
 
-#[cfg(feature = "hertel")]
-impl sc_executor::NativeExecutionDispatch for HertelExecutorDispatch {
+#[cfg(feature = "lagoon")]
+impl sc_executor::NativeExecutionDispatch for LagoonExecutorDispatch {
   type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
   fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-    hertel_runtime::dispatch(method, data)
+    lagoon_runtime::dispatch(method, data)
   }
 
   fn native_version() -> sc_executor::NativeVersion {
-    hertel_runtime::native_version()
+    lagoon_runtime::native_version()
   }
 }
 
@@ -147,9 +147,9 @@ pub trait ExecuteWithClient {
     Client: AbstractClient<Block, Backend, Api = Api> + 'static;
 }
 
-/// A handle to a Polkadot client instance.
+/// A handle to a Tidechain client instance.
 ///
-/// The Polkadot service supports multiple different runtimes (Westend, Polkadot itself, etc). As each runtime has a
+/// The Tidechain service supports multiple different runtimes (Lagoon, Tidechain itself, etc). As each runtime has a
 /// specialized client, we need to hide them behind a trait. This is this trait.
 ///
 /// When wanting to work with the inner client, you need to use `execute_with`.
@@ -167,8 +167,8 @@ pub trait ClientHandle {
 pub enum Client {
   #[cfg(feature = "tidechain")]
   Tidechain(Arc<FullClient<tidechain_runtime::RuntimeApi, crate::TidechainExecutorDispatch>>),
-  #[cfg(feature = "hertel")]
-  Hertel(Arc<FullClient<hertel_runtime::RuntimeApi, crate::HertelExecutorDispatch>>),
+  #[cfg(feature = "lagoon")]
+  Lagoon(Arc<FullClient<lagoon_runtime::RuntimeApi, crate::LagoonExecutorDispatch>>),
 }
 
 macro_rules! with_client {
@@ -182,8 +182,8 @@ macro_rules! with_client {
 		match $self {
 			#[cfg(feature = "tidechain")]
 			Self::Tidechain($client) => { $( $code )* },
-			#[cfg(feature = "hertel")]
-			Self::Hertel($client) => { $( $code )* },
+			#[cfg(feature = "lagoon")]
+			Self::Lagoon($client) => { $( $code )* },
 		}
 	}
 }

@@ -34,7 +34,7 @@ git fetch --depth="${GIT_DEPTH:-100}" origin dev
 
 
 runtimes=(
-  "hertel"
+  "lagoon"
   "tidechain"
 )
 

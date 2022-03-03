@@ -8,7 +8,7 @@ title: Tidechain {{ env.VERSION }} Release checklist
 
 This is the release checklist for Tidechain {{ env.VERSION }}. **All** following
 checks should be completed before publishing a new release of the
-Tidechain/Hertel runtime or client. The current release candidate can be
+Tidechain/Lagoon runtime or client. The current release candidate can be
 checked out with `git checkout release-{{ env.VERSION }}`
 
 ### Runtime Releases
@@ -53,7 +53,7 @@ candidate branch or started an additional release candidate branch (rc-2, rc-3, 
 
 ### Burn In
 
-Ensure that SEMNET DevOps has run the new release on Tidechain and Hertel validators for at least 12 hours prior to publishing the release.
+Ensure that SEMNET DevOps has run the new release on Tidechain and Lagoon validators for at least 12 hours prior to publishing the release.
 
 ### Build Artifacts
 

@@ -75,8 +75,8 @@ pub fn wasm_binary_unwrap() -> &'static [u8] {
 
 /// Runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-  spec_name: create_runtime_str!("tidechain"),
-  impl_name: create_runtime_str!("tidechain"),
+  spec_name: create_runtime_str!("lagoon"),
+  impl_name: create_runtime_str!("lagoon"),
   authoring_version: 0,
   // This should follow our current node version
   // 1.1 -> 1010
@@ -121,6 +121,11 @@ parameter_types! {
   pub const TidefiStakingPalletId: PalletId = PalletId(*b"py/stake");
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+}
+
+impl pallet_sudo::Config for Runtime {
+  type Event = Event;
+  type Call = Call;
 }
 
 construct_runtime!(
@@ -189,6 +194,9 @@ construct_runtime!(
 
         // Preimage registrar
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 29,
+
+        // Sudo module (Only available in lagoon)
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 30,
 
         // Tidefi public calls
         Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>} = 50,

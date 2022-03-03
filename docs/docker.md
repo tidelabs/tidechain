@@ -5,7 +5,7 @@
 The easiest/faster option to run Tidechain in Docker is to use the latest release images.
 These are small images that use the latest official release of the Tidechain binary, pulled from our package repository.
 
-**_Following examples are running on hertel network and without SSL. They can be used to quick start and learn how Tidechain needs to be configured. Please find out how to secure your node, if you want to operate it on the internet. Do not expose RPC and WS ports, if they are not correctly configured._**
+**_Following examples are running on lagoon network and without SSL. They can be used to quick start and learn how Tidechain needs to be configured. Please find out how to secure your node, if you want to operate it on the internet. Do not expose RPC and WS ports, if they are not correctly configured._**
 
 Let's first check the version we have. The first time you run this command, the Tidechain docker image will be downloaded.
 This takes a bit of time and bandwidth, be patient:
@@ -17,7 +17,7 @@ docker run --rm -it tide-labs/tidechain:latest --version
 You can also pass any argument/flag that Tidechain supports:
 
 ```bash
-docker run --rm -it tide-labs/tidechain:latest --chain hertel --name "TideDocker"
+docker run --rm -it tide-labs/tidechain:latest --chain lagoon --name "TideDocker"
 ```
 
 ## Examples
@@ -28,19 +28,19 @@ To start a Tidechain node on default rpc port 9933 and default p2p port 30333 us
 If you want to connect to rpc port 9933, then must add Tidechain startup parameter: `--rpc-external`.
 
 ```bash
-docker run -d -p 30333:30333 -p 9933:9933 -v /my/local/folder:/tidechain tide-labs/tidechain:latest --chain hertel --rpc-external --rpc-cors all
+docker run -d -p 30333:30333 -p 9933:9933 -v /my/local/folder:/tidechain tide-labs/tidechain:latest --chain lagoon --rpc-external --rpc-cors all
 ```
 
 Additionally if you want to have custom node name you can add the `--name "YourName"` at the end
 
 ```bash
-docker run -d -p 30333:30333 -p 9933:9933 -v /my/local/folder:/tidechain tide-labs/tidechain:latest --chain hertel --rpc-external --rpc-cors all --name "TideDocker"
+docker run -d -p 30333:30333 -p 9933:9933 -v /my/local/folder:/tidechain tide-labs/tidechain:latest --chain lagoon --rpc-external --rpc-cors all --name "TideDocker"
 ```
 
 If you also want to expose the webservice port 9944 use the following command:
 
 ```bash
-docker run -d -p 30333:30333 -p 9933:9933 -p 9944:9944 -v /my/local/folder:/tidechain tide-labs/tidechain:latest --chain hertel --ws-external --rpc-external --rpc-cors all --name "TideDocker"
+docker run -d -p 30333:30333 -p 9933:9933 -p 9944:9944 -v /my/local/folder:/tidechain tide-labs/tidechain:latest --chain lagoon --ws-external --rpc-external --rpc-cors all --name "TideDocker"
 ```
 
 ## Using Docker compose

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -e
 # numbers of quorum
 Q_NUM=3

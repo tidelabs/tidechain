@@ -6,7 +6,7 @@
 
 runtimes=(
   tidechain
-  hertel
+  lagoon
 )
 
 for runtime in "${runtimes[@]}"; do
