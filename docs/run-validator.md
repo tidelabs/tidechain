@@ -41,7 +41,7 @@ To build the `Tidechain` binary from the source-code, use the [release](https://
 You can synchronize your node by running the following commands if you do not want to start in validator mode right away:
 
 ```
-tidechain --chain=hertel-local --bootnodes=/dns/a.bootnode.sandbox.tidefi.io/tcp/30333/p2p/12D3KooWEQmRfrvLbDcmxm8dGpFqkpeyUm5rLTY2SjKH9VJxE7rj --pruning=archive
+tidechain --chain=lagoon-local --bootnodes=/dns/a.bootnode.sandbox.tidefi.io/tcp/30333/p2p/12D3KooWEQmRfrvLbDcmxm8dGpFqkpeyUm5rLTY2SjKH9VJxE7rj --pruning=archive
 ```
 
 The `--pruning=archive` flag is implied by the `--validator` flag, it is only required explicitly if you start your node without one of these two options. If you do not set your pruning to archive node, even when not running in validator mode, you will need to re-sync your database when you switch.
@@ -51,7 +51,7 @@ The `--pruning=archive` flag is implied by the `--validator` flag, it is only re
 Once your node is fully synced, stop the process by pressing Ctrl-C. At your terminal prompt, you will now start running the node.
 
 ```
-tidechain --chain=hertel-local --bootnodes=/dns/a.bootnode.sandbox.tidefi.io/tcp/30333/p2p/12D3KooWEQmRfrvLbDcmxm8dGpFqkpeyUm5rLTY2SjKH9VJxE7rj --validator --name "Validator-Test"
+tidechain --chain=lagoon-local --bootnodes=/dns/a.bootnode.sandbox.tidefi.io/tcp/30333/p2p/12D3KooWEQmRfrvLbDcmxm8dGpFqkpeyUm5rLTY2SjKH9VJxE7rj --validator --name "Validator-Test"
 ```
 
 You can give your validator any name that you like, but note that others will be able to see it and it will be included in the list of all servers using the same telemetry server. Since numerous people are using telemetry, it is recommended that you choose something likely to be unique.
@@ -73,7 +73,7 @@ Wants=network-online.target
 [Service]
 User=ubuntu
 Group=ubuntu
-ExecStart=tidechain --chain=hertel-local --bootnodes=/dns/a.bootnode.sandbox.tidefi.io/tcp/30333/p2p/12D3KooWEQmRfrvLbDcmxm8dGpFqkpeyUm5rLTY2SjKH9VJxE7rj --validator --name 'Validator-Test'
+ExecStart=tidechain --chain=lagoon-local --bootnodes=/dns/a.bootnode.sandbox.tidefi.io/tcp/30333/p2p/12D3KooWEQmRfrvLbDcmxm8dGpFqkpeyUm5rLTY2SjKH9VJxE7rj --validator --name 'Validator-Test'
 Restart=on-failure
 
 [Install]

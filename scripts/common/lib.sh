@@ -111,7 +111,7 @@ has_runtime_changes() {
   to=$2
 
   if git diff --name-only "${from}...${to}" \
-    | grep -q -e '^runtime/tidechain' -e '^runtime/hertel' -e '^runtime/common'
+    | grep -q -e '^runtime/tidechain' -e '^runtime/lagoon' -e '^runtime/common'
   then
     return 0
   else

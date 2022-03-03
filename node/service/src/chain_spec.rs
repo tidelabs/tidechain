@@ -22,10 +22,10 @@ use tidefi_primitives::{
 #[cfg(feature = "tidechain-native")]
 const TIDECHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
-#[cfg(feature = "hertel-native")]
-const HERTEL_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
+#[cfg(feature = "lagoon-native")]
+const LAGOON_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
-#[cfg(feature = "hertel-native")]
+#[cfg(feature = "lagoon-native")]
 const DEFAULT_PROTOCOL_ID: &str = "tide";
 
 /// Node `ChainSpec` extensions.
@@ -39,7 +39,7 @@ pub struct Extensions {
   pub fork_blocks: sc_client_api::ForkBlocks<Block>,
   /// Known bad block hashes.
   pub bad_blocks: sc_client_api::BadBlocks<Block>,
-  /// Required for Tidechain and Hertel Runtime, for future light-client implementation.
+  /// Required for Tidechain and Lagoon Runtime, for future light-client implementation.
   pub light_sync_state: sc_sync_state_rpc::LightSyncStateExtension,
 }
 
@@ -47,27 +47,27 @@ pub struct Extensions {
 pub type TidechainChainSpec =
   sc_service::GenericChainSpec<tidechain_runtime::GenesisConfig, Extensions>;
 
-#[cfg(feature = "hertel-native")]
-pub type HertelChainSpec = sc_service::GenericChainSpec<hertel_runtime::GenesisConfig, Extensions>;
+#[cfg(feature = "lagoon-native")]
+pub type LagoonChainSpec = sc_service::GenericChainSpec<lagoon_runtime::GenesisConfig, Extensions>;
 
 #[cfg(feature = "tidechain-native")]
 pub fn tidechain_config() -> Result<TidechainChainSpec, String> {
   TidechainChainSpec::from_json_bytes(&include_bytes!("../res/tidechain.json")[..])
 }
 
-#[cfg(feature = "hertel-native")]
-pub fn hertel_config() -> Result<HertelChainSpec, String> {
-  HertelChainSpec::from_json_bytes(&include_bytes!("../res/hertel.json")[..])
+#[cfg(feature = "lagoon-native")]
+pub fn lagoon_config() -> Result<LagoonChainSpec, String> {
+  LagoonChainSpec::from_json_bytes(&include_bytes!("../res/lagoon.json")[..])
 }
 
-#[cfg(feature = "hertel-native")]
-fn hertel_session_keys(
+#[cfg(feature = "lagoon-native")]
+fn lagoon_session_keys(
   grandpa: GrandpaId,
   babe: BabeId,
   im_online: ImOnlineId,
   authority_discovery: AuthorityDiscoveryId,
-) -> hertel_runtime::SessionKeys {
-  hertel_runtime::SessionKeys {
+) -> lagoon_runtime::SessionKeys {
+  lagoon_runtime::SessionKeys {
     grandpa,
     babe,
     im_online,
@@ -90,8 +90,8 @@ fn tidechain_session_keys(
   }
 }
 
-#[cfg(feature = "hertel-native")]
-fn hertel_testnet_genesis(
+#[cfg(feature = "lagoon-native")]
+fn lagoon_testnet_genesis(
   wasm_binary: &[u8],
   initial_authorities: Vec<(
     AccountId,
@@ -106,15 +106,15 @@ fn hertel_testnet_genesis(
   oracle: AccountId,
   root: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
-) -> hertel_runtime::GenesisConfig {
+) -> lagoon_runtime::GenesisConfig {
   // 1000 TIDEs / validators
   const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 2 * 1_000_000_000_000;
   // Treasury Account Id
-  let treasury_account: AccountId = hertel_runtime::TreasuryPalletId::get().into_account();
+  let treasury_account: AccountId = lagoon_runtime::TreasuryPalletId::get().into_account();
   // Fees Account Id
-  let fees_account: AccountId = hertel_runtime::FeesPalletId::get().into_account();
+  let fees_account: AccountId = lagoon_runtime::FeesPalletId::get().into_account();
   // Get all TIDE from our stakeholders
   let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
 
@@ -175,28 +175,28 @@ fn hertel_testnet_genesis(
     "Total Supply (endowed_accounts) is not equal to 1 billion"
   );
 
-  hertel_runtime::GenesisConfig {
-    system: hertel_runtime::SystemConfig {
+  lagoon_runtime::GenesisConfig {
+    system: lagoon_runtime::SystemConfig {
       code: wasm_binary.to_vec(),
     },
-    balances: hertel_runtime::BalancesConfig {
+    balances: lagoon_runtime::BalancesConfig {
       balances: endowed_accounts.clone(),
     },
 
-    indices: hertel_runtime::IndicesConfig { indices: vec![] },
-    session: hertel_runtime::SessionConfig {
+    indices: lagoon_runtime::IndicesConfig { indices: vec![] },
+    session: lagoon_runtime::SessionConfig {
       keys: initial_authorities
         .iter()
         .map(|x| {
           (
             x.0.clone(),
             x.0.clone(),
-            hertel_session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
+            lagoon_session_keys(x.2.clone(), x.3.clone(), x.4.clone(), x.5.clone()),
           )
         })
         .collect::<Vec<_>>(),
     },
-    staking: hertel_runtime::StakingConfig {
+    staking: lagoon_runtime::StakingConfig {
       minimum_validator_count: 1,
       validator_count: initial_authorities.len() as u32,
       invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
@@ -207,7 +207,7 @@ fn hertel_testnet_genesis(
             x.0.clone(),
             x.1.clone(),
             STASH,
-            hertel_runtime::StakerStatus::Validator,
+            lagoon_runtime::StakerStatus::Validator,
           )
         })
         .collect(),
@@ -215,36 +215,36 @@ fn hertel_testnet_genesis(
       ..Default::default()
     },
     elections: Default::default(),
-    council: hertel_runtime::CouncilConfig {
+    council: lagoon_runtime::CouncilConfig {
       members: vec![],
       phantom: Default::default(),
     },
-    technical_committee: hertel_runtime::TechnicalCommitteeConfig {
+    technical_committee: lagoon_runtime::TechnicalCommitteeConfig {
       members: vec![],
       phantom: Default::default(),
     },
 
     // FIXME: Remove sudo once the staging is completed
-    sudo: hertel_runtime::SudoConfig {
+    sudo: lagoon_runtime::SudoConfig {
       key: Some(root.clone()),
     },
 
-    babe: hertel_runtime::BabeConfig {
+    babe: lagoon_runtime::BabeConfig {
       authorities: Default::default(),
-      epoch_config: Some(hertel_runtime::BABE_GENESIS_EPOCH_CONFIG),
+      epoch_config: Some(lagoon_runtime::BABE_GENESIS_EPOCH_CONFIG),
     },
     im_online: Default::default(),
-    authority_discovery: hertel_runtime::AuthorityDiscoveryConfig { keys: vec![] },
+    authority_discovery: lagoon_runtime::AuthorityDiscoveryConfig { keys: vec![] },
     grandpa: Default::default(),
     technical_membership: Default::default(),
     treasury: Default::default(),
     // tidefi custom genesis
-    quorum: hertel_runtime::QuorumConfig {
+    quorum: lagoon_runtime::QuorumConfig {
       enabled: true,
       members: quorums,
       threshold: quorum_threshold,
     },
-    oracle: hertel_runtime::OracleConfig {
+    oracle: lagoon_runtime::OracleConfig {
       enabled: true,
       account: oracle,
       market_makers: vec![
@@ -270,7 +270,7 @@ fn hertel_testnet_genesis(
         hex!["904e3dea6bcdc6cb523f52cbdedad53c24bbd95692ec690154b0f2c7f0abc55c"].into(),
       ],
     },
-    asset_registry: hertel_runtime::AssetRegistryConfig {
+    asset_registry: lagoon_runtime::AssetRegistryConfig {
       // these assets are created on first initialization
       assets: helpers::get_assets_with_stakeholders(stakeholders, assets),
       // FIXME: Is the asset_registry owner should be the same account as root?
@@ -279,7 +279,7 @@ fn hertel_testnet_genesis(
       account: root,
     },
     security: Default::default(),
-    tidefi_staking: crate::tidefi_staking_genesis!(hertel_runtime),
+    tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
     fees: Default::default(),
   }
 }
@@ -449,8 +449,8 @@ fn tidechain_testnet_genesis(
 }
 
 /// Development config (single validator Alice)
-#[cfg(feature = "hertel-native")]
-pub fn hertel_development_config() -> Result<HertelChainSpec, String> {
+#[cfg(feature = "lagoon-native")]
+pub fn lagoon_development_config() -> Result<LagoonChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
@@ -460,13 +460,14 @@ pub fn hertel_development_config() -> Result<HertelChainSpec, String> {
     .expect("Map given; qed")
     .clone(),
   );
-  let wasm_binary = hertel_runtime::WASM_BINARY.ok_or("Hertel development wasm not available")?;
 
-  Ok(HertelChainSpec::from_genesis(
+  let wasm_binary = lagoon_runtime::WASM_BINARY.ok_or("Lagoon development wasm not available")?;
+
+  Ok(LagoonChainSpec::from_genesis(
     "Development",
-    "hertel_dev",
+    "lagoon_dev",
     ChainType::Development,
-    move || hertel_development_config_genesis(wasm_binary),
+    move || lagoon_development_config_genesis(wasm_binary),
     vec![],
     None,
     Some(DEFAULT_PROTOCOL_ID),
@@ -476,9 +477,9 @@ pub fn hertel_development_config() -> Result<HertelChainSpec, String> {
   ))
 }
 
-/// Hertel local testnet config.
-#[cfg(feature = "hertel-native")]
-pub fn hertel_local_testnet_config() -> Result<HertelChainSpec, String> {
+/// Lagoon local testnet config.
+#[cfg(feature = "lagoon-native")]
+pub fn lagoon_local_testnet_config() -> Result<LagoonChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
@@ -488,16 +489,15 @@ pub fn hertel_local_testnet_config() -> Result<HertelChainSpec, String> {
     .expect("Map given; qed")
     .clone(),
   );
-  let wasm_binary = hertel_runtime::WASM_BINARY.ok_or("Hertel development wasm not available")?;
 
-  let boot_nodes = vec![];
+  let wasm_binary = lagoon_runtime::WASM_BINARY.ok_or("Lagoon development wasm not available")?;
 
-  Ok(HertelChainSpec::from_genesis(
-    "Hertel Local Testnet",
-    "hertel_local_testnet",
+  Ok(LagoonChainSpec::from_genesis(
+    "Lagoon Local Testnet",
+    "lagoon_local_testnet",
     ChainType::Local,
-    move || hertel_local_testnet_config_genesis(wasm_binary),
-    boot_nodes,
+    move || lagoon_local_testnet_config_genesis(wasm_binary),
+    vec![],
     None,
     Some(DEFAULT_PROTOCOL_ID),
     None,
@@ -506,9 +506,9 @@ pub fn hertel_local_testnet_config() -> Result<HertelChainSpec, String> {
   ))
 }
 
-/// Hertel staging testnet config.
-#[cfg(feature = "hertel-native")]
-pub fn hertel_staging_testnet_config() -> Result<HertelChainSpec, String> {
+/// Lagoon staging testnet config.
+#[cfg(feature = "lagoon-native")]
+pub fn lagoon_staging_testnet_config() -> Result<LagoonChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
@@ -518,18 +518,17 @@ pub fn hertel_staging_testnet_config() -> Result<HertelChainSpec, String> {
     .expect("Map given; qed")
     .clone(),
   );
-  let wasm_binary = hertel_runtime::WASM_BINARY.ok_or("Hertel development wasm not available")?;
 
-  let boot_nodes = vec![];
+  let wasm_binary = lagoon_runtime::WASM_BINARY.ok_or("Lagoon development wasm not available")?;
 
-  Ok(HertelChainSpec::from_genesis(
-    "Hertel Staging Testnet",
-    "hertel_staging_testnet",
+  Ok(LagoonChainSpec::from_genesis(
+    "Lagoon Staging Testnet",
+    "lagoon_staging_testnet",
     ChainType::Live,
-    move || hertel_staging_testnet_config_genesis(wasm_binary),
-    boot_nodes,
+    move || lagoon_staging_testnet_config_genesis(wasm_binary),
+    vec![],
     Some(
-      TelemetryEndpoints::new(vec![(HERTEL_STAGING_TELEMETRY_URL.to_string(), 0)])
+      TelemetryEndpoints::new(vec![(LAGOON_STAGING_TELEMETRY_URL.to_string(), 0)])
         .expect("Discovery Staging telemetry url is valid; qed"),
     ),
     Some(DEFAULT_PROTOCOL_ID),
@@ -636,12 +635,12 @@ pub fn tidechain_local_testnet_config() -> Result<TidechainChainSpec, String> {
   ))
 }
 
-#[cfg(feature = "hertel-native")]
-fn hertel_development_config_genesis(wasm_binary: &[u8]) -> hertel_runtime::GenesisConfig {
-  hertel_testnet_genesis(
+#[cfg(feature = "lagoon-native")]
+fn lagoon_development_config_genesis(wasm_binary: &[u8]) -> lagoon_runtime::GenesisConfig {
+  lagoon_testnet_genesis(
     wasm_binary,
     vec![helpers::authority_keys_from_seed("Alice")],
-    helpers::get_stakeholder_tokens_hertel(),
+    helpers::get_stakeholder_tokens_lagoon(),
     vec![helpers::get_account_id_from_seed::<sr25519::Public>(
       "Charlie",
     )],
@@ -651,15 +650,15 @@ fn hertel_development_config_genesis(wasm_binary: &[u8]) -> hertel_runtime::Gene
   )
 }
 
-#[cfg(feature = "hertel-native")]
-fn hertel_local_testnet_config_genesis(wasm_binary: &[u8]) -> hertel_runtime::GenesisConfig {
-  hertel_testnet_genesis(
+#[cfg(feature = "lagoon-native")]
+fn lagoon_local_testnet_config_genesis(wasm_binary: &[u8]) -> lagoon_runtime::GenesisConfig {
+  lagoon_testnet_genesis(
     wasm_binary,
     vec![
       helpers::authority_keys_from_seed("Alice"),
       helpers::authority_keys_from_seed("Bob"),
     ],
-    helpers::get_stakeholder_tokens_hertel(),
+    helpers::get_stakeholder_tokens_lagoon(),
     vec![
       helpers::get_account_id_from_seed::<sr25519::Public>("Charlie"),
       helpers::get_account_id_from_seed::<sr25519::Public>("Dave"),
@@ -671,8 +670,8 @@ fn hertel_local_testnet_config_genesis(wasm_binary: &[u8]) -> hertel_runtime::Ge
   )
 }
 
-#[cfg(feature = "hertel-native")]
-fn hertel_staging_testnet_config_genesis(wasm_binary: &[u8]) -> hertel_runtime::GenesisConfig {
+#[cfg(feature = "lagoon-native")]
+fn lagoon_staging_testnet_config_genesis(wasm_binary: &[u8]) -> lagoon_runtime::GenesisConfig {
   let initial_authorities: Vec<(
     AccountId,
     AccountId,
@@ -735,10 +734,10 @@ fn hertel_staging_testnet_config_genesis(wasm_binary: &[u8]) -> hertel_runtime::
     hex!["5c88582258ab5c02f342cd3ff37601252953cad2fb04de192cab2e2656788a6e"].into(),
   ];
 
-  hertel_testnet_genesis(
+  lagoon_testnet_genesis(
     wasm_binary,
     initial_authorities,
-    helpers::get_stakeholder_tokens_hertel(),
+    helpers::get_stakeholder_tokens_lagoon(),
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
@@ -1039,9 +1038,9 @@ mod helpers {
     (initial_validators + initial_quorums) as u128 * endowment
   }
 
-  // SECRET="key" ./scripts/prepare-dev-hertel.sh
-  #[cfg(feature = "hertel-native")]
-  pub fn get_stakeholder_tokens_hertel() -> Vec<(CurrencyId, AccountId, Balance)> {
+  // SECRET="key" ./scripts/prepare-dev-lagoon.sh
+  #[cfg(feature = "lagoon-native")]
+  pub fn get_stakeholder_tokens_lagoon() -> Vec<(CurrencyId, AccountId, Balance)> {
     vec![
       // faucet
       (

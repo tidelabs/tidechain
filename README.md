@@ -1,6 +1,6 @@
 # Tidechain
 
-This repo contains runtimes for the Tidechain and Hertel networks.
+This repo contains runtimes for the Tidechain and Lagoon networks.
 The README provides information about installing the `tidechain` binary.
 For more specific guides, like how to be a validator, see the [Tidechain Wiki](#).
 
@@ -62,14 +62,14 @@ You can also build from source using
 ```bash
 git checkout <latest tagged release>
 docker run --rm -it -w /shellhere/tidechain \
-                    -v $(pwd):/tidechain/polkadot \
+                    -v $(pwd):/tidechain/tidechain \
                     tidelabs/tidechain-ci:latest cargo build --release
 sudo chown -R $(id -u):$(id -g) target/
 ```
 
 ## Networks
 
-This repo supports runtimes for Tidechain and Hertel.
+This repo supports runtimes for Tidechain and Lagoon.
 
 Tidechain is built on top of Substrate, a modular framework for blockchains.
 One feature of Substrate is to allow for connection to different networks using a single executable and configuring it with a start-up flag.
@@ -87,25 +87,25 @@ You can see your node on [telemetry] (set a custom name with `--name "my custom 
 
 [telemetry]: https://telemetry.tidefi.io/#list/Tidechain
 
-### Connect to the Hertel Testnet
+### Connect to the Lagoon Testnet
 
-Hertel is the latest test network for Tidechain.
+Lagoon is the latest test network for Tidechain.
 The tokens on this network are called TIDE and they purposefully hold no economic value.
 The `sudo` pallet is enabled on this network allowing the core-team to debug the chain.
 
-Connect to the global Hertel testnet by running:
+Connect to the global Lagoon testnet by running:
 
 ```bash
-tidechain --chain=hertel
+tidechain --chain=lagoon
 ```
 
 You can see your node on [telemetry] (set a custom name with `--name "my custom name"`).
 
-[telemetry]: https://telemetry.tidefi.io/#list/Hertel
+[telemetry]: https://telemetry.tidefi.io/#list/Lagoon
 
 ### Obtaining TIDEs
 
-For Hertel's TIDE tokens, see the faucet [instructions](#) on the Wiki.
+For Lagoon's TIDE tokens, see the faucet [instructions](#) on the Wiki.
 
 ## Hacking on Tidechain
 

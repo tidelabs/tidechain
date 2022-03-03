@@ -264,7 +264,7 @@ pub mod fee {
   impl WeightToFeePolynomial for WeightToFee {
     type Balance = Balance;
     fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-      // in Polkadot, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+      // in Tidechain, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
       let p = super::currency::CENTS;
       let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
       smallvec![WeightToFeeCoefficient {

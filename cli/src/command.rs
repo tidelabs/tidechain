@@ -58,7 +58,7 @@ impl SubstrateCli for Cli {
   fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
     let id = if id.is_empty() {
       let n = get_exec_name().unwrap_or_default();
-      ["tidechain", "hertel"]
+      ["tidechain", "lagoon"]
         .iter()
         .cloned()
         .find(|&chain| n.starts_with(chain))
@@ -68,14 +68,14 @@ impl SubstrateCli for Cli {
     };
 
     Ok(match id {
-      #[cfg(feature = "hertel-native")]
-      "hertel" => Box::new(chain_spec::hertel_config()?),
-      #[cfg(feature = "hertel-native")]
-      "hertel-dev" => Box::new(chain_spec::hertel_development_config()?),
-      #[cfg(feature = "hertel-native")]
-      "hertel-local" => Box::new(chain_spec::hertel_local_testnet_config()?),
-      #[cfg(feature = "hertel-native")]
-      "hertel-staging" => Box::new(chain_spec::hertel_staging_testnet_config()?),
+      #[cfg(feature = "lagoon-native")]
+      "lagoon" => Box::new(chain_spec::lagoon_config()?),
+      #[cfg(feature = "lagoon-native")]
+      "lagoon-dev" => Box::new(chain_spec::lagoon_development_config()?),
+      #[cfg(feature = "lagoon-native")]
+      "lagoon-local" => Box::new(chain_spec::lagoon_local_testnet_config()?),
+      #[cfg(feature = "lagoon-native")]
+      "lagoon-staging" => Box::new(chain_spec::lagoon_staging_testnet_config()?),
 
       #[cfg(feature = "tidechain-native")]
       "tidechain" => Box::new(chain_spec::tidechain_config()?),
@@ -85,7 +85,21 @@ impl SubstrateCli for Cli {
       "tidechain-local" => Box::new(chain_spec::tidechain_local_testnet_config()?),
       #[cfg(feature = "tidechain-native")]
       "tidechain-staging" => Box::new(chain_spec::tidechain_staging_testnet_config()?),
-      _path => return Err("Custom chain spec is not supported".into()),
+      path => {
+        let path = std::path::PathBuf::from(path);
+
+        let chain_spec = Box::new(tidechain_service::TidechainChainSpec::from_json_file(
+          path.clone(),
+        )?) as Box<dyn tidechain_service::ChainSpec>;
+
+        // When `force_*` is given or the file name starts with the name of one of the known chains,
+        // we use the chain spec for the specific chain.
+        if self.run.force_lagoon || chain_spec.is_lagoon() {
+          Box::new(tidechain_service::LagoonChainSpec::from_json_file(path)?)
+        } else {
+          chain_spec
+        }
+      }
     })
   }
 
@@ -95,12 +109,12 @@ impl SubstrateCli for Cli {
       return &tidechain_service::tidechain_runtime::VERSION;
     }
 
-    #[cfg(feature = "hertel-native")]
-    if spec.is_hertel() {
-      return &tidechain_service::hertel_runtime::VERSION;
+    #[cfg(feature = "lagoon-native")]
+    if spec.is_lagoon() {
+      return &tidechain_service::lagoon_runtime::VERSION;
     }
 
-    panic!("No runtime feature (tidechain, hertel) is enabled")
+    panic!("No runtime feature (tidechain, lagoon) is enabled")
   }
 }
 
@@ -111,7 +125,7 @@ fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
   /*
   let ss58_version = if spec.is_tidechain() {
     Ss58AddressFormatRegistry::SubstrateAccount
-  } else if spec.is_hertel() {
+  } else if spec.is_lagoon() {
     Ss58AddressFormatRegistry::SubstrateAccount
   } else {
     Ss58AddressFormatRegistry::SubstrateAccount
@@ -273,22 +287,22 @@ pub fn run() -> Result<(), Error> {
         }
       }
 
-      #[cfg(feature = "hertel-native")]
+      #[cfg(feature = "lagoon-native")]
       {
-        let wasm_binary_bloaty = tidechain_service::hertel_runtime::WASM_BINARY_BLOATY
+        let wasm_binary_bloaty = tidechain_service::lagoon_runtime::WASM_BINARY_BLOATY
           .ok_or(Error::UnavailableWasmBinary)?;
         let wasm_binary =
-          tidechain_service::hertel_runtime::WASM_BINARY.ok_or(Error::UnavailableWasmBinary)?;
+          tidechain_service::lagoon_runtime::WASM_BINARY.ok_or(Error::UnavailableWasmBinary)?;
 
         info!(
-          "Exporting hertel builtin wasm binary to folder: {}",
+          "Exporting lagoon builtin wasm binary to folder: {}",
           cmd.folder
         );
 
         let folder = PathBuf::from(cmd.folder.clone());
         {
           let mut path = folder.clone();
-          path.push("hertel_runtime.compact.wasm");
+          path.push("lagoon_runtime.compact.wasm");
           let mut file = File::create(path)?;
           file.write_all(wasm_binary)?;
           file.flush()?;
@@ -296,7 +310,7 @@ pub fn run() -> Result<(), Error> {
 
         {
           let mut path = folder;
-          path.push("hertel_runtime.wasm");
+          path.push("lagoon_runtime.wasm");
           let mut file = File::create(path)?;
           file.write_all(wasm_binary_bloaty)?;
           file.flush()?;

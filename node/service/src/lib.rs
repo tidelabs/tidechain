@@ -22,19 +22,22 @@ use {
   tidefi_primitives::Block,
 };
 
-use sc_service::ChainSpec;
+#[cfg(feature = "full-node")]
+pub use chain_spec::{LagoonChainSpec, TidechainChainSpec};
+
+pub use sc_service::ChainSpec;
 
 #[cfg(feature = "tidechain-native")]
 pub use tidechain_client::TidechainExecutorDispatch;
 #[cfg(feature = "tidechain-native")]
 pub use tidechain_runtime;
 
-#[cfg(feature = "hertel-native")]
-pub use hertel_runtime;
-#[cfg(feature = "hertel-native")]
-pub use tidechain_client::HertelExecutorDispatch;
+#[cfg(feature = "lagoon-native")]
+pub use lagoon_runtime;
+#[cfg(feature = "lagoon-native")]
+pub use tidechain_client::LagoonExecutorDispatch;
 
-#[cfg(any(feature = "tidechain-native", feature = "hertel-native"))]
+#[cfg(any(feature = "tidechain-native", feature = "lagoon-native"))]
 pub mod chain_spec;
 
 #[derive(thiserror::Error, Debug)]
@@ -60,25 +63,25 @@ pub enum Error {
   #[error(transparent)]
   Telemetry(#[from] sc_telemetry::Error),
 
-  #[error("Expected at least one of polkadot, kusama, westend or rococo runtime feature")]
+  #[error("Expected at least one of tidechain, lagoon runtime feature")]
   NoRuntime,
 }
 
-/// Can be called for a `Configuration` to check if it is a configuration for the `Hertel` network.
+/// Can be called for a `Configuration` to check if it is a configuration for the `Lagoon` network.
 pub trait IdentifyVariant {
   /// Returns if this is a configuration for the `Tidechain` network.
   fn is_tidechain(&self) -> bool;
 
-  /// Returns if this is a configuration for the `Hertel` network.
-  fn is_hertel(&self) -> bool;
+  /// Returns if this is a configuration for the `Lagoon` network.
+  fn is_lagoon(&self) -> bool;
 }
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
   fn is_tidechain(&self) -> bool {
     self.id().starts_with("tide")
   }
-  fn is_hertel(&self) -> bool {
-    self.id().starts_with("hert")
+  fn is_lagoon(&self) -> bool {
+    self.id().starts_with("lagoo")
   }
 }
 
@@ -494,7 +497,7 @@ where
     );
   }
 
-  // we'd say let overseer_handler = authority_hertel_service.map(|authority_hertel_service|, ...),
+  // we'd say let overseer_handler = authority_lagoon_service.map(|authority_lagoon_service|, ...),
   // but in that case we couldn't use ? to propagate errors
   let local_keystore = keystore_container.local_keystore();
   if local_keystore.is_none() {
@@ -572,10 +575,10 @@ pub fn build_full(config: Configuration) -> Result<NewFull<Client>, Error> {
       .map(|full| full.with_client(Client::Tidechain));
   }
 
-  #[cfg(feature = "hertel-native")]
-  if config.chain_spec.is_hertel() {
-    return new_full::<hertel_runtime::RuntimeApi, HertelExecutorDispatch>(config)
-      .map(|full| full.with_client(Client::Hertel));
+  #[cfg(feature = "lagoon-native")]
+  if config.chain_spec.is_lagoon() {
+    return new_full::<lagoon_runtime::RuntimeApi, LagoonExecutorDispatch>(config)
+      .map(|full| full.with_client(Client::Lagoon));
   }
 
   Err(Error::NoRuntime)
@@ -612,17 +615,17 @@ pub fn new_chain_ops(mut config: &mut Configuration) -> Result<NewChainOps<Clien
     });
   }
 
-  #[cfg(feature = "hertel-native")]
-  if config.chain_spec.is_hertel() {
+  #[cfg(feature = "lagoon-native")]
+  if config.chain_spec.is_lagoon() {
     let sc_service::PartialComponents {
       client,
       backend,
       import_queue,
       task_manager,
       ..
-    } = new_partial::<hertel_runtime::RuntimeApi, HertelExecutorDispatch>(config)?;
+    } = new_partial::<lagoon_runtime::RuntimeApi, LagoonExecutorDispatch>(config)?;
     return Ok(NewChainOps {
-      client: Client::Hertel(client),
+      client: Client::Lagoon(client),
       backend,
       import_queue,
       task_manager,

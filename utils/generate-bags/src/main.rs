@@ -1,5 +1,5 @@
 use generate_bags::generate_thresholds;
-use hertel_runtime::Runtime as HertelRuntime;
+use lagoon_runtime::Runtime as LagoonRuntime;
 use std::path::{Path, PathBuf};
 use structopt::{clap::arg_enum, StructOpt};
 use tidechain_runtime::Runtime as TidechainRuntime;
@@ -8,7 +8,7 @@ arg_enum! {
   #[derive(Debug)]
   enum Runtime {
     Tidechain,
-    Hertel,
+    Lagoon,
   }
 }
 
@@ -18,7 +18,7 @@ impl Runtime {
   ) -> Box<dyn FnOnce(usize, &Path, u128, u128) -> Result<(), std::io::Error>> {
     match self {
       Runtime::Tidechain => Box::new(generate_thresholds::<TidechainRuntime>),
-      Runtime::Hertel => Box::new(generate_thresholds::<HertelRuntime>),
+      Runtime::Lagoon => Box::new(generate_thresholds::<LagoonRuntime>),
     }
   }
 }

@@ -5,12 +5,12 @@ set -e
 #shellcheck source=../common/lib.sh
 . "$(dirname "${0}")/../common/lib.sh"
 
-HEAD_BIN=./artifacts/polkadot
+HEAD_BIN=./artifacts/tidechain
 HEAD_WS=ws://localhost:9944
 RELEASE_WS=ws://localhost:9945
 
 runtimes=(
-  "hertel"
+  "lagoon"
   "tidechain"
 )
 

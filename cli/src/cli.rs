@@ -47,9 +47,9 @@ pub struct RunCmd {
   #[clap(flatten)]
   pub base: sc_cli::RunCmd,
 
-  /// Force using Kusama native runtime.
-  #[clap(long = "force-hertel")]
-  pub force_hertel: bool,
+  /// Force using Lagoon native runtime.
+  #[clap(long = "force-lagoon")]
+  pub force_lagoon: bool,
 
   /// Setup a GRANDPA scheduled voting pause.
   ///
