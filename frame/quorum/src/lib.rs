@@ -953,14 +953,11 @@ pub mod pallet {
         transaction_id: transaction_id.clone(),
       };
 
-      AccountWatchList::<T>::try_mutate_exists(
-        account_id,
-        |account_watch_list| match account_watch_list {
-          Some(current_watch_list) => {
-            current_watch_list
-              .try_push(watch_list)
-              .map_err(|_| Error::<T>::WatchlistOverflow)
-          }
+      AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
+        match account_watch_list {
+          Some(current_watch_list) => current_watch_list
+            .try_push(watch_list)
+            .map_err(|_| Error::<T>::WatchlistOverflow),
           None => {
             let empty_bounded_vec: BoundedVec<
               WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
@@ -972,8 +969,8 @@ pub mod pallet {
             AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
             Ok(())
           }
-        },
-      )?;
+        }
+      })?;
 
       Self::deposit_event(Event::<T>::WatchTransactionAdded {
         account_id: account_id.clone(),
