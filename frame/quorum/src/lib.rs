@@ -65,6 +65,10 @@ pub mod pallet {
     #[pallet::constant]
     type ProposalsCap: Get<u32>;
 
+    /// Burned queue capacity
+    #[pallet::constant]
+    type BurnedCap: Get<u32>;
+
     /// Proposals lifetime
     #[pallet::constant]
     type ProposalLifetime: Get<Self::BlockNumber>;
@@ -180,6 +184,25 @@ pub mod pallet {
   #[pallet::getter(fn members)]
   pub type Members<T: Config> = CountedStorageMap<_, Blake2_128Concat, T::AccountId, bool>;
 
+  /// Burned queue
+  #[pallet::storage]
+  #[pallet::getter(fn burned_queue)]
+  pub type BurnedQueue<T: Config> = StorageValue<
+    _,
+    BoundedVec<
+      (
+        Hash,
+        Withdrawal<
+          T::AccountId,
+          T::BlockNumber,
+          BoundedVec<u8, <T as pallet::Config>::StringLimit>,
+        >,
+      ),
+      T::BurnedCap,
+    >,
+    ValueQuery,
+  >;
+
   /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
@@ -239,13 +262,17 @@ pub mod pallet {
       transaction_id: Vec<u8>,
       watch_action: WatchListAction,
     },
-    /// Quorum burned token to the account
-    Burned {
+
+    /// Quorum burned token to the account from tidechain
+    BurnedInitialized {
       proposal_id: Hash,
       account_id: T::AccountId,
       currency_id: CurrencyId,
       amount: Balance,
     },
+
+    /// Quorum member acknowledged the burned and initiated the process
+    BurnedAcknowledged { proposal_id: Hash },
 
     /// Member voted for a proposal
     VoteFor {
@@ -307,6 +334,8 @@ pub mod pallet {
     BadTransactionId,
     /// Invalid external address
     BadExternalAddress,
+    /// Burned queue cap reached
+    BurnedQueueOverflow,
     /// Watchlist cap reached
     WatchlistOverflow,
     /// Members cap reached
@@ -404,6 +433,29 @@ pub mod pallet {
 
       // 3. Register vote
       Self::vote_for(sender, proposal)?;
+
+      // Don't take tx fees on success
+      Ok(Pays::No.into())
+    }
+
+    /// Quorum member acknowledge a burned item and started the process.
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::acknowledge_burned())]
+    pub fn acknowledge_burned(origin: OriginFor<T>, proposal: Hash) -> DispatchResultWithPostInfo {
+      // 1. Make sure the request is signed by `account_id`
+      let sender = ensure_signed(origin)?;
+
+      // 2. Make sure this is a quorum member
+      ensure!(Self::is_member_and_ready(&sender), Error::<T>::AccessDenied);
+
+      // 3. Remove from the queue
+      BurnedQueue::<T>::mutate(|burned_queue| {
+        burned_queue.retain(|(proposal_id, _)| *proposal_id != proposal);
+      });
+
+      // 4. Emit event on chain
+      Self::deposit_event(Event::<T>::BurnedAcknowledged {
+        proposal_id: proposal,
+      });
 
       // Don't take tx fees on success
       Ok(Pays::No.into())
@@ -777,8 +829,15 @@ pub mod pallet {
       T::CurrencyTidefi::burn_from(item.asset_id, &item.account_id, item.amount)
         .map_err(|_| Error::<T>::BurnFailed)?;
 
-      // 3. Emit the event on chain
-      Self::deposit_event(Event::<T>::Burned {
+      // 3. Add to burned queue, the quorum can poll and initiate the chain deposit
+      BurnedQueue::<T>::try_mutate(|burned_queue| {
+        burned_queue
+          .try_push((proposal_id, item.clone()))
+          .map_err(|_| Error::<T>::BurnedQueueOverflow)
+      })?;
+
+      // 4. Emit the event on chain
+      Self::deposit_event(Event::<T>::BurnedInitialized {
         proposal_id,
         account_id: item.account_id.clone(),
         currency_id: item.asset_id,
@@ -894,30 +953,24 @@ pub mod pallet {
         transaction_id: transaction_id.clone(),
       };
 
-      AccountWatchList::<T>::mutate_exists(
-        account_id,
-        |account_watch_list| match account_watch_list {
-          Some(current_watch_list) => {
-            current_watch_list
-              .try_push(watch_list)
-              // FIXME: Remove unwrap
-              .map_err(|_| Error::<T>::WatchlistOverflow)
-              .unwrap();
-          }
+      AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
+        match account_watch_list {
+          Some(current_watch_list) => current_watch_list
+            .try_push(watch_list)
+            .map_err(|_| Error::<T>::WatchlistOverflow),
           None => {
             let empty_bounded_vec: BoundedVec<
               WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
               <T as pallet::Config>::WatchListLimit,
             > = vec![watch_list]
               .try_into()
-              // FIXME: Remove unwrap
-              .map_err(|_| Error::<T>::UnknownError)
-              .unwrap();
+              .map_err(|_| Error::<T>::UnknownError)?;
 
             AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
+            Ok(())
           }
-        },
-      );
+        }
+      })?;
 
       Self::deposit_event(Event::<T>::WatchTransactionAdded {
         account_id: account_id.clone(),

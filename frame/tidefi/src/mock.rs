@@ -145,6 +145,7 @@ parameter_types! {
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
+  pub const BurnedCap: u32 = 1000;
   // Maximum proposals in queue for the quorum, to limit the vector size and optimization
   pub const ProposalsCap: u32 = 1000;
   // The lifetime of a proposal by the quorum members
@@ -180,6 +181,7 @@ impl pallet_quorum::Config for Test {
   type Security = Security;
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
+  type BurnedCap = BurnedCap;
   type ProposalLifetime = ProposalLifetime;
   type StringLimit = StringLimit;
   type VotesLimit = VotesLimit;
