@@ -70,4 +70,9 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
+   fn acknowledge_burned() -> Weight {
+      60_000_300_u64
+      .saturating_add(T::DbWeight::get().reads(6_u64))
+      .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
 }

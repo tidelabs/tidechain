@@ -87,6 +87,8 @@ parameter_types! {
 
   // Maximum proposals in queue for the quorum, to limit the vector size and optimization
   pub const ProposalsCap: u32 = 1000;
+  pub const BurnedCap: u32 = 1000;
+
   // The lifetime of a proposal by the quorum members
   pub const ProposalLifetime: u64 = 100;
   // The maximum size of a string
@@ -141,6 +143,7 @@ impl pallet_quorum::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
+  type BurnedCap = BurnedCap;
   type ProposalLifetime = ProposalLifetime;
   type StringLimit = StringLimit;
   type VotesLimit = VotesLimit;

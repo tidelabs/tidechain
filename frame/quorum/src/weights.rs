@@ -9,6 +9,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
    fn submit_proposal() -> Weight;
    fn acknowledge_proposal() -> Weight;
+   fn acknowledge_burned() -> Weight;
    fn reject_proposal() -> Weight;
    fn eval_proposal_state() -> Weight;
    fn submit_public_keys(_k: u32) -> Weight;
@@ -24,8 +25,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
   }
   fn acknowledge_proposal() -> Weight {
       62_000_300_u64
-       .saturating_add(T::DbWeight::get().reads(6_u64))
-       .saturating_add(T::DbWeight::get().writes(5_u64))
+      .saturating_add(T::DbWeight::get().reads(6_u64))
+      .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
+   fn acknowledge_burned() -> Weight {
+      60_000_300_u64
+      .saturating_add(T::DbWeight::get().reads(6_u64))
+      .saturating_add(T::DbWeight::get().writes(5_u64))
    }
    fn reject_proposal() -> Weight {
       63_000_400_u64
