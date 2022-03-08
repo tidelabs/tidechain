@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Signature","Represents a Schnorr signature."]]});

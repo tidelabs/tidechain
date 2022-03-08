@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["hertel_runtime"] = [{"text":"impl <a class=\"trait\" href=\"hertel_runtime/trait.BuildStorage.html\" title=\"trait hertel_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"hertel_runtime/struct.GenesisConfig.html\" title=\"struct hertel_runtime::GenesisConfig\">GenesisConfig</a>","synthetic":false,"types":["hertel_runtime::GenesisConfig"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

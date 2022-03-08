@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["hertel_runtime"] = [{"text":"impl <a class=\"trait\" href=\"pallet_sudo/pallet/trait.Config.html\" title=\"trait pallet_sudo::pallet::Config\">Config</a> for <a class=\"struct\" href=\"hertel_runtime/struct.Runtime.html\" title=\"struct hertel_runtime::Runtime\">Runtime</a>","synthetic":false,"types":["hertel_runtime::Runtime"]}];
+implementors["lagoon_runtime"] = [{"text":"impl <a class=\"trait\" href=\"pallet_sudo/pallet/trait.Config.html\" title=\"trait pallet_sudo::pallet::Config\">Config</a> for <a class=\"struct\" href=\"lagoon_runtime/struct.Runtime.html\" title=\"struct lagoon_runtime::Runtime\">Runtime</a>","synthetic":false,"types":["lagoon_runtime::Runtime"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

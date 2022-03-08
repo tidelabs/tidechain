@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["secp256k1_ecdsa_recover",""],["secp256k1_ecdsa_recoverable_signature_convert",""],["secp256k1_ecdsa_recoverable_signature_parse_compact",""],["secp256k1_ecdsa_recoverable_signature_serialize_compact",""],["secp256k1_ecdsa_sign_recoverable",""]],"struct":[["RecoverableSignature","Library-internal representation of a Secp256k1 signature + recovery ID"]]});

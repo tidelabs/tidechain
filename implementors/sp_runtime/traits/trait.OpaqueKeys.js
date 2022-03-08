@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors["hertel_runtime"] = [{"text":"impl <a class=\"trait\" href=\"sp_runtime/traits/trait.OpaqueKeys.html\" title=\"trait sp_runtime::traits::OpaqueKeys\">OpaqueKeys</a> for <a class=\"struct\" href=\"hertel_runtime/struct.SessionKeys.html\" title=\"struct hertel_runtime::SessionKeys\">SessionKeys</a>","synthetic":false,"types":["hertel_runtime::SessionKeys"]}];
+implementors["lagoon_runtime"] = [{"text":"impl <a class=\"trait\" href=\"sp_runtime/traits/trait.OpaqueKeys.html\" title=\"trait sp_runtime::traits::OpaqueKeys\">OpaqueKeys</a> for <a class=\"struct\" href=\"lagoon_runtime/struct.SessionKeys.html\" title=\"struct lagoon_runtime::SessionKeys\">SessionKeys</a>","synthetic":false,"types":["lagoon_runtime::SessionKeys"]}];
 implementors["sp_runtime"] = [];
 implementors["tidechain_runtime"] = [{"text":"impl <a class=\"trait\" href=\"sp_runtime/traits/trait.OpaqueKeys.html\" title=\"trait sp_runtime::traits::OpaqueKeys\">OpaqueKeys</a> for <a class=\"struct\" href=\"tidechain_runtime/struct.SessionKeys.html\" title=\"struct tidechain_runtime::SessionKeys\">SessionKeys</a>","synthetic":false,"types":["tidechain_runtime::SessionKeys"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

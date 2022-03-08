@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["BitField","Performs C-style bitfield access through a `BitSlice`."]]});
+initSidebarItems({"trait":[["BitField","C-Style Bit-Field Access"]]});
