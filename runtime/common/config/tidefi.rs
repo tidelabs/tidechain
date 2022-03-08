@@ -52,10 +52,10 @@ parameter_types! {
   // Staking: Number of blocks to wait before unstaking when we force-unstake.
   // FIXME: Should be reverted to `14_400`
   pub const BlocksForceUnstake: BlockNumber = 100;
-  // 20 basis point
-  pub const FeeAmount: Permill = Permill::from_perthousand(20);
-  // 10 basis point
-  pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
+  // 0.25%
+  pub const FeeAmount: Permill = Permill::from_parts(2500);
+  // 0.05%
+  pub const MarketMakerFeeAmount: Permill = Permill::from_parts(500);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
   // Maximum pending burned possible in queue
@@ -71,11 +71,11 @@ parameter_types! {
   // The number of votes maximum per proposal, should alway be higher than the proposals threshold
   pub const VotesLimit: u32 = 10;
   // The maximum number of account the watchlist can contains
-  pub const WatchListLimit: u32 = 10000;
+  pub const WatchListLimit: u32 = 10_000;
   // The maximum number of pubkey each asset can have, should alway be more more than the current quorum active member set
   pub const PubkeyLimitPerAsset: u32 = 10;
   // The number of swap each account can have in queue
-  pub const SwapLimitByAccount: u32 = 100;
+  pub const SwapLimitByAccount: u32 = 10_000;
 }
 
 pub struct EnsureRootOrAssetRegistry;
