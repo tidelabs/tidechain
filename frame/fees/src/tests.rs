@@ -31,18 +31,23 @@ pub fn register_swap_fees() {
 
     // 100 tide @ 2% should cost 2 TIDEs
     let calculated_fee =
-      Fees::register_swap_fees(3u64.into(), CurrencyId::Tide, 100_000_000_000_000, false);
+      Fees::register_swap_fees(3u64.into(), CurrencyId::Tide, 100_000_000_000_000, false).unwrap();
     assert_eq!(calculated_fee.amount, 100_000_000_000_000);
     assert_eq!(calculated_fee.fee, 2_000_000_000_000);
 
     // make sure everything was registered
-    let registered_fee = Fees::account_fees(CurrencyId::Tide, AccountId(3u64));
+    let registered_fee = Fees::account_fees((1, CurrencyId::Tide, AccountId(3u64)));
     assert_eq!(registered_fee.amount, 100_000_000_000_000);
     assert_eq!(registered_fee.fee, 2_000_000_000_000);
 
     // make sure it increment the value
-    Fees::register_swap_fees(3u64.into(), CurrencyId::Tide, 100_000_000_000_000, false);
-    let registered_fee = Fees::account_fees(CurrencyId::Tide, AccountId(3u64));
+    assert_ok!(Fees::register_swap_fees(
+      3u64.into(),
+      CurrencyId::Tide,
+      100_000_000_000_000,
+      false
+    ));
+    let registered_fee = Fees::account_fees((1, CurrencyId::Tide, AccountId(3u64)));
     assert_eq!(registered_fee.amount, 200_000_000_000_000);
     assert_eq!(registered_fee.fee, 4_000_000_000_000);
   });

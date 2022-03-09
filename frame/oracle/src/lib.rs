@@ -428,7 +428,8 @@ pub mod pallet {
                       trade.token_from,
                       mm.amount_to_receive,
                       trade.is_market_maker,
-                    );
+                    )
+                    .map_err(|_| Error::<T>::FeesFailed)?;
 
                     // 12. a) Transfer funds from the market makers to the account
                     let amount_and_fee = T::Fees::calculate_swap_fees(
@@ -473,7 +474,8 @@ pub mod pallet {
                       trade.token_to,
                       mm.amount_to_send,
                       market_maker_trade_intent.is_market_maker,
-                    );
+                    )
+                    .map_err(|_| Error::<T>::FeesFailed)?;
 
                     // 13. Emit market maker trade event on chain
                     Self::deposit_event(Event::<T>::SwapProcessed {

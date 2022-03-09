@@ -40,18 +40,26 @@ pub mod pallet {
     },
     PalletId,
   };
-
+  use rand_chacha::{
+    rand_core::{RngCore, SeedableRng},
+    ChaChaRng,
+  };
   use sp_runtime::{
     traits::{AccountIdConversion, Saturating},
     Percent, Permill, SaturatedConversion,
   };
+  use sp_std::{borrow::ToOwned, vec};
   use tidefi_primitives::{
+    assets::{Asset, USDT},
     pallet::{FeesExt, SecurityExt, StakingExt},
-    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex,
+    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex, SunriseSwapPool,
   };
 
   /// The current storage version.
   const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
+  type BoundedAccountFees = BoundedVec<(CurrencyId, Fee), ConstU32<1_000>>;
+  type BoundedSunrisePools = BoundedVec<SunriseSwapPool, ConstU32<6>>;
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -72,6 +80,10 @@ pub mod pallet {
     /// Number of sessions per era
     #[pallet::constant]
     type SessionsPerEra: Get<SessionIndex>;
+
+    /// Sunrise pool account id
+    #[pallet::constant]
+    type SunriseAccountId: Get<Self::AccountId>;
 
     /// Number of sessions to keep in archive
     #[pallet::constant]
@@ -123,6 +135,11 @@ pub mod pallet {
   #[pallet::getter(fn active_era)]
   pub type ActiveEra<T: Config> = StorageValue<_, ActiveEraInfo<T::BlockNumber>>;
 
+  /// The active sunrise tier availables.
+  #[pallet::storage]
+  #[pallet::getter(fn sunrise_pools)]
+  pub type SunrisePools<T: Config> = StorageValue<_, BoundedSunrisePools, ValueQuery>;
+
   /// The current session of the era.
   #[pallet::storage]
   #[pallet::getter(fn current_session)]
@@ -140,6 +157,29 @@ pub mod pallet {
   #[pallet::getter(fn stored_sessions)]
   pub type StoredSessions<T: Config> = StorageMap<_, Blake2_128Concat, SessionIndex, ()>;
 
+  /// Tide price of the orderbook reported by oracle every X minutes at the current market price.
+  /// We keep in sync order book of USDT values for our sunrise pool.
+  ///
+  /// CurrencyId → USDT
+  /// USDT → TIDE
+  ///
+  /// To get current TIDE USDT value;
+  /// ```rust
+  /// Self::order_book_price(CurrencyId::Tide, CurrencyId::Wrapped(4))
+  /// ```
+  ///
+  #[pallet::storage]
+  #[pallet::getter(fn order_book_price)]
+  pub type OrderBookPrice<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    CurrencyId,
+    Blake2_128Concat,
+    CurrencyId,
+    Balance,
+    ValueQuery,
+  >;
+
   /// The total fees for the session.
   /// If total hasn't been set or has been removed then 0 stake is returned.
   #[pallet::storage]
@@ -154,22 +194,36 @@ pub mod pallet {
     ValueQuery,
   >;
 
-  /// Account fees for current era
+  /// Account fees accumulated by eras
   #[pallet::storage]
   #[pallet::getter(fn account_fees)]
   pub type AccountFees<T: Config> = StorageDoubleMap<
     _,
     Blake2_128Concat,
-    CurrencyId,
+    EraIndex,
     Blake2_128Concat,
     T::AccountId,
-    Fee,
+    BoundedAccountFees,
+    ValueQuery,
+  >;
+
+  /// Account fees for current era
+  #[pallet::storage]
+  #[pallet::getter(fn sunrise_rewards)]
+  pub type SunriseRewards<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    T::AccountId,
+    Blake2_128Concat,
+    EraIndex,
+    Balance,
     ValueQuery,
   >;
 
   /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
+    pub sunrise_swap_pools: Vec<SunriseSwapPool>,
     pub runtime_marker: PhantomData<T>,
   }
 
@@ -178,6 +232,60 @@ pub mod pallet {
     fn default() -> Self {
       Self {
         runtime_marker: PhantomData,
+        sunrise_swap_pools: vec![
+          SunriseSwapPool {
+            id: 1,
+            minimum_usdt_value: 0,
+            transactions_remaining: 1_000,
+            balance: Asset::Tide.saturating_mul(67_200_000),
+            rebates: Permill::from_rational(100_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 2,
+            // 100 USDT minimum value
+            minimum_usdt_value: Asset::Tether.saturating_mul(100),
+            transactions_remaining: 1_000,
+            balance: Asset::Tide.saturating_mul(57_600_000),
+            // 125%
+            rebates: Permill::from_rational(125_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 3,
+            // 1_000 USDT minimum value
+            minimum_usdt_value: Asset::Tether.saturating_mul(1_000),
+            transactions_remaining: 1_000,
+            balance: Asset::Tide.saturating_mul(57_600_000),
+            // 150%
+            rebates: Permill::from_rational(150_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 4,
+            // 10_000 USDT minimum value
+            minimum_usdt_value: Asset::Tether.saturating_mul(10_000),
+            transactions_remaining: 100,
+            balance: Asset::Tide.saturating_mul(38_400_000),
+            // 150%
+            rebates: Permill::from_rational(150_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 5,
+            // 50_000 USDT minimum value
+            minimum_usdt_value: Asset::Tether.saturating_mul(50_000),
+            transactions_remaining: 100,
+            balance: Asset::Tide.saturating_mul(19_200_000),
+            // 200%
+            rebates: Permill::from_rational(200_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 6,
+            // 100_000 USDT minimum value
+            minimum_usdt_value: Asset::Tether.saturating_mul(100_000),
+            transactions_remaining: 100,
+            balance: Asset::Tide.saturating_mul(9_600_000),
+            // 300%
+            rebates: Permill::from_rational(300_u32, 100_u32),
+          },
+        ],
       }
     }
   }
@@ -185,6 +293,9 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
+      let bounded_sunrise_pool: BoundedSunrisePools =
+        self.sunrise_swap_pools.clone().try_into().unwrap();
+      SunrisePools::<T>::put(bounded_sunrise_pool);
       CurrentSession::<T>::put(1);
       ActiveEra::<T>::put(ActiveEraInfo::<T::BlockNumber> {
         index: 1,
@@ -206,11 +317,22 @@ pub mod pallet {
       session_index: SessionIndex,
       session_fees_by_currency: Vec<(CurrencyId, Balance)>,
     },
+    SunriseReward {
+      era_index: EraIndex,
+      pool_id: u8,
+      account_id: T::AccountId,
+      reward: Balance,
+    },
   }
 
   // Errors inform users that something went wrong.
   #[pallet::error]
-  pub enum Error<T> {}
+  pub enum Error<T> {
+    /// Invalid sunrise pool
+    InvalidSunrisePool,
+    /// Account fees overflow
+    AccountFeeOverflow,
+  }
 
   // hooks
   #[pallet::hooks]
@@ -317,9 +439,44 @@ pub mod pallet {
       }
     }
 
+    pub(crate) fn sunrise_pool_for_fee(
+      fee: Fee,
+      currency_id: CurrencyId,
+    ) -> Option<SunriseSwapPool> {
+      // get all pools
+      let current_tide_price = Self::order_book_price(CurrencyId::Wrapped(4), CurrencyId::Tide);
+      let current_usdt_trade_value =
+        fee.amount * Self::order_book_price(currency_id, CurrencyId::Wrapped(4));
+
+      let mut all_pools = SunrisePools::<T>::get()
+        .iter()
+        // make sure there is enough transaction remaining in the pool
+        .filter(|pool| pool.transactions_remaining > 0)
+        // make sure there is enough tide remaining to fullfill this
+        .filter(|pool| pool.balance > 0 && pool.balance > (fee.fee_usdt * current_tide_price))
+        // make sure the transaction amount value in USDT is higher
+        .filter(|pool| pool.minimum_usdt_value >= current_usdt_trade_value)
+        .map(|sunrise_pool| sunrise_pool.to_owned())
+        .collect::<Vec<SunriseSwapPool>>();
+
+      // sort descending by minimum usdt value
+      all_pools.sort_by(|a, b| {
+        b.minimum_usdt_value
+          .partial_cmp(&a.minimum_usdt_value)
+          .unwrap_or(sp_std::cmp::Ordering::Equal)
+      });
+
+      all_pools
+        .first()
+        .map(|sunrise_pool| sunrise_pool.to_owned())
+    }
+
     pub fn start_era() {
       ActiveEra::<T>::mutate(|active_era| {
-        let new_index = active_era.as_ref().map(|info| info.index + 1).unwrap_or(0);
+        let new_index = active_era
+          .as_ref()
+          .map(|info| info.index.saturating_add(1))
+          .unwrap_or(0);
         *active_era = Some(ActiveEraInfo::<T::BlockNumber> {
           index: new_index,
           // Set new active era start in next `on_finalize`. To guarantee usage of `Time`
@@ -332,46 +489,81 @@ pub mod pallet {
       });
     }
 
-    pub(crate) fn _end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
-      // Note: active_era_start can be None if end era is called during genesis config.
-      if let Some(active_era_start) = active_era.start {
-        let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
+    fn build_era_account_fees(era: EraIndex, max_weight: Weight) -> Weight {
+      // let process maximum 1000 account at a time
+      let all_account_fees: Vec<(T::AccountId, BoundedAccountFees)> =
+        AccountFees::<T>::iter_prefix(era).take(1_000).collect();
 
-        let _era_duration = (now_as_millis_u64 - active_era_start).saturated_into::<u64>();
-        let all_fees_collected: Vec<(CurrencyId, Fee)> =
-          EraTotalFees::<T>::iter_prefix(active_era.index).collect();
+      let mut weight_used = <T as frame_system::Config>::DbWeight::get().reads(1);
 
-        for (currency_id, fees_details_collected_in_era) in all_fees_collected {
-          let total_amount_for_currency = fees_details_collected_in_era.amount;
-          let total_fees_collected_for_currency = fees_details_collected_in_era.fee;
+      if all_account_fees.len() == 0 {
+        return weight_used;
+      }
 
-          // The amount of tokens in each monthly distribution will
-          // be equal to `DistributionPercentage` of `CurrencyId` trading revenue (fees collected).
-          let revenue_for_current_currency =
-            T::DistributionPercentage::get() * total_fees_collected_for_currency;
+      // The amount of remaining weight under which we stop processing messages
+      let threshold_weight = 100_000;
 
-          // distribute to all accounts
-          for (account_id, account_fee_for_currency) in AccountFees::<T>::iter_prefix(currency_id) {
-            let total_transfer_in_era_for_account = account_fee_for_currency.amount;
-            let total_token_for_current_account = (total_transfer_in_era_for_account
-              / total_amount_for_currency)
-              * revenue_for_current_currency;
+      // we create a shuffle of index, to prevent queue blocking
+      let mut shuffled = Self::create_shuffle(all_account_fees.len());
+      let mut shuffle_index = 0;
+      let mut weight_available = 0;
 
-            // FIXME: Convert this amount in TIDE and transfer them from
-            // this account maybe?
-            let _total_tide_token = total_token_for_current_account;
+      while shuffle_index < shuffled.len()
+        && max_weight.saturating_sub(weight_used) >= threshold_weight
+      {
+        let index = shuffled[shuffle_index];
+        let account_id = &all_account_fees[index].0;
+        let account_fees = &all_account_fees[index].1;
 
-            T::CurrencyTidefi::transfer(
-              CurrencyId::Tide,
-              &Self::account_id(),
-              &account_id,
-              total_token_for_current_account,
-              true,
-            )?;
+        if weight_available != max_weight {
+          // The speed to which the available weight approaches the maximum weight. A lower number
+          // results in a faster progression. A value of 1 makes the entire weight available initially.
+          let weight_restrict_decay = 2;
+          // Get incrementally closer to freeing up max_weight for first round.
+          // For the second round we unlock all weight. If we come close enough
+          // on the first round to unlocking everything, then we do so.
+          if shuffle_index < all_account_fees.len() {
+            weight_available += (max_weight - weight_available) / (weight_restrict_decay + 1);
+            if weight_available + threshold_weight > max_weight {
+              weight_available = max_weight;
+            }
+          } else {
+            weight_available = max_weight;
           }
+        }
+
+        // loop all currency for this account
+        for (currency_id, fee) in account_fees.clone() {
+          // `T::DistributionPercentage`% of EraTotalFees paid
+          let currency_total_fee_pool =
+            T::DistributionPercentage::get() * EraTotalFees::<T>::get(era, currency_id).fee;
         }
       }
 
+      weight_used
+    }
+
+    // Create a shuffled vector the size of `len` with random keys
+    fn create_shuffle(len: usize) -> Vec<usize> {
+      // Create a shuffled order for use to iterate through.
+      // Not a great random seed, but good enough for our purposes.
+      let seed = frame_system::Pallet::<T>::parent_hash();
+      let seed = <[u8; 32]>::decode(&mut sp_runtime::traits::TrailingZeroInput::new(
+        seed.as_ref(),
+      ))
+      .expect("input is padded with zeroes; qed");
+      let mut rng = ChaChaRng::from_seed(seed);
+      let mut shuffled = (0..len).collect::<Vec<_>>();
+      for i in 0..len {
+        let j = (rng.next_u32() as usize) % len;
+        let a = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = a;
+      }
+      shuffled
+    }
+
+    pub(crate) fn _end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
       Ok(())
     }
   }
@@ -381,11 +573,8 @@ pub mod pallet {
       T::FeesPalletId::get().into_account()
     }
 
-    // we do not use the currency for now as all asset have same fees
-    // but if we need to update in the future, we could simply use the currency id
-    // and update the storage
     fn calculate_swap_fees(
-      _currency_id: CurrencyId,
+      currency_id: CurrencyId,
       total_amount_before_fees: Balance,
       is_market_maker: bool,
     ) -> Fee {
@@ -395,9 +584,13 @@ pub mod pallet {
         T::FeeAmount::get()
       } * total_amount_before_fees;
 
+      // get the fee value in USDT
+      let fee_usdt = fee * Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT));
+
       Fee {
         amount: total_amount_before_fees,
         fee,
+        fee_usdt,
       }
     }
 
@@ -406,20 +599,53 @@ pub mod pallet {
       currency_id: CurrencyId,
       total_amount_before_fees: Balance,
       is_market_maker: bool,
-    ) -> Fee {
-      match Self::active_era() {
+    ) -> Result<Fee, DispatchError> {
+      let fee = match Self::active_era() {
         Some(current_era) => {
           let current_session = CurrentSession::<T>::get();
-          let fee = if is_market_maker {
-            T::MarketMakerFeeAmount::get()
-          } else {
-            T::FeeAmount::get()
-          } * total_amount_before_fees;
+          let new_fee =
+            Self::calculate_swap_fees(currency_id, total_amount_before_fees, is_market_maker);
 
-          let new_fee = Fee {
-            amount: total_amount_before_fees,
-            fee,
-          };
+          if let Some(sunrise_pool_available) =
+            Self::sunrise_pool_for_fee(new_fee.clone(), currency_id)
+          {
+            let fee_in_usdt_with_rebates = sunrise_pool_available.rebates * new_fee.fee_usdt;
+            let real_fees_in_tide_with_rebates =
+            // maximum 10k USDT in fees calculated
+            if fee_in_usdt_with_rebates > Asset::Tether.saturating_mul(10_000) {
+                Asset::Tether.saturating_mul(10_000)
+              } else {
+                fee_in_usdt_with_rebates
+              } * Self::order_book_price(currency_id, CurrencyId::Tide);
+
+            // Update sunrise pool
+            SunrisePools::<T>::try_mutate::<(), DispatchError, _>(|pools| {
+              let sunrise_pool = pools
+                .iter_mut()
+                .find(|pool| pool.id == sunrise_pool_available.id)
+                .ok_or(Error::<T>::InvalidSunrisePool)?;
+
+              sunrise_pool.balance = sunrise_pool
+                .balance
+                .saturating_sub(real_fees_in_tide_with_rebates);
+              sunrise_pool.transactions_remaining -= 1;
+
+              Ok(())
+            })?;
+
+            // Increment reward for the account
+            SunriseRewards::<T>::mutate(account_id.clone(), current_era.index, |rewards| {
+              *rewards = rewards.saturating_add(real_fees_in_tide_with_rebates);
+            });
+
+            // Emit event
+            Self::deposit_event(Event::<T>::SunriseReward {
+              era_index: current_era.index,
+              pool_id: sunrise_pool_available.id,
+              account_id: account_id.clone(),
+              reward: real_fees_in_tide_with_rebates,
+            });
+          }
 
           // Update fees pool for the current era / currency
           EraTotalFees::<T>::mutate_exists(
@@ -430,8 +656,9 @@ pub mod pallet {
                 current_currency_fee
                   .as_ref()
                   .map(|current_fee| Fee {
-                    amount: current_fee.amount + new_fee.amount,
-                    fee: current_fee.fee + new_fee.fee,
+                    amount: current_fee.amount.saturating_add(new_fee.amount),
+                    fee: current_fee.fee.saturating_add(new_fee.fee),
+                    fee_usdt: current_fee.fee_usdt.saturating_add(new_fee.fee_usdt),
                   })
                   .unwrap_or_else(|| new_fee.clone()),
               );
@@ -447,8 +674,9 @@ pub mod pallet {
                 current_currency_fee
                   .as_ref()
                   .map(|current_fee| Fee {
-                    amount: current_fee.amount + new_fee.amount,
-                    fee: current_fee.fee + new_fee.fee,
+                    amount: current_fee.amount.saturating_add(new_fee.amount),
+                    fee: current_fee.fee.saturating_add(new_fee.fee),
+                    fee_usdt: current_fee.fee_usdt.saturating_add(new_fee.fee_usdt),
                   })
                   .unwrap_or_else(|| new_fee.clone()),
               );
@@ -456,25 +684,49 @@ pub mod pallet {
           );
 
           // Update the total fees for the account
-          AccountFees::<T>::mutate_exists(currency_id, account_id, |account_fee_for_currency| {
-            *account_fee_for_currency = Some(
-              account_fee_for_currency
-                .as_ref()
-                .map(|current_fee| Fee {
-                  amount: current_fee.amount + new_fee.amount,
-                  fee: current_fee.fee + new_fee.fee,
-                })
-                .unwrap_or_else(|| new_fee.clone()),
-            );
-          });
+          AccountFees::<T>::try_mutate_exists::<u32, T::AccountId, (), DispatchError, _>(
+            current_era.index,
+            account_id,
+            |account_fee_for_era| match account_fee_for_era {
+              Some(account_fee) => {
+                match account_fee
+                  .iter_mut()
+                  .find(|(found_currency_id, _)| *found_currency_id == currency_id)
+                {
+                  Some((_, current_fee)) => {
+                    current_fee.amount = current_fee.amount.saturating_add(new_fee.amount);
+                    current_fee.fee = current_fee.fee.saturating_add(new_fee.fee);
+                    current_fee.fee_usdt = current_fee.fee_usdt.saturating_add(new_fee.fee_usdt);
+                  }
+                  None => {
+                    account_fee
+                      .try_push((currency_id, new_fee.clone()))
+                      .map_err(|_| Error::<T>::AccountFeeOverflow)?;
+                  }
+                }
+                Ok(())
+              }
+              None => {
+                let bounded_vec: BoundedAccountFees = vec![(currency_id, new_fee.clone())]
+                  .try_into()
+                  .map_err(|_| Error::<T>::AccountFeeOverflow)?;
+                *account_fee_for_era = Some(bounded_vec);
+                Ok(())
+              }
+            },
+          )?;
 
           new_fee
         }
+        // No fees are taken as there is no active era
         None => Fee {
           amount: total_amount_before_fees,
           fee: 0,
+          fee_usdt: 0,
         },
-      }
+      };
+
+      Ok(fee)
     }
   }
 }
