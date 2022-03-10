@@ -165,9 +165,6 @@ pub mod pallet {
   /// USDT → TIDE
   ///
   /// To get current TIDE USDT value;
-  /// ```rust
-  /// Self::order_book_price(CurrencyId::Tide, CurrencyId::Wrapped(4))
-  /// ```
   ///
   #[pallet::storage]
   #[pallet::getter(fn order_book_price)]
