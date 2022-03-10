@@ -40,18 +40,23 @@ pub mod pallet {
     },
     PalletId,
   };
-
+  use frame_system::pallet_prelude::*;
   use sp_runtime::{
     traits::{AccountIdConversion, Saturating},
     Percent, Permill, SaturatedConversion,
   };
+  use sp_std::{borrow::ToOwned, vec};
   use tidefi_primitives::{
+    assets::{Asset, USDT},
     pallet::{FeesExt, SecurityExt, StakingExt},
-    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex,
+    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex, SunriseSwapPool,
   };
 
   /// The current storage version.
   const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
+  type BoundedAccountFees = BoundedVec<(CurrencyId, Fee), ConstU32<1_000>>;
+  type BoundedSunrisePools = BoundedVec<SunriseSwapPool, ConstU32<6>>;
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -81,6 +86,10 @@ pub mod pallet {
     #[pallet::constant]
     type BlocksPerSession: Get<Self::BlockNumber>;
 
+    /// Number of blocks to wait before allowing users to claim their sunrise rewards, after an era is completed.
+    #[pallet::constant]
+    type BlocksSunriseClaims: Get<Self::BlockNumber>;
+
     /// Number of sessions to keep in archive
     #[pallet::constant]
     type FeeAmount: Get<Permill>;
@@ -88,10 +97,6 @@ pub mod pallet {
     /// Number of sessions to keep in archive
     #[pallet::constant]
     type MarketMakerFeeAmount: Get<Permill>;
-
-    /// Number of sessions to keep in archive
-    #[pallet::constant]
-    type DistributionPercentage: Get<Permill>;
 
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
@@ -116,12 +121,25 @@ pub mod pallet {
   #[pallet::storage_version(STORAGE_VERSION)]
   pub struct Pallet<T>(_);
 
+  /// The current era index.
+  ///
+  /// This is the latest planned era, depending on how the Session pallet queues the validator
+  /// set, it might be active or not.
+  #[pallet::storage]
+  #[pallet::getter(fn current_era)]
+  pub type CurrentEra<T> = StorageValue<_, EraIndex>;
+
   /// The active era information, it holds index and start.
   ///
   /// The active era is the era being currently rewarded.
   #[pallet::storage]
   #[pallet::getter(fn active_era)]
   pub type ActiveEra<T: Config> = StorageValue<_, ActiveEraInfo<T::BlockNumber>>;
+
+  /// The active sunrise tier availables.
+  #[pallet::storage]
+  #[pallet::getter(fn sunrise_pools)]
+  pub type SunrisePools<T: Config> = StorageValue<_, BoundedSunrisePools, ValueQuery>;
 
   /// The current session of the era.
   #[pallet::storage]
@@ -140,6 +158,26 @@ pub mod pallet {
   #[pallet::getter(fn stored_sessions)]
   pub type StoredSessions<T: Config> = StorageMap<_, Blake2_128Concat, SessionIndex, ()>;
 
+  /// Tide price of the orderbook reported by oracle every X minutes at the current market price.
+  /// We keep in sync order book of USDT values for our sunrise pool.
+  ///
+  /// CurrencyId → USDT
+  /// USDT → TIDE
+  ///
+  /// To get current TIDE USDT value;
+  ///
+  #[pallet::storage]
+  #[pallet::getter(fn order_book_price)]
+  pub type OrderBookPrice<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    CurrencyId,
+    Blake2_128Concat,
+    CurrencyId,
+    Balance,
+    ValueQuery,
+  >;
+
   /// The total fees for the session.
   /// If total hasn't been set or has been removed then 0 stake is returned.
   #[pallet::storage]
@@ -154,30 +192,45 @@ pub mod pallet {
     ValueQuery,
   >;
 
-  /// Account fees for current era
+  /// Account fees accumulated by eras
   #[pallet::storage]
   #[pallet::getter(fn account_fees)]
   pub type AccountFees<T: Config> = StorageDoubleMap<
     _,
     Blake2_128Concat,
-    CurrencyId,
+    EraIndex,
     Blake2_128Concat,
     T::AccountId,
-    Fee,
+    BoundedAccountFees,
+    ValueQuery,
+  >;
+
+  /// Account fees for current era
+  #[pallet::storage]
+  #[pallet::getter(fn sunrise_rewards)]
+  pub type SunriseRewards<T: Config> = StorageDoubleMap<
+    _,
+    Blake2_128Concat,
+    T::AccountId,
+    Blake2_128Concat,
+    EraIndex,
+    Balance,
     ValueQuery,
   >;
 
   /// Genesis configuration
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
-    pub runtime_marker: PhantomData<T>,
+    pub sunrise_swap_pools: Vec<SunriseSwapPool>,
+    pub phantom: PhantomData<T>,
   }
 
   #[cfg(feature = "std")]
   impl<T: Config> Default for GenesisConfig<T> {
     fn default() -> Self {
       Self {
-        runtime_marker: PhantomData,
+        phantom: PhantomData,
+        sunrise_swap_pools: Vec::new(),
       }
     }
   }
@@ -185,6 +238,9 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
+      let bounded_sunrise_pool: BoundedSunrisePools =
+        self.sunrise_swap_pools.clone().try_into().unwrap();
+      SunrisePools::<T>::put(bounded_sunrise_pool);
       CurrentSession::<T>::put(1);
       ActiveEra::<T>::put(ActiveEraInfo::<T::BlockNumber> {
         index: 1,
@@ -194,6 +250,19 @@ pub mod pallet {
         last_session_block: None,
         start: None,
       });
+
+      // Create Fee account
+      let account_id = <Pallet<T>>::account_id();
+      let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tide);
+      if T::CurrencyTidefi::reducible_balance(CurrencyId::Tide, &account_id, false) < min {
+        if let Err(err) = T::CurrencyTidefi::mint_into(CurrencyId::Tide, &account_id, min) {
+          log!(
+            error,
+            "Unable to mint fee pallet minimum balance: {:?}",
+            err
+          );
+        }
+      }
     }
   }
 
@@ -206,11 +275,41 @@ pub mod pallet {
       session_index: SessionIndex,
       session_fees_by_currency: Vec<(CurrencyId, Balance)>,
     },
+    EraStarted {
+      era_index: EraIndex,
+    },
+    EraEnded {
+      era_index: EraIndex,
+    },
+    SunriseRewarded {
+      era_index: EraIndex,
+      pool_id: u8,
+      account_id: T::AccountId,
+      reward: Balance,
+    },
+    SunriseClaimed {
+      era_index: EraIndex,
+      account_id: T::AccountId,
+      reward: Balance,
+    },
   }
 
   // Errors inform users that something went wrong.
   #[pallet::error]
-  pub enum Error<T> {}
+  pub enum Error<T> {
+    /// Invalid sunrise pool
+    InvalidSunrisePool,
+    /// There is no rewards available for this account on this era
+    NoRewardsAvailable,
+    /// Invalid era
+    InvalidEra,
+    /// There is no active Era
+    NoActiveEra,
+    /// Era is not ready to be claimed yet, try again later
+    EraNotReady,
+    /// Account fees overflow
+    AccountFeeOverflow,
+  }
 
   // hooks
   #[pallet::hooks]
@@ -229,18 +328,24 @@ pub mod pallet {
         let real_block = T::Security::get_current_block_count();
         match active_era.start_block {
           Some(start_block) => {
-            // determine when the last session ended
+            // determine when the session
             let session_start_block = match active_era.last_session_block {
               Some(last_session_block) => last_session_block,
               None => start_block,
             };
-
             let expected_end_block_for_session =
               session_start_block.saturating_add(T::BlocksPerSession::get());
 
             // end of session
             if real_block >= expected_end_block_for_session {
               let current_session = CurrentSession::<T>::get();
+
+              let expected_end_session_for_era = match active_era.start_session_index {
+                Some(start_session_index) => start_session_index,
+                None => current_session,
+              }
+              .saturating_add(T::SessionsPerEra::get());
+
               log!(
                 info,
                 "Fees compound session #{} started in block #{:?}, and is now expired.",
@@ -275,16 +380,23 @@ pub mod pallet {
               StoredSessions::<T>::insert(current_session, ());
               // record the session change for the era
               active_era.last_session_block = Some(real_block);
+
+              if current_session >= expected_end_session_for_era {
+                // increment the era index
+                active_era.index = active_era.index.saturating_add(1);
+                // reset the era values
+                active_era.last_session_block = None;
+                active_era.start_block = None;
+                active_era.start_session_index = None;
+                active_era.start = None;
+                Self::deposit_event(Event::<T>::EraEnded {
+                  era_index: active_era.index,
+                });
+              }
+
+              // update active era
               ActiveEra::<T>::put(active_era);
 
-              // let expected_end_session_index_for_era = start_session_index.saturating_add(T::SessionsPerEra::get());
-
-              // if current_session >= expected_end_session_index_for_era {
-              // FIXME: Finalize tokenomics
-              // if let Err(err) = T::Staking::_end_era(current_session) {
-              //   log!(error, "Can't close the era {:?}", err);
-              // }
-              // }
               // drain old sessions
               Self::drain_old_sessions();
             }
@@ -296,6 +408,9 @@ pub mod pallet {
             active_era.start_session_index = Some(CurrentSession::<T>::get());
             // This write only ever happens once, we don't include it in the weight in
             // general
+            Self::deposit_event(Event::<T>::EraStarted {
+              era_index: active_era.index,
+            });
             ActiveEra::<T>::put(active_era);
             log!(trace, "Initializing in block #{:?}", real_block);
           }
@@ -305,7 +420,77 @@ pub mod pallet {
     }
   }
 
+  #[pallet::call]
   impl<T: Config> Pallet<T> {
+    /// Claim available sunrise rewards
+    ///
+    /// - `era_index`: Era to claim rewards
+    ///
+    /// Emits `SunriseRewardsClaimed` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::claim_sunrise_rewards())]
+    pub fn claim_sunrise_rewards(
+      origin: OriginFor<T>,
+      era_index: EraIndex,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure the transaction is signed
+      let account_id = ensure_signed(origin)?;
+
+      // 2. Make sure the era Index provided is ready to be claimed
+      let current_era = Self::active_era().ok_or(Error::<T>::NoActiveEra)?;
+      let starting_block = current_era.start_block.ok_or(Error::<T>::NoActiveEra)?;
+      let current_block = T::Security::get_current_block_count();
+
+      // Unable to claim current Era
+      if era_index >= current_era.index {
+        return Err(Error::<T>::InvalidEra.into());
+      }
+
+      // Unable to claim previous era if the `T::BlocksSunriseClaims` cooldown isnt completed
+      if era_index == current_era.index.saturating_sub(1)
+        && starting_block.saturating_add(T::BlocksSunriseClaims::get()) > current_block
+      {
+        return Err(Error::<T>::EraNotReady.into());
+      }
+
+      // 3. Claim rewards
+      Self::try_claim_sunrise_rewards(&account_id, era_index)?;
+
+      // Don't take tx fees on success
+      Ok(Pays::No.into())
+    }
+  }
+
+  impl<T: Config> Pallet<T> {
+    pub fn try_claim_sunrise_rewards(
+      who: &T::AccountId,
+      era_index: EraIndex,
+    ) -> Result<(), DispatchError> {
+      SunriseRewards::<T>::try_mutate_exists(who, era_index, |found_reward| match found_reward {
+        Some(reward) => {
+          if *reward == 0 {
+            return Err(Error::<T>::NoRewardsAvailable.into());
+          }
+
+          // transfer funds
+          T::CurrencyTidefi::transfer(CurrencyId::Tide, &Self::account_id(), &who, *reward, true)?;
+
+          // emit event
+          Self::deposit_event(Event::<T>::SunriseClaimed {
+            era_index,
+            account_id: who.clone(),
+            reward: *reward,
+          });
+
+          // delete storage
+          *found_reward = None;
+          Ok(())
+        }
+        None => Err(Error::<T>::NoRewardsAvailable.into()),
+      })
+    }
+
     pub(crate) fn drain_old_sessions() {
       let current_session = CurrentSession::<T>::get();
       for (session, _) in StoredSessions::<T>::iter() {
@@ -317,9 +502,47 @@ pub mod pallet {
       }
     }
 
+    pub(crate) fn try_select_first_eligible_sunrise_pool(
+      fee: Fee,
+      currency_id: CurrencyId,
+    ) -> Option<SunriseSwapPool> {
+      // get all pools
+      let current_usdt_trade_value =
+        fee.amount * Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT));
+
+      let mut all_pools = SunrisePools::<T>::get()
+        .iter()
+        // make sure there is enough transaction remaining in the pool
+        .filter(|pool| pool.transactions_remaining > 0)
+        // make sure there is enough tide remaining to fullfill this
+        .filter(|pool| {
+          pool.balance > 0
+            && pool.balance
+              >= Self::calculate_tide_reward_for_pool(pool.rebates, fee.fee_usdt, currency_id)
+        })
+        // make sure the transaction amount value in USDT is higher
+        .filter(|pool| pool.minimum_usdt_value >= current_usdt_trade_value)
+        .map(|sunrise_pool| sunrise_pool.to_owned())
+        .collect::<Vec<SunriseSwapPool>>();
+
+      // sort descending by minimum usdt value
+      all_pools.sort_by(|a, b| {
+        b.minimum_usdt_value
+          .partial_cmp(&a.minimum_usdt_value)
+          .unwrap_or(sp_std::cmp::Ordering::Equal)
+      });
+
+      all_pools
+        .first()
+        .map(|sunrise_pool| sunrise_pool.to_owned())
+    }
+
     pub fn start_era() {
       ActiveEra::<T>::mutate(|active_era| {
-        let new_index = active_era.as_ref().map(|info| info.index + 1).unwrap_or(0);
+        let new_index = active_era
+          .as_ref()
+          .map(|info| info.index.saturating_add(1))
+          .unwrap_or(0);
         *active_era = Some(ActiveEraInfo::<T::BlockNumber> {
           index: new_index,
           // Set new active era start in next `on_finalize`. To guarantee usage of `Time`
@@ -332,47 +555,18 @@ pub mod pallet {
       });
     }
 
-    pub(crate) fn _end_era(active_era: ActiveEraInfo<T::BlockNumber>) -> Result<(), DispatchError> {
-      // Note: active_era_start can be None if end era is called during genesis config.
-      if let Some(active_era_start) = active_era.start {
-        let now_as_millis_u64 = T::UnixTime::now().as_millis().saturated_into::<u64>();
-
-        let _era_duration = (now_as_millis_u64 - active_era_start).saturated_into::<u64>();
-        let all_fees_collected: Vec<(CurrencyId, Fee)> =
-          EraTotalFees::<T>::iter_prefix(active_era.index).collect();
-
-        for (currency_id, fees_details_collected_in_era) in all_fees_collected {
-          let total_amount_for_currency = fees_details_collected_in_era.amount;
-          let total_fees_collected_for_currency = fees_details_collected_in_era.fee;
-
-          // The amount of tokens in each monthly distribution will
-          // be equal to `DistributionPercentage` of `CurrencyId` trading revenue (fees collected).
-          let revenue_for_current_currency =
-            T::DistributionPercentage::get() * total_fees_collected_for_currency;
-
-          // distribute to all accounts
-          for (account_id, account_fee_for_currency) in AccountFees::<T>::iter_prefix(currency_id) {
-            let total_transfer_in_era_for_account = account_fee_for_currency.amount;
-            let total_token_for_current_account = (total_transfer_in_era_for_account
-              / total_amount_for_currency)
-              * revenue_for_current_currency;
-
-            // FIXME: Convert this amount in TIDE and transfer them from
-            // this account maybe?
-            let _total_tide_token = total_token_for_current_account;
-
-            T::CurrencyTidefi::transfer(
-              CurrencyId::Tide,
-              &Self::account_id(),
-              &account_id,
-              total_token_for_current_account,
-              true,
-            )?;
-          }
-        }
+    fn calculate_tide_reward_for_pool(
+      rebates: Permill,
+      fee_usdt: Balance,
+      currency_id: CurrencyId,
+    ) -> Balance {
+      let fee_in_usdt_with_rebates = rebates * fee_usdt;
+      let currency_to_tide_price = Self::order_book_price(currency_id, CurrencyId::Tide);
+      if fee_in_usdt_with_rebates > Asset::Tether.saturating_mul(10_000) {
+        Asset::Tether.saturating_mul(10_000) * currency_to_tide_price
+      } else {
+        fee_in_usdt_with_rebates * currency_to_tide_price
       }
-
-      Ok(())
     }
   }
 
@@ -381,11 +575,18 @@ pub mod pallet {
       T::FeesPalletId::get().into_account()
     }
 
-    // we do not use the currency for now as all asset have same fees
-    // but if we need to update in the future, we could simply use the currency id
-    // and update the storage
+    // FIXME: Would probably worth moving this into his own pallet?
+    fn register_order_book_price(
+      prices: Vec<(CurrencyId, CurrencyId, Balance)>,
+    ) -> Result<(), DispatchError> {
+      for price in prices {
+        OrderBookPrice::<T>::insert(price.0, price.1, price.2);
+      }
+      Ok(())
+    }
+
     fn calculate_swap_fees(
-      _currency_id: CurrencyId,
+      currency_id: CurrencyId,
       total_amount_before_fees: Balance,
       is_market_maker: bool,
     ) -> Fee {
@@ -395,9 +596,13 @@ pub mod pallet {
         T::FeeAmount::get()
       } * total_amount_before_fees;
 
+      // get the fee value in USDT
+      let fee_usdt = fee * Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT));
+
       Fee {
         amount: total_amount_before_fees,
         fee,
+        fee_usdt,
       }
     }
 
@@ -406,20 +611,52 @@ pub mod pallet {
       currency_id: CurrencyId,
       total_amount_before_fees: Balance,
       is_market_maker: bool,
-    ) -> Fee {
-      match Self::active_era() {
+    ) -> Result<Fee, DispatchError> {
+      let fee = match Self::active_era() {
         Some(current_era) => {
           let current_session = CurrentSession::<T>::get();
-          let fee = if is_market_maker {
-            T::MarketMakerFeeAmount::get()
-          } else {
-            T::FeeAmount::get()
-          } * total_amount_before_fees;
+          let new_fee =
+            Self::calculate_swap_fees(currency_id, total_amount_before_fees, is_market_maker);
 
-          let new_fee = Fee {
-            amount: total_amount_before_fees,
-            fee,
-          };
+          if let Some(sunrise_pool_available) =
+            Self::try_select_first_eligible_sunrise_pool(new_fee.clone(), currency_id)
+          {
+            let real_fees_in_tide_with_rebates = Self::calculate_tide_reward_for_pool(
+              sunrise_pool_available.rebates,
+              new_fee.fee_usdt,
+              currency_id,
+            );
+            // Update sunrise pool
+            SunrisePools::<T>::try_mutate::<(), DispatchError, _>(|pools| {
+              let sunrise_pool = pools
+                .iter_mut()
+                .find(|pool| pool.id == sunrise_pool_available.id)
+                .ok_or(Error::<T>::InvalidSunrisePool)?;
+
+              // Reduce pool balance
+              sunrise_pool.balance = sunrise_pool
+                .balance
+                .saturating_sub(real_fees_in_tide_with_rebates);
+
+              // Reduce number of transactions remaining for this pool
+              sunrise_pool.transactions_remaining -= 1;
+
+              Ok(())
+            })?;
+
+            // Increment reward for the account
+            SunriseRewards::<T>::mutate(account_id.clone(), current_era.index, |rewards| {
+              *rewards = rewards.saturating_add(real_fees_in_tide_with_rebates);
+            });
+
+            // Emit event
+            Self::deposit_event(Event::<T>::SunriseRewarded {
+              era_index: current_era.index,
+              pool_id: sunrise_pool_available.id,
+              account_id: account_id.clone(),
+              reward: real_fees_in_tide_with_rebates,
+            });
+          }
 
           // Update fees pool for the current era / currency
           EraTotalFees::<T>::mutate_exists(
@@ -430,8 +667,9 @@ pub mod pallet {
                 current_currency_fee
                   .as_ref()
                   .map(|current_fee| Fee {
-                    amount: current_fee.amount + new_fee.amount,
-                    fee: current_fee.fee + new_fee.fee,
+                    amount: current_fee.amount.saturating_add(new_fee.amount),
+                    fee: current_fee.fee.saturating_add(new_fee.fee),
+                    fee_usdt: current_fee.fee_usdt.saturating_add(new_fee.fee_usdt),
                   })
                   .unwrap_or_else(|| new_fee.clone()),
               );
@@ -447,8 +685,9 @@ pub mod pallet {
                 current_currency_fee
                   .as_ref()
                   .map(|current_fee| Fee {
-                    amount: current_fee.amount + new_fee.amount,
-                    fee: current_fee.fee + new_fee.fee,
+                    amount: current_fee.amount.saturating_add(new_fee.amount),
+                    fee: current_fee.fee.saturating_add(new_fee.fee),
+                    fee_usdt: current_fee.fee_usdt.saturating_add(new_fee.fee_usdt),
                   })
                   .unwrap_or_else(|| new_fee.clone()),
               );
@@ -456,25 +695,49 @@ pub mod pallet {
           );
 
           // Update the total fees for the account
-          AccountFees::<T>::mutate_exists(currency_id, account_id, |account_fee_for_currency| {
-            *account_fee_for_currency = Some(
-              account_fee_for_currency
-                .as_ref()
-                .map(|current_fee| Fee {
-                  amount: current_fee.amount + new_fee.amount,
-                  fee: current_fee.fee + new_fee.fee,
-                })
-                .unwrap_or_else(|| new_fee.clone()),
-            );
-          });
+          AccountFees::<T>::try_mutate_exists::<u32, T::AccountId, (), DispatchError, _>(
+            current_era.index,
+            account_id,
+            |account_fee_for_era| match account_fee_for_era {
+              Some(account_fee) => {
+                match account_fee
+                  .iter_mut()
+                  .find(|(found_currency_id, _)| *found_currency_id == currency_id)
+                {
+                  Some((_, current_fee)) => {
+                    current_fee.amount = current_fee.amount.saturating_add(new_fee.amount);
+                    current_fee.fee = current_fee.fee.saturating_add(new_fee.fee);
+                    current_fee.fee_usdt = current_fee.fee_usdt.saturating_add(new_fee.fee_usdt);
+                  }
+                  None => {
+                    account_fee
+                      .try_push((currency_id, new_fee.clone()))
+                      .map_err(|_| Error::<T>::AccountFeeOverflow)?;
+                  }
+                }
+                Ok(())
+              }
+              None => {
+                let bounded_vec: BoundedAccountFees = vec![(currency_id, new_fee.clone())]
+                  .try_into()
+                  .map_err(|_| Error::<T>::AccountFeeOverflow)?;
+                *account_fee_for_era = Some(bounded_vec);
+                Ok(())
+              }
+            },
+          )?;
 
           new_fee
         }
+        // No fees are taken as there is no active era
         None => Fee {
           amount: total_amount_before_fees,
           fee: 0,
+          fee_usdt: 0,
         },
-      }
+      };
+
+      Ok(fee)
     }
   }
 }

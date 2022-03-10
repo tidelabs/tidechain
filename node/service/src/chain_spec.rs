@@ -11,12 +11,13 @@ use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
-  Perbill, Percent,
+  Perbill, Percent, Permill,
 };
 use strum::IntoEnumIterator;
 // Tidechain primitives
 use tidefi_primitives::{
   assets, AccountId, AssetId, Balance, Block, CurrencyId, Signature, StakeCurrencyMeta,
+  SunriseSwapPool,
 };
 
 #[cfg(feature = "tidechain-native")]
@@ -111,6 +112,7 @@ fn lagoon_testnet_genesis(
   const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 2 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = 192_000_000 * 1_000_000_000_000;
   // Treasury Account Id
   let treasury_account: AccountId = lagoon_runtime::TreasuryPalletId::get().into_account();
   // Fees Account Id
@@ -133,10 +135,10 @@ fn lagoon_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
-  // 10 tide endowed to the fee pallet 
-  + 10_000_000_000_000
   // 10 tide endowed to root
-  + 10_000_000_000_000;
+  + 10_000_000_000_000
+  // Sunrise pool
+  + SUNRISE_POOL;
 
   // Each initial validator get an endowment of `ENDOWMENT` TIDE.
   let mut inital_validators_endowment = initial_authorities
@@ -150,8 +152,8 @@ fn lagoon_testnet_genesis(
   let mut endowed_accounts = vec![
     // Treasury funds
     (treasury_account, treasury_funds),
-    // 10 tide to make sure the fees pallet can receive funds
-    (fees_account, 10_000_000_000_000),
+    // Sunrise pool
+    (fees_account, SUNRISE_POOL),
     // 10 tide to root so he can pay fees
     (root.clone(), 10_000_000_000_000),
   ];
@@ -280,7 +282,7 @@ fn lagoon_testnet_genesis(
     },
     security: Default::default(),
     tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
-    fees: Default::default(),
+    fees: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
   }
 }
 
@@ -304,6 +306,7 @@ fn tidechain_testnet_genesis(
   const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 2 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = 192_000_000 * 1_000_000_000_000;
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
@@ -329,8 +332,8 @@ fn tidechain_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
-  // 1 tide endowed to the fee pallet 
-  + 1_000_000_000_000;
+  // Sunrise pool
+  + SUNRISE_POOL;
 
   // Each initial validator get an endowment of `ENDOWMENT` TIDE.
   let mut inital_validators_endowment = initial_authorities
@@ -344,8 +347,8 @@ fn tidechain_testnet_genesis(
   let mut endowed_accounts = vec![
     // Treasury funds
     (treasury_account, treasury_funds),
-    // 1 tide to make sure the fees pallet can receive funds
-    (fees_account, 1_000_000_000_000),
+    // Sunrise pool
+    (fees_account, SUNRISE_POOL),
   ];
 
   // Add all stake holders account
@@ -444,7 +447,7 @@ fn tidechain_testnet_genesis(
     },
     security: Default::default(),
     tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
-    fees: Default::default(),
+    fees: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
   }
 }
 
@@ -941,6 +944,64 @@ mod helpers {
           })
           .collect(),
         unstake_fee: Percent::from_parts(1),
+      }
+    };
+  }
+
+  // syntactic sugar for sunrise pool genesis config.
+  // 67200000 + 57600000 + 38400000 + 19200000 + 9600000 = 192_000_000
+  #[macro_export]
+  macro_rules! tidefi_sunrise_pool_genesis {
+    ($runtime:tt) => {
+      // FIXME: Maybe add some validation to make sure it equals `192_000_000`
+      $runtime::FeesConfig {
+        phantom: Default::default(),
+        sunrise_swap_pools: vec![
+          SunriseSwapPool {
+            id: 1,
+            minimum_usdt_value: 0,
+            transactions_remaining: 1_000,
+            balance: assets::Asset::Tide.saturating_mul(67_200_000),
+            // 100%
+            rebates: Permill::from_rational(100_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 2,
+            // 100 USDT minimum value
+            minimum_usdt_value: assets::Asset::Tether.saturating_mul(100),
+            transactions_remaining: 1_000,
+            balance: assets::Asset::Tide.saturating_mul(57_600_000),
+            // 125%
+            rebates: Permill::from_rational(125_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 3,
+            // 10_000 USDT minimum value
+            minimum_usdt_value: assets::Asset::Tether.saturating_mul(10_000),
+            transactions_remaining: 100,
+            balance: assets::Asset::Tide.saturating_mul(38_400_000),
+            // 150%
+            rebates: Permill::from_rational(150_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 4,
+            // 50_000 USDT minimum value
+            minimum_usdt_value: assets::Asset::Tether.saturating_mul(50_000),
+            transactions_remaining: 100,
+            balance: assets::Asset::Tide.saturating_mul(19_200_000),
+            // 200%
+            rebates: Permill::from_rational(200_u32, 100_u32),
+          },
+          SunriseSwapPool {
+            id: 5,
+            // 100_000 USDT minimum value
+            minimum_usdt_value: assets::Asset::Tether.saturating_mul(100_000),
+            transactions_remaining: 100,
+            balance: assets::Asset::Tide.saturating_mul(9_600_000),
+            // 300%
+            rebates: Permill::from_rational(300_u32, 100_u32),
+          },
+        ],
       }
     };
   }

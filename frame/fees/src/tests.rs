@@ -1,4 +1,5 @@
 use crate::mock::{new_test_ext, AccountId, Fees};
+use frame_support::assert_ok;
 use tidefi_primitives::{pallet::FeesExt, CurrencyId};
 
 #[test]
@@ -27,23 +28,36 @@ pub fn register_swap_fees() {
   new_test_ext().execute_with(|| {
     let current_era = Fees::active_era().unwrap().index;
     Fees::start_era();
-    assert_eq!(current_era + 1, Fees::active_era().unwrap().index);
+    let new_current_era = Fees::active_era().unwrap().index;
+    assert_eq!(current_era + 1, new_current_era);
 
     // 100 tide @ 2% should cost 2 TIDEs
     let calculated_fee =
-      Fees::register_swap_fees(3u64.into(), CurrencyId::Tide, 100_000_000_000_000, false);
+      Fees::register_swap_fees(3u64.into(), CurrencyId::Tide, 100_000_000_000_000, false).unwrap();
     assert_eq!(calculated_fee.amount, 100_000_000_000_000);
     assert_eq!(calculated_fee.fee, 2_000_000_000_000);
 
     // make sure everything was registered
-    let registered_fee = Fees::account_fees(CurrencyId::Tide, AccountId(3u64));
-    assert_eq!(registered_fee.amount, 100_000_000_000_000);
-    assert_eq!(registered_fee.fee, 2_000_000_000_000);
+    let registered_fee = Fees::account_fees(new_current_era, AccountId(3u64));
+    assert_eq!(registered_fee.first().unwrap().1.fee, 2_000_000_000_000);
+
+    assert_eq!(
+      registered_fee.first().unwrap().1.amount,
+      100_000_000_000_000
+    );
 
     // make sure it increment the value
-    Fees::register_swap_fees(3u64.into(), CurrencyId::Tide, 100_000_000_000_000, false);
-    let registered_fee = Fees::account_fees(CurrencyId::Tide, AccountId(3u64));
-    assert_eq!(registered_fee.amount, 200_000_000_000_000);
-    assert_eq!(registered_fee.fee, 4_000_000_000_000);
+    assert_ok!(Fees::register_swap_fees(
+      3u64.into(),
+      CurrencyId::Tide,
+      100_000_000_000_000,
+      false
+    ));
+    let registered_fee = Fees::account_fees(new_current_era, AccountId(3u64));
+    assert_eq!(
+      registered_fee.first().unwrap().1.amount,
+      200_000_000_000_000
+    );
+    assert_eq!(registered_fee.first().unwrap().1.fee, 4_000_000_000_000);
   });
 }
