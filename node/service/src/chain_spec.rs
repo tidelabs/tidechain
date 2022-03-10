@@ -135,8 +135,6 @@ fn lagoon_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
-  // 10 tide endowed to the fee pallet 
-  + 10_000_000_000_000
   // 10 tide endowed to root
   + 10_000_000_000_000
   // Sunrise pool
@@ -334,8 +332,6 @@ fn tidechain_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
-  // 1 tide endowed to the fee pallet 
-  + 1_000_000_000_000
   // Sunrise pool
   + SUNRISE_POOL;
 
