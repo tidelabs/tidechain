@@ -513,6 +513,7 @@ pub fn confirm_swap_with_fees() {
     assert!(Oracle::status());
     Fees::start_era();
     assert!(!Fees::active_era().is_none());
+    let current_era = Fees::active_era().unwrap().index;
 
     // add 1 tide to alice & mm
     assert_ok!(Adapter::mint_into(
@@ -530,13 +531,6 @@ pub fn confirm_swap_with_fees() {
     assert_ok!(Adapter::mint_into(
       CurrencyId::Tide,
       &4u64,
-      1_000_000_000_000
-    ));
-
-    // add 1 tide to fees pallet account
-    assert_ok!(Adapter::mint_into(
-      CurrencyId::Tide,
-      &Fees::account_id(),
       1_000_000_000_000
     ));
 
@@ -799,17 +793,17 @@ pub fn confirm_swap_with_fees() {
     );
 
     // make sure fees are registered on chain
-    let bob_fee = Fees::account_fees(CurrencyId::Tide, 2u64);
-    assert_eq!(bob_fee.fee, 200_000_000_000);
-    assert_eq!(bob_fee.amount, 10_000_000_000_000);
+    let bob_fee = Fees::account_fees(current_era, 2u64);
+    assert_eq!(bob_fee.first().unwrap().1.fee, 200_000_000_000);
+    assert_eq!(bob_fee.first().unwrap().1.amount, 10_000_000_000_000);
 
-    let charlie_fee = Fees::account_fees(CurrencyId::Wrapped(temp_asset_id), 3u64);
-    assert_eq!(charlie_fee.fee, 100);
-    assert_eq!(charlie_fee.amount, 10_000);
+    let charlie_fee = Fees::account_fees(current_era, 3u64);
+    assert_eq!(charlie_fee.first().unwrap().1.fee, 100);
+    assert_eq!(charlie_fee.first().unwrap().1.amount, 10_000);
 
-    let dave_fee = Fees::account_fees(CurrencyId::Wrapped(temp_asset_id), 4u64);
-    assert_eq!(dave_fee.fee, 100);
-    assert_eq!(dave_fee.amount, 10_000);
+    let dave_fee = Fees::account_fees(current_era, 4u64);
+    assert_eq!(dave_fee.first().unwrap().1.fee, 100);
+    assert_eq!(dave_fee.first().unwrap().1.amount, 10_000);
   });
 }
 

@@ -144,6 +144,7 @@ parameter_types! {
   pub const SwapLimitByAccount: u32 = 100;
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
+  pub const BlocksSunriseClaims: BlockNumber = 10;
 }
 
 impl pallet_oracle::Config for Test {
@@ -192,9 +193,8 @@ impl pallet_fees::Config for Test {
   type SessionsArchive = SessionsArchive;
   type FeeAmount = FeeAmount;
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
-  type DistributionPercentage = DistributionPercentage;
   type BlocksPerSession = BlocksPerSession;
-
+  type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;
 }
 

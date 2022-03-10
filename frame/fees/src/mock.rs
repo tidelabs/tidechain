@@ -177,10 +177,9 @@ parameter_types! {
   pub const FeeAmount: Permill = Permill::from_perthousand(20);
   // 10 basis point
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
-  // 20 %
-  pub const DistributionPercentage: Permill = Permill::from_percent(20);
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
+  pub const BlocksSunriseClaims: BlockNumber = 10;
 }
 
 impl pallet_fees::Config for Test {
@@ -196,7 +195,7 @@ impl pallet_fees::Config for Test {
   type BlocksPerSession = BlocksPerSession;
   type FeeAmount = FeeAmount;
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
-  type DistributionPercentage = DistributionPercentage;
+  type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;
 }
 

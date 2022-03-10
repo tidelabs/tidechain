@@ -42,8 +42,8 @@ parameter_types! {
   // Maximum unstake processed in queue
   pub const UnstakeQueueCap: u32 = 100;
   // Staking: Number of sessions per era
-  // ~ 1 month
-  pub const SessionsPerEra: SessionIndex = 720;
+  // ~ 1 hour
+  pub const SessionsPerEra: SessionIndex = 12;
   // Staking: Number of sessions to keep in archive
   pub const SessionsArchive: SessionIndex = 5;
   // Staking: Number of block per sessions
@@ -56,8 +56,6 @@ parameter_types! {
   pub const FeeAmount: Permill = Permill::from_parts(2500);
   // 0.05%
   pub const MarketMakerFeeAmount: Permill = Permill::from_parts(500);
-  // 20 %
-  pub const DistributionPercentage: Permill = Permill::from_percent(20);
   // Maximum pending burned possible in queue
   pub const BurnedCap: u32 = 1000;
   // Maximum proposals in queue for the quorum, to limit the vector size and optimization
@@ -76,6 +74,9 @@ parameter_types! {
   pub const PubkeyLimitPerAsset: u32 = 10;
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 10_000;
+  // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
+  // current_era.start_block + BlocksSunriseClaims < current_block to be able to claim last era sunrise reward
+  pub const BlocksSunriseClaims: BlockNumber = 10;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -210,10 +211,10 @@ impl pallet_fees::Config for Runtime {
   type FeeAmount = FeeAmount;
   // Swap fees for market makers
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
-  // Redistribution percentage
-  type DistributionPercentage = DistributionPercentage;
   // Security utils
   type Security = Security;
+  type BlocksSunriseClaims = BlocksSunriseClaims;
+  // FIXME: Use local weigth
   type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
   type ForceOrigin = EnsureOneOf<
     EnsureRoot<AccountId>,
