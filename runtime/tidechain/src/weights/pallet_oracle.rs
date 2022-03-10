@@ -85,4 +85,9 @@ impl<T: frame_system::Config> pallet_oracle::WeightInfo for WeightInfo<T> {
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
+   fn im_alive() -> Weight {
+      64_000_400_u64
+         .saturating_add(T::DbWeight::get().reads(6_u64))
+         .saturating_add(T::DbWeight::get().writes(5_u64))
+   }
 }

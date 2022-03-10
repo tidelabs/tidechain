@@ -30,8 +30,10 @@ pub mod pallet {
   use sp_runtime::Permill;
   use sp_std::vec;
   use tidefi_primitives::{
+    assets::USDT,
     pallet::{FeesExt, OracleExt, SecurityExt},
-    AssetId, Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
+    AssetId, Balance, CurrencyId, Hash, OracleImAlive, Swap, SwapConfirmation, SwapStatus,
+    SwapType,
   };
 
   /// Oracle configuration
@@ -75,6 +77,11 @@ pub mod pallet {
   #[pallet::storage]
   #[pallet::getter(fn status)]
   pub(super) type OracleStatus<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+  /// Oracle last seen
+  #[pallet::storage]
+  #[pallet::getter(fn last_seen)]
+  pub(super) type LastSeen<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
 
   /// Oracle Account ID
   #[pallet::storage]
@@ -551,6 +558,9 @@ pub mod pallet {
         Ok(())
       })?;
 
+      // 15. Update last seen
+      LastSeen::<T>::put(T::Security::get_current_block_count());
+
       // don't take tx fees on success
       Ok(Pays::No.into())
     }
@@ -575,6 +585,9 @@ pub mod pallet {
 
       // 4. Emit event on chain
       Self::deposit_event(Event::<T>::SwapCancelled { request_id });
+
+      // 5. Update last seen
+      LastSeen::<T>::put(T::Security::get_current_block_count());
 
       Ok(Pays::No.into())
     }
@@ -606,6 +619,9 @@ pub mod pallet {
         account_id: new_account_id,
       });
 
+      // 4. Update last seen
+      LastSeen::<T>::put(T::Security::get_current_block_count());
+
       // don't take tx fees on success
       Ok(Pays::No.into())
     }
@@ -628,6 +644,49 @@ pub mod pallet {
 
       // 3. Emit event on chain
       Self::deposit_event(Event::<T>::StatusChanged { is_enabled });
+
+      // 4. Update last seen
+      LastSeen::<T>::put(T::Security::get_current_block_count());
+
+      // don't take tx fees on success
+      Ok(Pays::No.into())
+    }
+
+    /// Change Oracle status.
+    ///
+    /// - `is_enabled`: Is the oracle enabled?
+    ///
+    /// Emits `StatusChanged` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::im_alive())]
+    pub fn im_alive(origin: OriginFor<T>, im_alive: OracleImAlive) -> DispatchResultWithPostInfo {
+      // 1. Make sure this is signed by `account_id`
+      let sender = ensure_signed(origin)?;
+      ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
+
+      // 2. Build final price vector
+      let mut all_prices = Vec::new();
+
+      for (currency_id, price) in im_alive.usdt_value {
+        all_prices.push((currency_id, CurrencyId::Wrapped(USDT), price))
+      }
+
+      for (asset_id, price) in im_alive.tide_value {
+        all_prices.push((
+          CurrencyId::Wrapped(asset_id),
+          CurrencyId::Wrapped(USDT),
+          price,
+        ))
+      }
+
+      if !all_prices.is_empty() {
+        // Update only if we provided at least one price
+        T::Fees::register_order_book_price(all_prices)?;
+      }
+
+      // 3. Update last seen
+      LastSeen::<T>::put(T::Security::get_current_block_count());
 
       // don't take tx fees on success
       Ok(Pays::No.into())
@@ -652,6 +711,9 @@ pub mod pallet {
 
       // 3. Emit event on chain
       Self::deposit_event(Event::<T>::MarketMakerAdded { account_id });
+
+      // 4. Update last seen
+      LastSeen::<T>::put(T::Security::get_current_block_count());
 
       // don't take tx fees on success
       Ok(Pays::No.into())
@@ -678,6 +740,9 @@ pub mod pallet {
 
       // 3. Emit event on chain
       Self::deposit_event(Event::<T>::MarketMakerRemoved { account_id });
+
+      // 4. Update last seen
+      LastSeen::<T>::put(T::Security::get_current_block_count());
 
       // don't take tx fees on success
       Ok(Pays::No.into())

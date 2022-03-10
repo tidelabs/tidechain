@@ -511,7 +511,7 @@ pub mod pallet {
     ) -> Option<SunriseSwapPool> {
       // get all pools
       let current_usdt_trade_value =
-        fee.amount * Self::order_book_price(currency_id, CurrencyId::Wrapped(4));
+        fee.amount * Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT));
 
       let mut all_pools = SunrisePools::<T>::get()
         .iter()
@@ -576,6 +576,16 @@ pub mod pallet {
   impl<T: Config> FeesExt<T::AccountId> for Pallet<T> {
     fn account_id() -> T::AccountId {
       T::FeesPalletId::get().into_account()
+    }
+
+    // FIXME: Would probably worth moving this into his own pallet?
+    fn register_order_book_price(
+      prices: Vec<(CurrencyId, CurrencyId, Balance)>,
+    ) -> Result<(), DispatchError> {
+      for price in prices {
+        OrderBookPrice::<T>::insert(price.0, price.1, price.2);
+      }
+      Ok(())
     }
 
     fn calculate_swap_fees(
