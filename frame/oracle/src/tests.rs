@@ -51,7 +51,7 @@ pub fn confirm_swap_partial_filling() {
       1_000_000_000_000
     ));
 
-    let temp_asset_id = 1;
+    let temp_asset_id = 4;
 
     assert_ok!(Oracle::set_status(alice.clone(), true));
     assert!(Oracle::status());
@@ -507,7 +507,7 @@ pub fn confirm_swap_with_fees() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
 
-    let temp_asset_id = 1;
+    let temp_asset_id = 4;
 
     assert_ok!(Oracle::set_status(alice.clone(), true));
     assert!(Oracle::status());
@@ -812,7 +812,7 @@ pub fn confirm_swap_ourself() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
 
-    let temp_asset_id = 1;
+    let temp_asset_id = 4;
 
     let bob_initial_balance: Balance = 20_000_000_000_000;
     let bob_initial_wrapped_balance: Balance = 1_000_000;
@@ -1013,7 +1013,7 @@ pub fn test_slippage() {
   new_test_ext().execute_with(|| {
     let alice = Origin::signed(1u64);
 
-    let temp_asset_id = 1;
+    let temp_asset_id = 4;
 
     let bob_initial_balance: Balance = 20_000_000_000_000;
     let bob_initial_wrapped_balance: Balance = 1_000_000;
