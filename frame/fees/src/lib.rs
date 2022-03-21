@@ -41,9 +41,10 @@ pub mod pallet {
     PalletId,
   };
   use frame_system::pallet_prelude::*;
+  use sp_arithmetic::traits::Zero;
   use sp_runtime::{
-    traits::{AccountIdConversion, Saturating},
-    Percent, Permill, SaturatedConversion,
+    traits::{AccountIdConversion, CheckedDiv, Saturating},
+    FixedPointNumber, FixedU128, Percent, Permill, SaturatedConversion,
   };
   use sp_std::{borrow::ToOwned, vec};
   use tidefi_primitives::{
@@ -121,14 +122,6 @@ pub mod pallet {
   #[pallet::storage_version(STORAGE_VERSION)]
   pub struct Pallet<T>(_);
 
-  /// The current era index.
-  ///
-  /// This is the latest planned era, depending on how the Session pallet queues the validator
-  /// set, it might be active or not.
-  #[pallet::storage]
-  #[pallet::getter(fn current_era)]
-  pub type CurrentEra<T> = StorageValue<_, EraIndex>;
-
   /// The active era information, it holds index and start.
   ///
   /// The active era is the era being currently rewarded.
@@ -174,7 +167,7 @@ pub mod pallet {
     CurrencyId,
     Blake2_128Concat,
     CurrencyId,
-    Balance,
+    FixedU128,
     ValueQuery,
   >;
 
@@ -303,12 +296,16 @@ pub mod pallet {
     NoRewardsAvailable,
     /// Invalid era
     InvalidEra,
+    /// Invalid asset
+    InvalidAsset,
     /// There is no active Era
     NoActiveEra,
     /// Era is not ready to be claimed yet, try again later
     EraNotReady,
     /// Account fees overflow
     AccountFeeOverflow,
+    /// Balance overflow
+    BalanceOverflow,
   }
 
   // hooks
@@ -463,6 +460,7 @@ pub mod pallet {
   }
 
   impl<T: Config> Pallet<T> {
+    // Initialize sunrise reward
     pub fn try_claim_sunrise_rewards(
       who: &T::AccountId,
       era_index: EraIndex,
@@ -491,6 +489,7 @@ pub mod pallet {
       })
     }
 
+    // Delete all session where the index < current_session - T::SessionsArchive
     pub(crate) fn drain_old_sessions() {
       let current_session = CurrentSession::<T>::get();
       for (session, _) in StoredSessions::<T>::iter() {
@@ -502,13 +501,107 @@ pub mod pallet {
       }
     }
 
-    pub(crate) fn try_select_first_eligible_sunrise_pool(
-      fee: Fee,
+    // Based on the price provided by Oracle, try to convert the usdt amount to the asset balance
+    pub(crate) fn try_get_value_from_usdt(
       currency_id: CurrencyId,
-    ) -> Option<SunriseSwapPool> {
+      usdt_amount: FixedU128,
+    ) -> Result<Balance, DispatchError> {
+      let asset_from: Asset = currency_id
+        .try_into()
+        .map_err(|_| Error::<T>::InvalidAsset)?;
+
+      // get order book price
+      let order_book_price = if currency_id == CurrencyId::Wrapped(USDT) {
+        FixedU128::from(1)
+      } else {
+        Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT))
+      };
+
+      if order_book_price.is_zero() || usdt_amount.is_zero() {
+        return Ok(0);
+      }
+
+      let currency_wanted = (usdt_amount * order_book_price)
+        .checked_div(&FixedU128::from(
+          10_u128.pow(Asset::Tether.exponent() as u32),
+        ))
+        .ok_or(Error::<T>::BalanceOverflow)?;
+
+      Ok(
+        currency_wanted
+          .saturating_mul(FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .into_inner()
+          .saturating_div(FixedU128::DIV),
+      )
+    }
+
+    // Based on the price provided by Oracle, try to convert the asset balance to USDT balance
+    pub(crate) fn try_get_usdt_value(
+      currency_id: CurrencyId,
+      amount: FixedU128,
+    ) -> Result<Balance, DispatchError> {
+      let asset_from: Asset = currency_id
+        .try_into()
+        .map_err(|_| Error::<T>::InvalidAsset)?;
+
+      let order_book_price = if currency_id == CurrencyId::Wrapped(USDT) {
+        FixedU128::from(1)
+      } else {
+        Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT))
+      };
+
+      if order_book_price.is_zero() {
+        return Ok(0);
+      }
+
+      let currency_wanted = (amount / order_book_price)
+        .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+        .ok_or(Error::<T>::BalanceOverflow)?;
+
+      Ok(
+        currency_wanted
+          .saturating_mul(FixedU128::from(
+            10_u128.pow(Asset::Tether.exponent() as u32),
+          ))
+          .into_inner()
+          .saturating_div(FixedU128::DIV),
+      )
+    }
+
+    // Based on the price provided by Oracle, try to convert the asset balance to TIDE balance
+    pub(crate) fn try_get_tide_value(
+      currency_id: CurrencyId,
+      amount: FixedU128,
+    ) -> Result<Balance, DispatchError> {
+      let asset_from: Asset = currency_id
+        .try_into()
+        .map_err(|_| Error::<T>::InvalidAsset)?;
+
+      let order_book_price = Self::order_book_price(currency_id, CurrencyId::Tide);
+
+      if order_book_price.is_zero() {
+        return Ok(0);
+      }
+
+      let currency_wanted = (amount / order_book_price)
+        .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+        .ok_or(Error::<T>::BalanceOverflow)?;
+
+      Ok(
+        currency_wanted
+          .saturating_mul(FixedU128::from(10_u128.pow(Asset::Tide.exponent() as u32)))
+          .into_inner()
+          .saturating_div(FixedU128::DIV),
+      )
+    }
+
+    // Based on the fee, try to select the highest matching sunrise pool
+    pub(crate) fn try_select_first_eligible_sunrise_pool(
+      fee: &Fee,
+      currency_id: CurrencyId,
+    ) -> Result<Option<SunriseSwapPool>, DispatchError> {
       // get all pools
-      let current_usdt_trade_value =
-        fee.amount * Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT));
+      let current_usdt_trade_value = Self::try_get_usdt_value(currency_id, fee.amount.into())?;
 
       let mut all_pools = SunrisePools::<T>::get()
         .iter()
@@ -518,7 +611,8 @@ pub mod pallet {
         .filter(|pool| {
           pool.balance > 0
             && pool.balance
-              >= Self::calculate_tide_reward_for_pool(pool.rebates, fee.fee_usdt, currency_id)
+              >= Self::calculate_tide_reward_for_pool(pool.rebates, fee, currency_id)
+                .unwrap_or_default()
         })
         // make sure the transaction amount value in USDT is higher
         .filter(|pool| pool.minimum_usdt_value >= current_usdt_trade_value)
@@ -532,11 +626,14 @@ pub mod pallet {
           .unwrap_or(sp_std::cmp::Ordering::Equal)
       });
 
-      all_pools
-        .first()
-        .map(|sunrise_pool| sunrise_pool.to_owned())
+      Ok(
+        all_pools
+          .first()
+          .map(|sunrise_pool| sunrise_pool.to_owned()),
+      )
     }
 
+    // Initialize new era
     pub fn start_era() {
       ActiveEra::<T>::mutate(|active_era| {
         let new_index = active_era
@@ -555,18 +652,22 @@ pub mod pallet {
       });
     }
 
-    fn calculate_tide_reward_for_pool(
-      rebates: Permill,
-      fee_usdt: Balance,
+    // Calculate the Sunrise rewards (TIDE balance) from the currency and the fee
+    pub(crate) fn calculate_tide_reward_for_pool(
+      rebates: FixedU128,
+      fee: &Fee,
       currency_id: CurrencyId,
-    ) -> Balance {
-      let fee_in_usdt_with_rebates = rebates * fee_usdt;
-      let currency_to_tide_price = Self::order_book_price(currency_id, CurrencyId::Tide);
-      if fee_in_usdt_with_rebates > Asset::Tether.saturating_mul(10_000) {
-        Asset::Tether.saturating_mul(10_000) * currency_to_tide_price
+    ) -> Result<Balance, DispatchError> {
+      let maximum_usdt_value = Asset::Tether.saturating_mul(10_000);
+      let real_fee_with_rebates = (if fee.fee_usdt > maximum_usdt_value {
+        rebates * Self::try_get_value_from_usdt(currency_id, maximum_usdt_value.into())?.into()
       } else {
-        fee_in_usdt_with_rebates * currency_to_tide_price
-      }
+        rebates * fee.fee.into()
+      } as FixedU128)
+        .into_inner()
+        .saturating_div(FixedU128::DIV);
+
+      Self::try_get_tide_value(currency_id, real_fee_with_rebates.into())
     }
   }
 
@@ -579,8 +680,13 @@ pub mod pallet {
     fn register_order_book_price(
       prices: Vec<(CurrencyId, CurrencyId, Balance)>,
     ) -> Result<(), DispatchError> {
-      for price in prices {
-        OrderBookPrice::<T>::insert(price.0, price.1, price.2);
+      for (from, to, price) in prices {
+        let asset_from: Asset = from.try_into().map_err(|_| Error::<T>::InvalidAsset)?;
+        OrderBookPrice::<T>::insert(
+          from,
+          to,
+          FixedU128::saturating_from_rational(price, asset_from.saturating_mul(1)),
+        );
       }
       Ok(())
     }
@@ -596,13 +702,10 @@ pub mod pallet {
         T::FeeAmount::get()
       } * total_amount_before_fees;
 
-      // get the fee value in USDT
-      let fee_usdt = fee * Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT));
-
       Fee {
         amount: total_amount_before_fees,
         fee,
-        fee_usdt,
+        fee_usdt: Self::try_get_usdt_value(currency_id, fee.into()).unwrap_or_default(),
       }
     }
 
@@ -619,13 +722,13 @@ pub mod pallet {
             Self::calculate_swap_fees(currency_id, total_amount_before_fees, is_market_maker);
 
           if let Some(sunrise_pool_available) =
-            Self::try_select_first_eligible_sunrise_pool(new_fee.clone(), currency_id)
+            Self::try_select_first_eligible_sunrise_pool(&new_fee, currency_id)?
           {
             let real_fees_in_tide_with_rebates = Self::calculate_tide_reward_for_pool(
               sunrise_pool_available.rebates,
-              new_fee.fee_usdt,
+              &new_fee,
               currency_id,
-            );
+            )?;
             // Update sunrise pool
             SunrisePools::<T>::try_mutate::<(), DispatchError, _>(|pools| {
               let sunrise_pool = pools
