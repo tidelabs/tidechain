@@ -11,7 +11,7 @@ use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
-  FixedU128, Perbill, Percent, FixedPointNumber
+  FixedPointNumber, FixedU128, Perbill, Percent,
 };
 use strum::IntoEnumIterator;
 // Tidechain primitives
