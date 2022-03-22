@@ -214,8 +214,7 @@ impl pallet_fees::Config for Runtime {
   // Security utils
   type Security = Security;
   type BlocksSunriseClaims = BlocksSunriseClaims;
-  // FIXME: Use local weigth
-  type WeightInfo = pallet_fees::weights::SubstrateWeight<Runtime>;
+  type WeightInfo = crate::weights::pallet_fees::WeightInfo<Runtime>;
   type ForceOrigin = EnsureOneOf<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,

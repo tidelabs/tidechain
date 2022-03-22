@@ -11,7 +11,7 @@ use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
   traits::{AccountIdConversion, IdentifyAccount, Verify},
-  Perbill, Percent, Permill,
+  FixedPointNumber, FixedU128, Perbill, Percent,
 };
 use strum::IntoEnumIterator;
 // Tidechain primitives
@@ -963,7 +963,7 @@ mod helpers {
             transactions_remaining: 1_000,
             balance: assets::Asset::Tide.saturating_mul(67_200_000),
             // 100%
-            rebates: Permill::from_rational(100_u32, 100_u32),
+            rebates: FixedU128::saturating_from_rational(100_u32, 100_u32),
           },
           SunriseSwapPool {
             id: 2,
@@ -972,7 +972,7 @@ mod helpers {
             transactions_remaining: 1_000,
             balance: assets::Asset::Tide.saturating_mul(57_600_000),
             // 125%
-            rebates: Permill::from_rational(125_u32, 100_u32),
+            rebates: FixedU128::saturating_from_rational(125_u32, 100_u32),
           },
           SunriseSwapPool {
             id: 3,
@@ -981,7 +981,7 @@ mod helpers {
             transactions_remaining: 100,
             balance: assets::Asset::Tide.saturating_mul(38_400_000),
             // 150%
-            rebates: Permill::from_rational(150_u32, 100_u32),
+            rebates: FixedU128::saturating_from_rational(150_u32, 100_u32),
           },
           SunriseSwapPool {
             id: 4,
@@ -990,7 +990,7 @@ mod helpers {
             transactions_remaining: 100,
             balance: assets::Asset::Tide.saturating_mul(19_200_000),
             // 200%
-            rebates: Permill::from_rational(200_u32, 100_u32),
+            rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
           },
           SunriseSwapPool {
             id: 5,
@@ -999,7 +999,7 @@ mod helpers {
             transactions_remaining: 100,
             balance: assets::Asset::Tide.saturating_mul(9_600_000),
             // 300%
-            rebates: Permill::from_rational(300_u32, 100_u32),
+            rebates: FixedU128::saturating_from_rational(300_u32, 100_u32),
           },
         ],
       }

@@ -16,13 +16,11 @@ pub mod pallet {
   use sha2::{Digest, Sha256};
   use sp_core::{H256, U256};
   use sp_runtime::traits::Saturating;
-  use tidefi_primitives::{pallet::SecurityExt, AssetId, Balance, Hash, StatusCode};
+  use tidefi_primitives::{pallet::SecurityExt, Hash, StatusCode};
 
   /// Security configuration
   #[pallet::config]
-  pub trait Config:
-    frame_system::Config + pallet_assets::Config<AssetId = AssetId, Balance = Balance>
-  {
+  pub trait Config: frame_system::Config {
     /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
   }
