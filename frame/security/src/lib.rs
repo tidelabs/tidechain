@@ -138,13 +138,13 @@ pub mod pallet {
     /// internal (auto-incrementing) `Nonce` to prevent replay attacks.
     fn get_next_id(id: &T::AccountId) -> H256 {
       let mut hasher = Sha256::default();
-      hasher.input(id.encode());
-      hasher.input(Self::get_nonce().encode());
+      hasher.update(id.encode());
+      hasher.update(Self::get_nonce().encode());
       // supplement with prev block hash to prevent replays
       // even if the `Nonce` is reset (i.e. purge-chain)
-      hasher.input(frame_system::Pallet::<T>::parent_hash());
+      hasher.update(frame_system::Pallet::<T>::parent_hash());
       let mut result = [0; 32];
-      result.copy_from_slice(&hasher.result()[..]);
+      result.copy_from_slice(&hasher.finalize()[..]);
       H256(result)
     }
   }

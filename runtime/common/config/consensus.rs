@@ -29,7 +29,6 @@ use crate::{
   Staking, Timestamp, TransactionPayment, Treasury,
 };
 use codec::Decode;
-use frame_election_provider_support::{SortedListProvider, VoteWeight};
 use frame_support::{
   pallet_prelude::PhantomData,
   parameter_types,
@@ -180,9 +179,15 @@ parameter_types! {
 
   // miner configs
   pub OffchainRepeat: BlockNumber = 5;
+
+  /// We take the top 22_500 nominators as electing voters..
+  pub const MaxElectingVoters: u32 = 22_500;
+  /// ... and all of the validators as electable targets. Whilst this is the case, we cannot and
+  /// shall not increase the size of the validator intentions.
+  pub const MaxElectableTargets: u16 = u16::MAX;
 }
 
-sp_npos_elections::generate_solution_type!(
+frame_election_provider_support::generate_solution_type!(
   #[compact]
   pub struct NposCompactSolution16::<
     VoterIndex = u32,
@@ -261,8 +266,9 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
-  type VoterSnapshotPerBlock = VoterSnapshotPerBlock;
   type WeightInfo = crate::weights::pallet_election_provider_multi_phase::WeightInfo<Runtime>;
+  type MaxElectingVoters = MaxElectingVoters;
+  type MaxElectableTargets = MaxElectableTargets;
 }
 
 parameter_types! {
@@ -283,11 +289,6 @@ parameter_types! {
     *RuntimeBlockLength::get()
     .max
     .get(DispatchClass::Normal);
-
-  /// Whilst `UseNominatorsAndUpdateBagsList` or `UseNominatorsMap` is in use, this can still be a
-  /// very large value. Once the `BagsList` is in full motion, staking might open its door to many
-  /// more nominators, and this value should instead be what is a "safe" number (e.g. 22500).
-  pub const VoterSnapshotPerBlock: u32 = 22_500;
 }
 
 impl frame_election_provider_support::onchain::Config for Runtime {
@@ -318,7 +319,7 @@ parameter_types! {
    pub const MaxNominatorRewardedPerValidator: u32 = 256;
    pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
    // 16
-  pub const MaxNominations: u32 = <NposCompactSolution16 as sp_npos_elections::NposSolution>::LIMIT as u32;
+  pub const MaxNominations: u32 = <NposCompactSolution16 as frame_election_provider_support::NposSolution>::LIMIT as u32;
 }
 
 /// A reasonable benchmarking config for staking pallet.
@@ -355,6 +356,7 @@ impl pallet_staking::Config for Runtime {
   type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
   // Use the nominators map to iter voters, but also keep bags-list up-to-date.
   type SortedListProvider = BagsList;
+  type MaxUnlockingChunks = frame_support::traits::ConstU32<32>;
   type BenchmarkingConfig = StakingBenchmarkingConfig;
   type WeightInfo = crate::weights::pallet_staking::WeightInfo<Runtime>;
 }
@@ -365,10 +367,11 @@ parameter_types! {
 
 impl pallet_bags_list::Config for Runtime {
   type Event = Event;
-  type VoteWeightProvider = Staking;
+  type ScoreProvider = Staking;
   type BagThresholds = BagThresholds;
   /// FIXME: Revert local weighting
   type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
+  type Score = sp_npos_elections::VoteWeight;
 }
 
 /// Implementation of `frame_election_provider_support::SortedListProvider` that updates the
@@ -377,10 +380,12 @@ impl pallet_bags_list::Config for Runtime {
 /// using it for snapshot generation. In contrast, a  "complete" implementation would use bags-list
 /// for `iter`.
 pub struct UseNominatorsAndUpdateBagsList<T>(PhantomData<T>);
-impl<T: pallet_bags_list::Config + pallet_staking::Config> SortedListProvider<T::AccountId>
+impl<T: pallet_bags_list::Config + pallet_staking::Config>
+  frame_election_provider_support::SortedListProvider<T::AccountId>
   for UseNominatorsAndUpdateBagsList<T>
 {
   type Error = pallet_bags_list::Error;
+  type Score = <T as pallet_bags_list::Config>::Score;
 
   fn iter() -> Box<dyn Iterator<Item = T::AccountId>> {
     Box::new(pallet_staking::Nominators::<T>::iter().map(|(n, _)| n))
@@ -394,11 +399,11 @@ impl<T: pallet_bags_list::Config + pallet_staking::Config> SortedListProvider<T:
     pallet_bags_list::Pallet::<T>::contains(id)
   }
 
-  fn on_insert(id: T::AccountId, weight: VoteWeight) -> Result<(), Self::Error> {
+  fn on_insert(id: T::AccountId, weight: Self::Score) -> Result<(), Self::Error> {
     pallet_bags_list::Pallet::<T>::on_insert(id, weight)
   }
 
-  fn on_update(id: &T::AccountId, new_weight: VoteWeight) {
+  fn on_update(id: &T::AccountId, new_weight: Self::Score) {
     pallet_bags_list::Pallet::<T>::on_update(id, new_weight);
   }
 
@@ -408,7 +413,7 @@ impl<T: pallet_bags_list::Config + pallet_staking::Config> SortedListProvider<T:
 
   fn unsafe_regenerate(
     all: impl IntoIterator<Item = T::AccountId>,
-    weight_of: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
+    weight_of: Box<dyn Fn(&T::AccountId) -> Self::Score>,
   ) -> u32 {
     pallet_bags_list::Pallet::<T>::unsafe_regenerate(all, weight_of)
   }
