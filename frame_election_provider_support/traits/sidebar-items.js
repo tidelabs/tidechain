@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["NposSolution","An opaque index-based, NPoS solution type."]]});

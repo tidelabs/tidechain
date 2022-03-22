@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["OverheadCmd","Benchmarks the per-block and per-extrinsic execution overhead."],["OverheadParams","Configures the benchmark, the post-processing and weight generation."]],"trait":[["ExtrinsicBuilder","Used by the benchmark to build signed extrinsics."]]});

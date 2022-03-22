@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["error","Error helpers for Dev RPC module."],["gen_client","The generated client module."]],"struct":[["BlockStats","Statistics of a block returned by the `dev_getBlockStats` RPC."],["DevApiClient","The Client."]],"trait":[["DevApi","Substrate dev API."]]});

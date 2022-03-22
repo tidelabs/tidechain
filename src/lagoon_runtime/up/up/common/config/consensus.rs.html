@@ -459,7 +459,6 @@
   <span class="ident">Staking</span>, <span class="ident">Timestamp</span>, <span class="ident">TransactionPayment</span>, <span class="ident">Treasury</span>,
 };
 <span class="kw">use</span> <span class="ident">codec::Decode</span>;
-<span class="kw">use</span> <span class="ident">frame_election_provider_support</span>::{<span class="ident">SortedListProvider</span>, <span class="ident">VoteWeight</span>};
 <span class="kw">use</span> <span class="ident">frame_support</span>::{
   <span class="ident">pallet_prelude::PhantomData</span>,
   <span class="ident">parameter_types</span>,
@@ -610,9 +609,15 @@
 
   <span class="comment">// miner configs</span>
   <span class="kw">pub</span> <span class="ident">OffchainRepeat</span>: <span class="ident">BlockNumber</span> <span class="op">=</span> <span class="number">5</span>;
+
+  <span class="doccomment">/// We take the top 22_500 nominators as electing voters..</span>
+  <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxElectingVoters</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">22_500</span>;
+  <span class="doccomment">/// ... and all of the validators as electable targets. Whilst this is the case, we cannot and</span>
+  <span class="doccomment">/// shall not increase the size of the validator intentions.</span>
+  <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxElectableTargets</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="ident">u16::MAX</span>;
 }
 
-<span class="macro">sp_npos_elections::generate_solution_type!</span>(
+<span class="macro">frame_election_provider_support::generate_solution_type!</span>(
   <span class="attribute">#[<span class="ident">compact</span>]</span>
   <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NposCompactSolution16</span>::<span class="op">&lt;</span>
     <span class="ident">VoterIndex</span> <span class="op">=</span> <span class="ident">u32</span>,
@@ -691,8 +696,9 @@
     <span class="ident">EnsureRoot</span><span class="op">&lt;</span><span class="ident">AccountId</span><span class="op">&gt;</span>,
     <span class="ident">pallet_collective::EnsureProportionAtLeast</span><span class="op">&lt;</span><span class="ident">AccountId</span>, <span class="ident">CouncilCollectiveInstance</span>, <span class="number">2</span>, <span class="number">3</span><span class="op">&gt;</span>,
   <span class="op">&gt;</span>;
-  <span class="kw">type</span> <span class="ident">VoterSnapshotPerBlock</span> <span class="op">=</span> <span class="ident">VoterSnapshotPerBlock</span>;
   <span class="kw">type</span> <span class="ident">WeightInfo</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::weights::pallet_election_provider_multi_phase::WeightInfo</span><span class="op">&lt;</span><span class="ident">Runtime</span><span class="op">&gt;</span>;
+  <span class="kw">type</span> <span class="ident">MaxElectingVoters</span> <span class="op">=</span> <span class="ident">MaxElectingVoters</span>;
+  <span class="kw">type</span> <span class="ident">MaxElectableTargets</span> <span class="op">=</span> <span class="ident">MaxElectableTargets</span>;
 }
 
 <span class="macro">parameter_types!</span> {
@@ -713,11 +719,6 @@
     <span class="kw-2">*</span><span class="ident">RuntimeBlockLength::get</span>()
     .<span class="ident">max</span>
     .<span class="ident">get</span>(<span class="ident">DispatchClass::Normal</span>);
-
-  <span class="doccomment">/// Whilst `UseNominatorsAndUpdateBagsList` or `UseNominatorsMap` is in use, this can still be a</span>
-  <span class="doccomment">/// very large value. Once the `BagsList` is in full motion, staking might open its door to many</span>
-  <span class="doccomment">/// more nominators, and this value should instead be what is a &quot;safe&quot; number (e.g. 22500).</span>
-  <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">VoterSnapshotPerBlock</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">22_500</span>;
 }
 
 <span class="kw">impl</span> <span class="ident">frame_election_provider_support::onchain::Config</span> <span class="kw">for</span> <span class="ident">Runtime</span> {
@@ -748,7 +749,7 @@
    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxNominatorRewardedPerValidator</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">256</span>;
    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OffendingValidatorsThreshold</span>: <span class="ident">Perbill</span> <span class="op">=</span> <span class="ident">Perbill::from_percent</span>(<span class="number">17</span>);
    <span class="comment">// 16</span>
-  <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxNominations</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">NposCompactSolution16</span> <span class="kw">as</span> <span class="ident">sp_npos_elections::NposSolution</span><span class="op">&gt;</span><span class="ident">::LIMIT</span> <span class="kw">as</span> <span class="ident">u32</span>;
+  <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxNominations</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">NposCompactSolution16</span> <span class="kw">as</span> <span class="ident">frame_election_provider_support::NposSolution</span><span class="op">&gt;</span><span class="ident">::LIMIT</span> <span class="kw">as</span> <span class="ident">u32</span>;
 }
 
 <span class="doccomment">/// A reasonable benchmarking config for staking pallet.</span>
@@ -785,6 +786,7 @@
   <span class="kw">type</span> <span class="ident">OffendingValidatorsThreshold</span> <span class="op">=</span> <span class="ident">OffendingValidatorsThreshold</span>;
   <span class="comment">// Use the nominators map to iter voters, but also keep bags-list up-to-date.</span>
   <span class="kw">type</span> <span class="ident">SortedListProvider</span> <span class="op">=</span> <span class="ident">BagsList</span>;
+  <span class="kw">type</span> <span class="ident">MaxUnlockingChunks</span> <span class="op">=</span> <span class="ident">frame_support::traits::ConstU32</span><span class="op">&lt;</span><span class="number">32</span><span class="op">&gt;</span>;
   <span class="kw">type</span> <span class="ident">BenchmarkingConfig</span> <span class="op">=</span> <span class="ident">StakingBenchmarkingConfig</span>;
   <span class="kw">type</span> <span class="ident">WeightInfo</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::weights::pallet_staking::WeightInfo</span><span class="op">&lt;</span><span class="ident">Runtime</span><span class="op">&gt;</span>;
 }
@@ -795,10 +797,11 @@
 
 <span class="kw">impl</span> <span class="ident">pallet_bags_list::Config</span> <span class="kw">for</span> <span class="ident">Runtime</span> {
   <span class="kw">type</span> <span class="ident">Event</span> <span class="op">=</span> <span class="ident">Event</span>;
-  <span class="kw">type</span> <span class="ident">VoteWeightProvider</span> <span class="op">=</span> <span class="ident">Staking</span>;
+  <span class="kw">type</span> <span class="ident">ScoreProvider</span> <span class="op">=</span> <span class="ident">Staking</span>;
   <span class="kw">type</span> <span class="ident">BagThresholds</span> <span class="op">=</span> <span class="ident">BagThresholds</span>;
   <span class="doccomment">/// FIXME: Revert local weighting</span>
   <span class="kw">type</span> <span class="ident">WeightInfo</span> <span class="op">=</span> <span class="ident">pallet_bags_list::weights::SubstrateWeight</span><span class="op">&lt;</span><span class="ident">Runtime</span><span class="op">&gt;</span>;
+  <span class="kw">type</span> <span class="ident">Score</span> <span class="op">=</span> <span class="ident">sp_npos_elections::VoteWeight</span>;
 }
 
 <span class="doccomment">/// Implementation of `frame_election_provider_support::SortedListProvider` that updates the</span>
@@ -807,10 +810,12 @@
 <span class="doccomment">/// using it for snapshot generation. In contrast, a  &quot;complete&quot; implementation would use bags-list</span>
 <span class="doccomment">/// for `iter`.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UseNominatorsAndUpdateBagsList</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>);
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">pallet_bags_list::Config</span> <span class="op">+</span> <span class="ident">pallet_staking::Config</span><span class="op">&gt;</span> <span class="ident">SortedListProvider</span><span class="op">&lt;</span><span class="ident">T::AccountId</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">pallet_bags_list::Config</span> <span class="op">+</span> <span class="ident">pallet_staking::Config</span><span class="op">&gt;</span>
+  <span class="ident">frame_election_provider_support::SortedListProvider</span><span class="op">&lt;</span><span class="ident">T::AccountId</span><span class="op">&gt;</span>
   <span class="kw">for</span> <span class="ident">UseNominatorsAndUpdateBagsList</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
 {
   <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">pallet_bags_list::Error</span>;
+  <span class="kw">type</span> <span class="ident">Score</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">pallet_bags_list::Config</span><span class="op">&gt;</span><span class="ident">::Score</span>;
 
   <span class="kw">fn</span> <span class="ident">iter</span>() -&gt; <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T::AccountId</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="ident">Box::new</span>(<span class="ident">pallet_staking::Nominators</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">n</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">n</span>))
@@ -824,11 +829,11 @@
     <span class="ident">pallet_bags_list::Pallet</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::contains</span>(<span class="ident">id</span>)
   }
 
-  <span class="kw">fn</span> <span class="ident">on_insert</span>(<span class="ident">id</span>: <span class="ident">T::AccountId</span>, <span class="ident">weight</span>: <span class="ident">VoteWeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+  <span class="kw">fn</span> <span class="ident">on_insert</span>(<span class="ident">id</span>: <span class="ident">T::AccountId</span>, <span class="ident">weight</span>: <span class="ident"><span class="self">Self</span>::Score</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
     <span class="ident">pallet_bags_list::Pallet</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::on_insert</span>(<span class="ident">id</span>, <span class="ident">weight</span>)
   }
 
-  <span class="kw">fn</span> <span class="ident">on_update</span>(<span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">T::AccountId</span>, <span class="ident">new_weight</span>: <span class="ident">VoteWeight</span>) {
+  <span class="kw">fn</span> <span class="ident">on_update</span>(<span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">T::AccountId</span>, <span class="ident">new_weight</span>: <span class="ident"><span class="self">Self</span>::Score</span>) {
     <span class="ident">pallet_bags_list::Pallet</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::on_update</span>(<span class="ident">id</span>, <span class="ident">new_weight</span>);
   }
 
@@ -838,7 +843,7 @@
 
   <span class="kw">fn</span> <span class="ident">unsafe_regenerate</span>(
     <span class="ident">all</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">T::AccountId</span><span class="op">&gt;</span>,
-    <span class="ident">weight_of</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T::AccountId</span>) -&gt; <span class="ident">VoteWeight</span><span class="op">&gt;</span>,
+    <span class="ident">weight_of</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">T::AccountId</span>) -&gt; <span class="ident"><span class="self">Self</span>::Score</span><span class="op">&gt;</span>,
   ) -&gt; <span class="ident">u32</span> {
     <span class="ident">pallet_bags_list::Pallet</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::unsafe_regenerate</span>(<span class="ident">all</span>, <span class="ident">weight_of</span>)
   }
@@ -849,11 +854,6 @@
 
   <span class="kw">fn</span> <span class="ident">unsafe_clear</span>() {
     <span class="ident">pallet_bags_list::Pallet</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::unsafe_clear</span>()
-  }
-
-  <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;runtime-benchmarks&quot;</span>)]</span>
-  <span class="kw">fn</span> <span class="ident">weight_update_worst_case</span>(<span class="ident">who</span>: <span class="kw-2">&amp;</span><span class="ident">T::AccountId</span>, <span class="ident">is_increase</span>: <span class="ident">bool</span>) -&gt; <span class="ident">VoteWeight</span> {
-    <span class="ident">pallet_bags_list::Pallet</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::weight_update_worst_case</span>(<span class="ident">who</span>, <span class="ident">is_increase</span>)
   }
 }
 </code></pre></div>
