@@ -14,6 +14,7 @@ pub mod pallet_bounties;
 pub mod pallet_collective;
 pub mod pallet_election_provider_multi_phase;
 pub mod pallet_elections_phragmen;
+pub mod pallet_fees;
 pub mod pallet_grandpa;
 pub mod pallet_identity;
 pub mod pallet_im_online;

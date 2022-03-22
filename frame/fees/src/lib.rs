@@ -1,15 +1,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod weights;
+pub use weights::*;
+
+mod migrations;
+
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
-pub mod weights;
-pub use weights::*;
-
-mod migrations;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
@@ -61,7 +64,7 @@ pub mod pallet {
 
   #[pallet::config]
   /// Configure the pallet by specifying the parameters and types on which it depends.
-  pub trait Config: frame_system::Config {
+  pub trait Config: frame_system::Config + pallet_security::Config {
     /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 

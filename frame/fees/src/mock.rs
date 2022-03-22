@@ -13,6 +13,7 @@ use frame_support::{
   },
   PalletId,
 };
+
 use frame_system as system;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -20,11 +21,11 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, Permill, RuntimeDebug,
+  DispatchError, DispatchResult, FixedPointNumber, FixedU128, Permill, RuntimeDebug,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex};
+use tidefi_primitives::{assets, BlockNumber, CurrencyId, SessionIndex, SunriseSwapPool};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -71,7 +72,7 @@ frame_support::construct_runtime!(
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Fees: pallet_fees::{Pallet, Storage, Event<T>},
+    Fees: pallet_fees::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
     TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
@@ -382,9 +383,19 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
-  pallet_fees::GenesisConfig::<Test>::default()
-    .assimilate_storage(&mut t)
-    .unwrap();
+  pallet_fees::GenesisConfig::<Test> {
+    phantom: Default::default(),
+    sunrise_swap_pools: vec![SunriseSwapPool {
+      id: 1,
+      minimum_usdt_value: 0,
+      transactions_remaining: 1_000,
+      balance: assets::Asset::Tide.saturating_mul(67_200_000),
+      // 200%
+      rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
+    }],
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
