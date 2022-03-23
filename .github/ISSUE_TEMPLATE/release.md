@@ -73,7 +73,7 @@ The release notes should list:
   based on the max priority of any _client_ changes.
 - Which native runtimes and their versions are included
 - The proposal hashes of the runtimes as built with
-  [srtool](https://gitlab.com/chevdor/srtool)
+  [srtool](https://gitlab.com/tide-labs/srtool)
 - Any changes in this release that are still awaiting audit
 
 The release notes may also list:
