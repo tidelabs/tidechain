@@ -740,7 +740,7 @@ fn lagoon_staging_testnet_config_genesis(wasm_binary: &[u8]) -> lagoon_runtime::
   lagoon_testnet_genesis(
     wasm_binary,
     initial_authorities,
-    helpers::get_stakeholder_tokens_lagoon(),
+    helpers::get_stakeholder_tokens_lagoon_staging(),
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
@@ -1097,6 +1097,20 @@ mod helpers {
   ) -> u128 {
     // Validators + quorums
     (initial_validators + initial_quorums) as u128 * endowment
+  }
+
+  #[cfg(feature = "lagoon-native")]
+  pub fn get_stakeholder_tokens_lagoon_staging() -> Vec<(CurrencyId, AccountId, Balance)> {
+    vec![
+      // faucet
+      (
+        CurrencyId::Tide,
+        //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
+        hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
+        // 10_000 TIDE
+        assets::Asset::Tide.saturating_mul(10_000),
+      ),
+    ]
   }
 
   // SECRET="key" ./scripts/prepare-dev-lagoon.sh
