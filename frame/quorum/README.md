@@ -1,4 +1,4 @@
-# Oracle
+# Quorum
 
 The Quorum module for Tidechain.
 

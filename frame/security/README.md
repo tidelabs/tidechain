@@ -1,4 +1,4 @@
-# Oracle
+# Security
 
 A simple Security module for Tidechain.
 
