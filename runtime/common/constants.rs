@@ -227,7 +227,11 @@ pub mod time {
 
   // NOTE: Currently it is not possible to change the epoch duration after the chain has started.
   // Attempting to do so will brick block production.
-  pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 4 * HOURS;
+
+  // FIXME: Once tests are done, revert to 4 hours epoch
+  // pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 4 * HOURS;
+  pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 15 * MINUTES;
+
   pub const EPOCH_DURATION_IN_SLOTS: u32 = {
     const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
 
