@@ -36,7 +36,7 @@ cargo +nightly run $standard_args -- benchmark \
   --execution=wasm \
   --wasm-execution=compiled \
   --heap-pages=4096 \
-  --header=./file_header.txt \
+  --header=./FILE_TEMPLATE \
   --output="./runtime/${runtime}/src/weights/${pallet/::/_}.rs"
 done < "${runtime}_pallets"
 rm "${runtime}_pallets"
