@@ -1,0 +1,89 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+# call for instance as:
+# ./bin/changelog v0.1.3
+#
+# You may set the ENV NO_CACHE to force fetching from Github
+# You should also ensure you set the ENV: GITHUB_TOKEN
+
+require_relative '../lib/changelog'
+require 'logger'
+
+logger = Logger.new($stdout)
+logger.level = Logger::DEBUG
+logger.debug('Starting')
+
+owner = 'tidelabs'
+repo = 'tidechain'
+
+gh_tidechain = SubRef.new(format('%<owner>s/%<repo>s', { owner: owner, repo: repo }))
+last_release_ref = gh_tidechain.get_last_ref()
+
+tidechain_ref1 = ARGV[0] || last_release_ref
+tidechain_ref2 = ARGV[1] || 'HEAD'
+output = ARGV[2] || 'release-notes.md'
+
+ENV['REF1'] = tidechain_ref1
+ENV['REF2'] = tidechain_ref2
+
+substrate_ref1 = gh_tidechain.get_dependency_reference(tidechain_ref1, 'sp-io')
+substrate_ref2 = gh_tidechain.get_dependency_reference(tidechain_ref2, 'sp-io')
+
+logger.debug("Tidechain from:   #{tidechain_ref1}")
+logger.debug("Tidechain to:     #{tidechain_ref2}")
+
+logger.debug("Substrate from:  #{substrate_ref1}")
+logger.debug("Substrate to:    #{substrate_ref2}")
+
+substrate_data = 'substrate.json'
+tidechain_data = 'tidechain.json'
+
+logger.debug("Using SUBSTRATE: #{substrate_data}")
+logger.debug("Using TIDECHAIN:  #{tidechain_data}")
+
+logger.warn('NO_CACHE set') if ENV['NO_CACHE']
+
+if ENV['NO_CACHE'] || !File.file?(tidechain_data)
+  logger.debug(format('Fetching data for Tidechain into %s', tidechain_data))
+  cmd = format('changelogerator %<owner>s/%<repo>s -f %<from>s -t %<to>s > %<output>s',
+               { owner: owner, repo: repo, from: tidechain_ref1, to: tidechain_ref2, output: tidechain_data })
+  system(cmd)
+else
+  logger.debug("Re-using:#{tidechain_data}")
+end
+
+if ENV['NO_CACHE'] || !File.file?(substrate_data)
+  logger.debug(format('Fetching data for Substrate into %s', substrate_data))
+  cmd = format('changelogerator %<owner>s/%<repo>s -f %<from>s -t %<to>s > %<output>s',
+               { owner: "paritytech", repo: 'substrate', from: substrate_ref1, to: substrate_ref2, output: substrate_data })
+  system(cmd)
+else
+  logger.debug("Re-using:#{substrate_data}")
+end
+
+LAGOON_DIGEST = ENV['LAGOON_DIGEST'] || 'digests/lagoon_srtool_output.json'
+TIDECHAIN_DIGEST = ENV['TIDECHAIN_DIGEST'] || 'digests/tidechain_srtool_output.json'
+
+# Here we compose all the pieces together into one
+# single big json file.
+cmd = format('jq \
+    --slurpfile substrate %s \
+    --slurpfile tidechain %s \
+    --slurpfile srtool_lagoon %s \
+    --slurpfile srtool_tidechain %s \
+    -n \'{
+            substrate: $substrate[0],
+            tidechain: $tidechain[0],
+        srtool: [
+        { name: "lagoon", data: $srtool_lagoon[0] },
+        { name: "tidechain", data: $srtool_tidechain[0] }
+    ] }\' > context.json', substrate_data, tidechain_data,
+            LAGOON_DIGEST,
+            TIDECHAIN_DIGEST)
+system(cmd)
+
+cmd = format('tera --env --env-key env --include-path templates \
+        --template templates/template.md.tera context.json > %s', output)
+system(cmd)

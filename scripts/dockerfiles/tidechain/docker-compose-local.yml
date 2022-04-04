@@ -1,0 +1,47 @@
+version: "3"
+services:
+  node_alice:
+    ports:
+      - "30333:30333"
+      - "9933:9933"
+      - "9944:9944"
+    image: tidelabs/tidechain:latest
+    volumes:
+      - "tidechain-data-alice:/data"
+    command: |
+      --dev
+      --alice
+      -d /data
+      --unsafe-ws-external 
+      --unsafe-rpc-external 
+      --rpc-cors=all
+      --node-key 0000000000000000000000000000000000000000000000000000000000000001
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.1
+
+  node_bob:
+    image: tidelabs/tidechain:latest
+    volumes:
+      - "tidechain-data-bob:/data"
+    links:
+      - "node_alice:alice"
+    command: |
+      --dev
+      --bob
+      -d /data
+      --bootnodes '/ip4/172.28.1.1/tcp/30333/p2p/QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR'
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.2
+
+volumes:
+  tidechain-data-alice:
+  tidechain-data-bob:
+
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
