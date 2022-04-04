@@ -44,7 +44,7 @@ candidate branch or started an additional release candidate branch (rc-2, rc-3, 
 - [ ] Check that the new client versions have [run on the network](#burn-in)
       without issue for 12 hours.
 - [ ] Check that a draft release has been created at
-      https://github.com/tide-labs/tidechain/releases with relevant [release
+      https://github.com/tidelabs/tidechain/releases with relevant [release
       notes](#release-notes)
 - [ ] Check that [build artifacts](#build-artifacts) have been added to the
       draft-release
@@ -73,7 +73,7 @@ The release notes should list:
   based on the max priority of any _client_ changes.
 - Which native runtimes and their versions are included
 - The proposal hashes of the runtimes as built with
-  [srtool](https://gitlab.com/tide-labs/srtool)
+  [srtool](https://gitlab.com/tidelabs/srtool)
 - Any changes in this release that are still awaiting audit
 
 The release notes may also list:
@@ -106,7 +106,7 @@ functions. Compare the metadata of the current and new runtimes and ensure that
 the `module index, call index` tuples map to the same set of functions. In case
 of a breaking change, increase `transaction_version`.
 
-To verify the order has not changed, you may manually start the following [Github Action](https://github.com/tide-labs/tidechain/actions/workflows/extrinsic-ordering-check-from-bin.yml). It takes around a minute to run and will produce the report as artifact you need to manually check.
+To verify the order has not changed, you may manually start the following [Github Action](https://github.com/tidelabs/tidechain/actions/workflows/extrinsic-ordering-check-from-bin.yml). It takes around a minute to run and will produce the report as artifact you need to manually check.
 
 The things to look for in the output are lines like:
 

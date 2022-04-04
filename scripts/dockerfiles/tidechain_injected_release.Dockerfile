@@ -5,14 +5,14 @@ ARG VCS_REF
 ARG BUILD_DATE
 ARG TIDECHAIN_VERSION
 
-LABEL com.semantic-network.image.authors="ops@semantic-network.com" \
+LABEL com.semantic-network.image.authors="publishers@tidelabs.org" \
 	com.semantic-network.image.vendor="Semantic Network" \
 	com.semantic-network.image.title="${IMAGE_NAME}" \
 	com.semantic-network.image.description="Tidechain" \
-	com.semantic-network.image.source="https://github.com/tide-labs/tidechain/blob/${VCS_REF}/scripts/docker/tidechain_injected_release.Dockerfile" \
+	com.semantic-network.image.source="https://github.com/tidelabs/tidechain/blob/${VCS_REF}/scripts/docker/tidechain_injected_release.Dockerfile" \
 	com.semantic-network.image.revision="${VCS_REF}" \
 	com.semantic-network.image.created="${BUILD_DATE}" \
-	com.semantic-network.image.documentation="https://github.com/tide-labs/tidechain/"
+	com.semantic-network.image.documentation="https://github.com/tidelabs/tidechain/"
 
 # show backtraces
 ENV RUST_BACKTRACE 1

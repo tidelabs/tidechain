@@ -11,11 +11,11 @@ FROM docker.io/library/ubuntu:20.04
 
 LABEL description="Multistage Docker image for Tidechain" \
 	com.semantic-network.image.type="builder" \
-	com.semantic-network.image.authors="ops@semantic-network.com" \
+	com.semantic-network.image.authors="publishers@tidelabs.org" \
 	com.semantic-network.image.vendor="Semantic Network" \
 	com.semantic-network.image.description="Tidechain" \
-	com.semantic-network.image.source="https://github.com/tide-labs/tidechain/blob/${VCS_REF}/scripts/dockerfiles/tidechain/tidechain_builder.Dockerfile" \
-	com.semantic-network.image.documentation="https://github.com/tide-labs/tidechain/"
+	com.semantic-network.image.source="https://github.com/tidelabs/tidechain/blob/${VCS_REF}/scripts/dockerfiles/tidechain/tidechain_builder.Dockerfile" \
+	com.semantic-network.image.documentation="https://github.com/tidelabs/tidechain/"
 
 COPY --from=builder /tidechain/target/release/tidechain /usr/local/bin
 

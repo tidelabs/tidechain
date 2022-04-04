@@ -15,10 +15,10 @@ runtimes=(
 )
 
 # First we fetch the latest released binary
-latest_release=$(latest_release 'tide-labs/tidechain')
+latest_release=$(latest_release 'tidelabs/tidechain')
 RELEASE_BIN="./tidechain-$latest_release"
 echo "[+] Fetching binary for Tidechain version $latest_release"
-curl -L "https://github.com/tide-labs/tidechain/releases/download/$latest_release/tidechain" > "$RELEASE_BIN" || exit 1
+curl -L "https://github.com/tidelabs/tidechain/releases/download/$latest_release/tidechain" > "$RELEASE_BIN" || exit 1
 chmod +x "$RELEASE_BIN"
 
 

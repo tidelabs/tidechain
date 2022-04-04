@@ -9,7 +9,7 @@
 
 ### Notes
 
-- The release-candidate branch _must_ be made in the tide-labs/tidechain repo in
+- The release-candidate branch _must_ be made in the tidelabs/tidechain repo in
   order for release automation to work correctly
 - Any new pushes/merges to the release-candidate branch (for example,
   refs/heads/release-v0.1.18) will result in the rc index being bumped (e.g., v0.1.18-rc1
