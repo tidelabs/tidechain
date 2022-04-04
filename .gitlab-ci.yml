@@ -6,7 +6,7 @@
 # setting DEPLOY_TAG will only deploy the tagged image
 #
 # please do not add new jobs without "rules:" and "*-env". There are &rules-test for everything
-# and "kubernetes-env" with "docker-env" to set a runner which executes the job.
+# and "docker-env" to set a runner which executes the job.
 
 stages:
   - test
@@ -26,9 +26,6 @@ variables:
   CI_IMAGE: "tidelabs/tidechain-ci:latest"
   DOCKER_OS: "debian:stretch"
   ARCH: "x86_64"
-  VAULT_SERVER_URL: "https://vault.semantic-network.tech"
-  VAULT_AUTH_PATH: "gitlab-semnet-io-jwt"
-  VAULT_AUTH_ROLE: "cicd_gitlab_semnet_${CI_PROJECT_NAME}"
 
 default:
   cache: {}
@@ -79,38 +76,12 @@ default:
     - if: $CI_COMMIT_BRANCH =~ /^chore/ # Chore
     - if: $CI_COMMIT_BRANCH =~ /^fix/ # Fix
 
-#### Vault secrets
-.vault-secrets: &vault-secrets
-  secrets:
-    DOCKER_HUB_USER:
-      vault: cicd/gitlab/semnet/DOCKER_HUB_USER@kv
-      file: false
-    DOCKER_HUB_PASS:
-      vault: cicd/gitlab/semnet/DOCKER_HUB_PASS@kv
-      file: false
-    GITHUB_USER:
-      vault: cicd/gitlab/$CI_PROJECT_PATH/GITHUB_USER@kv
-      file: false
-    GITHUB_SSH_PRIV_KEY:
-      vault: cicd/gitlab/$CI_PROJECT_PATH/GITHUB_SSH_PRIV_KEY@kv
-      file: false
-    SEMNETPR_USER:
-      vault: cicd/gitlab/$CI_PROJECT_PATH/SEMNETPR_USER@kv
-      file: false
-    SEMNETPR_PASS:
-      vault: cicd/gitlab/$CI_PROJECT_PATH/SEMNETPR_PASS@kv
-      file: false
-    SSH_PRIVATE_KEY:
-      vault: cicd/gitlab/$CI_PROJECT_PATH/SSH_PRIVATE_KEY@kv
-      file: false
-
 check-runtime:
   stage: test
   image: tidelabs/tools:latest
   #<<: *kubernetes-env
   <<: *docker-env
   <<: *rules-test
-  #<<: *vault-secrets
   script:
     - ./scripts/gitlab/check_runtime.sh
   allow_failure: true
@@ -129,7 +100,6 @@ test-deterministic-wasm:
   <<: *rules-test
   <<: *docker-env
   <<: *compiler-info
-  #<<: *vault-secrets
   script:
     - ./scripts/gitlab/test_deterministic_wasm.sh
 
@@ -138,7 +108,6 @@ test-build-linux-stable:
   <<: *docker-env
   <<: *compiler-info
   <<: *collect-artifacts
-  #<<: *vault-secrets
   variables:
     RUST_TOOLCHAIN: stable
     # Enable debug assertions since we are running optimized builds for testing
@@ -184,7 +153,6 @@ check-runtime-benchmarks:
   <<: *rules-test
   <<: *docker-env
   <<: *compiler-info
-  #<<: *vault-secrets
   script:
     # Check that the node will compile with `runtime-benchmarks` feature flag.
     - ./scripts/gitlab/check_runtime_benchmarks.sh
@@ -195,7 +163,6 @@ check-no-default-features:
   <<: *rules-test
   <<: *docker-env
   <<: *compiler-info
-  #<<: *vault-secrets
   script:
     # Check that tidechain-cli will compile no default features.
     - ./scripts/gitlab/check_no_default_features.sh
@@ -219,7 +186,6 @@ check-transaction-versions:
   stage: build
   <<: *rules-test
   <<: *docker-env
-  #<<: *vault-secrets
   image: node:15
   needs:
     - job: test-build-linux-stable
@@ -228,7 +194,7 @@ check-transaction-versions:
     - apt-get -y update; apt-get -y install jq lsof
     - npm install --ignore-scripts -g @polkadot/metadata-cmp
     # Set git config
-    - git config remote.origin.url "https://github.com/tide-labs/tidechain.git"
+    - git config remote.origin.url "https://github.com/tidelabs/tidechain.git"
     - git fetch origin release
   script:
     - scripts/gitlab/check_extrinsics_ordering.sh
@@ -289,7 +255,6 @@ publish-s3-release: &publish-s3
       artifacts: true
   #<<: *kubernetes-env
   <<: *docker-env
-  #<<: *vault-secrets
   image: tidelabs/awscli:latest
   variables:
     GIT_STRATEGY: none
@@ -337,7 +302,6 @@ publish-rustdoc:
   stage: publish
   #<<: *kubernetes-env
   <<: *docker-env
-  #<<: *vault-secrets
   image: tidelabs/tools:latest
   variables:
     GIT_DEPTH: 100
@@ -358,7 +322,7 @@ publish-rustdoc:
     # Set git config
     - git config user.email "tidechain.ci@gmail.com"
     - git config user.name "${GITHUB_USER}"
-    - git config remote.origin.url "git@github.com:/tide-labs/tidechain.git"
+    - git config remote.origin.url "git@github.com:/tidelabs/tidechain.git"
     - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
     - git fetch origin gh-pages
     # Save README and docs
@@ -377,7 +341,7 @@ publish-rustdoc:
     - git commit -m "Updated docs for ${CI_COMMIT_REF_NAME}" ||
       echo "___Nothing to commit___"
     - git push origin gh-pages --force
-    - echo "___Rustdoc was successfully published to https://tide-labs.github.io/tidechain/___"
+    - echo "___Rustdoc was successfully published to https://tidelabs.github.io/tidechain/___"
   after_script:
     - rm -rf .git/ ./*
 
