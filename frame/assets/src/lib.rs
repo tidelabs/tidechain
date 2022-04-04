@@ -143,7 +143,6 @@
 #![allow(clippy::or_fun_call)]
 #![allow(clippy::op_ref)]
 #![allow(clippy::result_unit_err)]
-#![allow(licen)]
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
