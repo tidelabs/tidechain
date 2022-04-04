@@ -1,3 +1,19 @@
+// Copyright 2021-2022 Semantic Network Ltd.
+// This file is part of Tidechain.
+
+// Tidechain is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Tidechain is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -28,6 +44,22 @@ use sp_version::RuntimeVersion;
 
 #[cfg(feature = "std")]
 pub use crate::api::{api::dispatch, RuntimeApi};
+// Copyright 2021-2022 Semantic Network Ltd.
+// This file is part of Tidechain.
+
+// Tidechain is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Tidechain is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
+
 pub use crate::types::{
   AccountId, AccountIndex, Address, AssetId, Balance, Block, BlockId, BlockNumber,
   CheckedExtrinsic, Hash, Header, Moment, Nonce, Signature, SignedBlock, SignedExtra,

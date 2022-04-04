@@ -31,7 +31,7 @@
 // --execution=wasm
 // --wasm-execution=compiled
 // --heap-pages=4096
-// --header=./file_header.txt
+// --header=./FILE_TEMPLATE
 // --output=./runtime/lagoon/src/weights/
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
