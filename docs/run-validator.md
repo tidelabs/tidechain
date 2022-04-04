@@ -29,12 +29,12 @@ The nature of pre-built binaries means that they may not work on your particular
 Download the latest Tidechain binary within Ubuntu by running the following command.
 
 ```
-curl -sL https://github.com/tide-labs/tidechain/releases/latest/download/tidechain && chmod +x tidechain && mv tidechain /usr/local/bin/
+curl -sL https://github.com/tidelabs/tidechain/releases/latest/download/tidechain && chmod +x tidechain && mv tidechain /usr/local/bin/
 ```
 
 ### Build from source
 
-To build the `Tidechain` binary from the source-code, use the [release](https://github.com/tide-labs/tidechain/tree/release) branch and follow the instructions in the [README](../README.md#build-from-source).
+To build the `Tidechain` binary from the source-code, use the [release](https://github.com/tidelabs/tidechain/tree/release) branch and follow the instructions in the [README](../README.md#build-from-source).
 
 ## Synchronize Chain Data
 

@@ -83,7 +83,7 @@ boldprint () { printf "|\n| \033[1m%s\033[0m\n|\n" "${@}"; }
 boldcat () { printf "|\n"; while read -r l; do printf "| \033[1m%s\033[0m\n" "${l}"; done; printf "|\n" ; }
 
 skip_if_companion_pr() {
-  url="https://api.github.com/repos/tide-labs/tidechain/pulls/${CI_COMMIT_REF_NAME}"
+  url="https://api.github.com/repos/tidelabs/tidechain/pulls/${CI_COMMIT_REF_NAME}"
   echo "[+] API URL: $url"
 
   pr_title=$(curl -sSL -H "Authorization: token ${GITHUB_PR_TOKEN}" "$url" | jq -r .title)
@@ -99,7 +99,7 @@ skip_if_companion_pr() {
 
 # Fetches the tag name of the latest release from a repository
 # repo: 'organisation/repo'
-# Usage: latest_release 'tide-labs/tidechain'
+# Usage: latest_release 'tidelabs/tidechain'
 latest_release() {
   curl -s "$api_base/$1/releases/latest" | jq -r '.tag_name'
 }

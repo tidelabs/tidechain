@@ -7,7 +7,7 @@ For more specific guides, like how to be a validator, see the [Tidechain Wiki](#
 ## Installation
 
 If you just wish to run a Tidechain node without compiling it yourself, you may
-either run the latest binary from our [releases](https://github.com/tide-labs/tidechain/releases) page.
+either run the latest binary from our [releases](https://github.com/tidelabs/tidechain/releases) page.
 
 ## Building
 
@@ -19,7 +19,7 @@ below this section.
 If you want to install Tidechain in your PATH, you can do so with with:
 
 ```bash
-cargo install --git https://github.com/tide-labs/tidechain --tag <version> tidechain --locked
+cargo install --git https://github.com/tidelabs/tidechain --tag <version> tidechain --locked
 ```
 
 ### Build from Source
@@ -62,7 +62,7 @@ You can also build from source using
 ```bash
 git checkout <latest tagged release>
 docker run --rm -it -w /shellhere/tidechain \
-                    -v $(pwd):/tidechain/tidechain \
+                    -v $(pwd):/shellhere/tidechain \
                     tidelabs/tidechain-ci:latest cargo build --release
 sudo chown -R $(id -u):$(id -g) target/
 ```
@@ -120,7 +120,7 @@ curl https://getsubstrate.io -sSf | bash -s -- --fast
 Then, grab the Tidechain source code:
 
 ```bash
-git clone https://github.com/tide-labs/tidechain.git
+git clone https://github.com/tidelabs/tidechain.git
 cd tidechain
 ```
 
@@ -164,13 +164,13 @@ If you want to see the multi-node consensus algorithm in action locally, then yo
 local testnet. You'll need two terminals open. In one, run:
 
 ```bash
-tidechain --chain=tidechain-local --alice -d /tmp/alice
+tidechain --chain=lagoon-local --alice -d /tmp/alice
 ```
 
 And in the other, run:
 
 ```bash
-tidechain --chain=tidechain-local --bob -d /tmp/bob --port 30334 --bootnodes '/ip4/127.0.0.1/tcp/30333/p2p/ALICE_BOOTNODE_ID_HERE'
+tidechain --chain=lagoon-local --bob -d /tmp/bob --port 30334 --bootnodes '/ip4/127.0.0.1/tcp/30333/p2p/ALICE_BOOTNODE_ID_HERE'
 ```
 
 Ensure you replace `ALICE_BOOTNODE_ID_HERE` with the node ID from the output of the first terminal.

@@ -48,7 +48,7 @@ impl SubstrateCli for Cli {
   }
 
   fn support_url() -> String {
-    "https://github.com/tide-labs/tidechain".into()
+    "https://github.com/tidelabs/tidechain".into()
   }
 
   fn copyright_start_year() -> i32 {

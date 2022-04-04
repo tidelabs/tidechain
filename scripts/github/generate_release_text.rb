@@ -55,7 +55,7 @@ renderer = ERB.new(
 
 #logger("Generate changelog for Tidechain")
 #tidechain_cl = Changelog.new(
-#  'tide-labs/tidechain', last_ref, current_ref, token: token
+#  'tidelabs/tidechain', last_ref, current_ref, token: token
 #)
 
 # Gets the substrate commit hash used for a given tidechain ref
@@ -77,7 +77,7 @@ end
 
 #logger("Generate changelog for Substrate")
 #substrate_cl = Changelog.new(
-#  'tide-labs/substrate', substrate_prev_sha, substrate_cur_sha,
+#  'tidelabs/substrate', substrate_prev_sha, substrate_cur_sha,
 #  token: token,
 #  prefix: true
 #)
