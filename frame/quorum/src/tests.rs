@@ -39,7 +39,7 @@ pub fn should_submit_proposal() {
 
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
-      currency_id: CurrencyId::Tide,
+      currency_id: CurrencyId::Tifi,
       mint_amount: 1_000_000_000_000,
       transaction_id: Vec::new(),
       compliance_level: ComplianceLevel::Green,
@@ -60,7 +60,7 @@ pub fn should_vote_for_mint() {
     assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
-      currency_id: CurrencyId::Tide,
+      currency_id: CurrencyId::Tifi,
       mint_amount: 1_000_000_000_000,
       transaction_id: Default::default(),
       compliance_level: ComplianceLevel::Green,
@@ -88,7 +88,7 @@ pub fn should_remove_expired() {
     assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
     let proposal = ProposalType::Mint(Mint {
       account_id: 1,
-      currency_id: CurrencyId::Tide,
+      currency_id: CurrencyId::Tifi,
       mint_amount: 1_000_000_000_000,
       transaction_id: Default::default(),
       compliance_level: ComplianceLevel::Green,

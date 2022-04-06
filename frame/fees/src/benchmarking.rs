@@ -32,7 +32,7 @@ benchmarks! {
     Pallet::<T>::start_era();
     Pallet::<T>::on_finalize(T::BlockNumber::from(1_u32));
 
-    T::CurrencyTidefi::mint_into(CurrencyId::Tide, &Pallet::<T>::account_id(), 1_000_000_000_000_000_000).unwrap();
+    T::CurrencyTidefi::mint_into(CurrencyId::Tifi, &Pallet::<T>::account_id(), 1_000_000_000_000_000_000).unwrap();
     SunriseRewards::<T>::insert(&caller, 1, 1_000_000_000_000);
 
     frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());

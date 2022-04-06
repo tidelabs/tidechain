@@ -199,8 +199,8 @@ pub mod pallet {
         Error::<T>::AssetDisabled
       );
 
-      // 4. Make sure the currency not a TIDE as it's not supported.
-      ensure!(currency_id != CurrencyId::Tide, Error::<T>::UnknownAsset);
+      // 4. Make sure the currency not a TIFI as it's not supported.
+      ensure!(currency_id != CurrencyId::Tifi, Error::<T>::UnknownAsset);
 
       // 5. Make sure the account have enough funds
       match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {

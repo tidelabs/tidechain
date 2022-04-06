@@ -226,7 +226,7 @@ pub mod pallet {
       );
 
       // 3. Freeze/unfreeze at the chain level, do nothing if
-      // we requested a TIDE freeze
+      // we requested a TIFI freeze
       if let CurrencyId::Wrapped(asset_id) = currency_id {
         match is_enabled {
           true => {
@@ -286,8 +286,8 @@ pub mod pallet {
 
     pub fn is_currency_exist(currency_id: CurrencyId) -> bool {
       match currency_id {
-        // tide always exist
-        CurrencyId::Tide => true,
+        // tifi always exist
+        CurrencyId::Tifi => true,
         CurrencyId::Wrapped(asset_id) => {
           pallet_assets::Pallet::<T>::asset_details(asset_id).is_some()
         }
@@ -301,7 +301,7 @@ pub mod pallet {
       // we use `reducible_balance` to return the real available value for the account
       // we also force the `keep_alive`
 
-      // FIXME: Review the `keep_alive` system for TIDE & assets, we should probably have
+      // FIXME: Review the `keep_alive` system for TIFI & assets, we should probably have
       // a user settings, where they can enable or force opting-out to keep-alive.
       // that mean if they use all of their funds, the account is deleted from the chain
       // and and will be re-created on next deposit. this could drain all persistent settings
@@ -316,10 +316,10 @@ pub mod pallet {
 
     pub fn get_assets() -> Result<Vec<(CurrencyId, CurrencyMetadata<Vec<u8>>)>, DispatchError> {
       let mut final_assets = vec![(
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         CurrencyMetadata {
-          name: "Tide".into(),
-          symbol: "TIDE".into(),
+          name: "Tidefi Token".into(),
+          symbol: "TIFI".into(),
           decimals: 12,
           is_frozen: false,
         },
@@ -348,8 +348,8 @@ pub mod pallet {
       account_id: &T::AccountId,
     ) -> Result<Vec<(CurrencyId, CurrencyBalance<BalanceInfo>)>, DispatchError> {
       let mut final_balances = vec![(
-        CurrencyId::Tide,
-        Self::get_account_balance(account_id, CurrencyId::Tide)?,
+        CurrencyId::Tifi,
+        Self::get_account_balance(account_id, CurrencyId::Tifi)?,
       )];
       let mut asset_balances = pallet_assets::Account::<T>::iter_prefix(account_id)
         .map(|(asset_id, balance)| {
@@ -374,8 +374,8 @@ pub mod pallet {
   impl<T: Config> AssetRegistryExt for Pallet<T> {
     fn is_currency_enabled(currency_id: CurrencyId) -> bool {
       match currency_id {
-        // we can't disable tide
-        CurrencyId::Tide => true,
+        // we can't disable tifi
+        CurrencyId::Tifi => true,
         CurrencyId::Wrapped(asset_id) => pallet_assets::Pallet::<T>::asset_details(asset_id)
           .map(|detail| !detail.is_frozen)
           .unwrap_or(false),

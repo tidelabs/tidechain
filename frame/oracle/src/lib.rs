@@ -688,8 +688,8 @@ pub mod pallet {
         all_prices.push((currency_id, CurrencyId::Wrapped(USDT), price))
       }
 
-      for (asset_id, price) in im_alive.tide_value {
-        all_prices.push((CurrencyId::Wrapped(asset_id), CurrencyId::Tide, price))
+      for (asset_id, price) in im_alive.tifi_value {
+        all_prices.push((CurrencyId::Wrapped(asset_id), CurrencyId::Tifi, price))
       }
 
       if !all_prices.is_empty() {
