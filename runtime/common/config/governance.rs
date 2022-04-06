@@ -16,7 +16,7 @@
 
 use crate::{
   constants::{
-    currency::{deposit, CENTS, TIDE},
+    currency::{deposit, CENTS, TIFI},
     time::DAYS,
   },
   types::{AccountId, Balance, BlockNumber, EnsureRootOrHalfCouncil},
@@ -32,7 +32,7 @@ use sp_runtime::{Percent, Permill};
 use static_assertions::const_assert;
 
 parameter_types! {
-   pub const CandidacyBond: Balance = 100 * TIDE;
+   pub const CandidacyBond: Balance = 100 * TIFI;
    // 1 storage item created, key size is 32 bytes, value size is 16+16.
    pub const VotingBondBase: Balance = deposit(1, 64);
    // additional data per vote is 32 bytes (account id).
@@ -115,20 +115,20 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 
 parameter_types! {
    pub const ProposalBond: Permill = Permill::from_percent(5);
-   pub const ProposalBondMinimum: Balance = 100 * TIDE;
-   pub const ProposalBondMaximum: Balance = 100_000 * TIDE;
+   pub const ProposalBondMinimum: Balance = 100 * TIFI;
+   pub const ProposalBondMaximum: Balance = 100_000 * TIFI;
    pub const SpendPeriod: BlockNumber = 24 * DAYS;
    pub const Burn: Permill = Permill::from_percent(1);
    pub const TipCountdown: BlockNumber = DAYS;
    pub const TipFindersFee: Percent = Percent::from_percent(20);
-   pub const TipReportDepositBase: Balance = TIDE;
+   pub const TipReportDepositBase: Balance = TIFI;
    pub const DataDepositPerByte: Balance = CENTS;
-   pub const BountyDepositBase: Balance = TIDE;
+   pub const BountyDepositBase: Balance = TIFI;
    pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
    pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
    pub const MaximumReasonLength: u32 = 16384;
    pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-   pub const BountyValueMinimum: Balance = 10 * TIDE;
+   pub const BountyValueMinimum: Balance = 10 * TIFI;
    pub const MaxApprovals: u32 = 100;
 }
 

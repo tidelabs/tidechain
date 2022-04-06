@@ -3,7 +3,7 @@
 %define debug_package %{nil}
 
 Name: tidechain
-Summary: Implementation of TIDE Chain node in Rust based on the Substrate framework.
+Summary: Implementation of Tidechain node in Rust based on the Substrate framework.
 Version: @@VERSION@@
 Release: @@RELEASE@@%{?dist}
 License: GPLv3+

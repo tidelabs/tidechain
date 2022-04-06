@@ -29,16 +29,16 @@ pub fn request_swap_event() {
     let alice = Origin::signed(1u64);
     let temp_asset_id = 1;
 
-    // add 1 tide to alice & all MMs
+    // add 1 tifi to alice & all MMs
     assert_ok!(Adapter::mint_into(
-      CurrencyId::Tide,
+      CurrencyId::Tifi,
       &1u64,
       1_000_000_000_000
     ));
 
     // add 20 tides to bob
     assert_ok!(Adapter::mint_into(
-      CurrencyId::Tide,
+      CurrencyId::Tifi,
       &2u64,
       20_000_000_000_000
     ));
@@ -67,7 +67,7 @@ pub fn request_swap_event() {
     // Submit request
     assert_ok!(Tidefi::swap(
       Origin::signed(2u64),
-      CurrencyId::Tide,
+      CurrencyId::Tifi,
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
       20_000,
@@ -82,7 +82,7 @@ pub fn request_swap_event() {
       )
       .unwrap_or_default(),
       account: 2u64,
-      currency_id_from: CurrencyId::Tide,
+      currency_id_from: CurrencyId::Tifi,
       amount_from: 10_000_000_000_000,
       currency_id_to: CurrencyId::Wrapped(temp_asset_id),
       amount_to: 20_000,

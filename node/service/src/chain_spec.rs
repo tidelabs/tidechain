@@ -42,8 +42,8 @@ const TIDECHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/
 #[cfg(feature = "lagoon-native")]
 const LAGOON_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
-#[cfg(feature = "lagoon-native")]
-const DEFAULT_PROTOCOL_ID: &str = "tide";
+#[cfg(any(feature = "lagoon-native", feature = "tidechain-native"))]
+const DEFAULT_PROTOCOL_ID: &str = "tifi";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -124,7 +124,7 @@ fn lagoon_testnet_genesis(
   root: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> lagoon_runtime::GenesisConfig {
-  // 1000 TIDEs / validators
+  // 1000 TIFIs / validators
   const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 2 * 1_000_000_000_000;
@@ -133,7 +133,7 @@ fn lagoon_testnet_genesis(
   let treasury_account: AccountId = lagoon_runtime::TreasuryPalletId::get().into_account();
   // Fees Account Id
   let fees_account: AccountId = lagoon_runtime::FeesPalletId::get().into_account();
-  // Get all TIDE from our stakeholders
+  // Get all TIFI from our stakeholders
   let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
 
   // default threshold set to 60%
@@ -151,18 +151,18 @@ fn lagoon_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
-  // 10 tide endowed to root
+  // 10 tifi endowed to root
   + 10_000_000_000_000
   // Sunrise pool
   + SUNRISE_POOL;
 
-  // Each initial validator get an endowment of `ENDOWMENT` TIDE.
+  // Each initial validator get an endowment of `ENDOWMENT` TIFI.
   let mut inital_validators_endowment = initial_authorities
     .iter()
     .map(|k| (k.0.clone(), ENDOWMENT))
     .collect_vec();
 
-  // Each quorums get an endowment of `ENDOWMENT` TIDE.
+  // Each quorums get an endowment of `ENDOWMENT` TIFI.
   let mut inital_quorums_endowment = quorums.iter().map(|k| (k.clone(), ENDOWMENT)).collect_vec();
 
   let mut endowed_accounts = vec![
@@ -170,7 +170,7 @@ fn lagoon_testnet_genesis(
     (treasury_account, treasury_funds),
     // Sunrise pool
     (fees_account, SUNRISE_POOL),
-    // 10 tide to root so he can pay fees
+    // 10 tifi to root so he can pay fees
     (root.clone(), 10_000_000_000_000),
   ];
 
@@ -318,7 +318,7 @@ fn tidechain_testnet_genesis(
   oracle: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> tidechain_runtime::GenesisConfig {
-  // 1000 TIDEs / validators
+  // 1000 TIFIs / validators
   const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 2 * 1_000_000_000_000;
@@ -333,7 +333,7 @@ fn tidechain_testnet_genesis(
   let fees_account: AccountId = tidechain_runtime::FeesPalletId::get().into_account();
   // Asset registry Account Id
   let asset_registry: AccountId = tidechain_runtime::AssetRegistryPalletId::get().into_account();
-  // Get all TIDE from our stakeholders
+  // Get all TIFI from our stakeholders
   let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
 
   let mut total_claims: u128 = 0;
@@ -351,13 +351,13 @@ fn tidechain_testnet_genesis(
   // Sunrise pool
   + SUNRISE_POOL;
 
-  // Each initial validator get an endowment of `ENDOWMENT` TIDE.
+  // Each initial validator get an endowment of `ENDOWMENT` TIFI.
   let mut inital_validators_endowment = initial_authorities
     .iter()
     .map(|k| (k.0.clone(), ENDOWMENT))
     .collect_vec();
 
-  // Each quorums get an endowment of `ENDOWMENT` TIDE.
+  // Each quorums get an endowment of `ENDOWMENT` TIFI.
   let mut inital_quorums_endowment = quorums.iter().map(|k| (k.clone(), ENDOWMENT)).collect_vec();
 
   let mut endowed_accounts = vec![
@@ -473,7 +473,7 @@ pub fn lagoon_development_config() -> Result<LagoonChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
-      "tokenSymbol": "TIDE"
+      "tokenSymbol": "TIFI"
     })
     .as_object()
     .expect("Map given; qed")
@@ -502,7 +502,7 @@ pub fn lagoon_local_testnet_config() -> Result<LagoonChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
-      "tokenSymbol": "TIDE"
+      "tokenSymbol": "TIFI"
     })
     .as_object()
     .expect("Map given; qed")
@@ -531,7 +531,7 @@ pub fn lagoon_staging_testnet_config() -> Result<LagoonChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
-      "tokenSymbol": "TIDE"
+      "tokenSymbol": "TIFI"
     })
     .as_object()
     .expect("Map given; qed")
@@ -563,7 +563,7 @@ pub fn tidechain_development_config() -> Result<TidechainChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
-      "tokenSymbol": "TIDE"
+      "tokenSymbol": "TIFI"
     })
     .as_object()
     .expect("Map given; qed")
@@ -593,7 +593,7 @@ pub fn tidechain_staging_testnet_config() -> Result<TidechainChainSpec, String> 
   let properties = Some(
     json!({
       "tokenDecimals": 12,
-      "tokenSymbol": "TIDE"
+      "tokenSymbol": "TIFI"
     })
     .as_object()
     .expect("Map given; qed")
@@ -628,7 +628,7 @@ pub fn tidechain_local_testnet_config() -> Result<TidechainChainSpec, String> {
   let properties = Some(
     json!({
       "tokenDecimals": 12,
-      "tokenSymbol": "TIDE"
+      "tokenSymbol": "TIFI"
     })
     .as_object()
     .expect("Map given; qed")
@@ -977,7 +977,7 @@ mod helpers {
             id: 1,
             minimum_usdt_value: 0,
             transactions_remaining: 1_000,
-            balance: assets::Asset::Tide.saturating_mul(67_200_000),
+            balance: assets::Asset::Tifi.saturating_mul(67_200_000),
             // 100%
             rebates: FixedU128::saturating_from_rational(100_u32, 100_u32),
           },
@@ -986,7 +986,7 @@ mod helpers {
             // 100 USDT minimum value
             minimum_usdt_value: assets::Asset::Tether.saturating_mul(100),
             transactions_remaining: 1_000,
-            balance: assets::Asset::Tide.saturating_mul(57_600_000),
+            balance: assets::Asset::Tifi.saturating_mul(57_600_000),
             // 125%
             rebates: FixedU128::saturating_from_rational(125_u32, 100_u32),
           },
@@ -995,7 +995,7 @@ mod helpers {
             // 10_000 USDT minimum value
             minimum_usdt_value: assets::Asset::Tether.saturating_mul(10_000),
             transactions_remaining: 100,
-            balance: assets::Asset::Tide.saturating_mul(38_400_000),
+            balance: assets::Asset::Tifi.saturating_mul(38_400_000),
             // 150%
             rebates: FixedU128::saturating_from_rational(150_u32, 100_u32),
           },
@@ -1004,7 +1004,7 @@ mod helpers {
             // 50_000 USDT minimum value
             minimum_usdt_value: assets::Asset::Tether.saturating_mul(50_000),
             transactions_remaining: 100,
-            balance: assets::Asset::Tide.saturating_mul(19_200_000),
+            balance: assets::Asset::Tifi.saturating_mul(19_200_000),
             // 200%
             rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
           },
@@ -1013,7 +1013,7 @@ mod helpers {
             // 100_000 USDT minimum value
             minimum_usdt_value: assets::Asset::Tether.saturating_mul(100_000),
             transactions_remaining: 100,
-            balance: assets::Asset::Tide.saturating_mul(9_600_000),
+            balance: assets::Asset::Tifi.saturating_mul(9_600_000),
             // 300%
             rebates: FixedU128::saturating_from_rational(300_u32, 100_u32),
           },
@@ -1063,7 +1063,7 @@ mod helpers {
   ) -> Vec<(AccountId, Balance)> {
     stakeholders
       .into_iter()
-      .filter(|(currency_id, _, _)| *currency_id == CurrencyId::Tide)
+      .filter(|(currency_id, _, _)| *currency_id == CurrencyId::Tifi)
       .map(|(_, account_id, balance)| (account_id, balance))
       .collect()
   }
@@ -1094,7 +1094,7 @@ mod helpers {
 
   pub fn get_all_assets() -> Vec<(AssetId, Vec<u8>, Vec<u8>, u8)> {
     assets::Asset::iter()
-      .filter(|asset| asset.id() != assets::TIDE)
+      .filter(|asset| asset.id() != assets::TIFI)
       .map(|asset| {
         (
           asset.id(),
@@ -1120,11 +1120,11 @@ mod helpers {
     vec![
       // faucet
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
         hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
     ]
   }
@@ -1135,19 +1135,19 @@ mod helpers {
     vec![
       // faucet
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
         hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       // investors
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5CXr49uaCnz6BhJaZvzQ25H7pCQPfRZcP859dN68T5H6nkGQ
         hex!["14b339129926e102774cfcce909dca2b587c7ba3972aa46034c4253f95c51308"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1178,11 +1178,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5G6KfjE9SyMHNMp5ivqoxxfNxoiS2zju7HQe9XV5GiGj3oGB
         hex!["b22cbb278194bfece1ecab5207b743424990fd1d320de9f7f589ce84c44b495e"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1213,11 +1213,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5CDKTdNQo5zQ5Ra3LuPpt1raBCFEchSyhMPeP1i4ewsHPK3x
         hex!["0691d0109120afb6b60e43a625ebadc9bdf8a855d75c91c08d91de6c2e162717"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1248,11 +1248,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5F9UYvJbwMzNcxiysaCVG6fLLXrKpkvJ6oAAaS2Wb68RznPf
         hex!["885822a596708b07cfb5c9bce3bb28854572ad39bcae0a09062a80edffe6ac45"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1283,11 +1283,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5G6T8M1unQRmZwbNs5xyJpiZgmBPTqQo1xrEympG3Y4GMY7A
         hex!["b245d70b5528570848768e4892bb52f3ca4978957c443df6421760f8a72fab5e"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1318,11 +1318,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5CJtCCvQcJLRmWUYFQbyuRzczKLhqS12aQHEVbsNrMtZ2Eoo
         hex!["0ad03b8cccca0980fb8c0e7469c909f26cf3c36f7a48bd18ffd907728e248434"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1353,11 +1353,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5FA6JuLx8geeWMUvKuTf3LRZNY7sqYwLrtmVZ2wKWRos9nHv
         hex!["88d0823558e2d1784938d2adee2524d311c71396ca014660d52354623283ee65"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1388,11 +1388,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5GmiWrcsDvQjbQ4sbKSycRS7dZ3AkxuB12iJC2vn9cZBXSpu
         hex!["d03836376dc9d289ce6b0e01442eec48188a4ea9a00064f95d8fd800f853c111"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1423,11 +1423,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5CJ1ADipRQcLonHR8paMQ3kC7Rs76s7vPfaP7fWea2fBgnTm
         hex!["0a246f9ff97b425735144a1162db84211e8953fad997a4906877a4c7dcb62f22"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1458,11 +1458,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5F92rg6xcfyCKxfpbkNNwC9bouURZPSzQRCJWGoX47Myz4PH
         hex!["8801a45cc54e90766bac513b5b40771ffceb96fc45236480b69d7c7ccd01d75e"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1493,11 +1493,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5Dco6bBWGNj62JxoUDSZ5nxFyXv8iEUcXqYzYRRYzBD5KtVB
         hex!["44b5b9d3a8474560f6705eb9a2fa5875fdf3e8bef27352da679814043537d323"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1528,11 +1528,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5FWkciyXUqmvqsv4d8DGJ1rCufcWFqjsbc2ScWSTKJUy3F1n
         hex!["98925ed611afe810efef0e3da011e25ed6704769de1b3b962840c4d04f55933f"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1563,11 +1563,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5DSNW8JyKnL8ffQyW5c1rLcNkprkSmRH84ZqHci8vNsRbKrH
         hex!["3cc27afba8905755c9243e61cfdfc46c2bfbc697eb2728d55b7f1b924e947762"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1598,11 +1598,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5HYsxrjNuqE9y4X4ubZgu9heVTSLq3s5xheEEEXgf9PH4xXk
         hex!["f2aa0f922382ad8a828044bb95702a1280d8f38263f28fc15e267ac9481fff5c"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1633,11 +1633,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(10_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5DLNXC7EiC4Dr7ZpSHrrZrCFwdtdURA6uXg4HxCANa9w1s6x
         hex!["382f11df7a878f1242d98603699b115aed13abc9e6bfa425c5492436336c4c26"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1669,11 +1669,11 @@ mod helpers {
       ),
       // devs
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
         hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1704,11 +1704,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
         hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1739,11 +1739,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
         hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1774,11 +1774,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
         hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1809,11 +1809,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
         hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1844,11 +1844,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5EPTgRuaMcWTH88BfmZQKymiJ41eKJc9goQC7VeRGwGnMGbK
         hex!["66c6683ad9c6b1940d9d74691cdc0cfd4e760357d7427185e73f1c420d2ce464"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1879,11 +1879,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5GKxcqHFndxDH8qdpK6311Qco4MLJJZJeY8ZSFjjN6w31goH
         hex!["bc934e6e40cd8207bc9bc72fb8c1c2cb3266ef7caac69f6e18cb5792ab859f62"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1914,11 +1914,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5CXeo6fy34CuZgmbkSjy7vjqrv9DojqmQmqCrHwANxwPqC9Q
         hex!["148d51dee87e09b75f8487aaf72aecda9b107f577e184da1d065d14bf02bc542"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1949,11 +1949,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5FQyxubtnNEpjcTWWRygJStchrQoSKc9r6ohPUv93WPMechq
         hex!["942bd4d3c1de0dbd822551f572762e194e52664bb94686c96c0679a899147506"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -1984,11 +1984,11 @@ mod helpers {
         assets::Asset::Ethereum.saturating_mul(1_000_000),
       ),
       (
-        assets::Asset::Tide.currency_id(),
+        assets::Asset::Tifi.currency_id(),
         //5FKuzgFppRcJqs1bYQvrDJ9DrKZaXqrwKggWBk4DyfpXFvoo
         hex!["904e3dea6bcdc6cb523f52cbdedad53c24bbd95692ec690154b0f2c7f0abc55c"].into(),
-        // 1_000_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000_000),
+        // 1_000_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000_000),
       ),
       (
         assets::Asset::Tether.currency_id(),
@@ -2027,83 +2027,83 @@ mod helpers {
     vec![
       // faucet
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
         hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
-        // 10_000 TIDE
-        assets::Asset::Tide.saturating_mul(10_000),
+        // 10_000 TIFI
+        assets::Asset::Tifi.saturating_mul(10_000),
       ),
       // investors
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5DUTRtdo3T6CtLx5rxJQxAVhT9RmZUWGw4FJWZSPWbLFhNf2
         hex!["3e598e8ee9577c609c70823e394ab1a2e0301f73f074a773a3a1b20bfba9050e"].into(),
-        // 1_000 TIDES
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFIS
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5GHab6U9Ke5XjbHHEB5WSUreyp293BryKjJrGWgQ1nCvEDzM
         hex!["bac2a7f4be9d7e0f8eee75e0af5e33240698e8ac0b02904627bd9c4d37b3dd5e"].into(),
-        // 1_000 TIDES
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFIS
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5CLmiDfMLGbuuvuuc87ZF1fr9itkyVzTE5hjWb725JemcGka
         hex!["0c40e6b8b6686685828658080a17af04562fa69818c848146795c8c586691a68"].into(),
-        // 1_000 TIDES
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFIS
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5CJMQZA3LgdZ7EXN1eTXjxqQvmxgZEuXy9iWA1Yvd67zK9Da
         hex!["0a689812fb1b2763c3ff90ad8f12c652848904d7f4cb3ea5d5328a30c4d3c978"].into(),
-        // 1_000 TIDES
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFIS
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5DWorbmbirDwHNNrLFu15aRjD63fiEAbi5K9Eo96mxwirVdM
         hex!["4024cecb82ca165b7960b22a19ac3fafa5240582691eaf22ffee7a6f06cb1526"].into(),
-        // 1_000 TIDES
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFIS
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       // devs
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
         hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
-        // 1_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
         hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
-        // 1_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
         hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
-        // 1_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
         hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
-        // 1_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
       (
-        CurrencyId::Tide,
+        CurrencyId::Tifi,
         //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
         hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
-        // 1_000 TIDE
-        assets::Asset::Tide.saturating_mul(1_000),
+        // 1_000 TIFI
+        assets::Asset::Tifi.saturating_mul(1_000),
       ),
     ]
   }

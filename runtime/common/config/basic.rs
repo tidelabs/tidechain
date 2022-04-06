@@ -16,7 +16,7 @@
 
 use crate::{
   constants::{
-    currency::{deposit, CENTS, MILLICENTS, TIDE},
+    currency::{deposit, CENTS, MILLICENTS, TIFI},
     fee::WeightToFee,
     time::SLOT_DURATION,
   },
@@ -154,7 +154,7 @@ impl pallet_scheduler::Config for Runtime {
 }
 
 parameter_types! {
-   pub const IndexDeposit: Balance = TIDE;
+   pub const IndexDeposit: Balance = TIFI;
 }
 
 impl pallet_indices::Config for Runtime {
@@ -220,10 +220,10 @@ impl pallet_preimage::Config for Runtime {
 }
 
 parameter_types! {
-  pub const ConfigDepositBase: Balance = 5 * TIDE;
+  pub const ConfigDepositBase: Balance = 5 * TIFI;
   pub const FriendDepositFactor: Balance = 50 * CENTS;
   pub const MaxFriends: u16 = 9;
-  pub const RecoveryDeposit: Balance = 5 * TIDE;
+  pub const RecoveryDeposit: Balance = 5 * TIFI;
 }
 
 impl pallet_recovery::Config for Runtime {

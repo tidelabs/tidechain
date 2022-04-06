@@ -3,7 +3,7 @@ title: Treasury
 ---
 
 The Treasury is a pot of funds collected through transaction fees, slashing,
-[staking inefficiencies](staking-tide.md#inflation), etc. The funds held in the Treasury can be spent by making a spending proposal that, if approved by the [Council](governance.md#council), will enter a waiting period before distribution. This waiting period is known as the budget period, and its duration is subject to [governance](governance.md), with the current default set to 24 days. The Treasury attempts to spend as many proposals in the queue as it can without running out of funds.
+[staking inefficiencies](staking-tifi.md#inflation), etc. The funds held in the Treasury can be spent by making a spending proposal that, if approved by the [Council](governance.md#council), will enter a waiting period before distribution. This waiting period is known as the budget period, and its duration is subject to [governance](governance.md), with the current default set to 24 days. The Treasury attempts to spend as many proposals in the queue as it can without running out of funds.
 
 If the Treasury ends a budget period without spending all of its funds, it suffers a burn of a percentage of its funds -- thereby causing deflationary pressure. This percentage is currently at 1%.
 
@@ -28,11 +28,11 @@ The Treasury is funded from different sources:
 
 2. Transaction fees: A portion of each block's transaction fees goes to the Treasury, with the remainder going to the block author.
 
-3. Staking inefficiency: [Inflation](staking-tide.md#inflation) is designed to be 10% in the first year, and the ideal staking ratio is set at 50%, meaning half of all tokens should be locked in staking. Any deviation from this ratio will cause a proportional amount of the inflation to go to the Treasury. In other words, if 50% of all tokens are staked, then 100% of the inflation goes to the validators as reward. If the staking rate is less than 50%, then the validators will receive less, with the remainder going to the Treasury.
+3. Staking inefficiency: [Inflation](staking-tifi.md#inflation) is designed to be 10% in the first year, and the ideal staking ratio is set at 50%, meaning half of all tokens should be locked in staking. Any deviation from this ratio will cause a proportional amount of the inflation to go to the Treasury. In other words, if 50% of all tokens are staked, then 100% of the inflation goes to the validators as reward. If the staking rate is less than 50%, then the validators will receive less, with the remainder going to the Treasury.
 
 ## Creating a Treasury Proposal
 
-The proposer has to deposit 5% of the requested amount or 100 TIDE (whichever is higher) as an anti-spam measure. This amount is burned if the proposal is rejected, or refunded otherwise. These values are subject to [governance](governance.md) so they may change in the future.
+The proposer has to deposit 5% of the requested amount or 100 TIFI (whichever is higher) as an anti-spam measure. This amount is burned if the proposal is rejected, or refunded otherwise. These values are subject to [governance](governance.md) so they may change in the future.
 
 Please note that there is no way for a user to revoke a treasury proposal after it has been submitted. The Council will either accept or reject the proposal, and if the proposal is rejected, the bonded funds are burned.
 

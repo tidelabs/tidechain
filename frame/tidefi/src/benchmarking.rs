@@ -33,11 +33,11 @@ benchmarks! {
       let caller: T::AccountId = whitelisted_caller();
       let balance = INITIAL_AMOUNT.saturating_mul(IA_MULTIPLIER.into());
       T::CurrencyTidefi::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &caller, balance as u128).expect("Unable to mint token");
-      T::CurrencyTidefi::mint_into(CurrencyId::Tide, &caller, balance as u128).expect("Unable to mint token");
-   }: _(RawOrigin::Signed(caller), CurrencyId::Tide, INITIAL_AMOUNT.into(), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT.into(), SwapType::Limit, None)
+      T::CurrencyTidefi::mint_into(CurrencyId::Tifi, &caller, balance as u128).expect("Unable to mint token");
+   }: _(RawOrigin::Signed(caller), CurrencyId::Tifi, INITIAL_AMOUNT.into(), CurrencyId::Wrapped(TEST_TOKEN), INITIAL_AMOUNT.into(), SwapType::Limit, None)
    transfer {
       let caller: T::AccountId = whitelisted_caller();
-   }: _(RawOrigin::Signed(caller.clone()), caller.clone(), CurrencyId::Tide, INITIAL_AMOUNT)
+   }: _(RawOrigin::Signed(caller.clone()), caller.clone(), CurrencyId::Tifi, INITIAL_AMOUNT)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

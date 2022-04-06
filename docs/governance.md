@@ -35,7 +35,7 @@ Emergency proposals deal with major problems with the network that need to be "f
 
 Anyone can propose a referendum by depositing the minimum amount of tokens for a certain period (number of blocks). If someone agrees with the proposal, they may deposit the same amount of tokens to support it - this action is called _seconding_. The proposal with the highest amount of bonded support will be selected to be a referendum in the next voting cycle.
 
-Note that this may be different from the absolute number of seconds; for instance, three accounts bonding 20 TIDE each would "outweigh" ten accounts bonding a single TIDE each. The bonded tokens will be released once the proposal is tabled (that is, brought to a vote).
+Note that this may be different from the absolute number of seconds; for instance, three accounts bonding 20 TIFI each would "outweigh" ten accounts bonding a single TIFI each. The bonded tokens will be released once the proposal is tabled (that is, brought to a vote).
 
 There can be a maximum of 100 public proposals in the proposal queue.
 
@@ -50,7 +50,7 @@ referendum in progress.
 
 #### Voting Timetable
 
-Every 7 days, a new referendum will come up for a vote, assuming there is at least one proposal in one of the queues. There is a queue for Council-approved proposals and a queue for publicly submitted  proposals. The referendum to be voted upon alternates between the top proposal in the two queues.
+Every 7 days, a new referendum will come up for a vote, assuming there is at least one proposal in one of the queues. There is a queue for Council-approved proposals and a queue for publicly submitted proposals. The referendum to be voted upon alternates between the top proposal in the two queues.
 
 The "top" proposal is determined by the amount of stake bonded behind it. If the given queue whose turn it is to create a referendum that has no proposals (is empty), and proposals are waiting in the other queue, the top proposal in the other queue will become a referendum.
 
@@ -65,14 +65,14 @@ It is possible to vote without locking at all, but your vote is worth a small fr
 ```
 Example:
 
-Peter: Votes `No` with 10 TIDE for a 128 week lock period  => 10 * 6 = 60 Votes
+Peter: Votes `No` with 10 TIFI for a 128 week lock period  => 10 * 6 = 60 Votes
 
-Logan: Votes `Yes` with 20 TIDE for a 4 week lock period => 20 * 1 = 20 Votes
+Logan: Votes `Yes` with 20 TIFI for a 4 week lock period => 20 * 1 = 20 Votes
 
-Kevin: Votes `Yes` with 15 TIDE for a 8 week lock period => 15 * 2 = 30 Votes
+Kevin: Votes `Yes` with 15 TIFI for a 8 week lock period => 15 * 2 = 30 Votes
 ```
 
-Even though combined both Logan and Kevin vote with more TIDE than Peter, the lock period for both of
+Even though combined both Logan and Kevin vote with more TIFI than Peter, the lock period for both of
 them is less than Peter, leading to their voting power counting as less.
 
 #### Tallying
@@ -85,7 +85,7 @@ Depending on which entity proposed the proposal and whether all council members 
 | Council (Complete agreement) | Negative Turnout Bias (Super-Majority Against) |
 | Council (Majority agreement) |                Simple Majority                 |
 
-Also, we need the following information and apply one of the formulas listed below to calculate the voting result. For example, let's use the public proposal as an example, so the `Super-Majority Approve` formula will be applied. There is no strict quorum, but the super-majority required increases with lower  turnout.
+Also, we need the following information and apply one of the formulas listed below to calculate the voting result. For example, let's use the public proposal as an example, so the `Super-Majority Approve` formula will be applied. There is no strict quorum, but the super-majority required increases with lower turnout.
 
 ```
 approve - the number of aye votes
@@ -94,7 +94,7 @@ against - the number of nay votes
 
 turnout - the total number of voting tokens (does not include conviction)
 
-electorate - the total number of TIDE tokens issued in the network
+electorate - the total number of TIFI tokens issued in the network
 ```
 
 ##### Super-Majority Approve
@@ -120,14 +120,14 @@ proposal is carried, no matter how much stake votes on the proposal.
 Example:
 
 Assume:
-- We only have 1_500 TIDE tokens in total.
+- We only have 1_500 TIFI tokens in total.
 - Public proposal
 
-John  - 500 TIDE
-Peter - 100 TIDE
-Lilly - 150 TIDE
-JJ    - 150 TIDE
-Ken   - 600 TIDE
+John  - 500 TIFI
+Peter - 100 TIFI
+Lilly - 150 TIFI
+JJ    - 150 TIFI
+Ken   - 600 TIFI
 
 John: Votes `Yes` for a 4 week lock period  => 500 * 1 = 500 Votes
 
@@ -200,7 +200,7 @@ Upon seeing their proposal removed, a submitter who is not properly introduced t
 
 ### How to be a council member?
 
-All TIDE stakeholders are free to signal their approval of any of the registered candidates.
+All TIFI stakeholders are free to signal their approval of any of the registered candidates.
 
 Council elections are handled by the same Phragmén election process that selects validators from the available pool based on nominations. However, token holders' votes for councillors are isolated from any of the nominations they may have on validators. Council terms last for one day.
 

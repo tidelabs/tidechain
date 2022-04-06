@@ -457,7 +457,7 @@ pub mod pallet {
       // for the queue storage
       if staking_is_forced {
         // take the fee
-        // FIXME: would be great to convert to TIDE
+        // FIXME: would be great to convert to TIFI
         let unstaking_fee = Self::unstake_fee() * stake.initial_balance;
         T::CurrencyTidefi::can_withdraw(stake.currency_id, &account_id, unstaking_fee)
           .into_result()
