@@ -50,8 +50,7 @@ parameter_types! {
   // ~ 5 mins
   pub const BlocksPerSession: BlockNumber = 50;
   // Staking: Number of blocks to wait before unstaking when we force-unstake.
-  // FIXME: Should be reverted to `14_400`
-  pub const BlocksForceUnstake: BlockNumber = 100;
+  pub const BlocksForceUnstake: BlockNumber = 14_400;
   // 0.25%
   pub const FeeAmount: Permill = Permill::from_parts(2500);
   // 0.10%
