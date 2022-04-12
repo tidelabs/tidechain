@@ -20,7 +20,7 @@ use crate::{
 };
 use frame_support::assert_ok;
 use sp_runtime::{FixedPointNumber, FixedU128};
-use tidefi_primitives::{pallet::FeesExt, CurrencyId};
+use tidefi_primitives::{pallet::FeesExt, CurrencyId, SwapType};
 
 #[test]
 pub fn check_genesis_config() {
@@ -40,11 +40,17 @@ pub fn calculate_trading_fees() {
     );
 
     // 100 tifi @ 2% should cost 2 TIFIs
-    let calculated_fee = Fees::calculate_swap_fees(CurrencyId::Tifi, 100_000_000_000_000, false);
+    let calculated_fee = Fees::calculate_swap_fees(
+      CurrencyId::Tifi,
+      100_000_000_000_000,
+      SwapType::Limit,
+      false,
+    );
     assert_eq!(calculated_fee.amount, 100_000_000_000_000);
     assert_eq!(calculated_fee.fee, 2_000_000_000_000);
 
-    let calculated_fee = Fees::calculate_swap_fees(CurrencyId::Tifi, 100_000_000_000_000, true);
+    let calculated_fee =
+      Fees::calculate_swap_fees(CurrencyId::Tifi, 100_000_000_000_000, SwapType::Limit, true);
     assert_eq!(calculated_fee.amount, 100_000_000_000_000);
     assert_eq!(calculated_fee.fee, 1_000_000_000_000);
   });
@@ -66,8 +72,14 @@ pub fn register_swap_fees() {
     assert_eq!(current_era + 1, new_current_era);
 
     // 100 tifi @ 2% should cost 2 TIFIs
-    let calculated_fee =
-      Fees::register_swap_fees(3u64.into(), CurrencyId::Tifi, 100_000_000_000_000, false).unwrap();
+    let calculated_fee = Fees::register_swap_fees(
+      3u64.into(),
+      CurrencyId::Tifi,
+      100_000_000_000_000,
+      SwapType::Limit,
+      false,
+    )
+    .unwrap();
     assert_eq!(calculated_fee.amount, 100_000_000_000_000);
     assert_eq!(calculated_fee.fee, 2_000_000_000_000);
 
@@ -85,6 +97,7 @@ pub fn register_swap_fees() {
       3u64.into(),
       CurrencyId::Tifi,
       100_000_000_000_000,
+      SwapType::Limit,
       false
     ));
     let registered_fee = Fees::account_fees(new_current_era, AccountId(3u64));
@@ -106,7 +119,8 @@ pub fn test_calc_reward() {
       FixedU128::saturating_from_rational(700_000, 1_000_000),
     );
 
-    let fee = Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 100_000_000, false);
+    let fee =
+      Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 100_000_000, SwapType::Limit, false);
     assert_eq!(
       Fees::calculate_tide_reward_for_pool(
         // 125%
@@ -133,7 +147,7 @@ pub fn test_calc_reward_small_numbers() {
       FixedU128::saturating_from_rational(500_000, 1_000_000),
     );
 
-    let fee = Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 1_000_000, false);
+    let fee = Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 1_000_000, SwapType::Limit, false);
 
     // We should receive 0.15625 TIFI in reward
     assert_eq!(
@@ -169,7 +183,8 @@ pub fn test_calc_reward_other_assets() {
       FixedU128::saturating_from_rational(1, 100_000),
     );
 
-    let fee = Fees::calculate_swap_fees(CurrencyId::Wrapped(2), 100_000_000, false);
+    let fee =
+      Fees::calculate_swap_fees(CurrencyId::Wrapped(2), 100_000_000, SwapType::Limit, false);
     // We should receive 2500 TIFI in reward
     assert_eq!(
       Fees::calculate_tide_reward_for_pool(
@@ -200,7 +215,12 @@ pub fn test_calc_reward_other_assets() {
 
     // 1_000 BTC transaction
     // worth 10_000_000 USDT
-    let fee = Fees::calculate_swap_fees(CurrencyId::Wrapped(2), 100_000_000_000, false);
+    let fee = Fees::calculate_swap_fees(
+      CurrencyId::Wrapped(2),
+      100_000_000_000,
+      SwapType::Limit,
+      false,
+    );
 
     // We should receive 125_000 TIFI in reward
     assert_eq!(

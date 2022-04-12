@@ -110,15 +110,15 @@ pub fn should_remove_expired() {
 pub fn test_vec_shuffle() {
   // switching block hash should give new shuffle
   new_test_ext().execute_with(|| {
-    let block_hash = Security::get_unique_id(1_u64.into());
+    let block_hash = Security::get_unique_id(1_u64);
     System::set_parent_hash(block_hash);
     assert_eq!(Quorum::create_shuffle(4), vec![3, 2, 1, 0]);
 
-    let block_hash = Security::get_unique_id(2_u64.into());
+    let block_hash = Security::get_unique_id(2_u64);
     System::set_parent_hash(block_hash);
     assert_eq!(Quorum::create_shuffle(4), vec![2, 0, 3, 1]);
 
-    let block_hash = Security::get_unique_id(3_u64.into());
+    let block_hash = Security::get_unique_id(3_u64);
     System::set_parent_hash(block_hash);
     assert_eq!(Quorum::create_shuffle(4), vec![3, 2, 0, 1]);
   });

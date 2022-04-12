@@ -415,6 +415,7 @@ pub mod pallet {
                     let amount_and_fee = T::Fees::calculate_swap_fees(
                       trade.token_from,
                       mm.amount_to_receive,
+                      trade.swap_type.clone(),
                       trade.is_market_maker,
                     );
 
@@ -450,6 +451,7 @@ pub mod pallet {
                       trade.account_id.clone(),
                       trade.token_from,
                       mm.amount_to_receive,
+                      trade.swap_type.clone(),
                       trade.is_market_maker,
                     )
                     .map_err(|_| Error::<T>::FeesFailed)?;
@@ -458,6 +460,7 @@ pub mod pallet {
                     let amount_and_fee = T::Fees::calculate_swap_fees(
                       trade.token_to,
                       mm.amount_to_send,
+                      market_maker_trade_intent.swap_type.clone(),
                       market_maker_trade_intent.is_market_maker,
                     );
 
@@ -496,6 +499,7 @@ pub mod pallet {
                       market_maker_trade_intent.account_id.clone(),
                       trade.token_to,
                       mm.amount_to_send,
+                      market_maker_trade_intent.swap_type.clone(),
                       market_maker_trade_intent.is_market_maker,
                     )
                     .map_err(|_| Error::<T>::FeesFailed)?;
@@ -772,11 +776,13 @@ pub mod pallet {
       let real_fees_amount = T::Fees::calculate_swap_fees(
         trade.token_from,
         trade.amount_from_filled,
+        trade.swap_type.clone(),
         trade.is_market_maker,
       );
       let fees_with_slippage = T::Fees::calculate_swap_fees(
         trade.token_from,
         amount_with_max_slippage,
+        trade.swap_type.clone(),
         trade.is_market_maker,
       );
 
@@ -880,14 +886,18 @@ pub mod pallet {
         block_number,
         extrinsic_hash,
         is_market_maker,
-        swap_type,
+        swap_type: swap_type.clone(),
         slippage,
       };
 
       // 6. Freeze asset
       let amount_from_with_slippage = amount_from.saturating_add(slippage * amount_from);
-      let amount_and_fee =
-        T::Fees::calculate_swap_fees(asset_id_from, amount_from_with_slippage, is_market_maker);
+      let amount_and_fee = T::Fees::calculate_swap_fees(
+        asset_id_from,
+        amount_from_with_slippage,
+        swap_type,
+        is_market_maker,
+      );
 
       T::CurrencyTidefi::hold(
         asset_id_from,
@@ -932,6 +942,7 @@ pub mod pallet {
           let amount_and_fee = T::Fees::calculate_swap_fees(
             swap_intent.token_from,
             swap_intent.amount_from,
+            swap_intent.swap_type.clone(),
             swap_intent.is_market_maker,
           );
           let amount_to_release = swap_intent
@@ -953,11 +964,13 @@ pub mod pallet {
             let real_fees_amount = T::Fees::calculate_swap_fees(
               swap_intent.token_from,
               swap_intent.amount_from_filled,
+              swap_intent.swap_type.clone(),
               swap_intent.is_market_maker,
             );
             let fees_with_slippage = T::Fees::calculate_swap_fees(
               swap_intent.token_from,
               amount_with_max_slippage,
+              swap_intent.swap_type.clone(),
               swap_intent.is_market_maker,
             );
 

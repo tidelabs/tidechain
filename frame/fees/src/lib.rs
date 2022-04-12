@@ -69,7 +69,7 @@ pub mod pallet {
   use tidefi_primitives::{
     assets::{Asset, USDT},
     pallet::{FeesExt, SecurityExt, StakingExt},
-    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex, SunriseSwapPool,
+    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex, SunriseSwapPool, SwapType,
   };
 
   /// The current storage version.
@@ -110,13 +110,17 @@ pub mod pallet {
     #[pallet::constant]
     type BlocksSunriseClaims: Get<Self::BlockNumber>;
 
-    /// Number of sessions to keep in archive
+    /// Retail user swap fee
     #[pallet::constant]
     type FeeAmount: Get<Permill>;
 
-    /// Number of sessions to keep in archive
+    /// Market maker market order fee
     #[pallet::constant]
     type MarketMakerFeeAmount: Get<Permill>;
+
+    /// Market maker limit order fee
+    #[pallet::constant]
+    type MarketMakerLimitFeeAmount: Get<Permill>;
 
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
@@ -491,7 +495,7 @@ pub mod pallet {
           }
 
           // transfer funds
-          T::CurrencyTidefi::transfer(CurrencyId::Tifi, &Self::account_id(), &who, *reward, true)?;
+          T::CurrencyTidefi::transfer(CurrencyId::Tifi, &Self::account_id(), who, *reward, true)?;
 
           // emit event
           Self::deposit_event(Event::<T>::SunriseClaimed {
@@ -713,10 +717,14 @@ pub mod pallet {
     fn calculate_swap_fees(
       currency_id: CurrencyId,
       total_amount_before_fees: Balance,
+      swap_type: SwapType,
       is_market_maker: bool,
     ) -> Fee {
       let fee = if is_market_maker {
-        T::MarketMakerFeeAmount::get()
+        match swap_type {
+          SwapType::Limit => T::MarketMakerLimitFeeAmount::get(),
+          SwapType::Market => T::MarketMakerFeeAmount::get(),
+        }
       } else {
         T::FeeAmount::get()
       } * total_amount_before_fees;
@@ -732,13 +740,18 @@ pub mod pallet {
       account_id: T::AccountId,
       currency_id: CurrencyId,
       total_amount_before_fees: Balance,
+      swap_type: SwapType,
       is_market_maker: bool,
     ) -> Result<Fee, DispatchError> {
       let fee = match Self::active_era() {
         Some(current_era) => {
           let current_session = CurrentSession::<T>::get();
-          let new_fee =
-            Self::calculate_swap_fees(currency_id, total_amount_before_fees, is_market_maker);
+          let new_fee = Self::calculate_swap_fees(
+            currency_id,
+            total_amount_before_fees,
+            swap_type,
+            is_market_maker,
+          );
 
           if let Some(sunrise_pool_available) =
             Self::try_select_first_eligible_sunrise_pool(&new_fee, currency_id)?
