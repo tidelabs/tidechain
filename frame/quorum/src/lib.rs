@@ -665,11 +665,7 @@ pub mod pallet {
     // Make sure the account id is part of the quorum set list and have public key set
     fn is_member_and_ready(who: &T::AccountId) -> bool {
       let at_least_one_public_key = PublicKeys::<T>::iter_values()
-        .find(|assets| {
-          assets
-            .iter()
-            .any(|(account_id, _)| account_id == who)
-        })
+        .find(|assets| assets.iter().any(|(account_id, _)| account_id == who))
         .is_some();
 
       Self::members(who).unwrap_or(false) && at_least_one_public_key
