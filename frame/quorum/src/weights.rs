@@ -61,7 +61,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
    }
    fn submit_public_keys(k: u32) -> Weight {
       65_000_400_u64
-         .saturating_add((2_000 as Weight).saturating_mul(k as Weight))
+         .saturating_add(2_000_u64.saturating_mul(k as Weight))
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }

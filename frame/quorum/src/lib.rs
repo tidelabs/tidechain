@@ -388,7 +388,7 @@ pub mod pallet {
 
       // 3. Add the proposal in queue
       let current_block = T::Security::get_current_block_count();
-      let proposal_id = T::Security::get_unique_id(sender.clone());
+      let proposal_id = T::Security::get_unique_id(sender);
 
       // Transform the proposal type to use bounded vector
       let proposal: ProposalType<
@@ -577,7 +577,7 @@ pub mod pallet {
 
         let weight_processed = if current_block >= proposal_expiration {
           // Delete proposal (1 write)
-          if let Err(_) = Self::delete_proposal(proposal_id) {
+          if Self::delete_proposal(proposal_id).is_err() {
             log!(error, "Can't delete proposal {}", proposal_id);
           };
 
@@ -652,9 +652,7 @@ pub mod pallet {
       let mut shuffled = (0..len).collect::<Vec<_>>();
       for i in 0..len {
         let j = (rng.next_u32() as usize) % len;
-        let a = shuffled[i];
-        shuffled[i] = shuffled[j];
-        shuffled[j] = a;
+        shuffled.swap(i, j);
       }
       shuffled
     }
@@ -670,8 +668,7 @@ pub mod pallet {
         .find(|assets| {
           assets
             .iter()
-            .find(|(account_id, _)| account_id == who)
-            .is_some()
+            .any(|(account_id, _)| account_id == who)
         })
         .is_some();
 
