@@ -99,11 +99,11 @@ pub mod pallet {
     #[pallet::constant]
     type StringLimit: Get<u32>;
 
-    /// The maximum number of votes per proposals
+    /// The maximum number of votes per proposal
     #[pallet::constant]
     type VotesLimit: Get<u32>;
 
-    /// The maximum number of votes per proposals
+    /// The maximum number of proposals per account watch list
     #[pallet::constant]
     type WatchListLimit: Get<u32>;
 
@@ -247,7 +247,7 @@ pub mod pallet {
     fn build(&self) {
       Threshold::<T>::put(self.threshold);
       QuorumStatus::<T>::put(self.enabled);
-      for account_id in self.members.clone() {
+      for account_id in &self.members {
         Members::<T>::insert(account_id, true);
       }
     }
