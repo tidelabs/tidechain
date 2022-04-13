@@ -135,7 +135,7 @@ pub fn test_vec_shuffle() {
 }
 
 #[test]
-pub fn vote_for_non_existing_proposal_should_fail() {
+pub fn vote_for_non_existent_proposal_should_fail() {
   new_test_ext().execute_with(|| {
     let context = Context::default();
     context.setup();
