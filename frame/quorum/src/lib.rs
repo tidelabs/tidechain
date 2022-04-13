@@ -696,10 +696,10 @@ pub mod pallet {
     fn commit_vote(who: T::AccountId, proposal_id: Hash, in_favour: bool) -> DispatchResult {
       let block_number = T::Security::get_current_block_count();
       ensure!(
-        Self::proposals().into_iter().find(|prop| {
-          let (id, _block_number, _proposal) = prop;
-          *id == proposal_id
-        }) != None,
+        Self::proposals()
+          .into_iter()
+          .find(|(id, _, _)| *id == proposal_id)
+          .is_some(),
         Error::<T>::ProposalDoesNotExist
       );
 
