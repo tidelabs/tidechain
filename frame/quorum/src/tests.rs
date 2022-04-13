@@ -142,7 +142,12 @@ pub fn vote_for_non_existent_proposal_should_fail() {
 
     let proposal_id = Hash::zero();
     assert_noop!(
-      Quorum::acknowledge_proposal(context.alice, proposal_id),
+      Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
+      Error::<Test>::ProposalDoesNotExist
+    );
+    let proposal_id = Hash::zero();
+    assert_noop!(
+      Quorum::reject_proposal(context.alice, proposal_id),
       Error::<Test>::ProposalDoesNotExist
     );
   });
