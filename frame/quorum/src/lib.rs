@@ -695,6 +695,14 @@ pub mod pallet {
     // Record the vote in the storage
     fn commit_vote(who: T::AccountId, proposal_id: Hash, in_favour: bool) -> DispatchResult {
       let block_number = T::Security::get_current_block_count();
+      ensure!(
+        Self::proposals().into_iter().find(|prop| {
+          let (id, _block_number, _proposal) = prop;
+          *id == proposal_id
+        }) != None,
+        Error::<T>::ProposalDoesNotExist
+      );
+
       let mut votes = Votes::<T>::get(proposal_id).unwrap_or_else(|| {
         let mut v =
           ProposalVotes::<T::BlockNumber, BoundedVec<T::AccountId, T::VotesLimit>>::default();
