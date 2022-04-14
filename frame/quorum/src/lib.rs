@@ -334,6 +334,8 @@ pub mod pallet {
     ProposalsCapExceeded,
     /// No proposal with the ID was found
     ProposalDoesNotExist,
+    /// Proposal block number is in the future.
+    ProposalBlockIsInFuture,
     /// Proposal has either failed or succeeded
     ProposalAlreadyComplete,
     /// Lifetime of proposal has been exceeded
@@ -694,19 +696,22 @@ pub mod pallet {
 
     // Record the vote in the storage
     fn commit_vote(who: T::AccountId, proposal_id: Hash, in_favour: bool) -> DispatchResult {
-      let block_number = T::Security::get_current_block_count();
+      let current_block = T::Security::get_current_block_count();
+      let maybe_proposal = Self::proposals()
+        .into_iter()
+        .find(|(id, _block_number, _proposal)| *id == proposal_id);
+      ensure!(maybe_proposal != None, Error::<T>::ProposalDoesNotExist);
+
+      let (_id, proposal_block, _proposal) = maybe_proposal.unwrap();
       ensure!(
-        Self::proposals().into_iter().find(|prop| {
-          let (id, _block_number, _proposal) = prop;
-          *id == proposal_id
-        }) != None,
-        Error::<T>::ProposalDoesNotExist
+        current_block >= proposal_block,
+        Error::<T>::ProposalBlockIsInFuture
       );
 
       let mut votes = Votes::<T>::get(proposal_id).unwrap_or_else(|| {
         let mut v =
           ProposalVotes::<T::BlockNumber, BoundedVec<T::AccountId, T::VotesLimit>>::default();
-        v.expiry = block_number + T::ProposalLifetime::get();
+        v.expiry = proposal_block + T::ProposalLifetime::get();
         v
       });
 
@@ -714,7 +719,7 @@ pub mod pallet {
         votes.status == ProposalStatus::Initiated,
         Error::<T>::ProposalAlreadyComplete
       );
-      ensure!(votes.expiry >= block_number, Error::<T>::ProposalExpired);
+      ensure!(votes.expiry >= current_block, Error::<T>::ProposalExpired);
       ensure!(
         !votes.votes_for.contains(&who) || !votes.votes_against.contains(&who),
         Error::<T>::MemberAlreadyVoted
