@@ -30,6 +30,7 @@ use tidefi_primitives::{
 struct Context {
   alice: Origin,
   public_keys: BoundedVec<(u64, BoundedVec<u8, StringLimit>), PubkeyLimitPerAsset>,
+  proposal_id: Hash,
 }
 
 impl Default for Context {
@@ -38,6 +39,7 @@ impl Default for Context {
     Self {
       alice: Origin::signed(1u64),
       public_keys: vec![(1u64, pub_key)].try_into().unwrap(),
+      proposal_id: Hash::zero(),
     }
   }
 }
@@ -88,13 +90,15 @@ pub fn should_vote_for_mint() {
       compliance_level: ComplianceLevel::Green,
     });
 
-    let proposal_id = Hash::zero();
     assert_ok!(Proposals::<Test>::try_append((
-      proposal_id,
+      context.proposal_id,
       Security::get_current_block_count(),
       proposal
     )));
-    assert_ok!(Quorum::acknowledge_proposal(context.alice, proposal_id));
+    assert_ok!(Quorum::acknowledge_proposal(
+      context.alice,
+      context.proposal_id
+    ));
   });
 }
 
@@ -149,13 +153,12 @@ mod vote_should_fail_for {
       let context = Context::default();
       context.setup();
 
-      let proposal_id = Hash::zero();
       assert_noop!(
-        Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
+        Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
         Error::<Test>::ProposalDoesNotExist
       );
       assert_noop!(
-        Quorum::reject_proposal(context.alice, proposal_id),
+        Quorum::reject_proposal(context.alice, context.proposal_id),
         Error::<Test>::ProposalDoesNotExist
       );
     });
@@ -175,19 +178,18 @@ mod vote_should_fail_for {
         compliance_level: ComplianceLevel::Green,
       });
 
-      let proposal_id = Hash::zero();
       assert_ok!(Proposals::<Test>::try_append((
-        proposal_id,
+        context.proposal_id,
         Security::get_current_block_count() + 100,
         proposal
       )));
 
       assert_noop!(
-        Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
+        Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
         Error::<Test>::ProposalBlockIsInFuture
       );
       assert_noop!(
-        Quorum::reject_proposal(context.alice, proposal_id),
+        Quorum::reject_proposal(context.alice, context.proposal_id),
         Error::<Test>::ProposalBlockIsInFuture
       );
     });
@@ -207,10 +209,9 @@ mod vote_should_fail_for {
         compliance_level: ComplianceLevel::Green,
       });
 
-      let proposal_id = Hash::zero();
       let current_block = Security::get_current_block_count();
       assert_ok!(Proposals::<Test>::try_append((
-        proposal_id,
+        context.proposal_id,
         current_block,
         proposal
       )));
@@ -218,11 +219,11 @@ mod vote_should_fail_for {
       set_current_block(current_block + ProposalLifetime::get() + 1);
 
       assert_noop!(
-        Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
+        Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
         Error::<Test>::ProposalExpired
       );
       assert_noop!(
-        Quorum::reject_proposal(context.alice, proposal_id),
+        Quorum::reject_proposal(context.alice, context.proposal_id),
         Error::<Test>::ProposalExpired
       );
     });
