@@ -319,16 +319,17 @@ publish-rustdoc:
     - ssh-add - <<< ${GITHUB_SSH_PRIV_KEY}
     - mkdir ~/.ssh && touch ~/.ssh/known_hosts
     - ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-    # Set git config
-    - git config user.email "tidechain.ci@gmail.com"
-    - git config user.name "${GITHUB_USER}"
-    - git config remote.origin.url "git@github.com:/tidelabs/tidechain.git"
-    - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-    - git fetch origin gh-pages
+    # Clone gh-pages
+    - git clone "git@github.com:/tidelabs/tidechain.git" gh-pages
     # Save README and docs
+    - rm -rf /tmp/doc/
     - cp -r ./crate-docs/ /tmp/doc/
     - cp README.md /tmp/doc/
+    # Checkout gh-pages
+    - pushd gh-pages
     - git checkout gh-pages
+    - git config user.email "tidechain.ci@gmail.com"
+    - git config user.name "${GITHUB_USER}"
     # Remove everything and restore generated docs and README
     - rm -rf ./*
     - mv /tmp/doc/* .
@@ -343,7 +344,8 @@ publish-rustdoc:
     - git push origin gh-pages --force
     - echo "___Rustdoc was successfully published to https://tidelabs.github.io/tidechain/___"
   after_script:
-    - rm -rf .git/ ./*
+    - rm -rf ./gh-pages
+    - rm -rf /tmp/doc/
 
 .build-push-image: &build-push-image
   <<: *docker-env

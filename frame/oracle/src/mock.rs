@@ -154,6 +154,7 @@ parameter_types! {
   pub const FeeAmount: Permill = Permill::from_perthousand(20);
   // 10 basis point
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
+  pub const MarketMakerLimitFeeAmount: Permill = Permill::from_perthousand(10);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
   // The number of swap each account can have in queue
@@ -209,6 +210,7 @@ impl pallet_fees::Config for Test {
   type SessionsArchive = SessionsArchive;
   type FeeAmount = FeeAmount;
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
+  type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
   type BlocksPerSession = BlocksPerSession;
   type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;

@@ -50,12 +50,13 @@ parameter_types! {
   // ~ 5 mins
   pub const BlocksPerSession: BlockNumber = 50;
   // Staking: Number of blocks to wait before unstaking when we force-unstake.
-  // FIXME: Should be reverted to `14_400`
-  pub const BlocksForceUnstake: BlockNumber = 100;
+  pub const BlocksForceUnstake: BlockNumber = 14_400;
   // 0.25%
   pub const FeeAmount: Permill = Permill::from_parts(2500);
+  // 0.10%
+  pub const MarketMakerFeeAmount: Permill = Permill::from_parts(1000);
   // 0.05%
-  pub const MarketMakerFeeAmount: Permill = Permill::from_parts(500);
+  pub const MarketMakerLimitFeeAmount: Permill = Permill::from_parts(500);
   // Maximum pending burned possible in queue
   pub const BurnedCap: u32 = 1000;
   // Maximum proposals in queue for the quorum, to limit the vector size and optimization
@@ -207,10 +208,10 @@ impl pallet_fees::Config for Runtime {
   type SessionsArchive = SessionsArchive;
   type BlocksPerSession = BlocksPerSession;
   type Staking = TidefiStaking;
-  // Swap fee for users
+  // Swap fees
   type FeeAmount = FeeAmount;
-  // Swap fees for market makers
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
+  type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
   // Security utils
   type Security = Security;
   type BlocksSunriseClaims = BlocksSunriseClaims;

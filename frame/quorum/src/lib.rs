@@ -390,7 +390,7 @@ pub mod pallet {
 
       // 3. Add the proposal in queue
       let current_block = T::Security::get_current_block_count();
-      let proposal_id = T::Security::get_unique_id(sender.clone());
+      let proposal_id = T::Security::get_unique_id(sender);
 
       // Transform the proposal type to use bounded vector
       let proposal: ProposalType<
@@ -579,7 +579,7 @@ pub mod pallet {
 
         let weight_processed = if current_block >= proposal_expiration {
           // Delete proposal (1 write)
-          if let Err(_) = Self::delete_proposal(proposal_id) {
+          if Self::delete_proposal(proposal_id).is_err() {
             log!(error, "Can't delete proposal {}", proposal_id);
           };
 
@@ -654,9 +654,7 @@ pub mod pallet {
       let mut shuffled = (0..len).collect::<Vec<_>>();
       for i in 0..len {
         let j = (rng.next_u32() as usize) % len;
-        let a = shuffled[i];
-        shuffled[i] = shuffled[j];
-        shuffled[j] = a;
+        shuffled.swap(i, j);
       }
       shuffled
     }
@@ -669,12 +667,7 @@ pub mod pallet {
     // Make sure the account id is part of the quorum set list and have public key set
     fn is_member_and_ready(who: &T::AccountId) -> bool {
       let at_least_one_public_key = PublicKeys::<T>::iter_values()
-        .find(|assets| {
-          assets
-            .iter()
-            .find(|(account_id, _)| account_id == who)
-            .is_some()
-        })
+        .find(|assets| assets.iter().any(|(account_id, _)| account_id == who))
         .is_some();
 
       Self::members(who).unwrap_or(false) && at_least_one_public_key
@@ -700,7 +693,7 @@ pub mod pallet {
       let maybe_proposal = Self::proposals()
         .into_iter()
         .find(|(id, _block_number, _proposal)| *id == proposal_id);
-      ensure!(maybe_proposal != None, Error::<T>::ProposalDoesNotExist);
+      ensure!(maybe_proposal.is_some(), Error::<T>::ProposalDoesNotExist);
 
       let (_id, proposal_block, _proposal) = maybe_proposal.unwrap();
       ensure!(
