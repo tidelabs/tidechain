@@ -22,6 +22,7 @@ use crate::{
   pallet::*,
 };
 use frame_support::{assert_noop, assert_ok, traits::Hooks, BoundedVec};
+use pallet_security::CurrentBlockCount as CurrentBlockNumber;
 use tidefi_primitives::{
   pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
 };
@@ -47,6 +48,13 @@ impl Context {
     assert!(Members::<Test>::contains_key(1));
     assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
   }
+}
+
+fn set_current_block(block_number: u64) {
+  <CurrentBlockNumber<Test>>::mutate(|n| {
+    *n = block_number;
+    *n
+  });
 }
 
 #[test]
@@ -107,10 +115,8 @@ pub fn should_remove_expired() {
     assert_eq!(Quorum::on_idle(0, 1_000_000_000_000), 0);
     assert_eq!(Proposals::<Test>::get().len(), 1);
 
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = ProposalLifetime::get() + 2;
-      *n
-    });
+    set_current_block(ProposalLifetime::get() + 2);
+
     assert_eq!(Quorum::on_idle(0, 1_000_000_000_000), 0);
     assert_eq!(Proposals::<Test>::get().len(), 0);
   });
@@ -134,21 +140,91 @@ pub fn test_vec_shuffle() {
   });
 }
 
-#[test]
-pub fn vote_for_non_existent_proposal_should_fail() {
-  new_test_ext().execute_with(|| {
-    let context = Context::default();
-    context.setup();
+mod vote_should_fail_for {
+  use super::*;
 
-    let proposal_id = Hash::zero();
-    assert_noop!(
-      Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
-      Error::<Test>::ProposalDoesNotExist
-    );
-    let proposal_id = Hash::zero();
-    assert_noop!(
-      Quorum::reject_proposal(context.alice, proposal_id),
-      Error::<Test>::ProposalDoesNotExist
-    );
-  });
+  #[test]
+  pub fn non_existent_proposal() {
+    new_test_ext().execute_with(|| {
+      let context = Context::default();
+      context.setup();
+
+      let proposal_id = Hash::zero();
+      assert_noop!(
+        Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
+        Error::<Test>::ProposalDoesNotExist
+      );
+      assert_noop!(
+        Quorum::reject_proposal(context.alice, proposal_id),
+        Error::<Test>::ProposalDoesNotExist
+      );
+    });
+  }
+
+  #[test]
+  pub fn future_proposal() {
+    new_test_ext().execute_with(|| {
+      let context = Context::default();
+      context.setup();
+
+      let proposal = ProposalType::Mint(Mint {
+        account_id: 1,
+        currency_id: CurrencyId::Tifi,
+        mint_amount: 1_000_000_000_000,
+        transaction_id: Default::default(),
+        compliance_level: ComplianceLevel::Green,
+      });
+
+      let proposal_id = Hash::zero();
+      assert_ok!(Proposals::<Test>::try_append((
+        proposal_id,
+        Security::get_current_block_count() + 100,
+        proposal
+      )));
+
+      assert_noop!(
+        Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
+        Error::<Test>::ProposalBlockIsInFuture
+      );
+      assert_noop!(
+        Quorum::reject_proposal(context.alice, proposal_id),
+        Error::<Test>::ProposalBlockIsInFuture
+      );
+    });
+  }
+
+  #[test]
+  pub fn expired_proposal() {
+    new_test_ext().execute_with(|| {
+      let context = Context::default();
+      context.setup();
+
+      let proposal = ProposalType::Mint(Mint {
+        account_id: 1,
+        currency_id: CurrencyId::Tifi,
+        mint_amount: 1_000_000_000_000,
+        transaction_id: Default::default(),
+        compliance_level: ComplianceLevel::Green,
+      });
+
+      let proposal_id = Hash::zero();
+      let current_block = Security::get_current_block_count();
+      assert_ok!(Proposals::<Test>::try_append((
+        proposal_id,
+        current_block,
+        proposal
+      )));
+
+      set_current_block(current_block + ProposalLifetime::get() + 1);
+
+      assert_noop!(
+        Quorum::acknowledge_proposal(context.alice.clone(), proposal_id),
+        Error::<Test>::ProposalExpired
+      );
+      assert_noop!(
+        Quorum::reject_proposal(context.alice, proposal_id),
+        Error::<Test>::ProposalExpired
+      );
+    });
+  }
 }
