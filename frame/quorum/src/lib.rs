@@ -690,12 +690,12 @@ pub mod pallet {
     // Record the vote in the storage
     fn commit_vote(who: T::AccountId, proposal_id: Hash, in_favour: bool) -> DispatchResult {
       let current_block = T::Security::get_current_block_count();
-      let maybe_proposal = Self::proposals()
+      let proposal_block = Self::proposals()
         .into_iter()
-        .find(|(id, _block_number, _proposal)| *id == proposal_id);
-      ensure!(maybe_proposal.is_some(), Error::<T>::ProposalDoesNotExist);
+        .find(|(id, _, _)| *id == proposal_id)
+        .ok_or(Error::<T>::ProposalDoesNotExist)?
+        .1;
 
-      let (_id, proposal_block, _proposal) = maybe_proposal.unwrap();
       ensure!(
         current_block >= proposal_block,
         Error::<T>::ProposalBlockIsInFuture
