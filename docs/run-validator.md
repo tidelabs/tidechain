@@ -29,7 +29,7 @@ The nature of pre-built binaries means that they may not work on your particular
 Download the latest Tidechain binary within Ubuntu by running the following command.
 
 ```
-curl -sL https://github.com/tidelabs/tidechain/releases/latest/download/tidechain && chmod +x tidechain && mv tidechain /usr/local/bin/
+curl -sLO https://github.com/tidelabs/tidechain/releases/latest/download/tidechain && chmod +x tidechain && mv tidechain /usr/local/bin/
 ```
 
 ### Build from source
