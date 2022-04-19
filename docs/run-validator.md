@@ -2,13 +2,13 @@
 title: Run a validator
 ---
 
-This page will instruct you how to set up a validator node on the TideChain Public Sandbox.
+This page will instruct you how to set up a validator node on the Tidechain testnet.
 
 ## Requirements
 
 The most common way for a beginner to run a validator is on a cloud server running Linux. You may choose whatever VPS provider you prefer, and whichever operating system you are comfortable with. For this guide we will be using **Ubuntu 20.04**, but the instructions should be similar for other platforms.
 
-The transaction weights in TideChain were benchmarked on standard hardware. It is recommended that validators run at least the standard hardware in order to ensure they are able to process all blocks in time. The following are not minimum requirements but if you decide to run with less than this, you may experience performance issues.
+The transaction weights in Tidechain were benchmarked on standard hardware. It is recommended that validators run at least the standard hardware in order to ensure they are able to process all blocks in time. The following are not minimum requirements but if you decide to run with less than this, you may experience performance issues.
 
 ### Standard Hardware
 
