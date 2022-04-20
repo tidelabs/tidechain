@@ -261,17 +261,6 @@ pub fn run() -> Result<(), Error> {
         ))
       })?)
     }
-    Some(Subcommand::Benchmark(cmd)) => {
-      let runner = cli.create_runner(cmd)?;
-      let chain_spec = &runner.config().chain_spec;
-
-      set_default_ss58_version(chain_spec);
-
-      Ok(runner.sync_run(|config| {
-				cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(config)
-					.map_err(Error::SubstrateCli)
-			})?)
-    }
     Some(Subcommand::ExportBuiltinWasm(cmd)) => {
       #[cfg(feature = "tidechain-native")]
       {
@@ -335,7 +324,35 @@ pub fn run() -> Result<(), Error> {
 
       Ok(())
     }
+    #[cfg(feature = "runtime-benchmarks")]
+    Some(Subcommand::Benchmark(cmd)) => {
+      let runner = cli.create_runner(cmd)?;
+      let chain_spec = &runner.config().chain_spec;
+
+      set_default_ss58_version(chain_spec);
+
+      Ok(runner.sync_run(|config| {
+				cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(config)
+					.map_err(Error::SubstrateCli)
+			})?)
+    }
     Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
+    #[cfg(feature = "try-runtime")]
+    Some(Subcommand::TryRuntime(cmd)) => {
+      let runner = cli.create_runner(cmd)?;
+
+      runner.async_run(|config| {
+        let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
+        let task_manager =
+          sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
+          .map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+        Ok((
+          cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(config)
+          .map_err(Error::SubstrateCli),
+          task_manager,
+        ))
+      })
+    }
   }?;
   Ok(())
 }
