@@ -139,8 +139,6 @@ pub fn confirm_swap_partial_filling() {
 
     // BOB: 10 TIFI for 200 TEMP (20 TEMP/TIFI)
     let bob_initial_trade: Balance = 10_000_000_000_000;
-    let bob_initial_trade_with_slippage =
-      bob_initial_trade.saturating_add(Permill::from_percent(2) * bob_initial_trade);
 
     let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
       2u64,
@@ -162,24 +160,22 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Tifi, &2u64),
-      bob_initial_trade_with_slippage
+      bob_initial_trade
         // add 0.2% fee
-        .saturating_add(FeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_add(FeeAmount::get() * bob_initial_trade)
     );
 
     assert_eq!(
       Adapter::reducible_balance(CurrencyId::Tifi, &2u64, true),
       bob_initial_balance
         // reduce 2% slippage
-        .saturating_sub(bob_initial_trade_with_slippage)
+        .saturating_sub(bob_initial_trade)
         // reduce 0.2% network fee
-        .saturating_sub(FeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_sub(FeeAmount::get() * bob_initial_trade)
     );
 
     // CHARLIE (MM): 4000 TEMP FOR 200 TIFI
     let charlie_initial_trade: Balance = 400_000;
-    let charlie_initial_trade_with_slippage =
-      charlie_initial_trade.saturating_add(Permill::from_percent(4) * charlie_initial_trade);
 
     let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       3u64,
@@ -201,14 +197,14 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &3u64),
-      charlie_initial_trade_with_slippage
+      charlie_initial_trade
         // add 0.1% fee
-        .saturating_add(MarketMakerFeeAmount::get() * charlie_initial_trade_with_slippage)
+        .saturating_add(MarketMakerFeeAmount::get() * charlie_initial_trade)
     );
 
     let last_charlie_balance = charlie_initial_wrapped_balance
-      .saturating_sub(charlie_initial_trade_with_slippage)
-      .saturating_sub(MarketMakerFeeAmount::get() * charlie_initial_trade_with_slippage);
+      .saturating_sub(charlie_initial_trade)
+      .saturating_sub(MarketMakerFeeAmount::get() * charlie_initial_trade);
 
     assert_eq!(
       Adapter::balance(CurrencyId::Wrapped(temp_asset_id), &3u64),
@@ -221,9 +217,9 @@ pub fn confirm_swap_partial_filling() {
         // keep-alive token
         .saturating_sub(1_u128)
         // slippage
-        .saturating_sub(charlie_initial_trade_with_slippage)
+        .saturating_sub(charlie_initial_trade)
         // fees
-        .saturating_sub(MarketMakerFeeAmount::get() * charlie_initial_trade_with_slippage)
+        .saturating_sub(MarketMakerFeeAmount::get() * charlie_initial_trade)
     );
 
     assert_eq!(
@@ -231,15 +227,13 @@ pub fn confirm_swap_partial_filling() {
       // minted 1_000_000 on genesis (no keep-alive)
       charlie_initial_wrapped_balance
         // slippage
-        .saturating_sub(charlie_initial_trade_with_slippage)
+        .saturating_sub(charlie_initial_trade)
         // fees
-        .saturating_sub(MarketMakerFeeAmount::get() * charlie_initial_trade_with_slippage)
+        .saturating_sub(MarketMakerFeeAmount::get() * charlie_initial_trade)
     );
 
     // DAVE (MM): 8000 TEMP for 400 TIFI
     let dave_initial_trade: Balance = 800_000;
-    let dave_initial_trade_with_slippage =
-      dave_initial_trade.saturating_add(Permill::from_percent(5) * dave_initial_trade);
 
     let (trade_request_mm2_id, trade_request_mm2) = Oracle::add_new_swap_in_queue(
       4u64,
@@ -261,9 +255,9 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &4u64),
-      dave_initial_trade_with_slippage
+      dave_initial_trade
         // add 0.1% fee
-        .saturating_add(MarketMakerFeeAmount::get() * dave_initial_trade_with_slippage)
+        .saturating_add(MarketMakerFeeAmount::get() * dave_initial_trade)
     );
 
     // make sure our trade request is created correctly
@@ -890,8 +884,6 @@ pub fn confirm_swap_ourself() {
 
     // BOB: 10 TIFI for 200 TEMP (20 TEMP/TIFI)
     let bob_initial_trade: Balance = 10_000_000_000_000;
-    let bob_initial_trade_with_slippage =
-      bob_initial_trade.saturating_add(Permill::from_percent(2) * bob_initial_trade);
 
     let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
       2u64,
@@ -913,23 +905,21 @@ pub fn confirm_swap_ourself() {
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Tifi, &2u64),
-      bob_initial_trade_with_slippage
+      bob_initial_trade
         // add 0.2% fee
-        .saturating_add(FeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_add(FeeAmount::get() * bob_initial_trade)
     );
 
     assert_eq!(
       Adapter::reducible_balance(CurrencyId::Tifi, &2u64, true),
       bob_initial_balance
         // reduce 2% slippage
-        .saturating_sub(bob_initial_trade_with_slippage)
+        .saturating_sub(bob_initial_trade)
         // reduce 0.2% network fee
-        .saturating_sub(FeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_sub(FeeAmount::get() * bob_initial_trade)
     );
 
     let bob_initial_trade: Balance = 40_000;
-    let bob_initial_trade_with_slippage =
-      bob_initial_trade.saturating_add(Permill::from_percent(5) * bob_initial_trade);
 
     let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       2u64,
@@ -951,9 +941,9 @@ pub fn confirm_swap_ourself() {
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &2u64),
-      bob_initial_trade_with_slippage
+      bob_initial_trade
         // add 0.1% fee
-        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade)
     );
 
     // make sure our trade request is created correctly
@@ -1091,8 +1081,6 @@ pub fn test_slippage() {
 
     // BOB: 10 TIFI for 200 TEMP (20 TEMP/TIFI)
     let bob_initial_trade: Balance = 10_000_000_000_000;
-    let bob_initial_trade_with_slippage =
-      bob_initial_trade.saturating_add(Permill::from_percent(2) * bob_initial_trade);
 
     let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
       2u64,
@@ -1114,23 +1102,21 @@ pub fn test_slippage() {
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Tifi, &2u64),
-      bob_initial_trade_with_slippage
+      bob_initial_trade
         // add 0.2% fee
-        .saturating_add(FeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_add(FeeAmount::get() * bob_initial_trade)
     );
 
     assert_eq!(
       Adapter::reducible_balance(CurrencyId::Tifi, &2u64, true),
       bob_initial_balance
         // reduce 2% slippage
-        .saturating_sub(bob_initial_trade_with_slippage)
+        .saturating_sub(bob_initial_trade)
         // reduce 0.2% network fee
-        .saturating_sub(FeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_sub(FeeAmount::get() * bob_initial_trade)
     );
 
     let bob_initial_trade: Balance = 80_000;
-    let bob_initial_trade_with_slippage =
-      bob_initial_trade.saturating_add(Permill::from_percent(5) * bob_initial_trade);
 
     let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       2u64,
@@ -1170,11 +1156,11 @@ pub fn test_slippage() {
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &2u64),
-      bob_initial_trade_with_slippage
+      bob_initial_trade
         // add 0.1% fee
-        .saturating_add(bob_initial_trade_with_slippage)
-        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade_with_slippage)
-        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade_with_slippage)
+        .saturating_add(bob_initial_trade)
+        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade)
+        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade)
     );
 
     // make sure our trade request is created correctly
@@ -1229,19 +1215,14 @@ pub fn test_slippage() {
       trade_request_id,
       vec![SwapConfirmation {
         request_id: trade_request_mm_id,
-        amount_to_receive: 10_200_000_000_000,
-        amount_to_send: 40_000,
+        amount_to_receive: 9_750_000_000_000,
+        amount_to_send: 39_000,
       },],
     ));
 
-    assert!(Oracle::swaps(trade_request_id).is_none());
+    // limit order isnt deleted as its not fully filled
+    assert!(Oracle::swaps(trade_request_id).is_some());
+    // market order got deleted
     assert!(Oracle::swaps(trade_request_mm_id).is_none());
-
-    // cant send another trade confirmation as the request should be deleted
-    // we do expect `InvalidRequestId`
-    assert_noop!(
-      Oracle::confirm_swap(alice, trade_request_id, vec![],),
-      Error::<Test>::InvalidRequestId
-    );
   });
 }
