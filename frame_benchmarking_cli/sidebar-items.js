@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["overhead",""]],"struct":[["BenchmarkCmd","The `benchmark` command used to benchmark FRAME Pallets."],["StorageCmd","Benchmark the storage of a Substrate node with a live chain snapshot."]]});
