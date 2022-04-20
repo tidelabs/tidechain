@@ -329,25 +329,11 @@ pub mod pallet {
             trade.amount_to_filled += total_to;
 
             ensure!(
-              trade.amount_from_filled
-                <= trade
-                  .amount_from
-                  .saturating_add(trade.slippage * trade.amount_from),
+              trade.amount_from_filled <= trade.amount_from,
               Error::Overflow
             );
 
-            let amount_from_with_max_slippage = trade
-              .amount_from
-              .saturating_add(trade.slippage * trade.amount_from);
-            let amount_from_with_min_slippage = trade
-              .amount_from
-              .saturating_sub(trade.slippage * trade.amount_from);
-
-            // if the amount filled, is within our slippage value of the amount_from, we mark this
-            // swap as closed
-            if trade.amount_from_filled >= amount_from_with_min_slippage
-              && trade.amount_from_filled <= amount_from_with_max_slippage
-            {
+            if trade.amount_from_filled == trade.amount_from {
               trade.status = SwapStatus::Completed;
             } else {
               trade.status = SwapStatus::PartiallyFilled;
@@ -389,21 +375,8 @@ pub mod pallet {
                     market_maker_trade_intent.amount_from_filled += mm.amount_to_send;
                     market_maker_trade_intent.amount_to_filled += mm.amount_to_receive;
 
-                    // calculate fill ratio based on the slippage
-                    let amount_from_with_max_slippage =
-                      market_maker_trade_intent.amount_from.saturating_add(
-                        market_maker_trade_intent.slippage * market_maker_trade_intent.amount_from,
-                      );
-                    let amount_from_with_min_slippage =
-                      market_maker_trade_intent.amount_from.saturating_sub(
-                        market_maker_trade_intent.slippage * market_maker_trade_intent.amount_from,
-                      );
-
-                    // if the amount filled, is within our slippage value of the amount_from, we mark this
-                    // swap as closed
-                    if market_maker_trade_intent.amount_from_filled >= amount_from_with_min_slippage
-                      && market_maker_trade_intent.amount_from_filled
-                        <= amount_from_with_max_slippage
+                    if market_maker_trade_intent.amount_from_filled
+                      == market_maker_trade_intent.amount_from
                     {
                       // completed fill
                       market_maker_trade_intent.status = SwapStatus::Completed;
@@ -768,10 +741,6 @@ pub mod pallet {
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
     fn swap_release_funds(trade: &Swap<T::AccountId, T::BlockNumber>) -> Result<(), DispatchError> {
-      // release the remaining funds
-      let amount_with_max_slippage = trade
-        .amount_from
-        .saturating_add(trade.slippage * trade.amount_from);
       // real fees required
       let real_fees_amount = T::Fees::calculate_swap_fees(
         trade.token_from,
@@ -781,15 +750,13 @@ pub mod pallet {
       );
       let fees_with_slippage = T::Fees::calculate_swap_fees(
         trade.token_from,
-        amount_with_max_slippage,
+        trade.amount_from,
         trade.swap_type.clone(),
         trade.is_market_maker,
       );
 
       let amount_to_release = trade
         .amount_from
-        // slippage
-        .saturating_add(trade.slippage * trade.amount_from)
         // reduce filled amount
         .saturating_sub(trade.amount_from_filled)
         // reduce un-needed locked fee
@@ -891,18 +858,13 @@ pub mod pallet {
       };
 
       // 6. Freeze asset
-      let amount_from_with_slippage = amount_from.saturating_add(slippage * amount_from);
-      let amount_and_fee = T::Fees::calculate_swap_fees(
-        asset_id_from,
-        amount_from_with_slippage,
-        swap_type,
-        is_market_maker,
-      );
+      let amount_and_fee =
+        T::Fees::calculate_swap_fees(asset_id_from, amount_from, swap_type, is_market_maker);
 
       T::CurrencyTidefi::hold(
         asset_id_from,
         &account_id,
-        amount_from_with_slippage.saturating_add(amount_and_fee.fee),
+        amount_from.saturating_add(amount_and_fee.fee),
       )?;
 
       Swaps::<T>::insert(request_id, swap.clone());
@@ -948,34 +910,28 @@ pub mod pallet {
           let amount_to_release = swap_intent
             .amount_from
             // amount filled
-            .saturating_sub(swap_intent.amount_from_filled)
-            // initial slippage extra
-            .saturating_add(swap_intent.slippage * swap_intent.amount_from);
+            .saturating_sub(swap_intent.amount_from_filled);
 
           // FIXME: Should we refund the swap fee?
           // swap fee
           let real_amount_to_release = if swap_intent.amount_from_filled == 0 {
             amount_to_release.saturating_add(amount_and_fee.fee)
           } else {
-            let amount_with_max_slippage = swap_intent
-              .amount_from
-              .saturating_add(swap_intent.slippage * swap_intent.amount_from);
             // real fees required
-            let real_fees_amount = T::Fees::calculate_swap_fees(
+            let fees_amount_filled = T::Fees::calculate_swap_fees(
               swap_intent.token_from,
               swap_intent.amount_from_filled,
               swap_intent.swap_type.clone(),
               swap_intent.is_market_maker,
             );
-            let fees_with_slippage = T::Fees::calculate_swap_fees(
+            let fees_amount = T::Fees::calculate_swap_fees(
               swap_intent.token_from,
-              amount_with_max_slippage,
+              swap_intent.amount_from,
               swap_intent.swap_type.clone(),
               swap_intent.is_market_maker,
             );
 
-            amount_to_release
-              .saturating_add(fees_with_slippage.fee.saturating_sub(real_fees_amount.fee))
+            amount_to_release.saturating_add(fees_amount.fee.saturating_sub(fees_amount_filled.fee))
           };
 
           T::CurrencyTidefi::release(
