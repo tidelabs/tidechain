@@ -50,7 +50,12 @@ pub enum Subcommand {
 
   ExportBuiltinWasm(ExportBuiltinWasmCommand),
 
+  /// Try some command against runtime state.
+  #[cfg(feature = "try-runtime")]
+  TryRuntime(try_runtime_cli::TryRuntimeCmd),
+
   /// The custom benchmark subcommmand benchmarking runtime pallets.
+  #[cfg(feature = "runtime-benchmarks")]
   Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
   /// Key management CLI utilities
