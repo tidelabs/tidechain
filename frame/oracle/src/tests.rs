@@ -60,13 +60,6 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(Fees::account_id(), 8246216774960574317);
 
-    // add 1 tifi to fees account to make sure account is valid
-    assert_ok!(Adapter::mint_into(
-      CurrencyId::Tifi,
-      &Fees::account_id(),
-      1_000_000_000_000
-    ));
-
     let temp_asset_id = 4;
 
     assert_ok!(Oracle::set_status(alice.clone(), true));
@@ -854,13 +847,6 @@ pub fn confirm_swap_ourself() {
 
     assert_eq!(Fees::account_id(), 8246216774960574317);
 
-    // add 1 tifi to fees account to make sure account is valid
-    assert_ok!(Adapter::mint_into(
-      CurrencyId::Tifi,
-      &Fees::account_id(),
-      1_000_000_000_000
-    ));
-
     // make TEMP asset as 2 decimals
     assert_ok!(Assets::set_metadata(
       alice.clone(),
@@ -1051,13 +1037,6 @@ pub fn test_slippage() {
 
     assert_eq!(Fees::account_id(), 8246216774960574317);
 
-    // add 1 tifi to fees account to make sure account is valid
-    assert_ok!(Adapter::mint_into(
-      CurrencyId::Tifi,
-      &Fees::account_id(),
-      1_000_000_000_000
-    ));
-
     // make TEMP asset as 2 decimals
     assert_ok!(Assets::set_metadata(
       alice.clone(),
@@ -1094,7 +1073,7 @@ pub fn test_slippage() {
         0, 0,
       ],
       false,
-      SwapType::Limit,
+      SwapType::Market,
       // 2% slippage tolerance
       Permill::from_percent(2),
     )
@@ -1116,51 +1095,29 @@ pub fn test_slippage() {
         .saturating_sub(FeeAmount::get() * bob_initial_trade)
     );
 
-    let bob_initial_trade: Balance = 80_000;
-
     let (trade_request_mm_id, trade_request_mm) = Oracle::add_new_swap_in_queue(
       2u64,
       CurrencyId::Wrapped(temp_asset_id),
-      bob_initial_trade,
+      // ratio is a bit different (mm is willing to pay a bit more for the same amount)
+      50_000,
       CurrencyId::Tifi,
-      20_000_000_000_000,
+      bob_initial_trade,
       0,
       [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0,
       ],
       true,
-      SwapType::Market,
-      // 5% slippage tolerance
-      Permill::from_percent(5),
-    )
-    .unwrap();
-
-    let (trade_request_mm_id2, _) = Oracle::add_new_swap_in_queue(
-      2u64,
-      CurrencyId::Wrapped(temp_asset_id),
-      bob_initial_trade,
-      CurrencyId::Tifi,
-      10_000_000_000_000,
-      0,
-      [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
-      ],
-      true,
-      SwapType::Market,
-      // 5% slippage tolerance
-      Permill::from_percent(5),
+      SwapType::Limit,
+      Permill::from_percent(0),
     )
     .unwrap();
 
     assert_eq!(
       Adapter::balance_on_hold(CurrencyId::Wrapped(temp_asset_id), &2u64),
-      bob_initial_trade
+      50_000_u128
         // add 0.1% fee
-        .saturating_add(bob_initial_trade)
-        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade)
-        .saturating_add(MarketMakerFeeAmount::get() * bob_initial_trade)
+        .saturating_add(MarketMakerFeeAmount::get() * 50_000_u128)
     );
 
     // make sure our trade request is created correctly
@@ -1189,24 +1146,11 @@ pub fn test_slippage() {
         trade_request_id,
         vec![SwapConfirmation {
           request_id: trade_request_mm_id,
-          amount_to_receive: 10_210_000_000_000,
+          amount_to_receive: 8_000_000_000_000,
           amount_to_send: 40_000,
         },],
       ),
       Error::<Test>::Overflow
-    );
-
-    assert_noop!(
-      Oracle::confirm_swap(
-        alice.clone(),
-        trade_request_id,
-        vec![SwapConfirmation {
-          request_id: trade_request_mm_id2,
-          amount_to_receive: 10_000_000_000_000,
-          amount_to_send: 40_000,
-        },],
-      ),
-      Error::<Test>::MarketMakerOverflow
     );
 
     // partial filling
@@ -1215,14 +1159,15 @@ pub fn test_slippage() {
       trade_request_id,
       vec![SwapConfirmation {
         request_id: trade_request_mm_id,
-        amount_to_receive: 9_750_000_000_000,
-        amount_to_send: 39_000,
+        // 9.8 test token (within the 2% slippage of the initial request)
+        amount_to_receive: 9_800_000_000_000,
+        amount_to_send: 40_000,
       },],
     ));
 
-    // limit order isnt deleted as its not fully filled
-    assert!(Oracle::swaps(trade_request_id).is_some());
     // market order got deleted
-    assert!(Oracle::swaps(trade_request_mm_id).is_none());
+    assert!(Oracle::swaps(trade_request_id).is_none());
+    // limit order isnt deleted as its not fully filled
+    assert!(Oracle::swaps(trade_request_mm_id).is_some());
   });
 }
