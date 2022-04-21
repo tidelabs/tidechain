@@ -958,6 +958,16 @@
 <span id="956">956</span>
 <span id="957">957</span>
 <span id="958">958</span>
+<span id="959">959</span>
+<span id="960">960</span>
+<span id="961">961</span>
+<span id="962">962</span>
+<span id="963">963</span>
+<span id="964">964</span>
+<span id="965">965</span>
+<span id="966">966</span>
+<span id="967">967</span>
+<span id="968">968</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -1239,9 +1249,14 @@
               <span class="kw">let</span> <span class="ident">pay_per_token</span> <span class="op">=</span> <span class="ident">trade</span>.<span class="ident">amount_from</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="ident">trade</span>.<span class="ident">amount_to</span> <span class="kw">as</span> <span class="ident">f64</span>;
               <span class="kw">let</span> <span class="ident">pay_per_token_offered</span> <span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_receive</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span> <span class="kw">as</span> <span class="ident">f64</span>;
               <span class="kw">let</span> <span class="ident">allowed_slippage</span> <span class="op">=</span> <span class="ident">trade</span>.<span class="ident">slippage</span>.<span class="ident">deconstruct</span>() <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="number">1_000_000_f64</span>;
-              <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">-</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
+
+              <span class="comment">// limit order can match with smaller price</span>
+              <span class="kw">if</span> <span class="ident">trade</span>.<span class="ident">swap_type</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapType::Limit</span> {
+                <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">-</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
+                <span class="macro">ensure!</span>(<span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>, <span class="ident">Error::Overflow</span>);
+              }
+
               <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">+</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
-              <span class="macro">ensure!</span>(<span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>, <span class="ident">Error::Overflow</span>);
               <span class="macro">ensure!</span>(<span class="ident">maximum_per_token</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>, <span class="ident">Error::Overflow</span>);
 
               <span class="comment">// validate mm slippage tolerance</span>
@@ -1249,12 +1264,17 @@
                 <span class="ident">mm_trade_request</span>.<span class="ident">amount_from</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="ident">mm_trade_request</span>.<span class="ident">amount_to</span> <span class="kw">as</span> <span class="ident">f64</span>;
               <span class="kw">let</span> <span class="ident">pay_per_token_offered</span> <span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="ident">mm</span>.<span class="ident">amount_to_receive</span> <span class="kw">as</span> <span class="ident">f64</span>;
               <span class="kw">let</span> <span class="ident">allowed_slippage</span> <span class="op">=</span> <span class="ident">mm_trade_request</span>.<span class="ident">slippage</span>.<span class="ident">deconstruct</span>() <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="number">1_000_000_f64</span>;
-              <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">-</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
+
+              <span class="comment">// limit order can match with smaller price</span>
+              <span class="kw">if</span> <span class="ident">mm_trade_request</span>.<span class="ident">swap_type</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapType::Limit</span> {
+                <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">-</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
+                <span class="macro">ensure!</span>(
+                  <span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
+                  <span class="ident">Error::MarketMakerOverflow</span>
+                );
+              }
+
               <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">+</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
-              <span class="macro">ensure!</span>(
-                <span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
-                <span class="ident">Error::MarketMakerOverflow</span>
-              );
               <span class="macro">ensure!</span>(
                 <span class="ident">maximum_per_token</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
                 <span class="ident">Error::MarketMakerOverflow</span>
