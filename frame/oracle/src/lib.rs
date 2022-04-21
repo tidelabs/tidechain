@@ -279,9 +279,14 @@ pub mod pallet {
               let pay_per_token = trade.amount_from as f64 / trade.amount_to as f64;
               let pay_per_token_offered = mm.amount_to_receive as f64 / mm.amount_to_send as f64;
               let allowed_slippage = trade.slippage.deconstruct() as f64 / 1_000_000_f64;
-              let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+
+              // limit order can match with smaller price
+              if trade.swap_type != SwapType::Limit {
+                let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+                ensure!(minimum_per_token <= pay_per_token_offered, Error::Overflow);
+              }
+
               let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
-              ensure!(minimum_per_token <= pay_per_token_offered, Error::Overflow);
               ensure!(maximum_per_token >= pay_per_token_offered, Error::Overflow);
 
               // validate mm slippage tolerance
@@ -289,12 +294,17 @@ pub mod pallet {
                 mm_trade_request.amount_from as f64 / mm_trade_request.amount_to as f64;
               let pay_per_token_offered = mm.amount_to_send as f64 / mm.amount_to_receive as f64;
               let allowed_slippage = mm_trade_request.slippage.deconstruct() as f64 / 1_000_000_f64;
-              let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+
+              // limit order can match with smaller price
+              if mm_trade_request.swap_type != SwapType::Limit {
+                let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+                ensure!(
+                  minimum_per_token <= pay_per_token_offered,
+                  Error::MarketMakerOverflow
+                );
+              }
+
               let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
-              ensure!(
-                minimum_per_token <= pay_per_token_offered,
-                Error::MarketMakerOverflow
-              );
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
                 Error::MarketMakerOverflow
