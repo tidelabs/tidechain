@@ -315,7 +315,7 @@ impl_runtime_apis! {
            impl frame_system_benchmarking::Config for Runtime {}
            use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
            impl pallet_election_provider_support_benchmarking::Config for Runtime {}
-           
+
            //use pallet_offences_benchmarking::Pallet as OffencesBench;
            //impl pallet_offences_benchmarking::Config for Runtime {}
 
