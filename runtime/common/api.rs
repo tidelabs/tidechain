@@ -296,7 +296,6 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_asset_registry, crate::AssetRegistry);
        list_benchmark!(list, extra, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
-
        let storage_info = crate::AllPalletsWithSystem::storage_info();
 
        (list, storage_info)
@@ -315,7 +314,8 @@ impl_runtime_apis! {
            use frame_system_benchmarking::Pallet as SystemBench;
            impl frame_system_benchmarking::Config for Runtime {}
            use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
-
+           impl pallet_election_provider_support_benchmarking::Config for Runtime {}
+           
            //use pallet_offences_benchmarking::Pallet as OffencesBench;
            //impl pallet_offences_benchmarking::Config for Runtime {}
 
