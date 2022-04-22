@@ -142,9 +142,11 @@ impl SubstrateCli for Cli {
   }
 }
 
+#[cfg(feature = "runtime-benchmarks")]
 const DEV_ONLY_ERROR_PATTERN: &'static str =
   "can only use subcommand with --chain [tidechain-dev, lagoon-dev], got ";
 
+#[cfg(feature = "runtime-benchmarks")]
 fn ensure_dev(spec: &Box<dyn tidechain_service::ChainSpec>) -> std::result::Result<(), String> {
   if spec.is_dev() {
     Ok(())
@@ -153,7 +155,7 @@ fn ensure_dev(spec: &Box<dyn tidechain_service::ChainSpec>) -> std::result::Resu
   }
 }
 
-/// Unwraps a [`polkadot_client::Client`] into the concrete runtime client.
+#[cfg(feature = "runtime-benchmarks")]
 macro_rules! unwrap_client {
   (
 		$client:ident,
