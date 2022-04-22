@@ -255,7 +255,7 @@ pub fn run() -> Result<(), Error> {
         let ops = tidechain_service::new_chain_ops(&mut config)?;
         Ok((
           cmd
-            .run(Arc::new(ops.client), ops.backend)
+            .run(Arc::new(ops.client), ops.backend, None)
             .map_err(Error::SubstrateCli),
           ops.task_manager,
         ))

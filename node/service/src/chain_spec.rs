@@ -124,10 +124,10 @@ fn lagoon_testnet_genesis(
   root: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> lagoon_runtime::GenesisConfig {
-  // 1000 TIFIs / validators
-  const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
+  // 10_500 TIFIs / validators (10_000 stashed)
+  const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
-  const STASH: u128 = 2 * 1_000_000_000_000;
+  const STASH: u128 = 10_000 * 1_000_000_000_000;
   const SUNRISE_POOL: u128 = 192_000_000 * 1_000_000_000_000;
   // Treasury Account Id
   let treasury_account: AccountId = lagoon_runtime::TreasuryPalletId::get().into_account();
@@ -318,10 +318,10 @@ fn tidechain_testnet_genesis(
   oracle: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> tidechain_runtime::GenesisConfig {
-  // 1000 TIFIs / validators
-  const ENDOWMENT: u128 = 1000 * 1_000_000_000_000;
+  // 10_500 TIFIs / validators (10_000 stashed)
+  const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
-  const STASH: u128 = 2 * 1_000_000_000_000;
+  const STASH: u128 = 10_000 * 1_000_000_000_000;
   const SUNRISE_POOL: u128 = 192_000_000 * 1_000_000_000_000;
 
   // default threshold set to 60%
