@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["InjectValidatorsIntoVoterList","Migration implementation that injects all validators into sorted list."]]});

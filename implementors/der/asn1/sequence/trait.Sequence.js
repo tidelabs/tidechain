@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["sec1"] = [{"text":"impl&lt;'a&gt; <a class=\"trait\" href=\"der/asn1/sequence/trait.Sequence.html\" title=\"trait der::asn1::sequence::Sequence\">Sequence</a>&lt;'a&gt; for <a class=\"struct\" href=\"sec1/struct.EcPrivateKey.html\" title=\"struct sec1::EcPrivateKey\">EcPrivateKey</a>&lt;'a&gt;","synthetic":false,"types":["sec1::private_key::EcPrivateKey"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

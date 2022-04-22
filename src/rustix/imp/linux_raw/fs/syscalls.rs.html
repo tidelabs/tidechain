@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;usr&#x2F;local&#x2F;cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;rustix-0.31.3&#x2F;src&#x2F;imp&#x2F;linux_raw&#x2F;fs&#x2F;syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;usr&#x2F;local&#x2F;cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;rustix-0.33.7&#x2F;src&#x2F;imp&#x2F;linux_raw&#x2F;fs&#x2F;syscalls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a class="sidebar-logo" href="../../../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../../rust-logo.png" alt="logo"></div>
         </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../rust-logo.png" alt="logo"></a><nav class="sub"><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
@@ -1276,80 +1276,159 @@
 <span id="1274">1274</span>
 <span id="1275">1275</span>
 <span id="1276">1276</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Safe (where possible) wrappers around filesystem system calls.</span>
+<span id="1277">1277</span>
+<span id="1278">1278</span>
+<span id="1279">1279</span>
+<span id="1280">1280</span>
+<span id="1281">1281</span>
+<span id="1282">1282</span>
+<span id="1283">1283</span>
+<span id="1284">1284</span>
+<span id="1285">1285</span>
+<span id="1286">1286</span>
+<span id="1287">1287</span>
+<span id="1288">1288</span>
+<span id="1289">1289</span>
+<span id="1290">1290</span>
+<span id="1291">1291</span>
+<span id="1292">1292</span>
+<span id="1293">1293</span>
+<span id="1294">1294</span>
+<span id="1295">1295</span>
+<span id="1296">1296</span>
+<span id="1297">1297</span>
+<span id="1298">1298</span>
+<span id="1299">1299</span>
+<span id="1300">1300</span>
+<span id="1301">1301</span>
+<span id="1302">1302</span>
+<span id="1303">1303</span>
+<span id="1304">1304</span>
+<span id="1305">1305</span>
+<span id="1306">1306</span>
+<span id="1307">1307</span>
+<span id="1308">1308</span>
+<span id="1309">1309</span>
+<span id="1310">1310</span>
+<span id="1311">1311</span>
+<span id="1312">1312</span>
+<span id="1313">1313</span>
+<span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
+<span id="1337">1337</span>
+<span id="1338">1338</span>
+<span id="1339">1339</span>
+<span id="1340">1340</span>
+<span id="1341">1341</span>
+<span id="1342">1342</span>
+<span id="1343">1343</span>
+<span id="1344">1344</span>
+<span id="1345">1345</span>
+<span id="1346">1346</span>
+<span id="1347">1347</span>
+<span id="1348">1348</span>
+<span id="1349">1349</span>
+<span id="1350">1350</span>
+<span id="1351">1351</span>
+<span id="1352">1352</span>
+<span id="1353">1353</span>
+<span id="1354">1354</span>
+<span id="1355">1355</span>
+<span id="1356">1356</span>
+<span id="1357">1357</span>
+<span id="1358">1358</span>
+<span id="1359">1359</span>
+</pre><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::fs`.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Safety</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! This file performs raw system calls, and sometimes passes them</span>
-<span class="doccomment">//! uninitialized memory buffers. The signatures in this file are currently</span>
-<span class="doccomment">//! manually maintained and must correspond with the signatures of the actual</span>
-<span class="doccomment">//! Linux syscalls.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Some of this could be auto-generated from the Linux header file</span>
-<span class="doccomment">//! &lt;linux/syscalls.h&gt;, but we often need more information than it provides,</span>
-<span class="doccomment">//! such as which pointers are array slices, out parameters, or in-out</span>
-<span class="doccomment">//! parameters, which integers are owned or borrowed file descriptors, etc.</span>
+<span class="doccomment">//! See the `rustix::imp::syscalls` module documentation for details.</span>
+
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall6_readonly</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall7_readonly</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose</span>::{
     <span class="ident">syscall1_readonly</span>, <span class="ident">syscall2</span>, <span class="ident">syscall2_readonly</span>, <span class="ident">syscall3</span>, <span class="ident">syscall3_readonly</span>, <span class="ident">syscall4</span>,
     <span class="ident">syscall4_readonly</span>, <span class="ident">syscall5</span>, <span class="ident">syscall5_readonly</span>, <span class="ident">syscall6</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::c</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
+    <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
+    <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>)
+))]</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv::zero</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{
-    <span class="ident">borrowed_fd</span>, <span class="ident">by_ref</span>, <span class="ident">c_int</span>, <span class="ident">c_str</span>, <span class="ident">c_uint</span>, <span class="ident">dev_t</span>, <span class="ident">mode_as</span>, <span class="ident">oflags</span>, <span class="ident">oflags_for_open_how</span>,
-    <span class="ident">opt_c_str</span>, <span class="ident">opt_mut</span>, <span class="ident">out</span>, <span class="ident">pass_usize</span>, <span class="ident">raw_fd</span>, <span class="ident">ret</span>, <span class="ident">ret_c_int</span>, <span class="ident">ret_c_uint</span>, <span class="ident">ret_owned_fd</span>,
-    <span class="ident">ret_usize</span>, <span class="ident">size_of</span>, <span class="ident">slice_just_addr</span>, <span class="ident">slice_mut</span>,
+    <span class="ident">borrowed_fd</span>, <span class="ident">by_ref</span>, <span class="ident">c_int</span>, <span class="ident">c_str</span>, <span class="ident">c_uint</span>, <span class="ident">dev_t</span>, <span class="ident">fs_advice</span>, <span class="ident">mode_and_type_as</span>, <span class="ident">mode_as</span>, <span class="ident">oflags</span>,
+    <span class="ident">oflags_for_open_how</span>, <span class="ident">opt_c_str</span>, <span class="ident">opt_mut</span>, <span class="ident">out</span>, <span class="ident">pass_usize</span>, <span class="ident">raw_fd</span>, <span class="ident">ret</span>, <span class="ident">ret_c_int</span>, <span class="ident">ret_c_uint</span>,
+    <span class="ident">ret_owned_fd</span>, <span class="ident">ret_usize</span>, <span class="ident">size_of</span>, <span class="ident">slice_mut</span>,
+};
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::reg::nr</span>;
+<span class="kw">use</span> <span class="kw">super</span>::{
+    <span class="ident">Access</span>, <span class="ident">Advice</span>, <span class="ident">AtFlags</span>, <span class="ident">FallocateFlags</span>, <span class="ident">FdFlags</span>, <span class="ident">FlockOperation</span>, <span class="ident">MemfdFlags</span>, <span class="ident">Mode</span>, <span class="ident">OFlags</span>,
+    <span class="ident">RenameFlags</span>, <span class="ident">ResolveFlags</span>, <span class="ident">Stat</span>, <span class="ident">StatFs</span>, <span class="ident">StatxFlags</span>,
 };
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::fd::AsFd</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::fd</span>::{<span class="ident">BorrowedFd</span>, <span class="ident">RawFd</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::reg::nr</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::time::Timespec</span>;
-<span class="kw">use</span> <span class="kw">super</span>::{
-    <span class="ident">Access</span>, <span class="ident">Advice</span> <span class="kw">as</span> <span class="ident">FsAdvice</span>, <span class="ident">AtFlags</span>, <span class="ident">FallocateFlags</span>, <span class="ident">FdFlags</span>, <span class="ident">FlockOperation</span>, <span class="ident">MemfdFlags</span>, <span class="ident">Mode</span>,
-    <span class="ident">OFlags</span>, <span class="ident">RenameFlags</span>, <span class="ident">ResolveFlags</span>, <span class="ident">Stat</span>, <span class="ident">StatFs</span>, <span class="ident">StatxFlags</span>,
-};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fd::AsFd</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fd</span>::{<span class="ident">BorrowedFd</span>, <span class="ident">RawFd</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ffi::ZStr</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fs</span>::{<span class="ident">FileType</span>, <span class="ident">SealFlags</span>, <span class="ident">Timestamps</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>::{<span class="self">self</span>, <span class="ident">OwnedFd</span>, <span class="ident">SeekFrom</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::process</span>::{<span class="ident">Gid</span>, <span class="ident">Uid</span>};
 <span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">core::mem::MaybeUninit</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_arm_fadvise64_64</span> <span class="kw">as</span> <span class="ident">__NR_fadvise64_64</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>, <span class="ident">not</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_fadvise64</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
+    <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
+    <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>))
+))]</span>
 <span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_fadvise64_64</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
 <span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_open</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)))]</span>
 <span class="kw">use</span> <span class="ident">linux_raw_sys::general::__NR_renameat</span>;
 <span class="kw">use</span> <span class="ident">linux_raw_sys::general</span>::{
-    <span class="ident">__NR_faccessat</span>, <span class="ident">__NR_fallocate</span>, <span class="ident">__NR_fchmod</span>, <span class="ident">__NR_fchmodat</span>, <span class="ident">__NR_fchown</span>, <span class="ident">__NR_fchownat</span>,
-    <span class="ident">__NR_fdatasync</span>, <span class="ident">__NR_flock</span>, <span class="ident">__NR_fsync</span>, <span class="ident">__NR_getdents64</span>, <span class="ident">__NR_linkat</span>, <span class="ident">__NR_mkdirat</span>,
-    <span class="ident">__NR_mknodat</span>, <span class="ident">__NR_openat</span>, <span class="ident">__NR_readlinkat</span>, <span class="ident">__NR_symlinkat</span>, <span class="ident">__NR_unlinkat</span>, <span class="ident">__NR_utimensat</span>,
-    <span class="ident">__kernel_timespec</span>, <span class="ident">AT_FDCWD</span>, <span class="ident">AT_REMOVEDIR</span>, <span class="ident">AT_SYMLINK_NOFOLLOW</span>, <span class="ident">F_DUPFD</span>, <span class="ident">F_DUPFD_CLOEXEC</span>,
-    <span class="ident">F_GETFD</span>, <span class="ident">F_GETFL</span>, <span class="ident">F_GETLEASE</span>, <span class="ident">F_GETOWN</span>, <span class="ident">F_GETSIG</span>, <span class="ident">F_SETFD</span>, <span class="ident">F_SETFL</span>,
-};
-<span class="kw">use</span> <span class="ident">linux_raw_sys::v5_11::general</span>::{<span class="ident">__NR_openat2</span>, <span class="ident">open_how</span>};
-<span class="kw">use</span> <span class="ident">linux_raw_sys::v5_4::general</span>::{
-    <span class="ident">__NR_copy_file_range</span>, <span class="ident">__NR_memfd_create</span>, <span class="ident">__NR_renameat2</span>, <span class="ident">__NR_statx</span>, <span class="ident">statx</span>, <span class="ident">F_GETPIPE_SZ</span>,
-    <span class="ident">F_GET_SEALS</span>, <span class="ident">F_SETPIPE_SZ</span>,
+    <span class="ident">__NR_copy_file_range</span>, <span class="ident">__NR_faccessat</span>, <span class="ident">__NR_fallocate</span>, <span class="ident">__NR_fchmod</span>, <span class="ident">__NR_fchmodat</span>, <span class="ident">__NR_fchown</span>,
+    <span class="ident">__NR_fchownat</span>, <span class="ident">__NR_fdatasync</span>, <span class="ident">__NR_flock</span>, <span class="ident">__NR_fsync</span>, <span class="ident">__NR_getdents64</span>, <span class="ident">__NR_linkat</span>,
+    <span class="ident">__NR_memfd_create</span>, <span class="ident">__NR_mkdirat</span>, <span class="ident">__NR_mknodat</span>, <span class="ident">__NR_openat</span>, <span class="ident">__NR_openat2</span>, <span class="ident">__NR_readlinkat</span>,
+    <span class="ident">__NR_renameat2</span>, <span class="ident">__NR_statx</span>, <span class="ident">__NR_symlinkat</span>, <span class="ident">__NR_unlinkat</span>, <span class="ident">__NR_utimensat</span>, <span class="ident">__kernel_timespec</span>,
+    <span class="ident">open_how</span>, <span class="ident">statx</span>, <span class="ident">AT_FDCWD</span>, <span class="ident">AT_REMOVEDIR</span>, <span class="ident">AT_SYMLINK_NOFOLLOW</span>, <span class="ident">F_ADD_SEALS</span>, <span class="ident">F_DUPFD</span>,
+    <span class="ident">F_DUPFD_CLOEXEC</span>, <span class="ident">F_GETFD</span>, <span class="ident">F_GETFL</span>, <span class="ident">F_GETLEASE</span>, <span class="ident">F_GETOWN</span>, <span class="ident">F_GETPIPE_SZ</span>, <span class="ident">F_GETSIG</span>, <span class="ident">F_GET_SEALS</span>,
+    <span class="ident">F_SETFD</span>, <span class="ident">F_SETFL</span>, <span class="ident">F_SETPIPE_SZ</span>,
 };
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
 <span class="kw">use</span> {
-    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{<span class="ident">hi</span>, <span class="ident">lo</span>},
-    <span class="ident">linux_raw_sys</span>::{
-        <span class="ident">general::timespec</span> <span class="kw">as</span> <span class="ident">__kernel_old_timespec</span>,
-        <span class="ident">general</span>::{
-            <span class="ident">__NR__llseek</span>, <span class="ident">__NR_fcntl64</span>, <span class="ident">__NR_fstat64</span>, <span class="ident">__NR_fstatat64</span>, <span class="ident">__NR_fstatfs64</span>,
-            <span class="ident">__NR_ftruncate64</span>, <span class="ident">__NR_sendfile64</span>,
-        },
-        <span class="ident">v5_4::general::__NR_utimensat_time64</span>,
+    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::arch::choose::syscall6_readonly</span>,
+    <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{<span class="ident">hi</span>, <span class="ident">lo</span>, <span class="ident">slice_just_addr</span>},
+    <span class="ident">linux_raw_sys::general::__NR_utimensat_time64</span>,
+    <span class="ident">linux_raw_sys::general</span>::{
+        <span class="ident">__NR__llseek</span>, <span class="ident">__NR_fcntl64</span>, <span class="ident">__NR_fstat64</span>, <span class="ident">__NR_fstatat64</span>, <span class="ident">__NR_fstatfs64</span>, <span class="ident">__NR_ftruncate64</span>,
+        <span class="ident">__NR_sendfile64</span>, <span class="ident">__NR_statfs64</span>, <span class="ident">timespec</span> <span class="kw">as</span> <span class="ident">__kernel_old_timespec</span>,
     },
 };
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
@@ -1357,7 +1436,7 @@
     <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::conv</span>::{<span class="ident">loff_t</span>, <span class="ident">loff_t_from_u64</span>, <span class="ident">ret_u64</span>},
     <span class="ident">linux_raw_sys::general</span>::{
         <span class="ident">__NR_fadvise64</span>, <span class="ident">__NR_fcntl</span>, <span class="ident">__NR_fstat</span>, <span class="ident">__NR_fstatfs</span>, <span class="ident">__NR_ftruncate</span>, <span class="ident">__NR_lseek</span>,
-        <span class="ident">__NR_newfstatat</span>, <span class="ident">__NR_sendfile</span>,
+        <span class="ident">__NR_newfstatat</span>, <span class="ident">__NR_sendfile</span>, <span class="ident">__NR_statfs</span>,
     },
 };
 
@@ -1531,6 +1610,7 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">mknodat</span>(
     <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
+    <span class="ident">file_type</span>: <span class="ident">FileType</span>,
     <span class="ident">mode</span>: <span class="ident">Mode</span>,
     <span class="ident">dev</span>: <span class="ident">u64</span>,
 ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
@@ -1540,7 +1620,7 @@
             <span class="ident">nr</span>(<span class="ident">__NR_mknodat</span>),
             <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
             <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+            <span class="ident">mode_and_type_as</span>(<span class="ident">mode</span>, <span class="ident">file_type</span>),
             <span class="ident">dev_t</span>(<span class="ident">dev</span>)<span class="question-mark">?</span>,
         ))
     }
@@ -1550,7 +1630,7 @@
             <span class="ident">nr</span>(<span class="ident">__NR_mknodat</span>),
             <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
             <span class="ident">c_str</span>(<span class="ident">filename</span>),
-            <span class="ident">mode_as</span>(<span class="ident">mode</span>),
+            <span class="ident">mode_and_type_as</span>(<span class="ident">mode</span>, <span class="ident">file_type</span>),
             <span class="ident">dev_t</span>(<span class="ident">dev</span>),
         ))
     }
@@ -1605,8 +1685,11 @@
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">ftruncate</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">length</span>: <span class="ident">u64</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L81-L83</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>))]</span>
+    <span class="comment">// &lt;https://github.com/torvalds/linux/blob/fcadab740480e0e0e9fa9bd272acd409884d431a/arch/arm64/kernel/sys32.c#L81-L83&gt;</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
+        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
+        <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>)
+    ))]</span>
     <span class="kw">unsafe</span> {
         <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
             <span class="ident">nr</span>(<span class="ident">__NR_ftruncate64</span>),
@@ -1616,7 +1699,10 @@
             <span class="ident">lo</span>(<span class="ident">length</span>),
         ))
     }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>, <span class="ident">not</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>)))]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
+        <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
+        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>))
+    ))]</span>
     <span class="kw">unsafe</span> {
         <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
             <span class="ident">nr</span>(<span class="ident">__NR_ftruncate64</span>),
@@ -1667,24 +1753,39 @@
 }
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fadvise</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pos</span>: <span class="ident">u64</span>, <span class="ident">len</span>: <span class="ident">u64</span>, <span class="ident">advice</span>: <span class="ident">FsAdvice</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// On arm and powerpc, the system calls are reordered so that the len and</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fadvise</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pos</span>: <span class="ident">u64</span>, <span class="ident">len</span>: <span class="ident">u64</span>, <span class="ident">advice</span>: <span class="ident">Advice</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="comment">// On arm and powerpc, the arguments are reordered so that the len and</span>
     <span class="comment">// pos argument pairs are aligned.</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>))]</span>
     <span class="kw">unsafe</span> {
         <span class="ident">ret</span>(<span class="ident">syscall6_readonly</span>(
             <span class="ident">nr</span>(<span class="ident">__NR_fadvise64_64</span>),
             <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
-            <span class="ident">c_uint</span>(<span class="ident">advice</span> <span class="kw">as</span> <span class="ident">c::c_uint</span>),
+            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
             <span class="ident">hi</span>(<span class="ident">pos</span>),
             <span class="ident">lo</span>(<span class="ident">pos</span>),
             <span class="ident">hi</span>(<span class="ident">len</span>),
             <span class="ident">lo</span>(<span class="ident">len</span>),
         ))
     }
+    <span class="comment">// On mips, the arguments are not reordered, and padding is inserted</span>
+    <span class="comment">// instead to ensure alignment.</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>)]</span>
+    <span class="kw">unsafe</span> {
+        <span class="ident">ret</span>(<span class="ident">syscall7_readonly</span>(
+            <span class="ident">nr</span>(<span class="ident">__NR_fadvise64</span>),
+            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
+            <span class="ident">zero</span>(),
+            <span class="ident">hi</span>(<span class="ident">pos</span>),
+            <span class="ident">lo</span>(<span class="ident">pos</span>),
+            <span class="ident">hi</span>(<span class="ident">len</span>),
+            <span class="ident">lo</span>(<span class="ident">len</span>),
+            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
+        ))
+    }
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(
         <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>,
-        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>))
+        <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;arm&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;powerpc&quot;</span>))
     ))]</span>
     <span class="kw">unsafe</span> {
         <span class="ident">ret</span>(<span class="ident">syscall6_readonly</span>(
@@ -1694,7 +1795,7 @@
             <span class="ident">lo</span>(<span class="ident">pos</span>),
             <span class="ident">hi</span>(<span class="ident">len</span>),
             <span class="ident">lo</span>(<span class="ident">len</span>),
-            <span class="ident">c_uint</span>(<span class="ident">advice</span> <span class="kw">as</span> <span class="ident">c::c_uint</span>),
+            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
         ))
     }
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
@@ -1704,7 +1805,7 @@
             <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
             <span class="ident">loff_t_from_u64</span>(<span class="ident">pos</span>),
             <span class="ident">loff_t_from_u64</span>(<span class="ident">len</span>),
-            <span class="ident">c_uint</span>(<span class="ident">advice</span> <span class="kw">as</span> <span class="ident">c::c_uint</span>),
+            <span class="ident">fs_advice</span>(<span class="ident">advice</span>),
         ))
     }
 }
@@ -1881,10 +1982,31 @@
 }
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">statfs</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span> {
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
+    <span class="kw">unsafe</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
+        <span class="ident">ret</span>(<span class="ident">syscall3</span>(
+            <span class="ident">nr</span>(<span class="ident">__NR_statfs64</span>),
+            <span class="ident">c_str</span>(<span class="ident">filename</span>),
+            <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">StatFs</span>, <span class="kw">_</span><span class="op">&gt;</span>(),
+            <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>),
+        ))
+        .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
+    }
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
+    <span class="kw">unsafe</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">StatFs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
+        <span class="ident">ret</span>(<span class="ident">syscall2</span>(<span class="ident">nr</span>(<span class="ident">__NR_statfs</span>), <span class="ident">c_str</span>(<span class="ident">filename</span>), <span class="ident">out</span>(<span class="kw-2">&amp;mut</span> <span class="ident">result</span>)))
+            .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">result</span>.<span class="ident">assume_init</span>())
+    }
+}
+
+<span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">readlink</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> (<span class="ident">buf_addr_mut</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">buf</span>);
     <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4_readonly</span>(
+        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
             <span class="ident">nr</span>(<span class="ident">__NR_readlinkat</span>),
             <span class="ident">c_int</span>(<span class="ident">AT_FDCWD</span>),
             <span class="ident">c_str</span>(<span class="ident">path</span>),
@@ -1898,7 +2020,7 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">readlinkat</span>(<span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> (<span class="ident">buf_addr_mut</span>, <span class="ident">buf_len</span>) <span class="op">=</span> <span class="ident">slice_mut</span>(<span class="ident">buf</span>);
     <span class="kw">unsafe</span> {
-        <span class="ident">ret_usize</span>(<span class="ident">syscall4_readonly</span>(
+        <span class="ident">ret_usize</span>(<span class="ident">syscall4</span>(
             <span class="ident">nr</span>(<span class="ident">__NR_readlinkat</span>),
             <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
             <span class="ident">c_str</span>(<span class="ident">path</span>),
@@ -2143,7 +2265,7 @@
 }
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_get_seals</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_get_seals</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">SealFlags</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
     <span class="kw">unsafe</span> {
         <span class="ident">ret_c_int</span>(<span class="ident">syscall2_readonly</span>(
@@ -2151,7 +2273,7 @@
             <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
             <span class="ident">c_uint</span>(<span class="ident">F_GET_SEALS</span>),
         ))
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seals</span><span class="op">|</span> <span class="ident">seals</span> <span class="kw">as</span> <span class="ident">u32</span>)
+        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seals</span><span class="op">|</span> <span class="ident">SealFlags::from_bits_unchecked</span>(<span class="ident">seals</span> <span class="kw">as</span> <span class="ident">u32</span>))
     }
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
     <span class="kw">unsafe</span> {
@@ -2160,7 +2282,29 @@
             <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
             <span class="ident">c_uint</span>(<span class="ident">F_GET_SEALS</span>),
         ))
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seals</span><span class="op">|</span> <span class="ident">seals</span> <span class="kw">as</span> <span class="ident">u32</span>)
+        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seals</span><span class="op">|</span> <span class="ident">SealFlags::from_bits_unchecked</span>(<span class="ident">seals</span> <span class="kw">as</span> <span class="ident">u32</span>))
+    }
+}
+
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">fcntl_add_seals</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">seals</span>: <span class="ident">SealFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
+    <span class="kw">unsafe</span> {
+        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
+            <span class="ident">nr</span>(<span class="ident">__NR_fcntl64</span>),
+            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
+            <span class="ident">c_uint</span>(<span class="ident">F_ADD_SEALS</span>),
+            <span class="ident">c_uint</span>(<span class="ident">seals</span>.<span class="ident">bits</span>()),
+        ))
+    }
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
+    <span class="kw">unsafe</span> {
+        <span class="ident">ret</span>(<span class="ident">syscall3_readonly</span>(
+            <span class="ident">nr</span>(<span class="ident">__NR_fcntl</span>),
+            <span class="ident">borrowed_fd</span>(<span class="ident">fd</span>),
+            <span class="ident">c_uint</span>(<span class="ident">F_ADD_SEALS</span>),
+            <span class="ident">c_uint</span>(<span class="ident">seals</span>.<span class="ident">bits</span>()),
+        ))
     }
 }
 
@@ -2375,58 +2519,34 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">utimensat</span>(
     <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">pathname</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>,
-    <span class="ident">utimes</span>: <span class="kw-2">&amp;</span>[<span class="ident">Timespec</span>; <span class="number">2</span>],
+    <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>,
     <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
 ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">_utimensat</span>(<span class="ident">dirfd</span>, <span class="prelude-val">Some</span>(<span class="ident">pathname</span>), <span class="ident">utimes</span>, <span class="ident">flags</span>)
+    <span class="ident">_utimensat</span>(<span class="ident">dirfd</span>, <span class="prelude-val">Some</span>(<span class="ident">pathname</span>), <span class="ident">times</span>, <span class="ident">flags</span>)
 }
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">fn</span> <span class="ident">_utimensat</span>(
     <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">pathname</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ZStr</span><span class="op">&gt;</span>,
-    <span class="ident">utimes</span>: <span class="kw-2">&amp;</span>[<span class="ident">__kernel_timespec</span>; <span class="number">2</span>],
+    <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>,
     <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
 ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// The length of the array is fixed and not passed into the syscall.</span>
-    <span class="kw">let</span> <span class="ident">utimes_addr</span> <span class="op">=</span> <span class="ident">slice_just_addr</span>(<span class="ident">utimes</span>);
+    <span class="comment">// Assert that `Timestamps` has the expected layout.</span>
+    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">core::mem::transmute</span>::<span class="op">&lt;</span><span class="ident">Timestamps</span>, [<span class="ident">__kernel_timespec</span>; <span class="number">2</span>]<span class="op">&gt;</span>(<span class="ident">times</span>.<span class="ident">clone</span>()) };
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
     <span class="kw">unsafe</span> {
-        <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
+        <span class="kw">match</span> <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
             <span class="ident">nr</span>(<span class="ident">__NR_utimensat_time64</span>),
             <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
             <span class="ident">opt_c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">utimes_addr</span>,
+            <span class="ident">by_ref</span>(<span class="ident">times</span>),
             <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-        ))
-        .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about</span>
-            <span class="comment">// emulation.</span>
-            <span class="kw">if</span> <span class="ident">err</span> <span class="op">==</span> <span class="ident">io::Error::NOSYS</span> {
-                <span class="kw">let</span> <span class="ident">old_utimes</span> <span class="op">=</span> [
-                    <span class="ident">__kernel_old_timespec</span> {
-                        <span class="ident">tv_sec</span>: <span class="ident">utimes</span>[<span class="number">0</span>].<span class="ident">tv_sec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-                        <span class="ident">tv_nsec</span>: <span class="ident">utimes</span>[<span class="number">0</span>].<span class="ident">tv_nsec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-                    },
-                    <span class="ident">__kernel_old_timespec</span> {
-                        <span class="ident">tv_sec</span>: <span class="ident">utimes</span>[<span class="number">1</span>].<span class="ident">tv_sec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-                        <span class="ident">tv_nsec</span>: <span class="ident">utimes</span>[<span class="number">1</span>].<span class="ident">tv_nsec</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
-                    },
-                ];
-                <span class="comment">// The length of the array is fixed and not passed into the syscall.</span>
-                <span class="kw">let</span> <span class="ident">old_utimes_addr</span> <span class="op">=</span> <span class="ident">slice_just_addr</span>(<span class="kw-2">&amp;</span><span class="ident">old_utimes</span>);
-                <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
-                    <span class="ident">nr</span>(<span class="ident">__NR_utimensat</span>),
-                    <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
-                    <span class="ident">opt_c_str</span>(<span class="ident">pathname</span>),
-                    <span class="ident">old_utimes_addr</span>,
-                    <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
-                ))
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>)
-            }
-        })
+        )) {
+            <span class="prelude-val">Err</span>(<span class="ident">io::Error::NOSYS</span>) =&gt; <span class="ident">_utimensat_old</span>(<span class="ident">dirfd</span>, <span class="ident">pathname</span>, <span class="ident">times</span>, <span class="ident">flags</span>),
+            <span class="ident">otherwise</span> =&gt; <span class="ident">otherwise</span>,
+        }
     }
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
     <span class="kw">unsafe</span> {
@@ -2434,14 +2554,60 @@
             <span class="ident">nr</span>(<span class="ident">__NR_utimensat</span>),
             <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
             <span class="ident">opt_c_str</span>(<span class="ident">pathname</span>),
-            <span class="ident">utimes_addr</span>,
+            <span class="ident">by_ref</span>(<span class="ident">times</span>),
             <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
         ))
     }
 }
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
+<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">_utimensat_old</span>(
+    <span class="ident">dirfd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">pathname</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ZStr</span><span class="op">&gt;</span>,
+    <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>,
+    <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
+) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="comment">// See the comments in `rustix_clock_gettime_via_syscall` about</span>
+    <span class="comment">// emulation.</span>
+    <span class="kw">let</span> <span class="ident">old_times</span> <span class="op">=</span> [
+        <span class="ident">__kernel_old_timespec</span> {
+            <span class="ident">tv_sec</span>: <span class="ident">times</span>
+                .<span class="ident">last_access</span>
+                .<span class="ident">tv_sec</span>
+                .<span class="ident">try_into</span>()
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+            <span class="ident">tv_nsec</span>: <span class="ident">times</span>
+                .<span class="ident">last_access</span>
+                .<span class="ident">tv_nsec</span>
+                .<span class="ident">try_into</span>()
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+        },
+        <span class="ident">__kernel_old_timespec</span> {
+            <span class="ident">tv_sec</span>: <span class="ident">times</span>
+                .<span class="ident">last_modification</span>
+                .<span class="ident">tv_sec</span>
+                .<span class="ident">try_into</span>()
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+            <span class="ident">tv_nsec</span>: <span class="ident">times</span>
+                .<span class="ident">last_modification</span>
+                .<span class="ident">tv_nsec</span>
+                .<span class="ident">try_into</span>()
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">io::Error::INVAL</span>)<span class="question-mark">?</span>,
+        },
+    ];
+    <span class="comment">// The length of the array is fixed and not passed into the syscall.</span>
+    <span class="kw">let</span> <span class="ident">old_times_addr</span> <span class="op">=</span> <span class="ident">slice_just_addr</span>(<span class="kw-2">&amp;</span><span class="ident">old_times</span>);
+    <span class="ident">ret</span>(<span class="ident">syscall4_readonly</span>(
+        <span class="ident">nr</span>(<span class="ident">__NR_utimensat</span>),
+        <span class="ident">borrowed_fd</span>(<span class="ident">dirfd</span>),
+        <span class="ident">opt_c_str</span>(<span class="ident">pathname</span>),
+        <span class="ident">old_times_addr</span>,
+        <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),
+    ))
+}
+
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">futimens</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">times</span>: <span class="kw-2">&amp;</span>[<span class="ident">Timespec</span>; <span class="number">2</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">futimens</span>(<span class="ident">fd</span>: <span class="ident">BorrowedFd</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">times</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamps</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="ident">_utimensat</span>(<span class="ident">fd</span>, <span class="prelude-val">None</span>, <span class="ident">times</span>, <span class="ident">AtFlags::empty</span>())
 }
 
@@ -2452,14 +2618,14 @@
     <span class="ident">flags</span>: <span class="ident">AtFlags</span>,
 ) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="ident">flags</span>.<span class="ident">is_empty</span>()
-        <span class="op">|</span><span class="op">|</span> (<span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">==</span> <span class="ident">linux_raw_sys::v5_11::general::AT_EACCESS</span>
+        <span class="op">|</span><span class="op">|</span> (<span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">==</span> <span class="ident">linux_raw_sys::general::AT_EACCESS</span>
             <span class="op">&amp;&amp;</span> <span class="ident"><span class="kw">crate</span>::process::getuid</span>() <span class="op">==</span> <span class="ident"><span class="kw">crate</span>::process::geteuid</span>()
             <span class="op">&amp;&amp;</span> <span class="ident"><span class="kw">crate</span>::process::getgid</span>() <span class="op">==</span> <span class="ident"><span class="kw">crate</span>::process::getegid</span>())
     {
         <span class="kw">return</span> <span class="ident">_accessat</span>(<span class="ident">dirfd</span>, <span class="ident">path</span>, <span class="ident">access</span>.<span class="ident">bits</span>());
     }
 
-    <span class="kw">if</span> <span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">linux_raw_sys::v5_11::general::AT_EACCESS</span> {
+    <span class="kw">if</span> <span class="ident">flags</span>.<span class="ident">bits</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">linux_raw_sys::general::AT_EACCESS</span> {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">io::Error::INVAL</span>);
     }
 
@@ -2516,7 +2682,7 @@
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">memfd_create</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">ZStr</span>, <span class="ident">flags</span>: <span class="ident">MemfdFlags</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">OwnedFd</span><span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
-        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall2</span>(
+        <span class="ident">ret_owned_fd</span>(<span class="ident">syscall2_readonly</span>(
             <span class="ident">nr</span>(<span class="ident">__NR_memfd_create</span>),
             <span class="ident">c_str</span>(<span class="ident">name</span>),
             <span class="ident">c_uint</span>(<span class="ident">flags</span>.<span class="ident">bits</span>()),

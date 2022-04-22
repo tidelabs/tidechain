@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["BitFlags_internal",""]]});
+initSidebarItems({"attr":[["bitflags_internal",""]]});

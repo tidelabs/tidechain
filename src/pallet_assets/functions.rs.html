@@ -1106,9 +1106,6 @@
 <span id="1104">1104</span>
 <span id="1105">1105</span>
 <span id="1106">1106</span>
-<span id="1107">1107</span>
-<span id="1108">1108</span>
-<span id="1109">1109</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -1182,9 +1179,12 @@
 
   <span class="doccomment">/// Get the total supply of an asset `id`.</span>
   <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">total_supply</span>(<span class="ident">id</span>: <span class="ident">T::AssetId</span>) -&gt; <span class="ident">T::Balance</span> {
-    <span class="ident">Asset</span>::<span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">I</span><span class="op">&gt;</span><span class="ident">::get</span>(<span class="ident">id</span>)
-      .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">supply</span>)
-      .<span class="ident">unwrap_or_else</span>(<span class="ident">Zero::zero</span>)
+    <span class="ident"><span class="self">Self</span>::maybe_total_supply</span>(<span class="ident">id</span>).<span class="ident">unwrap_or_default</span>()
+  }
+
+  <span class="doccomment">/// Get the total supply of an asset `id` if the asset exists.</span>
+  <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maybe_total_supply</span>(<span class="ident">id</span>: <span class="ident">T::AssetId</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T::Balance</span><span class="op">&gt;</span> {
+    <span class="ident">Asset</span>::<span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">I</span><span class="op">&gt;</span><span class="ident">::get</span>(<span class="ident">id</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">supply</span>)
   }
 
   <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new_account</span>(
@@ -1650,12 +1650,6 @@
   ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T::Balance</span>, <span class="ident">DispatchError</span><span class="op">&gt;</span> {
     <span class="comment">// Early exist if no-op.</span>
     <span class="kw">if</span> <span class="ident">amount</span>.<span class="ident">is_zero</span>() {
-      <span class="ident"><span class="self">Self</span>::deposit_event</span>(<span class="ident">Event::Transferred</span> {
-        <span class="ident">asset_id</span>: <span class="ident">id</span>,
-        <span class="ident">from</span>: <span class="ident">source</span>.<span class="ident">clone</span>(),
-        <span class="ident">to</span>: <span class="ident">dest</span>.<span class="ident">clone</span>(),
-        <span class="ident">amount</span>,
-      });
       <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">amount</span>);
     }
 

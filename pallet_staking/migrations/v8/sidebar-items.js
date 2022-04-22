@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["migrate","Migration to sorted [`SortedListProvider`]."]]});
+initSidebarItems({"fn":[["migrate","Migration to sorted `VoterList`."]]});

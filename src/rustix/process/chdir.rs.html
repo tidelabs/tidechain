@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;usr&#x2F;local&#x2F;cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;rustix-0.31.3&#x2F;src&#x2F;process&#x2F;chdir.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>chdir.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;usr&#x2F;local&#x2F;cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;rustix-0.33.7&#x2F;src&#x2F;process&#x2F;chdir.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>chdir.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a class="sidebar-logo" href="../../../rustix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.png" alt="logo"></div>
         </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../rust-logo.png" alt="logo"></a><nav class="sub"><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1"> 1</span>
 <span id="2"> 2</span>
@@ -68,7 +68,12 @@
 <span id="66">66</span>
 <span id="67">67</span>
 <span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ffi::ZString</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::path::SMALL_PATH_BUFFER_SIZE</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">imp</span>, <span class="ident">io</span>, <span class="ident">path</span>};
 <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;fuchsia&quot;</span>))]</span>
@@ -84,7 +89,7 @@
 <span class="doccomment">/// [Linux]: https://man7.org/linux/man-pages/man2/chdir.2.html</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">chdir</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="ident">path::Arg</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="ident">P</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">path</span>.<span class="ident">into_with_z_str</span>(<span class="ident">imp::syscalls::chdir</span>)
+    <span class="ident">path</span>.<span class="ident">into_with_z_str</span>(<span class="ident">imp::process::syscalls::chdir</span>)
 }
 
 <span class="doccomment">/// `fchdir(fd)`—Change the working directory.</span>
@@ -98,8 +103,7 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;fuchsia&quot;</span>))]</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fchdir</span><span class="op">&lt;</span><span class="ident">Fd</span>: <span class="ident">AsFd</span><span class="op">&gt;</span>(<span class="ident">fd</span>: <span class="ident">Fd</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="ident">fd</span>.<span class="ident">as_fd</span>();
-    <span class="ident">imp::syscalls::fchdir</span>(<span class="ident">fd</span>)
+    <span class="ident">imp::process::syscalls::fchdir</span>(<span class="ident">fd</span>.<span class="ident">as_fd</span>())
 }
 
 <span class="doccomment">/// `getcwd()`</span>
@@ -122,11 +126,15 @@
     <span class="comment">// This code would benefit from having a better way to read into</span>
     <span class="comment">// uninitialized memory, but that requires `unsafe`.</span>
     <span class="ident">buffer</span>.<span class="ident">clear</span>();
-    <span class="ident">buffer</span>.<span class="ident">resize</span>(<span class="number">256</span>, <span class="number">0_u8</span>);
+    <span class="ident">buffer</span>.<span class="ident">reserve</span>(<span class="ident">SMALL_PATH_BUFFER_SIZE</span>);
+    <span class="ident">buffer</span>.<span class="ident">resize</span>(<span class="ident">buffer</span>.<span class="ident">capacity</span>(), <span class="number">0_u8</span>);
 
     <span class="kw">loop</span> {
-        <span class="kw">match</span> <span class="ident">imp::syscalls::getcwd</span>(<span class="kw-2">&amp;mut</span> <span class="ident">buffer</span>) {
-            <span class="prelude-val">Err</span>(<span class="ident">imp::io::Error::RANGE</span>) =&gt; <span class="ident">buffer</span>.<span class="ident">resize</span>(<span class="ident">buffer</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="number">2</span>, <span class="number">0_u8</span>),
+        <span class="kw">match</span> <span class="ident">imp::process::syscalls::getcwd</span>(<span class="kw-2">&amp;mut</span> <span class="ident">buffer</span>) {
+            <span class="prelude-val">Err</span>(<span class="ident">imp::io::Error::RANGE</span>) =&gt; {
+                <span class="ident">buffer</span>.<span class="ident">reserve</span>(<span class="number">1</span>); <span class="comment">// use `Vec` reallocation strategy to grow capacity exponentially</span>
+                <span class="ident">buffer</span>.<span class="ident">resize</span>(<span class="ident">buffer</span>.<span class="ident">capacity</span>(), <span class="number">0_u8</span>);
+            }
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">iter</span>().<span class="ident">position</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">x</span> <span class="op">==</span> <span class="string">b&#39;\0&#39;</span>).<span class="ident">unwrap</span>();
                 <span class="ident">buffer</span>.<span class="ident">resize</span>(<span class="ident">len</span>, <span class="number">0_u8</span>);
