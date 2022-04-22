@@ -30,7 +30,6 @@ use crate::{
 };
 use codec::Decode;
 use frame_support::{
-  pallet_prelude::PhantomData,
   parameter_types,
   traits::{ConstU32, EnsureOneOf, KeyOwnerProofSystem, U128CurrencyToVote},
   weights::{DispatchClass, Weight},
@@ -49,10 +48,18 @@ use sp_std::prelude::*;
 /// pallet-election-provider-multi-phase.
 pub const MINER_MAX_ITERATIONS: u32 = 10;
 
+pub struct OnChainSeqPhragmen;
+impl frame_election_provider_support::onchain::Config for OnChainSeqPhragmen {
+  type System = Runtime;
+  type Solver = frame_election_provider_support::SequentialPhragmen<AccountId, Perbill>;
+  type DataProvider = Staking;
+  type WeightInfo = crate::weights::frame_election_provider_support::WeightInfo<Runtime>;
+}
+
 parameter_types! {
    pub const MaxAuthorities: u32 = 100_000;
    // NOTE: Currently it is not possible to change the epoch duration after the chain has started.
-   //       Attempting to do so will brick block production.
+   // Attempting to do so will brick block production.
    pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
    pub const ReportLongevity: u64 =
        BondingDuration::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
@@ -169,13 +176,14 @@ parameter_types! {
 
   // signed config
   pub const SignedMaxSubmissions: u32 = 16;
+  pub const SignedMaxRefunds: u32 = 16 / 4;
   // 40 TIFI fixed deposit..
   pub const SignedDepositBase: Balance = deposit(2, 0);
   // 0.01 TIFI per KB of solution data.
   pub const SignedDepositByte: Balance = deposit(0, 10) / 1024;
   // Each good submission will get 1 TIFI as reward
   pub SignedRewardBase: Balance = UNITS;
-  pub SolutionImprovementThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
+  pub BetterUnsignedThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
 
   // miner configs
   pub OffchainRepeat: BlockNumber = 5;
@@ -193,6 +201,7 @@ frame_election_provider_support::generate_solution_type!(
     VoterIndex = u32,
     TargetIndex = u16,
     Accuracy = sp_runtime::PerU16,
+    MaxVoters = MaxElectingVoters,
   >(16)
 );
 
@@ -238,6 +247,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type EstimateCallFee = TransactionPayment;
   type UnsignedPhase = UnsignedPhase;
   type SignedMaxSubmissions = SignedMaxSubmissions;
+  type SignedMaxRefunds = SignedMaxRefunds;
   type SignedRewardBase = SignedRewardBase;
   type SignedDepositBase = SignedDepositBase;
   type SignedDepositByte = SignedDepositByte;
@@ -246,7 +256,8 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type SlashHandler = (); // burn slashes
   type RewardHandler = (); // nothing to do upon rewards
   type SignedPhase = SignedPhase;
-  type SolutionImprovementThreshold = SolutionImprovementThreshold;
+  type BetterUnsignedThreshold = BetterUnsignedThreshold;
+  type BetterSignedThreshold = ();
   type MinerMaxWeight = OffchainSolutionWeightLimit; // For now use the one from staking.
   type MinerMaxLength = OffchainSolutionLengthLimit;
   type OffchainRepeat = OffchainRepeat;
@@ -255,7 +266,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type Solution = NposCompactSolution16;
   type Fallback = pallet_election_provider_multi_phase::NoFallback<Self>;
   type GovernanceFallback =
-    frame_election_provider_support::onchain::OnChainSequentialPhragmen<Self>;
+    frame_election_provider_support::onchain::UnboundedExecution<OnChainSeqPhragmen>;
   type Solver = frame_election_provider_support::SequentialPhragmen<
     AccountId,
     pallet_election_provider_multi_phase::SolutionAccuracyOf<Self>,
@@ -289,11 +300,6 @@ parameter_types! {
     *RuntimeBlockLength::get()
     .max
     .get(DispatchClass::Normal);
-}
-
-impl frame_election_provider_support::onchain::Config for Runtime {
-  type Accuracy = Perbill;
-  type DataProvider = Staking;
 }
 
 pallet_staking_reward_curve::build! {
@@ -330,6 +336,7 @@ impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
 impl pallet_staking::Config for Runtime {
   type MaxNominations = MaxNominations;
   type Currency = Balances;
+  type CurrencyBalance = Balance;
   type UnixTime = Timestamp;
   type CurrencyToVote = U128CurrencyToVote;
   type RewardRemainder = Treasury;
@@ -340,7 +347,7 @@ impl pallet_staking::Config for Runtime {
   type BondingDuration = BondingDuration;
   type ElectionProvider = ElectionProviderMultiPhase;
   type GenesisElectionProvider =
-    frame_election_provider_support::onchain::OnChainSequentialPhragmen<Self>;
+    frame_election_provider_support::onchain::UnboundedExecution<OnChainSeqPhragmen>;
   type SlashDeferDuration = SlashDeferDuration;
   /// A super-majority of the council can cancel the slash.
   type SlashCancelOrigin = EnsureOneOf<
@@ -353,9 +360,10 @@ impl pallet_staking::Config for Runtime {
   type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
   type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
   // Use the nominators map to iter voters, but also keep bags-list up-to-date.
-  type SortedListProvider = BagsList;
+  type VoterList = BagsList;
   type MaxUnlockingChunks = frame_support::traits::ConstU32<32>;
   type BenchmarkingConfig = StakingBenchmarkingConfig;
+  type OnStakerSlash = ();
   type WeightInfo = crate::weights::pallet_staking::WeightInfo<Runtime>;
 }
 
@@ -370,57 +378,4 @@ impl pallet_bags_list::Config for Runtime {
   /// FIXME: Revert local weighting
   type WeightInfo = pallet_bags_list::weights::SubstrateWeight<Runtime>;
   type Score = sp_npos_elections::VoteWeight;
-}
-
-/// Implementation of `frame_election_provider_support::SortedListProvider` that updates the
-/// bags-list but uses [`pallet_staking::Nominators`] for `iter`. This is meant to be a transitionary
-/// implementation for runtimes to "test" out the bags-list by keeping it up to date, but not yet
-/// using it for snapshot generation. In contrast, a  "complete" implementation would use bags-list
-/// for `iter`.
-pub struct UseNominatorsAndUpdateBagsList<T>(PhantomData<T>);
-impl<T: pallet_bags_list::Config + pallet_staking::Config>
-  frame_election_provider_support::SortedListProvider<T::AccountId>
-  for UseNominatorsAndUpdateBagsList<T>
-{
-  type Error = pallet_bags_list::Error;
-  type Score = <T as pallet_bags_list::Config>::Score;
-
-  fn iter() -> Box<dyn Iterator<Item = T::AccountId>> {
-    Box::new(pallet_staking::Nominators::<T>::iter().map(|(n, _)| n))
-  }
-
-  fn count() -> u32 {
-    pallet_bags_list::Pallet::<T>::count()
-  }
-
-  fn contains(id: &T::AccountId) -> bool {
-    pallet_bags_list::Pallet::<T>::contains(id)
-  }
-
-  fn on_insert(id: T::AccountId, weight: Self::Score) -> Result<(), Self::Error> {
-    pallet_bags_list::Pallet::<T>::on_insert(id, weight)
-  }
-
-  fn on_update(id: &T::AccountId, new_weight: Self::Score) {
-    pallet_bags_list::Pallet::<T>::on_update(id, new_weight);
-  }
-
-  fn on_remove(id: &T::AccountId) {
-    pallet_bags_list::Pallet::<T>::on_remove(id);
-  }
-
-  fn unsafe_regenerate(
-    all: impl IntoIterator<Item = T::AccountId>,
-    weight_of: Box<dyn Fn(&T::AccountId) -> Self::Score>,
-  ) -> u32 {
-    pallet_bags_list::Pallet::<T>::unsafe_regenerate(all, weight_of)
-  }
-
-  fn sanity_check() -> Result<(), &'static str> {
-    pallet_bags_list::Pallet::<T>::sanity_check()
-  }
-
-  fn unsafe_clear() {
-    pallet_bags_list::Pallet::<T>::unsafe_clear()
-  }
 }

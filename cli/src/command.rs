@@ -15,6 +15,8 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::cli::{Cli, Subcommand};
+#[cfg(feature = "runtime-benchmarks")]
+use frame_benchmarking_cli::BenchmarkCmd;
 use futures::future::TryFutureExt;
 use log::info;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
@@ -37,6 +39,12 @@ pub enum Error {
 
   #[error("Wasm binary is not available")]
   UnavailableWasmBinary,
+
+  #[error("Command is not implemented")]
+  CommandNotImplemented,
+
+  #[error("Other: {0}")]
+  Other(String),
 }
 
 fn get_exec_name() -> Option<String> {
@@ -132,6 +140,36 @@ impl SubstrateCli for Cli {
 
     panic!("No runtime feature (tidechain, lagoon) is enabled")
   }
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+const DEV_ONLY_ERROR_PATTERN: &'static str =
+  "can only use subcommand with --chain [tidechain-dev, lagoon-dev], got ";
+
+#[cfg(feature = "runtime-benchmarks")]
+fn ensure_dev(spec: &Box<dyn tidechain_service::ChainSpec>) -> std::result::Result<(), String> {
+  if spec.is_dev() {
+    Ok(())
+  } else {
+    Err(format!("{}{}", DEV_ONLY_ERROR_PATTERN, spec.id()))
+  }
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+macro_rules! unwrap_client {
+  (
+		$client:ident,
+		$code:expr
+	) => {
+    match $client {
+      #[cfg(feature = "lagoon-native")]
+      tidechain_client::Client::Lagoon($client) => $code,
+      #[cfg(feature = "tidechain-native")]
+      tidechain_client::Client::Tidechain($client) => $code,
+      #[allow(unreachable_patterns)]
+      _ => Err(Error::CommandNotImplemented),
+    }
+  };
 }
 
 #[allow(clippy::borrowed_box)]
@@ -255,7 +293,7 @@ pub fn run() -> Result<(), Error> {
         let ops = tidechain_service::new_chain_ops(&mut config)?;
         Ok((
           cmd
-            .run(Arc::new(ops.client), ops.backend)
+            .run(Arc::new(ops.client), ops.backend, None)
             .map_err(Error::SubstrateCli),
           ops.task_manager,
         ))
@@ -324,19 +362,71 @@ pub fn run() -> Result<(), Error> {
 
       Ok(())
     }
+    Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
     #[cfg(feature = "runtime-benchmarks")]
     Some(Subcommand::Benchmark(cmd)) => {
       let runner = cli.create_runner(cmd)?;
       let chain_spec = &runner.config().chain_spec;
 
-      set_default_ss58_version(chain_spec);
+      match cmd {
+        BenchmarkCmd::Storage(cmd) => runner.sync_run(|mut config| {
+          let ops = tidechain_service::new_chain_ops(&mut config)?;
+          let db = ops.backend.expose_db();
+          let storage = ops.backend.expose_storage();
+          let client = ops.client.clone();
 
-      Ok(runner.sync_run(|config| {
-				cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(config)
-					.map_err(Error::SubstrateCli)
-			})?)
+          unwrap_client!(
+            client,
+            cmd
+              .run(config, client.clone(), db, storage)
+              .map_err(Error::SubstrateCli)
+          )
+        }),
+        BenchmarkCmd::Block(cmd) => runner.sync_run(|mut config| {
+          let client = tidechain_service::new_chain_ops(&mut config)?.client;
+          unwrap_client!(client, cmd.run(client.clone()).map_err(Error::SubstrateCli))
+        }),
+
+        BenchmarkCmd::Pallet(cmd) => {
+          set_default_ss58_version(chain_spec);
+          ensure_dev(chain_spec).map_err(Error::Other)?;
+
+          #[cfg(feature = "lagoon-native")]
+          if chain_spec.is_lagoon() {
+            return Ok(runner.sync_run(|config| {
+              cmd
+                .run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(
+                  config,
+                )
+                .map_err(|e| Error::SubstrateCli(e))
+            })?);
+          }
+
+          // else we assume it is tidechain
+          #[cfg(feature = "tidechain-native")]
+          if chain_spec.is_tidechain() {
+            return Ok(runner.sync_run(|config| {
+              cmd
+                .run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(
+                  config,
+                )
+                .map_err(|e| Error::SubstrateCli(e))
+            })?);
+          }
+
+          #[allow(unreachable_code)]
+          Err(tidechain_service::Error::NoRuntime.into())
+        }
+
+        BenchmarkCmd::Machine(cmd) => {
+          runner.sync_run(|config| cmd.run(&config).map_err(Error::SubstrateCli))
+        }
+        // NOTE: this allows the Tidechain client to leniently implement
+        // new benchmark commands.
+        #[allow(unreachable_patterns)]
+        _ => Err(Error::CommandNotImplemented),
+      }
     }
-    Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
     #[cfg(feature = "try-runtime")]
     Some(Subcommand::TryRuntime(cmd)) => {
       let runner = cli.create_runner(cmd)?;
@@ -346,11 +436,28 @@ pub fn run() -> Result<(), Error> {
         let task_manager =
           sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
           .map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
-        Ok((
-          cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(config)
-          .map_err(Error::SubstrateCli),
-          task_manager,
-        ))
+
+          #[cfg(feature = "lagoon-native")]
+          if chain_spec.is_lagoon() {
+            return Ok((
+              cmd.run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(config)
+              .map_err(Error::SubstrateCli),
+              task_manager,
+            ))
+          }
+
+          // else we assume it is tidechain
+          #[cfg(feature = "tidechain-native")]
+          if chain_spec.is_tidechain() {
+            return Ok((
+              cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(config)
+              .map_err(Error::SubstrateCli),
+              task_manager,
+            ))
+          }
+
+          #[allow(unreachable_code)]
+          Err(tidechain_service::Error::NoRuntime.into())
       })
     }
   }?;

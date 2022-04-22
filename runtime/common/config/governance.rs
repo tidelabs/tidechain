@@ -16,7 +16,7 @@
 
 use crate::{
   constants::{
-    currency::{deposit, CENTS, TIFI},
+    currency::{deposit, CENTS, DOLLARS, TIFI},
     time::DAYS,
   },
   types::{AccountId, Balance, BlockNumber, EnsureRootOrHalfCouncil},
@@ -28,7 +28,7 @@ use frame_support::{
   traits::{EnsureOneOf, LockIdentifier, U128CurrencyToVote},
 };
 use frame_system::EnsureRoot;
-use sp_runtime::{Percent, Permill};
+use sp_runtime::Permill;
 use static_assertions::const_assert;
 
 parameter_types! {
@@ -115,21 +115,20 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 
 parameter_types! {
    pub const ProposalBond: Permill = Permill::from_percent(5);
-   pub const ProposalBondMinimum: Balance = 100 * TIFI;
-   pub const ProposalBondMaximum: Balance = 100_000 * TIFI;
+   pub const ProposalBondMinimum: Balance = 100 * DOLLARS;
+   pub const ProposalBondMaximum: Balance = 500 * DOLLARS;
    pub const SpendPeriod: BlockNumber = 24 * DAYS;
    pub const Burn: Permill = Permill::from_percent(1);
-   pub const TipCountdown: BlockNumber = DAYS;
-   pub const TipFindersFee: Percent = Percent::from_percent(20);
-   pub const TipReportDepositBase: Balance = TIFI;
    pub const DataDepositPerByte: Balance = CENTS;
-   pub const BountyDepositBase: Balance = TIFI;
+   pub const BountyDepositBase: Balance = DOLLARS;
    pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
    pub const BountyUpdatePeriod: BlockNumber = 90 * DAYS;
    pub const MaximumReasonLength: u32 = 16384;
-   pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-   pub const BountyValueMinimum: Balance = 10 * TIFI;
+   pub const BountyValueMinimum: Balance = 10 * DOLLARS;
    pub const MaxApprovals: u32 = 100;
+   pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
+   pub const CuratorDepositMin: Balance = 10 * DOLLARS;
+   pub const CuratorDepositMax: Balance = 200 * DOLLARS;
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -154,14 +153,18 @@ impl pallet_treasury::Config for Runtime {
 }
 
 impl pallet_bounties::Config for Runtime {
-  type Event = Event;
   type BountyDepositBase = BountyDepositBase;
   type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
   type BountyUpdatePeriod = BountyUpdatePeriod;
-  type BountyCuratorDeposit = BountyCuratorDeposit;
+
+  type CuratorDepositMultiplier = CuratorDepositMultiplier;
+  type CuratorDepositMin = CuratorDepositMin;
+  type CuratorDepositMax = CuratorDepositMax;
+
   type BountyValueMinimum = BountyValueMinimum;
-  type DataDepositPerByte = DataDepositPerByte;
-  type MaximumReasonLength = MaximumReasonLength;
   type ChildBountyManager = ();
+  type DataDepositPerByte = DataDepositPerByte;
+  type Event = Event;
+  type MaximumReasonLength = MaximumReasonLength;
   type WeightInfo = crate::weights::pallet_bounties::WeightInfo<Runtime>;
 }

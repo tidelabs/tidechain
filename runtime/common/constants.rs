@@ -34,7 +34,7 @@ pub mod currency {
 
   pub const TIFI: Balance = 1_000_000_000_000;
   pub const UNITS: Balance = TIFI;
-  pub const DOLLARS: Balance = TIFI; // 10_000_000_000
+  pub const DOLLARS: Balance = TIFI * 10; // 10 TIFI / DOLLAR
   pub const CENTS: Balance = DOLLARS / 100; // 100_000_000
   pub const MILLICENTS: Balance = CENTS / 1_000; // 1_000_000
 

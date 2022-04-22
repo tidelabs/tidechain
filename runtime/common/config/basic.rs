@@ -32,7 +32,7 @@ use crate::{
 use frame_support::{
   parameter_types,
   traits::{ConstU32, Everything, PrivilegeCmp},
-  weights::Weight,
+  weights::{ConstantMultiplier, Weight},
 };
 use frame_system::EnsureRoot;
 use pallet_transaction_payment::{CurrencyAdapter, Multiplier, TargetedFeeAdjustment};
@@ -84,15 +84,15 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
   type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-  type TransactionByteFee = TransactionByteFee;
   type OperationalFeeMultiplier = OperationalFeeMultiplier;
   type WeightToFee = WeightToFee;
+  type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
   type FeeMultiplierUpdate =
     TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 }
 
 parameter_types! {
-  pub const ExistentialDeposit: Balance = 100 * CENTS;
+  pub const ExistentialDeposit: Balance = TIFI;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
 }
