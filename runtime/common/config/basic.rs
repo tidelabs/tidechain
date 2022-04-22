@@ -92,7 +92,7 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-  pub const ExistentialDeposit: Balance = 100 * CENTS;
+  pub const ExistentialDeposit: Balance = TIFI;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
 }

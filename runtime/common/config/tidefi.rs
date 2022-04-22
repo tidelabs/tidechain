@@ -15,7 +15,7 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-  constants::currency::{deposit, Adapter, CENTS, DOLLARS},
+  constants::currency::{deposit, Adapter, TIFI},
   types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
   AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
   FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security,
@@ -30,8 +30,8 @@ use frame_system::{EnsureRoot, RawOrigin};
 use sp_runtime::{traits::AccountIdConversion, Permill};
 
 parameter_types! {
-  pub const ApprovalDeposit: Balance = 10 * CENTS;
-  pub const AssetDeposit: Balance = DOLLARS;
+  pub const ApprovalDeposit: Balance = TIFI;
+  pub const AssetDeposit: Balance = TIFI;
   pub const AssetsStringLimit: u32 = 50;
   /// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
   // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
