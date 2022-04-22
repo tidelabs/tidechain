@@ -90,6 +90,9 @@ pub trait IdentifyVariant {
 
   /// Returns if this is a configuration for the `Lagoon` network.
   fn is_lagoon(&self) -> bool;
+
+  /// Returns true if this configuration is for a development network.
+  fn is_dev(&self) -> bool;
 }
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
@@ -98,6 +101,9 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
   }
   fn is_lagoon(&self) -> bool {
     self.id().starts_with("lagoo")
+  }
+  fn is_dev(&self) -> bool {
+    self.id().ends_with("dev")
   }
 }
 

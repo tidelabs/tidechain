@@ -71,9 +71,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
   /// Get the total supply of an asset `id`.
   pub fn total_supply(id: T::AssetId) -> T::Balance {
-    Asset::<T, I>::get(id)
-      .map(|x| x.supply)
-      .unwrap_or_else(Zero::zero)
+    Self::maybe_total_supply(id).unwrap_or_default()
+  }
+
+  /// Get the total supply of an asset `id` if the asset exists.
+  pub fn maybe_total_supply(id: T::AssetId) -> Option<T::Balance> {
+    Asset::<T, I>::get(id).map(|x| x.supply)
   }
 
   pub(super) fn new_account(
@@ -539,12 +542,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
   ) -> Result<T::Balance, DispatchError> {
     // Early exist if no-op.
     if amount.is_zero() {
-      Self::deposit_event(Event::Transferred {
-        asset_id: id,
-        from: source.clone(),
-        to: dest.clone(),
-        amount,
-      });
       return Ok(amount);
     }
 

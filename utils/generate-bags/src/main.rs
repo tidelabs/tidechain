@@ -14,18 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
+use clap::{ArgEnum, Parser};
 use generate_bags::generate_thresholds;
 use lagoon_runtime::Runtime as LagoonRuntime;
 use std::path::{Path, PathBuf};
-use structopt::{clap::arg_enum, StructOpt};
 use tidechain_runtime::Runtime as TidechainRuntime;
 
-arg_enum! {
-  #[derive(Debug)]
-  enum Runtime {
-    Tidechain,
-    Lagoon,
-  }
+#[derive(Clone, Debug, ArgEnum)]
+#[clap(rename_all = "PascalCase")]
+enum Runtime {
+  Tidechain,
+  Lagoon,
 }
 
 impl Runtime {
@@ -39,30 +38,25 @@ impl Runtime {
   }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Opt {
   /// How many bags to generate.
-  #[structopt(long, default_value = "200")]
+  #[clap(long, default_value = "200")]
   n_bags: usize,
 
   /// Which runtime to generate.
-  #[structopt(
-		long,
-		case_insensitive = true,
-		default_value = "Tidechain",
-		possible_values = &Runtime::variants(),
-	)]
+  #[clap(long, ignore_case = true, arg_enum, default_value = "Tidechain")]
   runtime: Runtime,
 
   /// Where to write the output.
   output: PathBuf,
 
   /// The total issuance of the native currency.
-  #[structopt(short, long)]
+  #[clap(short, long)]
   total_issuance: u128,
 
   /// The minimum account balance (i.e. existential deposit) for the native currency.
-  #[structopt(short, long)]
+  #[clap(short, long)]
   minimum_balance: u128,
 }
 
@@ -73,7 +67,7 @@ fn main() -> Result<(), std::io::Error> {
     runtime,
     total_issuance,
     minimum_balance,
-  } = Opt::from_args();
+  } = Opt::parse();
 
   runtime.generate_thresholds_fn()(n_bags, &output, total_issuance, minimum_balance)
 }
