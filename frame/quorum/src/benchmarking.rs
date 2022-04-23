@@ -24,6 +24,7 @@ use frame_support::BoundedVec;
 use frame_system::{self, RawOrigin};
 use tidefi_primitives::{
   pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType, ProposalVotes,
+  Withdrawal,
 };
 
 const SEED: u32 = 0;
@@ -74,6 +75,29 @@ fn create_proposal<T: Config>() -> Hash {
   proposal_id
 }
 
+fn create_burned_queue<T: Config>() -> Hash {
+  let account_id: T::AccountId = whitelisted_caller();
+  let proposal_id = Hash::zero();
+  BurnedQueue::<T>::try_mutate(|burned_queue| {
+    burned_queue.try_push((
+      proposal_id,
+      Withdrawal {
+        account_id,
+        asset_id: CurrencyId::Wrapped(2),
+        amount: 100_000_000,
+        external_address: b"1FfmbHfnpaZjKFvyi1okTjJJusN455paPH"
+          .to_vec()
+          .try_into()
+          .expect("Invalid address"),
+        block_number: T::BlockNumber::from(1_u32),
+      },
+    ))
+  })
+  .unwrap();
+
+  proposal_id
+}
+
 benchmarks! {
    submit_proposal {
       let user = pre_set_auth::<T>();
@@ -89,6 +113,10 @@ benchmarks! {
    acknowledge_proposal {
       let user = pre_set_auth::<T>();
       let proposal_id = create_proposal::<T>();
+   }: _(RawOrigin::Signed(user), proposal_id)
+   acknowledge_burned {
+      let user = pre_set_auth::<T>();
+      let proposal_id = create_burned_queue::<T>();
    }: _(RawOrigin::Signed(user), proposal_id)
    reject_proposal {
       let user = pre_set_auth::<T>();

@@ -261,6 +261,7 @@ impl_runtime_apis! {
        use pallet_session_benchmarking::Pallet as SessionBench;
        //use pallet_offences_benchmarking::Pallet as OffencesBench;
        use frame_system_benchmarking::Pallet as SystemBench;
+       use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
 
        let mut list = Vec::<BenchmarkList>::new();
 
@@ -293,6 +294,7 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_oracle, crate::Oracle);
        list_benchmark!(list, extra, pallet_fees, crate::Fees);
        list_benchmark!(list, extra, pallet_asset_registry, crate::AssetRegistry);
+       list_benchmark!(list, extra, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
        let storage_info = crate::AllPalletsWithSystem::storage_info();
 
@@ -311,6 +313,8 @@ impl_runtime_apis! {
 
            use frame_system_benchmarking::Pallet as SystemBench;
            impl frame_system_benchmarking::Config for Runtime {}
+           use pallet_election_provider_support_benchmarking::Pallet as ElectionProviderBench;
+           impl pallet_election_provider_support_benchmarking::Config for Runtime {}
 
            //use pallet_offences_benchmarking::Pallet as OffencesBench;
            //impl pallet_offences_benchmarking::Config for Runtime {}
@@ -365,6 +369,7 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_asset_registry, crate::AssetRegistry);
            add_benchmark!(params, batches, pallet_preimage, crate::Preimage);
            add_benchmark!(params, batches, pallet_fees, crate::Fees);
+           add_benchmark!(params, batches, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
            if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
            Ok(batches)
