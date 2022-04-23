@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, Adapter, Assets, Event as MockEvent, FeeAmount, Fees, MarketMakerFeeAmount,
-    Oracle, Origin, System, Test,
+    new_test_ext, AccountId, Adapter, Assets, Event as MockEvent, FeeAmount, Fees,
+    MarketMakerFeeAmount, Oracle, Origin, System, Test,
   },
   pallet::*,
 };
@@ -32,7 +32,7 @@ use tidefi_primitives::{
   Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
 };
 
-const CURRENT_BLOCK_NUMBER: u64 = 0;
+const CURRENT_BLOCK_NUMBER: BlockNumber = 0;
 
 // TEMP Asset
 const TEMP_ASSET_ID: u32 = 4;
@@ -51,10 +51,10 @@ const ONE_MILLI_TIFI: u128 = 1_000_000_000;
 const ONE_TIFI: u128 = 1_000 * ONE_MILLI_TIFI;
 
 // Test Accounts
-const ALICE_ACCOUNT_ID: u64 = 1;
-const BOB_ACCOUNT_ID: u64 = 2;
-const CHARLIE_ACCOUNT_ID: u64 = 3;
-const DAVE_ACCOUNT_ID: u64 = 4;
+const ALICE_ACCOUNT_ID: AccountId = 1;
+const BOB_ACCOUNT_ID: AccountId = 2;
+const CHARLIE_ACCOUNT_ID: AccountId = 3;
+const DAVE_ACCOUNT_ID: AccountId = 4;
 
 // Extrinsic Hashes
 const EXTRINSIC_HASH_0: [u8; 32] = [0; 32];
@@ -71,11 +71,13 @@ const SLIPPAGE_2_PERCENTS: Permill = Permill::from_percent(2);
 const SLIPPAGE_4_PERCENTS: Permill = Permill::from_percent(4);
 const SLIPPAGE_5_PERCENTS: Permill = Permill::from_percent(5);
 
+type BlockNumber = u64;
+
 struct Context {
   alice: Origin,
   bob: Origin,
-  market_makers: Vec<u64>,
-  fees_account_id: u64,
+  market_makers: Vec<AccountId>,
+  fees_account_id: AccountId,
 }
 
 impl Default for Context {
@@ -102,7 +104,7 @@ impl Context {
     self
   }
 
-  fn set_market_makers(mut self, account_ids: Vec<u64>) -> Self {
+  fn set_market_makers(mut self, account_ids: Vec<AccountId>) -> Self {
     self.market_makers = account_ids;
     self
   }
@@ -129,19 +131,19 @@ impl Context {
     self
   }
 
-  fn mint_tifi(self, account: u64, amount: u128) -> Self {
+  fn mint_tifi(self, account: AccountId, amount: u128) -> Self {
     Self::mint_asset_for_accounts(vec![account], CurrencyId::Tifi, amount);
     assert_eq!(Adapter::balance(CurrencyId::Tifi, &account), amount);
     self
   }
 
-  fn mint_temp(self, account: u64, amount: u128) -> Self {
+  fn mint_temp(self, account: AccountId, amount: u128) -> Self {
     Self::mint_asset_for_accounts(vec![account], TEMP_CURRENCY_ID, amount);
     assert_eq!(Adapter::balance(TEMP_CURRENCY_ID, &account), amount);
     self
   }
 
-  fn mint_asset_for_accounts(accounts: Vec<u64>, asset: CurrencyId, amount: u128) {
+  fn mint_asset_for_accounts(accounts: Vec<AccountId>, asset: CurrencyId, amount: u128) {
     for account in accounts {
       assert_ok!(Adapter::mint_into(asset, &account, amount));
     }
@@ -149,13 +151,13 @@ impl Context {
 
   fn create_tifi_to_temp_limit_swap_request(
     &self,
-    requester_account_id: u64,
+    requester_account_id: AccountId,
     tifi_amount: Balance,
     temp_amount: Balance,
     extrinsic_hash: [u8; 32],
     slippage: Permill,
-  ) -> (Hash, Swap<u64, u64>) {
-    Oracle::add_new_swap_in_queue(
+  ) -> (Hash, Swap<AccountId, BlockNumber>) {
+    add_new_swap_and_assert_requester_balances(
       requester_account_id,
       CurrencyId::Tifi,
       tifi_amount,
@@ -167,18 +169,17 @@ impl Context {
       SwapType::Limit,
       slippage,
     )
-    .unwrap()
   }
 
   fn create_temp_to_tifi_limit_swap_request(
     &self,
-    requester_account_id: u64,
+    requester_account_id: AccountId,
     temp_amount: Balance,
     tifi_amount: Balance,
     extrinsic_hash: [u8; 32],
     slippage: Permill,
-  ) -> (Hash, Swap<u64, u64>) {
-    Oracle::add_new_swap_in_queue(
+  ) -> (Hash, Swap<AccountId, BlockNumber>) {
+    add_new_swap_and_assert_requester_balances(
       requester_account_id,
       TEMP_CURRENCY_ID,
       temp_amount,
@@ -190,18 +191,17 @@ impl Context {
       SwapType::Limit,
       slippage,
     )
-    .unwrap()
   }
 
   fn create_tifi_to_temp_market_swap_request(
     &self,
-    requester_account_id: u64,
+    requester_account_id: AccountId,
     tifi_amount: Balance,
     temp_amount: Balance,
     extrinsic_hash: [u8; 32],
     slippage: Permill,
-  ) -> (Hash, Swap<u64, u64>) {
-    Oracle::add_new_swap_in_queue(
+  ) -> (Hash, Swap<AccountId, BlockNumber>) {
+    add_new_swap_and_assert_requester_balances(
       requester_account_id,
       CurrencyId::Tifi,
       tifi_amount,
@@ -213,11 +213,63 @@ impl Context {
       SwapType::Market,
       slippage,
     )
-    .unwrap()
   }
 }
 
-fn assert_swap_cost_is_suspended(account_id: u64, currency_id: CurrencyId, sell_amount: Balance) {
+fn add_new_swap_and_assert_requester_balances(
+  account_id: AccountId,
+  asset_id_from: CurrencyId,
+  amount_from: Balance,
+  asset_id_to: CurrencyId,
+  amount_to: Balance,
+  block_number: BlockNumber,
+  extrinsic_hash: [u8; 32],
+  is_market_maker: bool,
+  swap_type: SwapType,
+  slippage: Permill,
+) -> (Hash, Swap<AccountId, BlockNumber>) {
+  let initial_from_token_balance = Adapter::balance(asset_id_from, &account_id);
+
+  let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
+    account_id,
+    asset_id_from,
+    amount_from,
+    asset_id_to,
+    amount_to,
+    block_number,
+    extrinsic_hash,
+    is_market_maker,
+    swap_type,
+    slippage,
+  )
+  .unwrap();
+
+  assert_swap_cost_is_suspended(account_id, asset_id_from, amount_from);
+
+  if asset_id_from != CurrencyId::Tifi {
+    assert_sold_tokens_are_deducted(
+      account_id,
+      asset_id_from,
+      initial_from_token_balance,
+      amount_from,
+    );
+  }
+
+  assert_spendable_balance_is_updated(
+    account_id,
+    asset_id_from,
+    initial_from_token_balance,
+    amount_from,
+  );
+
+  (trade_request_id, trade_request)
+}
+
+fn assert_swap_cost_is_suspended(
+  account_id: AccountId,
+  currency_id: CurrencyId,
+  sell_amount: Balance,
+) {
   let swap_fee_rate = match currency_id {
     CurrencyId::Tifi => REQUESTER_SWAP_FEE_RATE,
     _ => MARKET_MAKER_SWAP_FEE_RATE,
@@ -230,7 +282,7 @@ fn assert_swap_cost_is_suspended(account_id: u64, currency_id: CurrencyId, sell_
 }
 
 fn assert_spendable_balance_is_updated(
-  account_id: u64,
+  account_id: AccountId,
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
@@ -264,7 +316,7 @@ fn assert_spendable_balance_is_updated(
 }
 
 fn assert_sold_tokens_are_deducted(
-  account_id: u64,
+  account_id: AccountId,
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
@@ -308,7 +360,7 @@ pub fn set_operational_status_works() {
 #[test]
 pub fn confirm_swap_partial_filling() {
   new_test_ext().execute_with(|| {
-    const BOB_INITIAL_TWENTY_TIFIS: Balance = 20 * ONE_TIFI;
+    const BOB_INITIAL_20_TIFIS: Balance = 20 * ONE_TIFI;
     const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
     const DAVE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
 
@@ -318,7 +370,7 @@ pub fn confirm_swap_partial_filling() {
       .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
       .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
       .mint_tifi(DAVE_ACCOUNT_ID, ONE_TIFI)
-      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_TWENTY_TIFIS)
+      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
       .create_temp_asset_and_metadata()
       .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS)
       .mint_temp(DAVE_ACCOUNT_ID, DAVE_INITIAL_10000_TEMPS);
@@ -333,14 +385,6 @@ pub fn confirm_swap_partial_filling() {
       SLIPPAGE_2_PERCENTS,
     );
 
-    assert_swap_cost_is_suspended(BOB_ACCOUNT_ID, CurrencyId::Tifi, BOB_SELLS_10_TIFIS);
-    assert_spendable_balance_is_updated(
-      BOB_ACCOUNT_ID,
-      CurrencyId::Tifi,
-      BOB_INITIAL_TWENTY_TIFIS,
-      BOB_SELLS_10_TIFIS,
-    );
-
     const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
     const CHARLIE_BUYS_200_TIFIS: Balance = 200 * ONE_TIFI;
     let (trade_request_mm_id, trade_request_mm) = context.create_temp_to_tifi_limit_swap_request(
@@ -350,27 +394,6 @@ pub fn confirm_swap_partial_filling() {
       EXTRINSIC_HASH_1,
       SLIPPAGE_4_PERCENTS,
     );
-
-    assert_swap_cost_is_suspended(
-      CHARLIE_ACCOUNT_ID,
-      TEMP_CURRENCY_ID,
-      CHARLIE_SELLS_4000_TEMPS,
-    );
-
-    assert_sold_tokens_are_deducted(
-      CHARLIE_ACCOUNT_ID,
-      TEMP_CURRENCY_ID,
-      CHARLIE_INITIAL_10000_TEMPS,
-      CHARLIE_SELLS_4000_TEMPS,
-    );
-
-    assert_spendable_balance_is_updated(
-      CHARLIE_ACCOUNT_ID,
-      TEMP_CURRENCY_ID,
-      CHARLIE_INITIAL_10000_TEMPS,
-      CHARLIE_SELLS_4000_TEMPS,
-    );
-
     const DAVE_SELLS_8000_TEMPS: Balance = 8_000 * ONE_TEMP;
     const DAVE_BUYS_400_TIFIS: Balance = 400 * ONE_TIFI;
     let (trade_request_mm2_id, trade_request_mm2) = context.create_temp_to_tifi_limit_swap_request(
@@ -380,8 +403,6 @@ pub fn confirm_swap_partial_filling() {
       EXTRINSIC_HASH_2,
       SLIPPAGE_5_PERCENTS,
     );
-
-    assert_swap_cost_is_suspended(DAVE_ACCOUNT_ID, TEMP_CURRENCY_ID, DAVE_SELLS_8000_TEMPS);
 
     // make sure our trade request is created correctly
     assert_eq!(
@@ -422,7 +443,7 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(
       Adapter::balance(CurrencyId::Tifi, &BOB_ACCOUNT_ID),
-      BOB_INITIAL_TWENTY_TIFIS
+      BOB_INITIAL_20_TIFIS
         .saturating_sub(5 * ONE_TIFI)
         .saturating_sub(REQUESTER_SWAP_FEE_RATE * (5 * ONE_TIFI))
     );
@@ -494,7 +515,7 @@ pub fn confirm_swap_partial_filling() {
 
     assert_eq!(
       Adapter::balance(CurrencyId::Tifi, &BOB_ACCOUNT_ID),
-      BOB_INITIAL_TWENTY_TIFIS
+      BOB_INITIAL_20_TIFIS
         .saturating_sub(10 * ONE_TIFI)
         .saturating_sub(REQUESTER_SWAP_FEE_RATE * (10 * ONE_TIFI))
     );
@@ -556,7 +577,7 @@ pub fn confirm_swap_partial_filling() {
     // validate all balance
     assert_eq!(
       Adapter::balance(CurrencyId::Tifi, &BOB_ACCOUNT_ID),
-      BOB_INITIAL_TWENTY_TIFIS
+      BOB_INITIAL_20_TIFIS
         .saturating_sub(10 * ONE_TIFI)
         .saturating_sub(REQUESTER_SWAP_FEE_RATE * (10 * ONE_TIFI))
     );
@@ -610,22 +631,25 @@ pub fn confirm_swap_partial_filling() {
 #[test]
 pub fn confirm_swap_with_fees() {
   new_test_ext().execute_with(|| {
+    const BOB_INITIAL_20_TIFIS: Balance = 20 * ONE_TIFI;
+    const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+    const DAVE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+
     let context = Context::default()
       .set_oracle_status(true)
       .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
       .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
       .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
       .mint_tifi(DAVE_ACCOUNT_ID, ONE_TIFI)
-      .mint_tifi(BOB_ACCOUNT_ID, 20 * ONE_TIFI)
+      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
       .create_temp_asset_and_metadata()
-      .mint_temp(CHARLIE_ACCOUNT_ID, 10_000 * ONE_TEMP)
-      .mint_temp(DAVE_ACCOUNT_ID, 10_000 * ONE_TEMP);
+      .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS)
+      .mint_temp(DAVE_ACCOUNT_ID, DAVE_INITIAL_10000_TEMPS);
 
     Fees::start_era();
     assert!(!Fees::active_era().is_none());
     let current_era = Fees::active_era().unwrap().index;
 
-    // BOB: 10 TIFI for 200 TEMP (20 TEMP/TIFI)
     const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
     const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
     let (trade_request_id, trade_request) = context.create_tifi_to_temp_limit_swap_request(
@@ -636,7 +660,6 @@ pub fn confirm_swap_with_fees() {
       SLIPPAGE_2_PERCENTS,
     );
 
-    // CHARLIE (MM): 4000 TEMP FOR 200 TIFI
     const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
     const CHARLIE_BUYS_200_TIFIS: Balance = 200 * ONE_TIFI;
     let (trade_request_mm_id, trade_request_mm) = context.create_temp_to_tifi_limit_swap_request(
@@ -647,7 +670,6 @@ pub fn confirm_swap_with_fees() {
       SLIPPAGE_5_PERCENTS,
     );
 
-    // DAVE (MM): 100 TEMP for 5 TIFI
     const DAVE_SELLS_100_TEMPS: Balance = 100 * ONE_TEMP;
     const DAVE_BUYS_5_TIFIS: Balance = 5 * ONE_TIFI;
     let (trade_request_mm2_id, trade_request_mm2) = context.create_temp_to_tifi_limit_swap_request(
@@ -836,15 +858,15 @@ pub fn confirm_swap_with_fees() {
 #[test]
 pub fn confirm_swap_ourself() {
   new_test_ext().execute_with(|| {
-    const BOB_INITIAL_TWENTY_TIFIS: Balance = 20 * ONE_TIFI;
-    const BOB_INITIAL_WRAPPED_BALANCE: Balance = 10_000 * ONE_TEMP;
+    const BOB_INITIAL_20_TIFIS: Balance = 20 * ONE_TIFI;
+    const BOB_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
 
     let context = Context::default()
       .set_oracle_status(true)
       .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
-      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_TWENTY_TIFIS)
+      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
       .create_temp_asset_and_metadata()
-      .mint_temp(BOB_ACCOUNT_ID, BOB_INITIAL_WRAPPED_BALANCE);
+      .mint_temp(BOB_ACCOUNT_ID, BOB_INITIAL_10000_TEMPS);
 
     const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
     const BOB_BUYS_400_TEMPS: Balance = 400 * ONE_TEMP;
@@ -856,18 +878,8 @@ pub fn confirm_swap_ourself() {
       SLIPPAGE_2_PERCENTS,
     );
 
-    assert_swap_cost_is_suspended(BOB_ACCOUNT_ID, CurrencyId::Tifi, BOB_SELLS_10_TIFIS);
-
-    assert_spendable_balance_is_updated(
-      BOB_ACCOUNT_ID,
-      CurrencyId::Tifi,
-      BOB_INITIAL_TWENTY_TIFIS,
-      BOB_SELLS_10_TIFIS,
-    );
-
     const BOB_SELLS_400_TEMPS: Balance = 400 * ONE_TEMP;
     const BOB_BUYS_10_TIFIS: Balance = 10 * ONE_TIFI;
-
     let context = Context::default().set_market_makers(vec![BOB_ACCOUNT_ID]);
     let (trade_request_mm_id, trade_request_mm) = context.create_temp_to_tifi_limit_swap_request(
       BOB_ACCOUNT_ID,
@@ -876,8 +888,6 @@ pub fn confirm_swap_ourself() {
       EXTRINSIC_HASH_0,
       SLIPPAGE_5_PERCENTS,
     );
-
-    assert_swap_cost_is_suspended(BOB_ACCOUNT_ID, TEMP_CURRENCY_ID, BOB_SELLS_400_TEMPS);
 
     // make sure our trade request is created correctly
     assert_eq!(
@@ -928,12 +938,12 @@ pub fn confirm_swap_ourself() {
     assert_eq!(
       Adapter::reducible_balance(CurrencyId::Tifi, &BOB_ACCOUNT_ID, false),
       // we should refund the extra fees paid on the slippage value
-      BOB_INITIAL_TWENTY_TIFIS.saturating_sub(REQUESTER_SWAP_FEE_RATE * (10 * ONE_TIFI))
+      BOB_INITIAL_20_TIFIS.saturating_sub(REQUESTER_SWAP_FEE_RATE * (10 * ONE_TIFI))
     );
 
     assert_eq!(
       Adapter::reducible_balance(TEMP_CURRENCY_ID, &BOB_ACCOUNT_ID, false),
-      BOB_INITIAL_WRAPPED_BALANCE.saturating_sub(MARKET_MAKER_SWAP_FEE_RATE * (400 * ONE_TEMP))
+      BOB_INITIAL_10000_TEMPS.saturating_sub(MARKET_MAKER_SWAP_FEE_RATE * (400 * ONE_TEMP))
     );
 
     assert_eq!(
@@ -950,34 +960,24 @@ pub fn confirm_swap_ourself() {
 #[test]
 pub fn test_slippage() {
   new_test_ext().execute_with(|| {
-    const BOB_INITIAL_TWENTY_TIFIS: Balance = 20 * ONE_TIFI;
-    const BOB_INITIAL_WRAPPED_BALANCE: Balance = 10_000 * ONE_TEMP;
+    const BOB_INITIAL_20_TIFIS: Balance = 20 * ONE_TIFI;
+    const BOB_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
 
     let context = Context::default()
       .set_oracle_status(true)
       .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
-      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_TWENTY_TIFIS)
+      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
       .create_temp_asset_and_metadata()
-      .mint_temp(BOB_ACCOUNT_ID, BOB_INITIAL_WRAPPED_BALANCE);
+      .mint_temp(BOB_ACCOUNT_ID, BOB_INITIAL_10000_TEMPS);
 
     const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
     const BOB_BUYS_400_TEMPS: Balance = 400 * ONE_TEMP;
-
     let (trade_request_id, trade_request) = context.create_tifi_to_temp_market_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_10_TIFIS,
       BOB_BUYS_400_TEMPS,
       EXTRINSIC_HASH_0,
       SLIPPAGE_2_PERCENTS,
-    );
-
-    assert_swap_cost_is_suspended(BOB_ACCOUNT_ID, CurrencyId::Tifi, BOB_SELLS_10_TIFIS);
-
-    assert_spendable_balance_is_updated(
-      BOB_ACCOUNT_ID,
-      CurrencyId::Tifi,
-      BOB_INITIAL_TWENTY_TIFIS,
-      BOB_SELLS_10_TIFIS,
     );
 
     const BOB_SELLS_500_TEMPS: Balance = 500 * ONE_TEMP;
@@ -991,8 +991,6 @@ pub fn test_slippage() {
       EXTRINSIC_HASH_0,
       SLIPPAGE_0_PERCENT,
     );
-
-    assert_swap_cost_is_suspended(BOB_ACCOUNT_ID, TEMP_CURRENCY_ID, BOB_SELLS_500_TEMPS);
 
     // make sure our trade request is created correctly
     assert_eq!(
