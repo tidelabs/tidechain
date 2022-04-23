@@ -27,7 +27,7 @@
 // --chain=lagoon-dev
 // --steps=50
 // --repeat=20
-// --pallet=*
+// --pallet=pallet_quorum
 // --extrinsic=*
 // --execution=wasm
 // --wasm-execution=compiled
@@ -52,7 +52,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: System ParentHash (r:1 w:0)
 	// Storage: Quorum Proposals (r:1 w:1)
 	fn submit_proposal() -> Weight {
-		(41_186_000 as Weight)
+		(37_341_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -64,9 +64,17 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum Threshold (r:1 w:0)
 	// Storage: Quorum CounterForMembers (r:1 w:0)
 	fn acknowledge_proposal() -> Weight {
-		(88_204_000 as Weight)
+		(86_964_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	// Storage: Quorum PublicKeys (r:2 w:0)
+	// Storage: Quorum Members (r:1 w:0)
+	// Storage: Quorum BurnedQueue (r:1 w:1)
+	fn acknowledge_burned() -> Weight {
+		(30_064_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Quorum PublicKeys (r:2 w:0)
 	// Storage: Quorum Members (r:1 w:0)
@@ -76,7 +84,7 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum Threshold (r:1 w:0)
 	// Storage: Quorum CounterForMembers (r:1 w:0)
 	fn reject_proposal() -> Weight {
-		(55_742_000 as Weight)
+		(55_419_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -85,24 +93,18 @@ impl<T: frame_system::Config> pallet_quorum::WeightInfo for WeightInfo<T> {
 	// Storage: Quorum Threshold (r:1 w:0)
 	// Storage: Quorum CounterForMembers (r:1 w:0)
 	fn eval_proposal_state() -> Weight {
-		(14_917_000 as Weight)
+		(14_362_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Quorum Members (r:1 w:0)
 	// Storage: Quorum PublicKeys (r:2 w:1)
 	fn submit_public_keys(k: u32, ) -> Weight {
-		(19_452_000 as Weight)
-			// Standard Error: 13_000
-			.saturating_add((3_832_000 as Weight).saturating_mul(k as Weight))
+		(17_961_000 as Weight)
+			// Standard Error: 14_000
+			.saturating_add((3_919_000 as Weight).saturating_mul(k as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(k as Weight)))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(k as Weight)))
 	}
-
-   fn acknowledge_burned() -> Weight {
-      60_000_300_u64
-      .saturating_add(T::DbWeight::get().reads(6_u64))
-      .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
 }
