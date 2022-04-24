@@ -29,7 +29,7 @@ use sp_runtime::{traits::Zero, Permill};
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
-  Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
+  Balance, CurrencyId, Hash, SwapConfirmation, SwapStatus, SwapType,
 };
 
 const CURRENT_BLOCK_NUMBER: BlockNumber = 0;
@@ -156,8 +156,8 @@ impl Context {
     temp_amount: Balance,
     extrinsic_hash: [u8; 32],
     slippage: Permill,
-  ) -> (Hash, Swap<AccountId, BlockNumber>) {
-    add_new_swap_and_assert_requester_balances(
+  ) -> Hash {
+    add_new_swap_and_assert_results(
       requester_account_id,
       CurrencyId::Tifi,
       tifi_amount,
@@ -178,8 +178,8 @@ impl Context {
     tifi_amount: Balance,
     extrinsic_hash: [u8; 32],
     slippage: Permill,
-  ) -> (Hash, Swap<AccountId, BlockNumber>) {
-    add_new_swap_and_assert_requester_balances(
+  ) -> Hash {
+    add_new_swap_and_assert_results(
       requester_account_id,
       TEMP_CURRENCY_ID,
       temp_amount,
@@ -200,8 +200,8 @@ impl Context {
     temp_amount: Balance,
     extrinsic_hash: [u8; 32],
     slippage: Permill,
-  ) -> (Hash, Swap<AccountId, BlockNumber>) {
-    add_new_swap_and_assert_requester_balances(
+  ) -> Hash {
+    add_new_swap_and_assert_results(
       requester_account_id,
       CurrencyId::Tifi,
       tifi_amount,
@@ -216,7 +216,7 @@ impl Context {
   }
 }
 
-fn add_new_swap_and_assert_requester_balances(
+fn add_new_swap_and_assert_results(
   account_id: AccountId,
   asset_id_from: CurrencyId,
   amount_from: Balance,
@@ -227,7 +227,7 @@ fn add_new_swap_and_assert_requester_balances(
   is_market_maker: bool,
   swap_type: SwapType,
   slippage: Permill,
-) -> (Hash, Swap<AccountId, BlockNumber>) {
+) -> Hash {
   let initial_from_token_balance = Adapter::balance(asset_id_from, &account_id);
 
   let (trade_request_id, trade_request) = Oracle::add_new_swap_in_queue(
@@ -262,7 +262,10 @@ fn add_new_swap_and_assert_requester_balances(
     amount_from,
   );
 
-  (trade_request_id, trade_request)
+  assert_eq!(trade_request.status, SwapStatus::Pending);
+  assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
+
+  trade_request_id
 }
 
 fn assert_swap_cost_is_suspended(
@@ -377,7 +380,7 @@ pub fn confirm_swap_partial_filling() {
 
     const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
     const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
-    let (trade_request_id, trade_request) = context.create_tifi_to_temp_limit_swap_request(
+    let trade_request_id = context.create_tifi_to_temp_limit_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_10_TIFIS,
       BOB_BUYS_200_TEMPS,
@@ -387,16 +390,17 @@ pub fn confirm_swap_partial_filling() {
 
     const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
     const CHARLIE_BUYS_200_TIFIS: Balance = 200 * ONE_TIFI;
-    let (trade_request_mm_id, trade_request_mm) = context.create_temp_to_tifi_limit_swap_request(
+    let trade_request_mm_id = context.create_temp_to_tifi_limit_swap_request(
       CHARLIE_ACCOUNT_ID,
       CHARLIE_SELLS_4000_TEMPS,
       CHARLIE_BUYS_200_TIFIS,
       EXTRINSIC_HASH_1,
       SLIPPAGE_4_PERCENTS,
     );
+
     const DAVE_SELLS_8000_TEMPS: Balance = 8_000 * ONE_TEMP;
     const DAVE_BUYS_400_TIFIS: Balance = 400 * ONE_TIFI;
-    let (trade_request_mm2_id, trade_request_mm2) = context.create_temp_to_tifi_limit_swap_request(
+    let trade_request_mm2_id = context.create_temp_to_tifi_limit_swap_request(
       DAVE_ACCOUNT_ID,
       DAVE_SELLS_8000_TEMPS,
       DAVE_BUYS_400_TIFIS,
@@ -410,21 +414,12 @@ pub fn confirm_swap_partial_filling() {
       Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
         .unwrap_or_default()
     );
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
 
     assert_eq!(
       trade_request_mm_id,
       Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
         .unwrap_or_default()
     );
-
-    assert_eq!(trade_request.status, SwapStatus::Pending);
-    assert_eq!(trade_request_mm.status, SwapStatus::Pending);
-    assert_eq!(trade_request_mm2.status, SwapStatus::Pending);
-
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
-    assert_eq!(trade_request_mm.block_number, CURRENT_BLOCK_NUMBER);
-    assert_eq!(trade_request_mm2.block_number, CURRENT_BLOCK_NUMBER);
 
     const CHARLIE_PARTIAL_FILLING_100_TEMPS: Balance = 100 * ONE_TEMP;
     // partial filling
@@ -652,7 +647,7 @@ pub fn confirm_swap_with_fees() {
 
     const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
     const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
-    let (trade_request_id, trade_request) = context.create_tifi_to_temp_limit_swap_request(
+    let trade_request_id = context.create_tifi_to_temp_limit_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_10_TIFIS,
       BOB_BUYS_200_TEMPS,
@@ -662,7 +657,7 @@ pub fn confirm_swap_with_fees() {
 
     const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
     const CHARLIE_BUYS_200_TIFIS: Balance = 200 * ONE_TIFI;
-    let (trade_request_mm_id, trade_request_mm) = context.create_temp_to_tifi_limit_swap_request(
+    let trade_request_mm_id = context.create_temp_to_tifi_limit_swap_request(
       CHARLIE_ACCOUNT_ID,
       CHARLIE_SELLS_4000_TEMPS,
       CHARLIE_BUYS_200_TIFIS,
@@ -672,7 +667,7 @@ pub fn confirm_swap_with_fees() {
 
     const DAVE_SELLS_100_TEMPS: Balance = 100 * ONE_TEMP;
     const DAVE_BUYS_5_TIFIS: Balance = 5 * ONE_TIFI;
-    let (trade_request_mm2_id, trade_request_mm2) = context.create_temp_to_tifi_limit_swap_request(
+    let trade_request_mm2_id = context.create_temp_to_tifi_limit_swap_request(
       DAVE_ACCOUNT_ID,
       DAVE_SELLS_100_TEMPS,
       DAVE_BUYS_5_TIFIS,
@@ -686,17 +681,12 @@ pub fn confirm_swap_with_fees() {
       Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
         .unwrap_or_default()
     );
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
 
     assert_eq!(
       trade_request_mm_id,
       Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
         .unwrap_or_default()
     );
-
-    assert_eq!(trade_request.status, SwapStatus::Pending);
-    assert_eq!(trade_request_mm.status, SwapStatus::Pending);
-    assert_eq!(trade_request_mm2.status, SwapStatus::Pending);
 
     assert_eq!(
       Oracle::account_swaps(BOB_ACCOUNT_ID)
@@ -721,9 +711,6 @@ pub fn confirm_swap_with_fees() {
         .find(|(request_id, _)| *request_id == trade_request_mm2_id),
       Some(&(trade_request_mm2_id, SwapStatus::Pending))
     );
-
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
-    assert_eq!(trade_request_mm.block_number, CURRENT_BLOCK_NUMBER);
 
     // partial filling
     assert_ok!(Oracle::confirm_swap(
@@ -870,7 +857,7 @@ pub fn confirm_swap_ourself() {
 
     const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
     const BOB_BUYS_400_TEMPS: Balance = 400 * ONE_TEMP;
-    let (trade_request_id, trade_request) = context.create_tifi_to_temp_limit_swap_request(
+    let trade_request_id = context.create_tifi_to_temp_limit_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_10_TIFIS,
       BOB_BUYS_400_TEMPS,
@@ -881,7 +868,7 @@ pub fn confirm_swap_ourself() {
     const BOB_SELLS_400_TEMPS: Balance = 400 * ONE_TEMP;
     const BOB_BUYS_10_TIFIS: Balance = 10 * ONE_TIFI;
     let context = Context::default().set_market_makers(vec![BOB_ACCOUNT_ID]);
-    let (trade_request_mm_id, trade_request_mm) = context.create_temp_to_tifi_limit_swap_request(
+    let trade_request_mm_id = context.create_temp_to_tifi_limit_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_400_TEMPS,
       BOB_BUYS_10_TIFIS,
@@ -895,19 +882,12 @@ pub fn confirm_swap_ourself() {
       Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
         .unwrap_or_default()
     );
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
 
     assert_eq!(
       trade_request_mm_id,
       Hash::from_str("0xe0424aac19ef997f1b76ac20d400aecc2ee0258d9eacb7013c3fcfa2e55bdc67")
         .unwrap_or_default()
     );
-
-    assert_eq!(trade_request.status, SwapStatus::Pending);
-    assert_eq!(trade_request_mm.status, SwapStatus::Pending);
-
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
-    assert_eq!(trade_request_mm.block_number, CURRENT_BLOCK_NUMBER);
 
     // partial filling
     assert_ok!(Oracle::confirm_swap(
@@ -972,7 +952,7 @@ pub fn test_slippage() {
 
     const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
     const BOB_BUYS_400_TEMPS: Balance = 400 * ONE_TEMP;
-    let (trade_request_id, trade_request) = context.create_tifi_to_temp_market_swap_request(
+    let trade_request_id = context.create_tifi_to_temp_market_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_10_TIFIS,
       BOB_BUYS_400_TEMPS,
@@ -983,7 +963,7 @@ pub fn test_slippage() {
     const BOB_SELLS_500_TEMPS: Balance = 500 * ONE_TEMP;
     const BOB_BUYS_10_TIFIS: Balance = 10 * ONE_TIFI;
     let context = Context::default().set_market_makers(vec![BOB_ACCOUNT_ID]);
-    let (trade_request_mm_id, trade_request_mm) = context.create_temp_to_tifi_limit_swap_request(
+    let trade_request_mm_id = context.create_temp_to_tifi_limit_swap_request(
       BOB_ACCOUNT_ID,
       // ratio is a bit different (mm is willing to pay a bit more for the same amount)
       BOB_SELLS_500_TEMPS,
@@ -998,19 +978,12 @@ pub fn test_slippage() {
       Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
         .unwrap_or_default()
     );
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
 
     assert_eq!(
       trade_request_mm_id,
       Hash::from_str("0xe0424aac19ef997f1b76ac20d400aecc2ee0258d9eacb7013c3fcfa2e55bdc67")
         .unwrap_or_default()
     );
-
-    assert_eq!(trade_request.status, SwapStatus::Pending);
-    assert_eq!(trade_request_mm.status, SwapStatus::Pending);
-
-    assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
-    assert_eq!(trade_request_mm.block_number, CURRENT_BLOCK_NUMBER);
 
     assert_noop!(
       Oracle::confirm_swap(
