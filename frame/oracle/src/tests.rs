@@ -263,6 +263,14 @@ fn add_new_swap_and_assert_results(
   );
 
   assert_eq!(trade_request.status, SwapStatus::Pending);
+  assert_eq!(
+    Oracle::account_swaps(account_id)
+      .unwrap()
+      .iter()
+      .find(|(request_id, _)| *request_id == trade_request_id),
+    Some(&(trade_request_id, SwapStatus::Pending))
+  );
+
   assert_eq!(trade_request.block_number, CURRENT_BLOCK_NUMBER);
 
   trade_request_id
@@ -388,6 +396,12 @@ pub fn confirm_swap_partial_filling() {
       SLIPPAGE_2_PERCENTS,
     );
 
+    assert_eq!(
+      trade_request_id,
+      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
+        .unwrap_or_default()
+    );
+
     const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
     const CHARLIE_BUYS_200_TIFIS: Balance = 200 * ONE_TIFI;
     let trade_request_mm_id = context.create_temp_to_tifi_limit_swap_request(
@@ -398,6 +412,12 @@ pub fn confirm_swap_partial_filling() {
       SLIPPAGE_4_PERCENTS,
     );
 
+    assert_eq!(
+      trade_request_mm_id,
+      Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
+        .unwrap_or_default()
+    );
+
     const DAVE_SELLS_8000_TEMPS: Balance = 8_000 * ONE_TEMP;
     const DAVE_BUYS_400_TIFIS: Balance = 400 * ONE_TIFI;
     let trade_request_mm2_id = context.create_temp_to_tifi_limit_swap_request(
@@ -406,19 +426,6 @@ pub fn confirm_swap_partial_filling() {
       DAVE_BUYS_400_TIFIS,
       EXTRINSIC_HASH_2,
       SLIPPAGE_5_PERCENTS,
-    );
-
-    // make sure our trade request is created correctly
-    assert_eq!(
-      trade_request_id,
-      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
-        .unwrap_or_default()
-    );
-
-    assert_eq!(
-      trade_request_mm_id,
-      Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
-        .unwrap_or_default()
     );
 
     const CHARLIE_PARTIAL_FILLING_100_TEMPS: Balance = 100 * ONE_TEMP;
@@ -655,6 +662,12 @@ pub fn confirm_swap_with_fees() {
       SLIPPAGE_2_PERCENTS,
     );
 
+    assert_eq!(
+      trade_request_id,
+      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
+        .unwrap_or_default()
+    );
+
     const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
     const CHARLIE_BUYS_200_TIFIS: Balance = 200 * ONE_TIFI;
     let trade_request_mm_id = context.create_temp_to_tifi_limit_swap_request(
@@ -665,6 +678,12 @@ pub fn confirm_swap_with_fees() {
       SLIPPAGE_5_PERCENTS,
     );
 
+    assert_eq!(
+      trade_request_mm_id,
+      Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
+        .unwrap_or_default()
+    );
+
     const DAVE_SELLS_100_TEMPS: Balance = 100 * ONE_TEMP;
     const DAVE_BUYS_5_TIFIS: Balance = 5 * ONE_TIFI;
     let trade_request_mm2_id = context.create_temp_to_tifi_limit_swap_request(
@@ -673,43 +692,6 @@ pub fn confirm_swap_with_fees() {
       DAVE_BUYS_5_TIFIS,
       EXTRINSIC_HASH_2,
       SLIPPAGE_4_PERCENTS,
-    );
-
-    // make sure our trade request is created correctly
-    assert_eq!(
-      trade_request_id,
-      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
-        .unwrap_or_default()
-    );
-
-    assert_eq!(
-      trade_request_mm_id,
-      Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
-        .unwrap_or_default()
-    );
-
-    assert_eq!(
-      Oracle::account_swaps(BOB_ACCOUNT_ID)
-        .unwrap()
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_id),
-      Some(&(trade_request_id, SwapStatus::Pending))
-    );
-
-    assert_eq!(
-      Oracle::account_swaps(CHARLIE_ACCOUNT_ID)
-        .unwrap()
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_mm_id),
-      Some(&(trade_request_mm_id, SwapStatus::Pending))
-    );
-
-    assert_eq!(
-      Oracle::account_swaps(DAVE_ACCOUNT_ID)
-        .unwrap()
-        .iter()
-        .find(|(request_id, _)| *request_id == trade_request_mm2_id),
-      Some(&(trade_request_mm2_id, SwapStatus::Pending))
     );
 
     // partial filling
@@ -865,6 +847,12 @@ pub fn confirm_swap_ourself() {
       SLIPPAGE_2_PERCENTS,
     );
 
+    assert_eq!(
+      trade_request_id,
+      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
+        .unwrap_or_default()
+    );
+
     const BOB_SELLS_400_TEMPS: Balance = 400 * ONE_TEMP;
     const BOB_BUYS_10_TIFIS: Balance = 10 * ONE_TIFI;
     let context = Context::default().set_market_makers(vec![BOB_ACCOUNT_ID]);
@@ -874,13 +862,6 @@ pub fn confirm_swap_ourself() {
       BOB_BUYS_10_TIFIS,
       EXTRINSIC_HASH_0,
       SLIPPAGE_5_PERCENTS,
-    );
-
-    // make sure our trade request is created correctly
-    assert_eq!(
-      trade_request_id,
-      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
-        .unwrap_or_default()
     );
 
     assert_eq!(
@@ -960,6 +941,12 @@ pub fn test_slippage() {
       SLIPPAGE_2_PERCENTS,
     );
 
+    assert_eq!(
+      trade_request_id,
+      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
+        .unwrap_or_default()
+    );
+
     const BOB_SELLS_500_TEMPS: Balance = 500 * ONE_TEMP;
     const BOB_BUYS_10_TIFIS: Balance = 10 * ONE_TIFI;
     let context = Context::default().set_market_makers(vec![BOB_ACCOUNT_ID]);
@@ -970,13 +957,6 @@ pub fn test_slippage() {
       BOB_BUYS_10_TIFIS,
       EXTRINSIC_HASH_0,
       SLIPPAGE_0_PERCENT,
-    );
-
-    // make sure our trade request is created correctly
-    assert_eq!(
-      trade_request_id,
-      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
-        .unwrap_or_default()
     );
 
     assert_eq!(
