@@ -47,8 +47,7 @@ const TEMP_ASSET_NUMBER_OF_DECIMAL_PLACES: u8 = 2;
 
 // Asset Units
 const ONE_TEMP: u128 = 100;
-const ONE_MILLI_TIFI: u128 = 1_000_000_000;
-const ONE_TIFI: u128 = 1_000 * ONE_MILLI_TIFI;
+const ONE_TIFI: u128 = 1_000_000_000_000;
 
 // Test Accounts
 const ALICE_ACCOUNT_ID: AccountId = 1;
@@ -813,12 +812,13 @@ pub fn confirm_swap_with_fees() {
     assert_eq!(
       Adapter::balance(CurrencyId::Tifi, &context.fees_account_id),
       // we burned 1 tifi on start so it should contain 1.2 tifi now
-      1_200 * ONE_MILLI_TIFI
+      ONE_TIFI + REQUESTER_SWAP_FEE_RATE * BOB_SELLS_10_TIFIS
     );
 
     assert_eq!(
       Adapter::balance(TEMP_CURRENCY_ID, &context.fees_account_id),
-      2 * ONE_TEMP
+      MARKET_MAKER_SWAP_FEE_RATE
+        * (CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS + DAVE_PARTIAL_FILLING_SELLS_100_TEMPS)
     );
 
     assert_eq!(
