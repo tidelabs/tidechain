@@ -81,6 +81,13 @@ pub struct RunCmd {
   /// elapsed (i.e. until a block at height `pause_block + delay` is imported).
   #[clap(long = "grandpa-pause", number_of_values(2))]
   pub grandpa_pause: Vec<u32>,
+
+  /// Add the destination address to the `pyroscope` agent.
+  ///
+  /// Must be valid socket address, of format `IP:Port`
+  /// commonly `127.0.0.1:4040`.
+  #[clap(long)]
+  pub pyroscope_server: Option<String>,
 }
 
 #[derive(Debug, Parser)]
