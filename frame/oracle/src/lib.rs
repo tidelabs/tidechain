@@ -202,6 +202,8 @@ pub mod pallet {
     InvalidRequestStatus,
     /// Invalid market maker status.
     InvalidMarketMakerRequest,
+    /// Invalid market maker request ID, includes an index in the SwapConfirmation list
+    InvalidMarketMakerRequestId { index: u8 },
     /// There is a conflict in the request.
     Conflict,
     /// Unable to transfer token.
@@ -271,9 +273,9 @@ pub mod pallet {
             let mut total_from: Balance = 0;
             let mut total_to: Balance = 0;
 
-            for mm in market_makers.iter() {
+            for (index, mm) in market_makers.iter().enumerate() {
               let mm_trade_request = Swaps::<T>::try_get(mm.request_id)
-                .map_err(|_| Error::<T>::InvalidMarketMakerRequest)?;
+                .map_err(|_| Error::<T>::InvalidMarketMakerRequestId { index: index as u8 })?;
 
               // validate user slippage tolerance
               let pay_per_token = trade.amount_from as f64 / trade.amount_to as f64;
@@ -354,10 +356,10 @@ pub mod pallet {
               .into_result()
               .map_err(|_| Error::<T>::BurnFailed)?;
 
-            for mm in market_makers.iter() {
+            for (index, mm) in market_makers.iter().enumerate() {
               Swaps::<T>::try_mutate_exists(mm.request_id, |mm_trade_request| {
                 match mm_trade_request {
-                  None => Err(Error::<T>::InvalidRequestId),
+                  None => Err(Error::<T>::InvalidMarketMakerRequestId { index: index as u8 }),
                   Some(market_maker_trade_intent) => {
                     // 11. a) Make sure the marketmaker trade request is still valid
                     if market_maker_trade_intent.status != SwapStatus::Pending
