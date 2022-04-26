@@ -29,7 +29,7 @@ The nature of pre-built binaries means that they may not work on your particular
 Download the latest Tidechain binary within Ubuntu by running the following command.
 
 ```
-curl -sLO https://github.com/tidelabs/tidechain/releases/latest/download/tidechain && chmod +x tidechain && mv tidechain /usr/local/bin/
+curl -sLO https://github.com/tidelabs/tidechain/releases/latest/download/tidechain && chmod +x tidechain && sudo mv tidechain /usr/local/bin/
 ```
 
 ### Build from source
@@ -83,7 +83,7 @@ tidechain --chain=lagoon --validator --rpc-methods=unsafe
 Once your node is started open another terminal and run this command:
 
 ```
-curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933
+curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933 | awk -F',' '{print $2}' | cut -f2 -d":"|tr -d \" | tee > sessionkey.tx
 ```
 
 The output will have a hex-encoded "result" field. The result is the concatenation of the four public keys. Save this result for the next step.
