@@ -25,6 +25,7 @@ use frame_support::{
   assert_noop, assert_ok,
   traits::fungibles::{Inspect, InspectHold, Mutate},
 };
+use sp_core::H256;
 use sp_runtime::{traits::Zero, Permill};
 use std::str::FromStr;
 use tidefi_primitives::{
@@ -1036,5 +1037,49 @@ pub fn test_slippage() {
     assert!(Oracle::swaps(trade_request_id).is_none());
     // limit order isnt deleted as its not fully filled
     assert!(Oracle::swaps(trade_request_mm_id).is_some());
+  });
+}
+
+#[test]
+pub fn confirm_swap_fails_when_market_maker_request_id_is_invalid() {
+  new_test_ext().execute_with(|| {
+    const BOB_INITIAL_20_TIFIS: Balance = 20 * ONE_TIFI;
+    const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+
+    let context = Context::default()
+      .set_oracle_status(true)
+      .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+      .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+      .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+      .create_temp_asset_and_metadata()
+      .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+    const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
+    const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
+    let trade_request_id = context.create_tifi_to_temp_limit_swap_request(
+      BOB_ACCOUNT_ID,
+      BOB_SELLS_10_TIFIS,
+      BOB_BUYS_200_TEMPS,
+      EXTRINSIC_HASH_0,
+      SLIPPAGE_2_PERCENTS,
+    );
+
+    const CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS: Balance = 100 * ONE_TEMP;
+    const CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS: Balance = 5 * ONE_TIFI;
+    const INVALID_REQUEST_ID: H256 = H256::zero();
+    // partial filling
+    assert_noop!(
+      Oracle::confirm_swap(
+        context.alice.clone(),
+        trade_request_id,
+        vec![SwapConfirmation {
+          request_id: INVALID_REQUEST_ID,
+          amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+          amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+        },],
+      ),
+      Error::<Test>::InvalidMarketMakerRequestId { index: 0 }
+    );
   });
 }
