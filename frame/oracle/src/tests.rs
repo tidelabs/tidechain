@@ -1516,5 +1516,80 @@ mod confirm_swap {
         );
       });
     }
+
+    #[test]
+    fn market_maker_does_not_have_enough_funds() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id = context.create_temp_to_tifi_limit_swap_request(
+          CHARLIE_ACCOUNT_ID,
+          BOB_BUYS_200_TEMPS.saturating_div(5),
+          BOB_SELLS_10_TIFIS.saturating_div(5),
+          EXTRINSIC_HASH_1,
+          SLIPPAGE_4_PERCENTS,
+        );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::MarketMakerNoFunds
+        );
+      });
+    }
+
+    #[test]
+    fn requester_does_not_have_enough_funds() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS.saturating_mul(5),
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS.saturating_mul(5),
+            },],
+          ),
+          Error::<Test>::NoFunds
+        );
+      });
+    }
   }
 }
