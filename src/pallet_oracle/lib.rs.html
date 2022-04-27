@@ -967,7 +967,6 @@
 <span id="965">965</span>
 <span id="966">966</span>
 <span id="967">967</span>
-<span id="968">968</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -1172,6 +1171,8 @@
     <span class="ident">InvalidRequestStatus</span>,
     <span class="doccomment">/// Invalid market maker status.</span>
     <span class="ident">InvalidMarketMakerRequest</span>,
+    <span class="doccomment">/// Invalid market maker request ID, includes an index in the SwapConfirmation list</span>
+    <span class="ident">InvalidMarketMakerRequestId</span> { <span class="ident">index</span>: <span class="ident">u8</span> },
     <span class="doccomment">/// There is a conflict in the request.</span>
     <span class="ident">Conflict</span>,
     <span class="doccomment">/// Unable to transfer token.</span>
@@ -1241,9 +1242,9 @@
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_from</span>: <span class="ident">Balance</span> <span class="op">=</span> <span class="number">0</span>;
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_to</span>: <span class="ident">Balance</span> <span class="op">=</span> <span class="number">0</span>;
 
-            <span class="kw">for</span> <span class="ident">mm</span> <span class="kw">in</span> <span class="ident">market_makers</span>.<span class="ident">iter</span>() {
+            <span class="kw">for</span> (<span class="ident">index</span>, <span class="ident">mm</span>) <span class="kw">in</span> <span class="ident">market_makers</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
               <span class="kw">let</span> <span class="ident">mm_trade_request</span> <span class="op">=</span> <span class="ident">Swaps</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::try_get</span>(<span class="ident">mm</span>.<span class="ident">request_id</span>)
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidMarketMakerRequest</span>)<span class="question-mark">?</span>;
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidMarketMakerRequestId</span> { <span class="ident">index</span>: <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u8</span> })<span class="question-mark">?</span>;
 
               <span class="comment">// validate user slippage tolerance</span>
               <span class="kw">let</span> <span class="ident">pay_per_token</span> <span class="op">=</span> <span class="ident">trade</span>.<span class="ident">amount_from</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="ident">trade</span>.<span class="ident">amount_to</span> <span class="kw">as</span> <span class="ident">f64</span>;
@@ -1326,175 +1327,172 @@
 
             <span class="kw">for</span> <span class="ident">mm</span> <span class="kw">in</span> <span class="ident">market_makers</span>.<span class="ident">iter</span>() {
               <span class="ident">Swaps</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::try_mutate_exists</span>(<span class="ident">mm</span>.<span class="ident">request_id</span>, <span class="op">|</span><span class="ident">mm_trade_request</span><span class="op">|</span> {
-                <span class="kw">match</span> <span class="ident">mm_trade_request</span> {
-                  <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidRequestId</span>),
-                  <span class="prelude-val">Some</span>(<span class="ident">market_maker_trade_intent</span>) =&gt; {
-                    <span class="comment">// 11. a) Make sure the marketmaker trade request is still valid</span>
-                    <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapStatus::Pending</span>
-                      <span class="op">&amp;&amp;</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapStatus::PartiallyFilled</span>
-                    {
-                      <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidRequestStatus</span>);
-                    }
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">market_maker_trade_intent</span>) <span class="op">=</span> <span class="ident">mm_trade_request</span> {
+                  <span class="comment">// 11. a) Make sure the marketmaker trade request is still valid</span>
+                  <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapStatus::Pending</span>
+                    <span class="op">&amp;&amp;</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapStatus::PartiallyFilled</span>
+                  {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidRequestStatus</span>);
+                  }
 
-                    <span class="comment">// 11. b) Make sure the currency match</span>
-                    <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">token_from</span> <span class="op">!</span><span class="op">=</span> <span class="ident">trade</span>.<span class="ident">token_to</span> {
-                      <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidMarketMakerRequest</span>);
-                    }
+                  <span class="comment">// 11. b) Make sure the currency match</span>
+                  <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">token_from</span> <span class="op">!</span><span class="op">=</span> <span class="ident">trade</span>.<span class="ident">token_to</span> {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidMarketMakerRequest</span>);
+                  }
 
-                    <span class="comment">// 11. c) make sure market maker have enough funds in the trade intent request</span>
-                    <span class="kw">let</span> <span class="ident">available_funds</span> <span class="op">=</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from</span>
-                      <span class="op">-</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span>;
+                  <span class="comment">// 11. c) make sure market maker have enough funds in the trade intent request</span>
+                  <span class="kw">let</span> <span class="ident">available_funds</span> <span class="op">=</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from</span>
+                    <span class="op">-</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span>;
 
-                    <span class="kw">if</span> <span class="ident">available_funds</span>
-                      .<span class="ident">saturating_add</span>(<span class="ident">market_maker_trade_intent</span>.<span class="ident">slippage</span> <span class="op">*</span> <span class="ident">available_funds</span>)
-                      <span class="op">&lt;</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span>
-                    {
-                      <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidMarketMakerRequest</span>);
-                    }
+                  <span class="kw">if</span> <span class="ident">available_funds</span>
+                    .<span class="ident">saturating_add</span>(<span class="ident">market_maker_trade_intent</span>.<span class="ident">slippage</span> <span class="op">*</span> <span class="ident">available_funds</span>)
+                    <span class="op">&lt;</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span>
+                  {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::InvalidMarketMakerRequest</span>);
+                  }
 
-                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span> <span class="op">+</span><span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span>;
-                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_to_filled</span> <span class="op">+</span><span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>;
+                  <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span> <span class="op">+</span><span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span>;
+                  <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_to_filled</span> <span class="op">+</span><span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>;
 
-                    <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span>
-                      <span class="op">==</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from</span>
-                    {
-                      <span class="comment">// completed fill</span>
-                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">SwapStatus::Completed</span>;
-                    } <span class="kw">else</span> {
-                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">SwapStatus::PartiallyFilled</span>;
-                    }
+                  <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span>
+                    <span class="op">==</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from</span>
+                  {
+                    <span class="comment">// completed fill</span>
+                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">SwapStatus::Completed</span>;
+                  } <span class="kw">else</span> {
+                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">SwapStatus::PartiallyFilled</span>;
+                  }
 
-                    <span class="comment">// 11. d) Transfer funds from the requester to the market makers</span>
-                    <span class="kw">let</span> <span class="ident">amount_and_fee</span> <span class="op">=</span> <span class="ident">T::Fees::calculate_swap_fees</span>(
-                      <span class="ident">trade</span>.<span class="ident">token_from</span>,
-                      <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
-                      <span class="ident">trade</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
-                      <span class="ident">trade</span>.<span class="ident">is_market_maker</span>,
-                    );
+                  <span class="comment">// 11. d) Transfer funds from the requester to the market makers</span>
+                  <span class="kw">let</span> <span class="ident">amount_and_fee</span> <span class="op">=</span> <span class="ident">T::Fees::calculate_swap_fees</span>(
+                    <span class="ident">trade</span>.<span class="ident">token_from</span>,
+                    <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
+                    <span class="ident">trade</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
+                    <span class="ident">trade</span>.<span class="ident">is_market_maker</span>,
+                  );
 
-                    <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
-                      <span class="ident">trade</span>.<span class="ident">token_from</span>,
-                      <span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">account_id</span>,
+                  <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
+                    <span class="ident">trade</span>.<span class="ident">token_from</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">account_id</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
+                    <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
+                    <span class="bool-val">false</span>,
+                    <span class="bool-val">false</span>,
+                  )
+                  .<span class="ident">is_err</span>()
+                  {
+                    <span class="comment">// FIXME: Add rollback</span>
+                  }
+
+                  <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
+                    <span class="ident">trade</span>.<span class="ident">token_from</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">account_id</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">T::Fees::account_id</span>(),
+                    <span class="ident">amount_and_fee</span>.<span class="ident">fee</span>,
+                    <span class="bool-val">false</span>,
+                    <span class="bool-val">false</span>,
+                  )
+                  .<span class="ident">is_err</span>()
+                  {
+                    <span class="comment">// FIXME: Add rollback</span>
+                  }
+
+                  <span class="comment">// 11. f) Register a new trading fees associated with the account.</span>
+                  <span class="comment">// A percentage of the network profits will be re-distributed to the account at the end of the era.</span>
+                  <span class="ident">T::Fees::register_swap_fees</span>(
+                    <span class="ident">trade</span>.<span class="ident">account_id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">trade</span>.<span class="ident">token_from</span>,
+                    <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
+                    <span class="ident">trade</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
+                    <span class="ident">trade</span>.<span class="ident">is_market_maker</span>,
+                  )
+                  .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::FeesFailed</span>)<span class="question-mark">?</span>;
+
+                  <span class="comment">// 12. a) Transfer funds from the market makers to the account</span>
+                  <span class="kw">let</span> <span class="ident">amount_and_fee</span> <span class="op">=</span> <span class="ident">T::Fees::calculate_swap_fees</span>(
+                    <span class="ident">trade</span>.<span class="ident">token_to</span>,
+                    <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
+                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
+                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">is_market_maker</span>,
+                  );
+
+                  <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
+                    <span class="ident">trade</span>.<span class="ident">token_to</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">account_id</span>,
+                    <span class="comment">// deduce the fee from the amount</span>
+                    <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
+                    <span class="bool-val">false</span>,
+                    <span class="bool-val">false</span>,
+                  )
+                  .<span class="ident">is_err</span>()
+                  {
+                    <span class="comment">// FIXME: Add rollback</span>
+                  }
+
+                  <span class="comment">// 12. b) Market makers pay fees of the transaction, but this is deducted</span>
+                  <span class="comment">// from the requester final amount, so this is paid by the requester</span>
+                  <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
+                    <span class="ident">trade</span>.<span class="ident">token_to</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">T::Fees::account_id</span>(),
+                    <span class="ident">amount_and_fee</span>.<span class="ident">fee</span>,
+                    <span class="bool-val">false</span>,
+                    <span class="bool-val">false</span>,
+                  )
+                  .<span class="ident">is_err</span>()
+                  {
+                    <span class="comment">// FIXME: Add rollback</span>
+                  }
+
+                  <span class="comment">// 12. c) Register a new trading fees associated with the account.</span>
+                  <span class="comment">// A percentage of the network profits will be re-distributed to the account at the end of the era.</span>
+                  <span class="ident">T::Fees::register_swap_fees</span>(
+                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">trade</span>.<span class="ident">token_to</span>,
+                    <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
+                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
+                    <span class="ident">market_maker_trade_intent</span>.<span class="ident">is_market_maker</span>,
+                  )
+                  .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::FeesFailed</span>)<span class="question-mark">?</span>;
+
+                  <span class="comment">// 13. Emit market maker trade event on chain</span>
+                  <span class="ident"><span class="self">Self</span>::deposit_event</span>(<span class="ident">Event</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SwapProcessed</span> {
+                    <span class="ident">request_id</span>: <span class="ident">mm</span>.<span class="ident">request_id</span>,
+                    <span class="ident">initial_extrinsic_hash</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">extrinsic_hash</span>,
+                    <span class="ident">status</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span>.<span class="ident">clone</span>(),
+                    <span class="ident">account_id</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">currency_from</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">token_from</span>,
+                    <span class="ident">currency_amount_from</span>: <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
+                    <span class="ident">currency_to</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">token_to</span>,
+                    <span class="ident">currency_amount_to</span>: <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
+                  });
+
+                  <span class="comment">// 14. Delete the intent if it&#39;s completed or if it&#39;s a market order</span>
+
+                  <span class="comment">// release order if its within slippage values</span>
+                  <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">==</span> <span class="ident">SwapStatus::Completed</span>
+                    <span class="op">|</span><span class="op">|</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">swap_type</span> <span class="op">==</span> <span class="ident">SwapType::Market</span>
+                  {
+                    <span class="ident"><span class="self">Self</span>::try_delete_account_swap</span>(
                       <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
-                      <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
-                      <span class="bool-val">false</span>,
-                      <span class="bool-val">false</span>,
+                      <span class="ident">mm</span>.<span class="ident">request_id</span>,
                     )
-                    .<span class="ident">is_err</span>()
-                    {
-                      <span class="comment">// FIXME: Add rollback</span>
-                    }
-
-                    <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
-                      <span class="ident">trade</span>.<span class="ident">token_from</span>,
-                      <span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">account_id</span>,
-                      <span class="kw-2">&amp;</span><span class="ident">T::Fees::account_id</span>(),
-                      <span class="ident">amount_and_fee</span>.<span class="ident">fee</span>,
-                      <span class="bool-val">false</span>,
-                      <span class="bool-val">false</span>,
-                    )
-                    .<span class="ident">is_err</span>()
-                    {
-                      <span class="comment">// FIXME: Add rollback</span>
-                    }
-
-                    <span class="comment">// 11. f) Register a new trading fees associated with the account.</span>
-                    <span class="comment">// A percentage of the network profits will be re-distributed to the account at the end of the era.</span>
-                    <span class="ident">T::Fees::register_swap_fees</span>(
-                      <span class="ident">trade</span>.<span class="ident">account_id</span>.<span class="ident">clone</span>(),
-                      <span class="ident">trade</span>.<span class="ident">token_from</span>,
-                      <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
-                      <span class="ident">trade</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
-                      <span class="ident">trade</span>.<span class="ident">is_market_maker</span>,
-                    )
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::FeesFailed</span>)<span class="question-mark">?</span>;
-
-                    <span class="comment">// 12. a) Transfer funds from the market makers to the account</span>
-                    <span class="kw">let</span> <span class="ident">amount_and_fee</span> <span class="op">=</span> <span class="ident">T::Fees::calculate_swap_fees</span>(
-                      <span class="ident">trade</span>.<span class="ident">token_to</span>,
-                      <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
-                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
-                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">is_market_maker</span>,
-                    );
-
-                    <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
-                      <span class="ident">trade</span>.<span class="ident">token_to</span>,
+                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::UnknownError</span>)<span class="question-mark">?</span>;
+                    <span class="ident"><span class="self">Self</span>::swap_release_funds</span>(<span class="ident">market_maker_trade_intent</span>)
+                      .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ReleaseFailed</span>)<span class="question-mark">?</span>;
+                    <span class="kw-2">*</span><span class="ident">mm_trade_request</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+                  } <span class="kw">else</span> {
+                    <span class="ident"><span class="self">Self</span>::try_update_account_swap_status</span>(
                       <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
-                      <span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">account_id</span>,
-                      <span class="comment">// deduce the fee from the amount</span>
-                      <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
-                      <span class="bool-val">false</span>,
-                      <span class="bool-val">false</span>,
+                      <span class="ident">mm</span>.<span class="ident">request_id</span>,
+                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span>.<span class="ident">clone</span>(),
                     )
-                    .<span class="ident">is_err</span>()
-                    {
-                      <span class="comment">// FIXME: Add rollback</span>
-                    }
-
-                    <span class="comment">// 12. b) Market makers pay fees of the transaction, but this is deducted</span>
-                    <span class="comment">// from the requester final amount, so this is paid by the requester</span>
-                    <span class="kw">if</span> <span class="ident">T::CurrencyTidefi::transfer_held</span>(
-                      <span class="ident">trade</span>.<span class="ident">token_to</span>,
-                      <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
-                      <span class="kw-2">&amp;</span><span class="ident">T::Fees::account_id</span>(),
-                      <span class="ident">amount_and_fee</span>.<span class="ident">fee</span>,
-                      <span class="bool-val">false</span>,
-                      <span class="bool-val">false</span>,
-                    )
-                    .<span class="ident">is_err</span>()
-                    {
-                      <span class="comment">// FIXME: Add rollback</span>
-                    }
-
-                    <span class="comment">// 12. c) Register a new trading fees associated with the account.</span>
-                    <span class="comment">// A percentage of the network profits will be re-distributed to the account at the end of the era.</span>
-                    <span class="ident">T::Fees::register_swap_fees</span>(
-                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>.<span class="ident">clone</span>(),
-                      <span class="ident">trade</span>.<span class="ident">token_to</span>,
-                      <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
-                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">swap_type</span>.<span class="ident">clone</span>(),
-                      <span class="ident">market_maker_trade_intent</span>.<span class="ident">is_market_maker</span>,
-                    )
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::FeesFailed</span>)<span class="question-mark">?</span>;
-
-                    <span class="comment">// 13. Emit market maker trade event on chain</span>
-                    <span class="ident"><span class="self">Self</span>::deposit_event</span>(<span class="ident">Event</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SwapProcessed</span> {
-                      <span class="ident">request_id</span>: <span class="ident">mm</span>.<span class="ident">request_id</span>,
-                      <span class="ident">initial_extrinsic_hash</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">extrinsic_hash</span>,
-                      <span class="ident">status</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span>.<span class="ident">clone</span>(),
-                      <span class="ident">account_id</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>.<span class="ident">clone</span>(),
-                      <span class="ident">currency_from</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">token_from</span>,
-                      <span class="ident">currency_amount_from</span>: <span class="ident">mm</span>.<span class="ident">amount_to_send</span>,
-                      <span class="ident">currency_to</span>: <span class="ident">market_maker_trade_intent</span>.<span class="ident">token_to</span>,
-                      <span class="ident">currency_amount_to</span>: <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>,
-                    });
-
-                    <span class="comment">// 14. Delete the intent if it&#39;s completed or if it&#39;s a market order</span>
-
-                    <span class="comment">// release order if its within slippage values</span>
-                    <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span> <span class="op">==</span> <span class="ident">SwapStatus::Completed</span>
-                      <span class="op">|</span><span class="op">|</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">swap_type</span> <span class="op">==</span> <span class="ident">SwapType::Market</span>
-                    {
-                      <span class="ident"><span class="self">Self</span>::try_delete_account_swap</span>(
-                        <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
-                        <span class="ident">mm</span>.<span class="ident">request_id</span>,
-                      )
-                      .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::UnknownError</span>)<span class="question-mark">?</span>;
-                      <span class="ident"><span class="self">Self</span>::swap_release_funds</span>(<span class="ident">market_maker_trade_intent</span>)
-                        .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ReleaseFailed</span>)<span class="question-mark">?</span>;
-                      <span class="kw-2">*</span><span class="ident">mm_trade_request</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-                    } <span class="kw">else</span> {
-                      <span class="ident"><span class="self">Self</span>::try_update_account_swap_status</span>(
-                        <span class="kw-2">&amp;</span><span class="ident">market_maker_trade_intent</span>.<span class="ident">account_id</span>,
-                        <span class="ident">mm</span>.<span class="ident">request_id</span>,
-                        <span class="ident">market_maker_trade_intent</span>.<span class="ident">status</span>.<span class="ident">clone</span>(),
-                      )
-                      .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::UnknownError</span>)<span class="question-mark">?</span>;
-                    }
-
-                    <span class="prelude-val">Ok</span>(())
+                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::UnknownError</span>)<span class="question-mark">?</span>;
                   }
                 }
+
+                <span class="prelude-val">Ok</span>(())
               })<span class="question-mark">?</span>;
             }
 
