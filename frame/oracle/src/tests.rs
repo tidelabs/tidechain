@@ -26,7 +26,10 @@ use frame_support::{
   traits::fungibles::{Inspect, InspectHold, Mutate},
 };
 use sp_core::H256;
-use sp_runtime::{traits::Zero, Permill};
+use sp_runtime::{
+  traits::{BadOrigin, Zero},
+  Permill,
+};
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
@@ -73,6 +76,7 @@ const SLIPPAGE_5_PERCENTS: Permill = Permill::from_percent(5);
 
 type BlockNumber = u64;
 
+#[derive(Clone)]
 struct Context {
   alice: Origin,
   bob: Origin,
@@ -207,6 +211,28 @@ impl Context {
       tifi_amount,
       TEMP_CURRENCY_ID,
       temp_amount,
+      CURRENT_BLOCK_NUMBER,
+      extrinsic_hash,
+      self.market_makers.contains(&requester_account_id),
+      SwapType::Market,
+      slippage,
+    )
+  }
+
+  fn create_temp_to_tifi_market_swap_request(
+    &self,
+    requester_account_id: AccountId,
+    temp_amount: Balance,
+    tifi_amount: Balance,
+    extrinsic_hash: [u8; 32],
+    slippage: Permill,
+  ) -> Hash {
+    add_new_swap_and_assert_results(
+      requester_account_id,
+      TEMP_CURRENCY_ID,
+      temp_amount,
+      CurrencyId::Tifi,
+      tifi_amount,
       CURRENT_BLOCK_NUMBER,
       extrinsic_hash,
       self.market_makers.contains(&requester_account_id),
@@ -1015,7 +1041,7 @@ pub fn test_slippage() {
           amount_to_send: BOB_BUYS_400_TEMPS,
         },],
       ),
-      Error::<Test>::Overflow
+      Error::<Test>::OfferIsLessThanSwapLowerBound { index: 0 }
     );
 
     // partial filling
@@ -1040,46 +1066,455 @@ pub fn test_slippage() {
   });
 }
 
-#[test]
-pub fn confirm_swap_fails_when_market_maker_request_id_is_invalid() {
-  new_test_ext().execute_with(|| {
-    const BOB_INITIAL_20_TIFIS: Balance = 20 * ONE_TIFI;
-    const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+mod confirm_swap {
+  use super::*;
 
-    let context = Context::default()
-      .set_oracle_status(true)
-      .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
-      .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
-      .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
-      .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
-      .create_temp_asset_and_metadata()
-      .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+  const BOB_INITIAL_20_TIFIS: Balance = 20 * ONE_TIFI;
+  const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
+  const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
 
-    const BOB_SELLS_10_TIFIS: Balance = 10 * ONE_TIFI;
-    const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
-    let trade_request_id = context.create_tifi_to_temp_limit_swap_request(
+  const CHARLIE_INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
+  const CHARLIE_SELLS_4000_TEMPS: Balance = 4_000 * ONE_TEMP;
+  const CHARLIE_BUYS_200_TIFIS: Balance = 200 * ONE_TIFI;
+
+  const CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS: Balance = 100 * ONE_TEMP;
+  const CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS: Balance = 5 * ONE_TIFI;
+
+  fn create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+    context: &Context,
+  ) -> Hash {
+    context.create_tifi_to_temp_limit_swap_request(
       BOB_ACCOUNT_ID,
       BOB_SELLS_10_TIFIS,
       BOB_BUYS_200_TEMPS,
       EXTRINSIC_HASH_0,
       SLIPPAGE_2_PERCENTS,
-    );
+    )
+  }
 
-    const CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS: Balance = 100 * ONE_TEMP;
-    const CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS: Balance = 5 * ONE_TIFI;
-    const INVALID_REQUEST_ID: H256 = H256::zero();
-    // partial filling
-    assert_noop!(
-      Oracle::confirm_swap(
-        context.alice.clone(),
-        trade_request_id,
-        vec![SwapConfirmation {
-          request_id: INVALID_REQUEST_ID,
-          amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
-          amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
-        },],
-      ),
-      Error::<Test>::InvalidMarketMakerRequestId { index: 0 }
-    );
-  });
+  fn create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_5_percents_slippage(
+    context: &Context,
+  ) -> Hash {
+    context.create_tifi_to_temp_limit_swap_request(
+      BOB_ACCOUNT_ID,
+      BOB_SELLS_10_TIFIS,
+      BOB_BUYS_200_TEMPS,
+      EXTRINSIC_HASH_0,
+      SLIPPAGE_5_PERCENTS,
+    )
+  }
+
+  fn create_bob_market_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+    context: &Context,
+  ) -> Hash {
+    context.create_tifi_to_temp_market_swap_request(
+      BOB_ACCOUNT_ID,
+      BOB_SELLS_10_TIFIS,
+      BOB_BUYS_200_TEMPS,
+      EXTRINSIC_HASH_0,
+      SLIPPAGE_2_PERCENTS,
+    )
+  }
+
+  fn create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+    context: &Context,
+  ) -> Hash {
+    context.create_temp_to_tifi_limit_swap_request(
+      CHARLIE_ACCOUNT_ID,
+      CHARLIE_SELLS_4000_TEMPS,
+      CHARLIE_BUYS_200_TIFIS,
+      EXTRINSIC_HASH_1,
+      SLIPPAGE_4_PERCENTS,
+    )
+  }
+
+  fn create_charlie_market_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+    context: &Context,
+  ) -> Hash {
+    context.create_temp_to_tifi_market_swap_request(
+      CHARLIE_ACCOUNT_ID,
+      CHARLIE_SELLS_4000_TEMPS,
+      CHARLIE_BUYS_200_TIFIS,
+      EXTRINSIC_HASH_1,
+      SLIPPAGE_4_PERCENTS,
+    )
+  }
+
+  mod fails_when {
+    use super::*;
+
+    #[test]
+    fn oracle_is_paused() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(false)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::OraclePaused
+        );
+      });
+    }
+
+    #[test]
+    fn not_signed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            Origin::none(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    fn not_signed_by_sender() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.bob.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::AccessDenied
+        );
+      });
+    }
+
+    #[test]
+    fn request_id_is_invalid() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        const INVALID_REQUEST_ID: H256 = H256::zero();
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            INVALID_REQUEST_ID,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::InvalidRequestId
+        );
+      });
+    }
+
+    #[test]
+    fn request_status_is_invalid() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        for invalid_status in vec![
+          SwapStatus::Cancelled,
+          SwapStatus::Completed,
+          SwapStatus::Rejected,
+        ] {
+          Swaps::<Test>::mutate(trade_request_id, |request| {
+            if let Some(trade_request) = request {
+              trade_request.status = invalid_status
+            }
+          });
+
+          assert_noop!(
+            Oracle::confirm_swap(
+              context.alice.clone(),
+              trade_request_id,
+              vec![SwapConfirmation {
+                request_id: trade_request_mm_id,
+                amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+                amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+              },],
+            ),
+            Error::<Test>::InvalidRequestStatus
+          );
+        }
+      });
+    }
+
+    #[test]
+    fn market_maker_request_id_is_invalid() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        const INVALID_REQUEST_ID: H256 = H256::zero();
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: INVALID_REQUEST_ID,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+            },],
+          ),
+          Error::<Test>::InvalidMarketMakerRequestId { index: 0 }
+        );
+      });
+    }
+
+    #[test]
+    fn offer_is_less_than_swap_lower_bound() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_market_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: BOB_SELLS_10_TIFIS
+                .saturating_sub(SLIPPAGE_2_PERCENTS * BOB_SELLS_10_TIFIS)
+                .saturating_sub(ONE_TIFI),
+              amount_to_send: BOB_BUYS_200_TEMPS,
+            }],
+          ),
+          Error::<Test>::OfferIsLessThanSwapLowerBound { index: 0 }
+        );
+      });
+    }
+
+    #[test]
+    fn offer_is_greater_than_swap_upper_bound() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: BOB_SELLS_10_TIFIS * 2,
+              amount_to_send: BOB_BUYS_200_TEMPS,
+            }],
+          ),
+          Error::<Test>::OfferIsGreaterThanSwapUpperBound { index: 0 }
+        );
+      });
+    }
+
+    #[test]
+    fn offer_is_less_than_market_maker_swap_lower_bound() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_5_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_market_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: BOB_SELLS_10_TIFIS,
+              amount_to_send: BOB_BUYS_200_TEMPS
+                .saturating_sub(SLIPPAGE_4_PERCENTS * BOB_BUYS_200_TEMPS)
+                .saturating_sub(ONE_TEMP),
+            }],
+          ),
+          Error::<Test>::OfferIsLessThanMarketMakerSwapLowerBound { index: 0 }
+        );
+      });
+    }
+
+    #[test]
+    fn offer_is_greater_than_market_maker_swap_upper_bound() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: BOB_SELLS_10_TIFIS,
+              amount_to_send: BOB_BUYS_200_TEMPS
+                .saturating_add(SLIPPAGE_4_PERCENTS * BOB_BUYS_200_TEMPS)
+                .saturating_add(ONE_TEMP),
+            },],
+          ),
+          Error::<Test>::OfferIsGreaterThanMarketMakerSwapUpperBound { index: 0 }
+        );
+      });
+    }
+  }
 }
