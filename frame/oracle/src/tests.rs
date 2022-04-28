@@ -1591,5 +1591,41 @@ mod confirm_swap {
         );
       });
     }
+
+    #[test]
+    fn market_maker_swaps_buy_amount_is_greater_than_swap_sell_amount() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .mint_tifi(ALICE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(CHARLIE_ACCOUNT_ID, ONE_TIFI)
+          .mint_tifi(BOB_ACCOUNT_ID, BOB_INITIAL_20_TIFIS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tifis_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tifis_with_4_percents_slippage(
+            &context,
+          );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: BOB_SELLS_10_TIFIS.saturating_add(1),
+              amount_to_send: BOB_BUYS_200_TEMPS,
+            },],
+          ),
+          Error::<Test>::Overflow
+        );
+      });
+    }
   }
 }
