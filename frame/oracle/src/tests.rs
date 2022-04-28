@@ -1310,24 +1310,26 @@ mod confirm_swap {
           SwapStatus::Completed,
           SwapStatus::Rejected,
         ] {
-          Swaps::<Test>::mutate(trade_request_id, |request| {
-            if let Some(trade_request) = request {
-              trade_request.status = invalid_status
-            }
-          });
+          for request_id in vec![trade_request_id, trade_request_mm_id] {
+            Swaps::<Test>::mutate(request_id, |request| {
+              if let Some(trade_request) = request {
+                trade_request.status = invalid_status.clone()
+              }
+            });
 
-          assert_noop!(
-            Oracle::confirm_swap(
-              context.alice.clone(),
-              trade_request_id,
-              vec![SwapConfirmation {
-                request_id: trade_request_mm_id,
-                amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
-                amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
-              },],
-            ),
-            Error::<Test>::InvalidRequestStatus
-          );
+            assert_noop!(
+              Oracle::confirm_swap(
+                context.alice.clone(),
+                trade_request_id,
+                vec![SwapConfirmation {
+                  request_id: trade_request_mm_id,
+                  amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TIFIS,
+                  amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+                },],
+              ),
+              Error::<Test>::InvalidRequestStatus
+            );
+          }
         }
       });
     }
