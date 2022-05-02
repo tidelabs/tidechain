@@ -90,7 +90,7 @@ You can see your node on [telemetry] (set a custom name with `--name "my custom 
 ### Connect to the Lagoon Testnet
 
 Lagoon is the latest test network for Tidechain.
-The tokens on this network are called TIFI and they purposefully hold no economic value.
+The tokens on this network are called TDFY and they purposefully hold no economic value.
 The `sudo` pallet is enabled on this network allowing the core-team to debug the chain.
 
 Connect to the global Lagoon testnet by running:
@@ -105,7 +105,7 @@ You can see your node on [telemetry] (set a custom name with `--name "my custom 
 
 ### Obtaining TIFIs
 
-For Lagoon's TIFI tokens, see the faucet [instructions](#) on the Wiki.
+For Lagoon's TDFY tokens, see the faucet [instructions](#) on the Wiki.
 
 ## Hacking on Tidechain
 

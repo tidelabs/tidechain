@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;usr&#x2F;local&#x2F;cargo&#x2F;git&#x2F;checkouts&#x2F;substrate-773f176d546a32fa&#x2F;02b7dc6&#x2F;client&#x2F;executor&#x2F;wasmi&#x2F;src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;usr&#x2F;local&#x2F;cargo&#x2F;git&#x2F;checkouts&#x2F;substrate-773f176d546a32fa&#x2F;75ae73b&#x2F;client&#x2F;executor&#x2F;wasmi&#x2F;src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a class="sidebar-logo" href="../../sc_executor_wasmi/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.png" alt="logo"></div>
         </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../sc_executor_wasmi/index.html"><img class="rust-logo" src="../../rust-logo.png" alt="logo"></a><nav class="sub"><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
@@ -806,6 +806,8 @@
 <span id="804">804</span>
 <span id="805">805</span>
 <span id="806">806</span>
+<span id="807">807</span>
+<span id="808">808</span>
 </pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
 
 <span class="comment">// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.</span>
@@ -826,8 +828,17 @@
 
 <span class="doccomment">//! This crate provides an implementation of `WasmModule` that is baked by wasmi.</span>
 
-<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">cell::RefCell</span>, <span class="ident">rc::Rc</span>, <span class="ident">str</span>, <span class="ident">sync::Arc</span>};
+
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">trace</span>};
+<span class="kw">use</span> <span class="ident">wasmi</span>::{
+	<span class="ident">memory_units::Pages</span>,
+	<span class="ident">FuncInstance</span>, <span class="ident">ImportsBuilder</span>, <span class="ident">MemoryInstance</span>, <span class="ident">MemoryRef</span>, <span class="ident">Module</span>, <span class="ident">ModuleInstance</span>, <span class="ident">ModuleRef</span>,
+	<span class="ident">RuntimeValue</span>::{<span class="self">self</span>, <span class="ident">I32</span>, <span class="ident">I64</span>},
+	<span class="ident">TableRef</span>,
+};
+
+<span class="kw">use</span> <span class="ident">codec</span>::{<span class="ident">Decode</span>, <span class="ident">Encode</span>};
 <span class="kw">use</span> <span class="ident">sc_executor_common</span>::{
 	<span class="ident">error</span>::{<span class="ident">Error</span>, <span class="ident">MessageWithBacktrace</span>, <span class="ident">WasmError</span>},
 	<span class="ident">runtime_blob</span>::{<span class="ident">DataSegmentsSnapshot</span>, <span class="ident">RuntimeBlob</span>},
@@ -835,17 +846,10 @@
 	<span class="ident">util::MemoryTransfer</span>,
 	<span class="ident">wasm_runtime</span>::{<span class="ident">InvokeMethod</span>, <span class="ident">WasmInstance</span>, <span class="ident">WasmModule</span>},
 };
-<span class="kw">use</span> <span class="ident">sp_core::sandbox</span> <span class="kw">as</span> <span class="ident">sandbox_primitives</span>;
 <span class="kw">use</span> <span class="ident">sp_runtime_interface::unpack_ptr_and_len</span>;
+<span class="kw">use</span> <span class="ident">sp_sandbox::env</span> <span class="kw">as</span> <span class="ident">sandbox_env</span>;
 <span class="kw">use</span> <span class="ident">sp_wasm_interface</span>::{
 	<span class="ident">Function</span>, <span class="ident">FunctionContext</span>, <span class="ident">MemoryId</span>, <span class="ident">Pointer</span>, <span class="prelude-ty">Result</span> <span class="kw">as</span> <span class="ident">WResult</span>, <span class="ident">Sandbox</span>, <span class="ident">WordSize</span>,
-};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">cell::RefCell</span>, <span class="ident">rc::Rc</span>, <span class="ident">str</span>, <span class="ident">sync::Arc</span>};
-<span class="kw">use</span> <span class="ident">wasmi</span>::{
-	<span class="ident">memory_units::Pages</span>,
-	<span class="ident">FuncInstance</span>, <span class="ident">ImportsBuilder</span>, <span class="ident">MemoryInstance</span>, <span class="ident">MemoryRef</span>, <span class="ident">Module</span>, <span class="ident">ModuleInstance</span>, <span class="ident">ModuleRef</span>,
-	<span class="ident">RuntimeValue</span>::{<span class="self">self</span>, <span class="ident">I32</span>, <span class="ident">I64</span>},
-	<span class="ident">TableRef</span>,
 };
 
 <span class="kw">struct</span> <span class="ident">FunctionExecutor</span> {
@@ -909,7 +913,7 @@
 
 		<span class="kw">match</span> <span class="ident">result</span> {
 			<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">RuntimeValue::I64</span>(<span class="ident">val</span>))) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">val</span>),
-			<span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;Supervisor function returned unexpected result!&quot;</span>.<span class="ident">into</span>()),
+			<span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;Supervisor function returned unexpected result!&quot;</span>.<span class="ident">into</span>()),
 			<span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::Sandbox</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
 		}
 	}
@@ -963,15 +967,15 @@
 		<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">buf_len</span> <span class="kw">as</span> <span class="ident">usize</span>;
 
 		<span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sandboxed_memory</span>.<span class="ident">read</span>(<span class="ident">Pointer::new</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u32</span>), <span class="ident">len</span>) {
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OUT_OF_BOUNDS</span>),
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>),
 			<span class="prelude-val">Ok</span>(<span class="ident">buffer</span>) =&gt; <span class="ident">buffer</span>,
 		};
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">set</span>(<span class="ident">buf_ptr</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="ident">buffer</span>) {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OUT_OF_BOUNDS</span>)
+		<span class="kw">if</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">set</span>(<span class="ident">buf_ptr</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="ident">buffer</span>).<span class="ident">is_err</span>() {
+			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>)
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OK</span>)
+		<span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>)
 	}
 
 	<span class="kw">fn</span> <span class="ident">memory_set</span>(
@@ -987,15 +991,15 @@
 		<span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">val_len</span> <span class="kw">as</span> <span class="ident">usize</span>;
 
 		<span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">memory</span>.<span class="ident">get</span>(<span class="ident">val_ptr</span>.<span class="ident">into</span>(), <span class="ident">len</span>) {
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OUT_OF_BOUNDS</span>),
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>),
 			<span class="prelude-val">Ok</span>(<span class="ident">buffer</span>) =&gt; <span class="ident">buffer</span>,
 		};
 
-		<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="ident">sandboxed_memory</span>.<span class="ident">write_from</span>(<span class="ident">Pointer::new</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u32</span>), <span class="kw-2">&amp;</span><span class="ident">buffer</span>) {
-			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OUT_OF_BOUNDS</span>)
+		<span class="kw">if</span> <span class="ident">sandboxed_memory</span>.<span class="ident">write_from</span>(<span class="ident">Pointer::new</span>(<span class="ident">offset</span> <span class="kw">as</span> <span class="ident">u32</span>), <span class="kw-2">&amp;</span><span class="ident">buffer</span>).<span class="ident">is_err</span>() {
+			<span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OUT_OF_BOUNDS</span>)
 		}
 
-		<span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OK</span>)
+		<span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>)
 	}
 
 	<span class="kw">fn</span> <span class="ident">memory_teardown</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">memory_id</span>: <span class="ident">MemoryId</span>) -&gt; <span class="ident">WResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
@@ -1044,18 +1048,18 @@
 			<span class="ident">state</span>,
 			<span class="kw-2">&amp;mut</span> <span class="ident">SandboxContext</span> { <span class="ident">dispatch_thunk</span>, <span class="ident">executor</span>: <span class="self">self</span> },
 		) {
-			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OK</span>),
+			<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>),
 			<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">val</span>)) =&gt; {
 				<span class="comment">// Serialize return value and write it back into the memory.</span>
-				<span class="ident">sp_wasm_interface::ReturnValue::Value</span>(<span class="ident">val</span>.<span class="ident">into</span>()).<span class="ident">using_encoded</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> {
+				<span class="ident">sp_wasm_interface::ReturnValue::Value</span>(<span class="ident">val</span>).<span class="ident">using_encoded</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> {
 					<span class="kw">if</span> <span class="ident">val</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">return_val_len</span> <span class="kw">as</span> <span class="ident">usize</span> {
-						<span class="prelude-val">Err</span>(<span class="string">&quot;Return value buffer is too small&quot;</span>)<span class="question-mark">?</span>;
+						<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;Return value buffer is too small&quot;</span>.<span class="ident">into</span>())
 					}
 					<span class="self">self</span>.<span class="ident">write_memory</span>(<span class="ident">return_val</span>, <span class="ident">val</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;Return value buffer is OOB&quot;</span>)<span class="question-mark">?</span>;
-					<span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_OK</span>)
+					<span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_OK</span>)
 				})
 			},
-			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_EXECUTION</span>),
+			<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_EXECUTION</span>),
 		}
 	}
 
@@ -1078,17 +1082,17 @@
 			<span class="kw">let</span> <span class="ident">table</span> <span class="op">=</span> <span class="self">self</span>
 				.<span class="ident">table</span>
 				.<span class="ident">as_ref</span>()
-				.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;Runtime doesn&#39;t have a table; sandbox is unavailable&quot;</span>)<span class="question-mark">?</span>;
+				.<span class="ident">ok_or</span>(<span class="string">&quot;Runtime doesn&#39;t have a table; sandbox is unavailable&quot;</span>)<span class="question-mark">?</span>;
 			<span class="ident">table</span>
 				.<span class="ident">get</span>(<span class="ident">dispatch_thunk_id</span>)
 				.<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;dispatch_thunk_idx is out of the table bounds&quot;</span>)<span class="question-mark">?</span>
-				.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;dispatch_thunk_idx points on an empty table entry&quot;</span>)<span class="question-mark">?</span>
+				.<span class="ident">ok_or</span>(<span class="string">&quot;dispatch_thunk_idx points on an empty table entry&quot;</span>)<span class="question-mark">?</span>
 		};
 
 		<span class="kw">let</span> <span class="ident">guest_env</span> <span class="op">=</span>
 			<span class="kw">match</span> <span class="ident">sandbox::GuestEnvironment::decode</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">sandbox_store</span>.<span class="ident">borrow</span>(), <span class="ident">raw_env_def</span>) {
 				<span class="prelude-val">Ok</span>(<span class="ident">guest_env</span>) =&gt; <span class="ident">guest_env</span>,
-				<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_primitives::ERR_MODULE</span> <span class="kw">as</span> <span class="ident">u32</span>),
+				<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">sandbox_env::ERR_MODULE</span> <span class="kw">as</span> <span class="ident">u32</span>),
 			};
 
 		<span class="kw">let</span> <span class="ident">store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sandbox_store</span>.<span class="ident">clone</span>();
@@ -1102,8 +1106,8 @@
 		<span class="kw">let</span> <span class="ident">instance_idx_or_err_code</span> <span class="op">=</span>
 			<span class="kw">match</span> <span class="ident">result</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="ident">store</span>.<span class="ident">borrow_mut</span>(), <span class="ident">dispatch_thunk</span>)) {
 				<span class="prelude-val">Ok</span>(<span class="ident">instance_idx</span>) =&gt; <span class="ident">instance_idx</span>,
-				<span class="prelude-val">Err</span>(<span class="ident">sandbox::InstantiationError::StartTrapped</span>) =&gt; <span class="ident">sandbox_primitives::ERR_EXECUTION</span>,
-				<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="ident">sandbox_primitives::ERR_MODULE</span>,
+				<span class="prelude-val">Err</span>(<span class="ident">sandbox::InstantiationError::StartTrapped</span>) =&gt; <span class="ident">sandbox_env::ERR_EXECUTION</span>,
+				<span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="ident">sandbox_env::ERR_MODULE</span>,
 			};
 
 		<span class="prelude-val">Ok</span>(<span class="ident">instance_idx_or_err_code</span>)
@@ -1264,9 +1268,9 @@
 <span class="kw">fn</span> <span class="ident">get_mem_instance</span>(<span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">ModuleRef</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MemoryRef</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
 	<span class="prelude-val">Ok</span>(<span class="ident">module</span>
 		.<span class="ident">export_by_name</span>(<span class="string">&quot;memory&quot;</span>)
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::InvalidMemoryReference</span>)<span class="question-mark">?</span>
+		.<span class="ident">ok_or</span>(<span class="ident">Error::InvalidMemoryReference</span>)<span class="question-mark">?</span>
 		.<span class="ident">as_memory</span>()
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::InvalidMemoryReference</span>)<span class="question-mark">?</span>
+		.<span class="ident">ok_or</span>(<span class="ident">Error::InvalidMemoryReference</span>)<span class="question-mark">?</span>
 		.<span class="ident">clone</span>())
 }
 
@@ -1275,9 +1279,9 @@
 <span class="kw">fn</span> <span class="ident">get_heap_base</span>(<span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">ModuleRef</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
 	<span class="kw">let</span> <span class="ident">heap_base_val</span> <span class="op">=</span> <span class="ident">module</span>
 		.<span class="ident">export_by_name</span>(<span class="string">&quot;__heap_base&quot;</span>)
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::HeapBaseNotFoundOrInvalid</span>)<span class="question-mark">?</span>
+		.<span class="ident">ok_or</span>(<span class="ident">Error::HeapBaseNotFoundOrInvalid</span>)<span class="question-mark">?</span>
 		.<span class="ident">as_global</span>()
-		.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::HeapBaseNotFoundOrInvalid</span>)<span class="question-mark">?</span>
+		.<span class="ident">ok_or</span>(<span class="ident">Error::HeapBaseNotFoundOrInvalid</span>)<span class="question-mark">?</span>
 		.<span class="ident">get</span>();
 
 	<span class="kw">match</span> <span class="ident">heap_base_val</span> {
@@ -1370,7 +1374,7 @@
 	<span class="kw">match</span> <span class="ident">result</span> {
 		<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">I64</span>(<span class="ident">r</span>))) =&gt; {
 			<span class="kw">let</span> (<span class="ident">ptr</span>, <span class="ident">length</span>) <span class="op">=</span> <span class="ident">unpack_ptr_and_len</span>(<span class="ident">r</span> <span class="kw">as</span> <span class="ident">u64</span>);
-			<span class="ident">memory</span>.<span class="ident">get</span>(<span class="ident">ptr</span>.<span class="ident">into</span>(), <span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Runtime</span>)
+			<span class="ident">memory</span>.<span class="ident">get</span>(<span class="ident">ptr</span>, <span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::Runtime</span>)
 		},
 		<span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
 			<span class="macro">trace!</span>(
@@ -1378,7 +1382,7 @@
 				<span class="string">&quot;Failed to execute code with {} pages&quot;</span>,
 				<span class="ident">memory</span>.<span class="ident">current_size</span>().<span class="number">0</span>,
 			);
-			<span class="prelude-val">Err</span>(<span class="ident">e</span>.<span class="ident">into</span>())
+			<span class="prelude-val">Err</span>(<span class="ident">e</span>)
 		},
 		<span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidReturn</span>),
 	}

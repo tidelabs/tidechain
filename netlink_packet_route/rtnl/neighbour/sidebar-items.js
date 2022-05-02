@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["NEIGHBOUR_HEADER_LEN",""]],"mod":[["nlas",""]],"struct":[["NeighbourHeader","Neighbour headers have the following structure:"],["NeighbourMessage",""],["NeighbourMessageBuffer",""]]});

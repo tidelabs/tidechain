@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["write","Write float to an `io::Write`."]],"trait":[["Floating","An floating point number that can be formatted by `dtoa::write`."]]});
+initSidebarItems({"struct":[["Buffer","A correctly sized stack allocation for the formatted float to be written into."]],"trait":[["Float","A floating point number that can be written into a [`dtoa::Buffer`][Buffer]."]]});

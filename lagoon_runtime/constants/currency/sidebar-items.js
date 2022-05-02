@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["CENTS",""],["DOLLARS",""],["MILLICENTS",""],["TIFI",""],["UNITS",""]],"fn":[["deposit",""]],"struct":[["Adapter",""]]});
+initSidebarItems({"constant":[["CENTS",""],["DOLLARS",""],["MILLICENTS",""],["TDFY",""],["UNITS",""]],"fn":[["deposit",""]],"struct":[["Adapter",""]]});
