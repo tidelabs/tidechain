@@ -16,7 +16,7 @@
 
 use crate::cli::{Cli, Subcommand};
 #[cfg(feature = "runtime-benchmarks")]
-use frame_benchmarking_cli::BenchmarkCmd;
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::future::TryFutureExt;
 use log::info;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
@@ -418,9 +418,11 @@ pub fn run() -> Result<(), Error> {
           Err(tidechain_service::Error::NoRuntime.into())
         }
 
-        BenchmarkCmd::Machine(cmd) => {
-          runner.sync_run(|config| cmd.run(&config).map_err(Error::SubstrateCli))
-        }
+        BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
+          cmd
+            .run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())
+            .map_err(Error::SubstrateCli)
+        }),
         // NOTE: this allows the Tidechain client to leniently implement
         // new benchmark commands.
         #[allow(unreachable_patterns)]
