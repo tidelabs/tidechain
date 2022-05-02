@@ -327,6 +327,7 @@ pub mod pallet {
                 trade.token_from,
                 &mm_trade_request.account_id,
                 mm.amount_to_receive,
+                false,
               )
               .into_result()
               .map_err(|_| Error::<T>::MarketMakerCantDeposit)?;
@@ -352,7 +353,7 @@ pub mod pallet {
             }
 
             // 10. Make sure the requester can deposit the new asset before initializing trade process
-            T::CurrencyTidefi::can_deposit(trade.token_to, &trade.account_id, total_to)
+            T::CurrencyTidefi::can_deposit(trade.token_to, &trade.account_id, total_to, false)
               .into_result()
               .map_err(|_| Error::<T>::BurnFailed)?;
 
@@ -674,8 +675,8 @@ pub mod pallet {
         all_prices.push((currency_id, CurrencyId::Wrapped(USDT), price))
       }
 
-      for (asset_id, price) in im_alive.tifi_value {
-        all_prices.push((CurrencyId::Wrapped(asset_id), CurrencyId::Tifi, price))
+      for (asset_id, price) in im_alive.tdfy_value {
+        all_prices.push((CurrencyId::Wrapped(asset_id), CurrencyId::Tdfy, price))
       }
 
       if !all_prices.is_empty() {

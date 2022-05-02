@@ -1,7 +1,7 @@
 # Lagoon Testnet
 
 Lagoon is the latest test network for Tidechain.
-The tokens on this network are called TIFI and they purposefully hold no economic value.
+The tokens on this network are called TDFY and they purposefully hold no economic value.
 The `sudo` pallet is enabled on this network allowing the core-team to debug the chain.
 
 Connect to the global Lagoon testnet by running:

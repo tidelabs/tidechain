@@ -177,11 +177,11 @@ parameter_types! {
   // signed config
   pub const SignedMaxSubmissions: u32 = 16;
   pub const SignedMaxRefunds: u32 = 16 / 4;
-  // 40 TIFI fixed deposit..
+  // 40 TDFY fixed deposit..
   pub const SignedDepositBase: Balance = deposit(2, 0);
-  // 0.01 TIFI per KB of solution data.
+  // 0.01 TDFY per KB of solution data.
   pub const SignedDepositByte: Balance = deposit(0, 10) / 1024;
-  // Each good submission will get 1 TIFI as reward
+  // Each good submission will get 1 TDFY as reward
   pub SignedRewardBase: Balance = UNITS;
   pub BetterUnsignedThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
 

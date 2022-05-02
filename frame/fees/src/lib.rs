@@ -174,13 +174,13 @@ pub mod pallet {
   #[pallet::getter(fn stored_sessions)]
   pub type StoredSessions<T: Config> = StorageMap<_, Blake2_128Concat, SessionIndex, ()>;
 
-  /// Tifi price of the orderbook reported by oracle every X minutes at the current market price.
+  /// Tdfy price of the orderbook reported by oracle every X minutes at the current market price.
   /// We keep in sync order book of USDT values for our sunrise pool.
   ///
   /// CurrencyId → USDT
-  /// USDT → TIFI
+  /// USDT → TDFY
   ///
-  /// To get current TIFI USDT value;
+  /// To get current TDFY USDT value;
   ///
   #[pallet::storage]
   #[pallet::getter(fn order_book_price)]
@@ -269,9 +269,9 @@ pub mod pallet {
 
       // Create Fee account
       let account_id = <Pallet<T>>::account_id();
-      let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tifi);
-      if T::CurrencyTidefi::reducible_balance(CurrencyId::Tifi, &account_id, false) < min {
-        if let Err(err) = T::CurrencyTidefi::mint_into(CurrencyId::Tifi, &account_id, min) {
+      let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tdfy);
+      if T::CurrencyTidefi::reducible_balance(CurrencyId::Tdfy, &account_id, false) < min {
+        if let Err(err) = T::CurrencyTidefi::mint_into(CurrencyId::Tdfy, &account_id, min) {
           log!(
             error,
             "Unable to mint fee pallet minimum balance: {:?}",
@@ -495,7 +495,7 @@ pub mod pallet {
           }
 
           // transfer funds
-          T::CurrencyTidefi::transfer(CurrencyId::Tifi, &Self::account_id(), who, *reward, true)?;
+          T::CurrencyTidefi::transfer(CurrencyId::Tdfy, &Self::account_id(), who, *reward, true)?;
 
           // emit event
           Self::deposit_event(Event::<T>::SunriseClaimed {
@@ -591,7 +591,7 @@ pub mod pallet {
       )
     }
 
-    // Based on the price provided by Oracle, try to convert the asset balance to TIFI balance
+    // Based on the price provided by Oracle, try to convert the asset balance to TDFY balance
     pub(crate) fn try_get_tide_value(
       currency_id: CurrencyId,
       amount: FixedU128,
@@ -600,7 +600,7 @@ pub mod pallet {
         .try_into()
         .map_err(|_| Error::<T>::InvalidAsset)?;
 
-      let order_book_price = Self::order_book_price(currency_id, CurrencyId::Tifi);
+      let order_book_price = Self::order_book_price(currency_id, CurrencyId::Tdfy);
 
       if order_book_price.is_zero() {
         return Ok(0);
@@ -612,7 +612,7 @@ pub mod pallet {
 
       Ok(
         currency_wanted
-          .saturating_mul(FixedU128::from(10_u128.pow(Asset::Tifi.exponent() as u32)))
+          .saturating_mul(FixedU128::from(10_u128.pow(Asset::Tdfy.exponent() as u32)))
           .into_inner()
           .saturating_div(FixedU128::DIV),
       )
@@ -675,7 +675,7 @@ pub mod pallet {
       });
     }
 
-    // Calculate the Sunrise rewards (TIFI balance) from the currency and the fee
+    // Calculate the Sunrise rewards (TDFY balance) from the currency and the fee
     pub(crate) fn calculate_tide_reward_for_pool(
       rebates: FixedU128,
       fee: &Fee,
