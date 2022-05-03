@@ -968,6 +968,18 @@
 <span id="966">966</span>
 <span id="967">967</span>
 <span id="968">968</span>
+<span id="969">969</span>
+<span id="970">970</span>
+<span id="971">971</span>
+<span id="972">972</span>
+<span id="973">973</span>
+<span id="974">974</span>
+<span id="975">975</span>
+<span id="976">976</span>
+<span id="977">977</span>
+<span id="978">978</span>
+<span id="979">979</span>
+<span id="980">980</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -1190,10 +1202,16 @@
     <span class="ident">UnknownAsset</span>,
     <span class="doccomment">/// No Funds available for this Asset Id.</span>
     <span class="ident">NoFunds</span>,
+    <span class="doccomment">/// Request contains offer that is less than swap lower bound</span>
+    <span class="ident">OfferIsLessThanSwapLowerBound</span> { <span class="ident">index</span>: <span class="ident">u8</span> },
+    <span class="doccomment">/// Request contains offer that is greater than swap upper bound</span>
+    <span class="ident">OfferIsGreaterThanSwapUpperBound</span> { <span class="ident">index</span>: <span class="ident">u8</span> },
     <span class="doccomment">/// Swap overflow</span>
     <span class="ident">Overflow</span>,
-    <span class="doccomment">/// Market maker overflow</span>
-    <span class="ident">MarketMakerOverflow</span>,
+    <span class="doccomment">/// Request contains offer that is less than market maker swap lower bound</span>
+    <span class="ident">OfferIsLessThanMarketMakerSwapLowerBound</span> { <span class="ident">index</span>: <span class="ident">u8</span> },
+    <span class="doccomment">/// Request contains offer that is greater than market maker swap upper bound</span>
+    <span class="ident">OfferIsGreaterThanMarketMakerSwapUpperBound</span> { <span class="ident">index</span>: <span class="ident">u8</span> },
     <span class="doccomment">/// Market Makers do not have enough funds</span>
     <span class="ident">MarketMakerNoFunds</span>,
     <span class="doccomment">/// Market Makers cannot deposit source funds of the trade</span>
@@ -1255,11 +1273,17 @@
               <span class="comment">// limit order can match with smaller price</span>
               <span class="kw">if</span> <span class="ident">trade</span>.<span class="ident">swap_type</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapType::Limit</span> {
                 <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">-</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
-                <span class="macro">ensure!</span>(<span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>, <span class="ident">Error::Overflow</span>);
+                <span class="macro">ensure!</span>(
+                  <span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
+                  <span class="ident">Error::OfferIsLessThanSwapLowerBound</span> { <span class="ident">index</span>: <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u8</span> }
+                );
               }
 
               <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">+</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
-              <span class="macro">ensure!</span>(<span class="ident">maximum_per_token</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>, <span class="ident">Error::Overflow</span>);
+              <span class="macro">ensure!</span>(
+                <span class="ident">maximum_per_token</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
+                <span class="ident">Error::OfferIsGreaterThanSwapUpperBound</span> { <span class="ident">index</span>: <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u8</span> }
+              );
 
               <span class="comment">// validate mm slippage tolerance</span>
               <span class="kw">let</span> <span class="ident">pay_per_token</span> <span class="op">=</span>
@@ -1272,14 +1296,14 @@
                 <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">-</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
                 <span class="macro">ensure!</span>(
                   <span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
-                  <span class="ident">Error::MarketMakerOverflow</span>
+                  <span class="ident">Error::OfferIsLessThanMarketMakerSwapLowerBound</span> { <span class="ident">index</span>: <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u8</span> }
                 );
               }
 
               <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span> <span class="op">+</span> (<span class="ident">allowed_slippage</span> <span class="op">*</span> <span class="ident">pay_per_token</span>);
               <span class="macro">ensure!</span>(
                 <span class="ident">maximum_per_token</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
-                <span class="ident">Error::MarketMakerOverflow</span>
+                <span class="ident">Error::OfferIsGreaterThanMarketMakerSwapUpperBound</span> { <span class="ident">index</span>: <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u8</span> }
               );
 
               <span class="comment">// make sure all the market markers have enough funds before we can continue</span>
