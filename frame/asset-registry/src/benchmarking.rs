@@ -37,7 +37,7 @@ fn pre_set_auth<T: Config>() -> T::AccountId {
 benchmarks! {
    set_status {
     let user = pre_set_auth::<T>();
-   }: _(RawOrigin::Signed(user), CurrencyId::Tifi, true)
+   }: _(RawOrigin::Signed(user), CurrencyId::Tdfy, true)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

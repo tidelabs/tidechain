@@ -32,9 +32,9 @@ pub mod currency {
   };
   use sp_std::marker::PhantomData;
 
-  pub const TIFI: Balance = 1_000_000_000_000;
-  pub const UNITS: Balance = TIFI;
-  pub const DOLLARS: Balance = TIFI * 10; // 10 TIFI / DOLLAR
+  pub const TDFY: Balance = 1_000_000_000_000;
+  pub const UNITS: Balance = TDFY;
+  pub const DOLLARS: Balance = TDFY * 10; // 10 TDFY / DOLLAR
   pub const CENTS: Balance = DOLLARS / 100; // 100_000_000
   pub const MILLICENTS: Balance = CENTS / 1_000; // 1_000_000
 
@@ -52,28 +52,28 @@ pub mod currency {
 
     fn total_issuance(asset: Self::AssetId) -> Self::Balance {
       match asset {
-        CurrencyId::Tifi => Balances::total_issuance(),
+        CurrencyId::Tdfy => Balances::total_issuance(),
         CurrencyId::Wrapped(asset_id) => Assets::total_issuance(asset_id),
       }
     }
 
     fn balance(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
       match asset {
-        CurrencyId::Tifi => Balances::balance(who),
+        CurrencyId::Tdfy => Balances::balance(who),
         CurrencyId::Wrapped(asset_id) => Assets::balance(asset_id, who),
       }
     }
 
     fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
       match asset {
-        CurrencyId::Tifi => Balances::minimum_balance(),
+        CurrencyId::Tdfy => Balances::minimum_balance(),
         CurrencyId::Wrapped(asset_id) => Assets::minimum_balance(asset_id),
       }
     }
 
     fn reducible_balance(asset: Self::AssetId, who: &AccountId, keep_alive: bool) -> Self::Balance {
       match asset {
-        CurrencyId::Tifi => Balances::reducible_balance(who, keep_alive),
+        CurrencyId::Tdfy => Balances::reducible_balance(who, keep_alive),
         CurrencyId::Wrapped(asset_id) => Assets::reducible_balance(asset_id, who, keep_alive),
       }
     }
@@ -82,10 +82,11 @@ pub mod currency {
       asset: Self::AssetId,
       who: &AccountId,
       amount: Self::Balance,
+      mint: bool,
     ) -> DepositConsequence {
       match asset {
-        CurrencyId::Tifi => Balances::can_deposit(who, amount),
-        CurrencyId::Wrapped(asset_id) => Assets::can_deposit(asset_id, who, amount),
+        CurrencyId::Tdfy => Balances::can_deposit(who, amount, mint),
+        CurrencyId::Wrapped(asset_id) => Assets::can_deposit(asset_id, who, amount, mint),
       }
     }
 
@@ -95,7 +96,7 @@ pub mod currency {
       amount: Self::Balance,
     ) -> WithdrawConsequence<Self::Balance> {
       match asset {
-        CurrencyId::Tifi => Balances::can_withdraw(who, amount),
+        CurrencyId::Tdfy => Balances::can_withdraw(who, amount),
         CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
       }
     }
@@ -104,13 +105,13 @@ pub mod currency {
   impl InspectHold<AccountId> for Adapter<AccountId> {
     fn balance_on_hold(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
       match asset {
-        CurrencyId::Tifi => Balances::balance_on_hold(who),
+        CurrencyId::Tdfy => Balances::balance_on_hold(who),
         CurrencyId::Wrapped(asset_id) => Assets::balance_on_hold(asset_id, who),
       }
     }
     fn can_hold(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> bool {
       match asset {
-        CurrencyId::Tifi => Balances::can_hold(who, amount),
+        CurrencyId::Tdfy => Balances::can_hold(who, amount),
         CurrencyId::Wrapped(asset_id) => Assets::can_hold(asset_id, who, amount),
       }
     }
@@ -119,7 +120,7 @@ pub mod currency {
   impl MutateHold<AccountId> for Adapter<AccountId> {
     fn hold(asset: CurrencyId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
       match asset {
-        CurrencyId::Tifi => Balances::hold(who, amount),
+        CurrencyId::Tdfy => Balances::hold(who, amount),
         CurrencyId::Wrapped(asset_id) => Assets::hold(asset_id, who, amount),
       }
     }
@@ -131,7 +132,7 @@ pub mod currency {
       best_effort: bool,
     ) -> Result<Balance, DispatchError> {
       match asset {
-        CurrencyId::Tifi => Balances::release(who, amount, best_effort),
+        CurrencyId::Tdfy => Balances::release(who, amount, best_effort),
         CurrencyId::Wrapped(asset_id) => Assets::release(asset_id, who, amount, best_effort),
       }
     }
@@ -144,7 +145,7 @@ pub mod currency {
       on_hold: bool,
     ) -> Result<Balance, DispatchError> {
       match asset {
-        CurrencyId::Tifi => Balances::transfer_held(source, dest, amount, best_effort, on_hold),
+        CurrencyId::Tdfy => Balances::transfer_held(source, dest, amount, best_effort, on_hold),
         CurrencyId::Wrapped(asset_id) => {
           Assets::transfer_held(asset_id, source, dest, amount, best_effort, on_hold)
         }
@@ -155,7 +156,7 @@ pub mod currency {
   impl Mutate<AccountId> for Adapter<AccountId> {
     fn mint_into(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
       match asset {
-        CurrencyId::Tifi => Balances::mint_into(who, amount),
+        CurrencyId::Tdfy => Balances::mint_into(who, amount),
         CurrencyId::Wrapped(asset_id) => Assets::mint_into(asset_id, who, amount),
       }
     }
@@ -166,7 +167,7 @@ pub mod currency {
       amount: Balance,
     ) -> Result<Balance, DispatchError> {
       match asset {
-        CurrencyId::Tifi => Balances::burn_from(who, amount),
+        CurrencyId::Tdfy => Balances::burn_from(who, amount),
         CurrencyId::Wrapped(asset_id) => Assets::burn_from(asset_id, who, amount),
       }
     }
@@ -184,7 +185,7 @@ pub mod currency {
       keep_alive: bool,
     ) -> Result<Balance, DispatchError> {
       match asset {
-        CurrencyId::Tifi => {
+        CurrencyId::Tdfy => {
           <Balances as FungibleTransfer<AccountId>>::transfer(source, dest, amount, keep_alive)
         }
         CurrencyId::Wrapped(asset_id) => {

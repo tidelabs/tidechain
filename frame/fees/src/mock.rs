@@ -134,9 +134,9 @@ impl pallet_timestamp::Config for Test {
   type WeightInfo = ();
 }
 
-pub const TIFI: Balance = 1_000_000_000_000;
+pub const TDFY: Balance = 1_000_000_000_000;
 parameter_types! {
-  pub const ExistentialDeposit: Balance = TIFI;
+  pub const ExistentialDeposit: Balance = TDFY;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
 }
@@ -253,28 +253,28 @@ impl Inspect<AccountId> for Adapter<AccountId> {
 
   fn total_issuance(asset: Self::AssetId) -> Self::Balance {
     match asset {
-      CurrencyId::Tifi => Balances::total_issuance(),
+      CurrencyId::Tdfy => Balances::total_issuance(),
       CurrencyId::Wrapped(asset_id) => Assets::total_issuance(asset_id),
     }
   }
 
   fn balance(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
     match asset {
-      CurrencyId::Tifi => Balances::balance(who),
+      CurrencyId::Tdfy => Balances::balance(who),
       CurrencyId::Wrapped(asset_id) => Assets::balance(asset_id, who),
     }
   }
 
   fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
     match asset {
-      CurrencyId::Tifi => Balances::minimum_balance(),
+      CurrencyId::Tdfy => Balances::minimum_balance(),
       CurrencyId::Wrapped(asset_id) => Assets::minimum_balance(asset_id),
     }
   }
 
   fn reducible_balance(asset: Self::AssetId, who: &AccountId, keep_alive: bool) -> Self::Balance {
     match asset {
-      CurrencyId::Tifi => Balances::reducible_balance(who, keep_alive),
+      CurrencyId::Tdfy => Balances::reducible_balance(who, keep_alive),
       CurrencyId::Wrapped(asset_id) => Assets::reducible_balance(asset_id, who, keep_alive),
     }
   }
@@ -283,10 +283,11 @@ impl Inspect<AccountId> for Adapter<AccountId> {
     asset: Self::AssetId,
     who: &AccountId,
     amount: Self::Balance,
+    mint: bool,
   ) -> DepositConsequence {
     match asset {
-      CurrencyId::Tifi => Balances::can_deposit(who, amount),
-      CurrencyId::Wrapped(asset_id) => Assets::can_deposit(asset_id, who, amount),
+      CurrencyId::Tdfy => Balances::can_deposit(who, amount, mint),
+      CurrencyId::Wrapped(asset_id) => Assets::can_deposit(asset_id, who, amount, mint),
     }
   }
 
@@ -296,7 +297,7 @@ impl Inspect<AccountId> for Adapter<AccountId> {
     amount: Self::Balance,
   ) -> WithdrawConsequence<Self::Balance> {
     match asset {
-      CurrencyId::Tifi => Balances::can_withdraw(who, amount),
+      CurrencyId::Tdfy => Balances::can_withdraw(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::can_withdraw(asset_id, who, amount),
     }
   }
@@ -305,7 +306,7 @@ impl Inspect<AccountId> for Adapter<AccountId> {
 impl Mutate<AccountId> for Adapter<AccountId> {
   fn mint_into(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
     match asset {
-      CurrencyId::Tifi => Balances::mint_into(who, amount),
+      CurrencyId::Tdfy => Balances::mint_into(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::mint_into(asset_id, who, amount),
     }
   }
@@ -316,7 +317,7 @@ impl Mutate<AccountId> for Adapter<AccountId> {
     amount: Balance,
   ) -> Result<Balance, DispatchError> {
     match asset {
-      CurrencyId::Tifi => Balances::burn_from(who, amount),
+      CurrencyId::Tdfy => Balances::burn_from(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::burn_from(asset_id, who, amount),
     }
   }
@@ -334,7 +335,7 @@ where
     keep_alive: bool,
   ) -> Result<Balance, DispatchError> {
     match asset {
-      CurrencyId::Tifi => {
+      CurrencyId::Tdfy => {
         <Balances as FungibleTransfer<AccountId>>::transfer(source, dest, amount, keep_alive)
       }
       CurrencyId::Wrapped(asset_id) => {
@@ -347,13 +348,13 @@ where
 impl InspectHold<AccountId> for Adapter<AccountId> {
   fn balance_on_hold(asset: Self::AssetId, who: &AccountId) -> Self::Balance {
     match asset {
-      CurrencyId::Tifi => Balances::balance_on_hold(who),
+      CurrencyId::Tdfy => Balances::balance_on_hold(who),
       CurrencyId::Wrapped(asset_id) => Assets::balance_on_hold(asset_id, who),
     }
   }
   fn can_hold(asset: Self::AssetId, who: &AccountId, amount: Self::Balance) -> bool {
     match asset {
-      CurrencyId::Tifi => Balances::can_hold(who, amount),
+      CurrencyId::Tdfy => Balances::can_hold(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::can_hold(asset_id, who, amount),
     }
   }
@@ -362,7 +363,7 @@ impl InspectHold<AccountId> for Adapter<AccountId> {
 impl MutateHold<AccountId> for Adapter<AccountId> {
   fn hold(asset: CurrencyId, who: &AccountId, amount: Self::Balance) -> DispatchResult {
     match asset {
-      CurrencyId::Tifi => Balances::hold(who, amount),
+      CurrencyId::Tdfy => Balances::hold(who, amount),
       CurrencyId::Wrapped(asset_id) => Assets::hold(asset_id, who, amount),
     }
   }
@@ -374,7 +375,7 @@ impl MutateHold<AccountId> for Adapter<AccountId> {
     best_effort: bool,
   ) -> Result<Balance, DispatchError> {
     match asset {
-      CurrencyId::Tifi => Balances::release(who, amount, best_effort),
+      CurrencyId::Tdfy => Balances::release(who, amount, best_effort),
       CurrencyId::Wrapped(asset_id) => Assets::release(asset_id, who, amount, best_effort),
     }
   }
@@ -387,7 +388,7 @@ impl MutateHold<AccountId> for Adapter<AccountId> {
     on_hold: bool,
   ) -> Result<Balance, DispatchError> {
     match asset {
-      CurrencyId::Tifi => Balances::transfer_held(source, dest, amount, best_effort, on_hold),
+      CurrencyId::Tdfy => Balances::transfer_held(source, dest, amount, best_effort, on_hold),
       CurrencyId::Wrapped(asset_id) => {
         Assets::transfer_held(asset_id, source, dest, amount, best_effort, on_hold)
       }
@@ -407,7 +408,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
       id: 1,
       minimum_usdt_value: 0,
       transactions_remaining: 1_000,
-      balance: assets::Asset::Tifi.saturating_mul(67_200_000),
+      balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
       // 200%
       rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
     }],

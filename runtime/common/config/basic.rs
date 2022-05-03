@@ -16,7 +16,7 @@
 
 use crate::{
   constants::{
-    currency::{deposit, CENTS, MILLICENTS, TIFI},
+    currency::{deposit, CENTS, MILLICENTS, TDFY},
     fee::WeightToFee,
     time::SLOT_DURATION,
   },
@@ -92,7 +92,7 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-  pub const ExistentialDeposit: Balance = TIFI;
+  pub const ExistentialDeposit: Balance = TDFY;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
 }
@@ -154,7 +154,7 @@ impl pallet_scheduler::Config for Runtime {
 }
 
 parameter_types! {
-   pub const IndexDeposit: Balance = TIFI;
+   pub const IndexDeposit: Balance = TDFY;
 }
 
 impl pallet_indices::Config for Runtime {
@@ -220,10 +220,10 @@ impl pallet_preimage::Config for Runtime {
 }
 
 parameter_types! {
-  pub const ConfigDepositBase: Balance = 5 * TIFI;
+  pub const ConfigDepositBase: Balance = 5 * TDFY;
   pub const FriendDepositFactor: Balance = 50 * CENTS;
   pub const MaxFriends: u16 = 9;
-  pub const RecoveryDeposit: Balance = 5 * TIFI;
+  pub const RecoveryDeposit: Balance = 5 * TDFY;
 }
 
 impl pallet_recovery::Config for Runtime {
@@ -234,4 +234,6 @@ impl pallet_recovery::Config for Runtime {
   type FriendDepositFactor = FriendDepositFactor;
   type MaxFriends = MaxFriends;
   type RecoveryDeposit = RecoveryDeposit;
+  // FIXME: use local weight
+  type WeightInfo = pallet_recovery::weights::SubstrateWeight<Runtime>;
 }

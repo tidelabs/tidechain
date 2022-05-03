@@ -58,7 +58,7 @@ fn create_proposal<T: Config>() -> Hash {
   let account_id: T::AccountId = whitelisted_caller();
   let proposal = ProposalType::Mint(Mint {
     account_id,
-    currency_id: CurrencyId::Tifi,
+    currency_id: CurrencyId::Tdfy,
     mint_amount: 1_000_000_000_000,
     transaction_id: Default::default(),
     compliance_level: ComplianceLevel::Green,
@@ -104,7 +104,7 @@ benchmarks! {
       let account_id: T::AccountId = whitelisted_caller();
       let proposal = ProposalType::Mint(Mint {
          account_id,
-         currency_id: CurrencyId::Tifi,
+         currency_id: CurrencyId::Tdfy,
          mint_amount: 1_000_000_000_000,
          transaction_id: Vec::new(),
          compliance_level: ComplianceLevel::Green,

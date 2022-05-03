@@ -46,7 +46,7 @@ tidechain --chain=lagoon --pruning=archive
 
 The `--pruning=archive` flag is implied by the `--validator` flag, it is only required explicitly if you start your node without one of these two options. If you do not set your pruning to archive node, even when not running in validator mode, you will need to re-sync your database when you switch.
 
-## Bond TIFI
+## Bond TDFY
 
 Bonding funds is the first step to validate. It locks up a portion of funds that is used to secure the network. These funds are placed at risk, i.e. you can be slashed and lose a portion if the validator node misbehaves. Validators and nominators share both rewards and the slashing effects.
 
@@ -61,12 +61,12 @@ First you need to download the latest [Tidechain explorer here](https://github.c
 
 You will need to create two accounts and make sure each of them have enough funds to pay the fees for sending transactions.
 
-Make sure not to bond all your TIFI balance since you will be unable to pay transaction fees from your bonded balance.
+Make sure not to bond all your TDFY balance since you will be unable to pay transaction fees from your bonded balance.
 
 It is now time to set up your validator. You will want to go to the Network > Staking section.
 Click on "Accounts", and then the "+ Stash" button.
 
-![Create new TIFI bond](./assets/explorer-new-bond.gif)
+![Create new TDFY bond](./assets/explorer-new-bond.gif)
 
 Click on "Bond" once you have selected the stash and controller accounts. Make sure to validate the value bonded.
 
@@ -104,4 +104,4 @@ You need to submit your intention to validate when you are ready.
 
 ![Submit validate intention](./assets/explorer-validate.gif)
 
-The validator set is refreshed every era. In the next era (every 24 hours), if there is a slot available and your node is selected to join the validator set, your node will become an active validator. Until then, it will remain in the waiting queue. If your validator is not selected to become part of the validator set, it will remain in the waiting queue until it is. There is no need to re-start if you are not selected for the validator set in a particular era. However, it may be necessary to increase the number of TIFI bonded or seek out nominators for your validator in order to join the validator set.
+The validator set is refreshed every era. In the next era (every 24 hours), if there is a slot available and your node is selected to join the validator set, your node will become an active validator. Until then, it will remain in the waiting queue. If your validator is not selected to become part of the validator set, it will remain in the waiting queue until it is. There is no need to re-start if you are not selected for the validator set in a particular era. However, it may be necessary to increase the number of TDFY bonded or seek out nominators for your validator in order to join the validator set.
