@@ -220,10 +220,16 @@ pub mod pallet {
     UnknownAsset,
     /// No Funds available for this Asset Id.
     NoFunds,
+    /// Request contains offer that is less than swap lower bound
+    OfferIsLessThanSwapLowerBound { index: u8 },
+    /// Request contains offer that is greater than swap upper bound
+    OfferIsGreaterThanSwapUpperBound { index: u8 },
     /// Swap overflow
     Overflow,
-    /// Market maker overflow
-    MarketMakerOverflow,
+    /// Request contains offer that is less than market maker swap lower bound
+    OfferIsLessThanMarketMakerSwapLowerBound { index: u8 },
+    /// Request contains offer that is greater than market maker swap upper bound
+    OfferIsGreaterThanMarketMakerSwapUpperBound { index: u8 },
     /// Market Makers do not have enough funds
     MarketMakerNoFunds,
     /// Market Makers cannot deposit source funds of the trade
@@ -285,11 +291,17 @@ pub mod pallet {
               // limit order can match with smaller price
               if trade.swap_type != SwapType::Limit {
                 let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
-                ensure!(minimum_per_token <= pay_per_token_offered, Error::Overflow);
+                ensure!(
+                  minimum_per_token <= pay_per_token_offered,
+                  Error::OfferIsLessThanSwapLowerBound { index: index as u8 }
+                );
               }
 
               let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
-              ensure!(maximum_per_token >= pay_per_token_offered, Error::Overflow);
+              ensure!(
+                maximum_per_token >= pay_per_token_offered,
+                Error::OfferIsGreaterThanSwapUpperBound { index: index as u8 }
+              );
 
               // validate mm slippage tolerance
               let pay_per_token =
@@ -302,14 +314,14 @@ pub mod pallet {
                 let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
-                  Error::MarketMakerOverflow
+                  Error::OfferIsLessThanMarketMakerSwapLowerBound { index: index as u8 }
                 );
               }
 
               let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
-                Error::MarketMakerOverflow
+                Error::OfferIsGreaterThanMarketMakerSwapUpperBound { index: index as u8 }
               );
 
               // make sure all the market markers have enough funds before we can continue
