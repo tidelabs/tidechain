@@ -1285,7 +1285,7 @@ mod confirm_swap {
     }
 
     #[test]
-    fn request_status_is_invalid() {
+    fn trade_request_status_is_invalid() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .set_oracle_status(true)
@@ -1310,26 +1310,72 @@ mod confirm_swap {
           SwapStatus::Completed,
           SwapStatus::Rejected,
         ] {
-          for request_id in vec![trade_request_id, trade_request_mm_id] {
-            Swaps::<Test>::mutate(request_id, |request| {
-              if let Some(trade_request) = request {
-                trade_request.status = invalid_status.clone()
-              }
-            });
+          Swaps::<Test>::mutate(trade_request_id, |request| {
+            if let Some(trade_request) = request {
+              trade_request.status = invalid_status.clone()
+            }
+          });
 
-            assert_noop!(
-              Oracle::confirm_swap(
-                context.alice.clone(),
-                trade_request_id,
-                vec![SwapConfirmation {
-                  request_id: trade_request_mm_id,
-                  amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
-                  amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
-                },],
-              ),
-              Error::<Test>::InvalidRequestStatus
-            );
-          }
+          assert_noop!(
+            Oracle::confirm_swap(
+              context.alice.clone(),
+              trade_request_id,
+              vec![SwapConfirmation {
+                request_id: trade_request_mm_id,
+                amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+                amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+              },],
+            ),
+            Error::<Test>::InvalidSwapRequestStatus
+          );
+        }
+      });
+    }
+
+    #[test]
+    fn market_maker_request_status_is_invalid() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID, DAVE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+        let trade_request_mm_id =
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
+            &context,
+          );
+
+        for invalid_status in vec![
+          SwapStatus::Cancelled,
+          SwapStatus::Completed,
+          SwapStatus::Rejected,
+        ] {
+          Swaps::<Test>::mutate(trade_request_mm_id, |request| {
+            if let Some(trade_request) = request {
+              trade_request.status = invalid_status.clone()
+            }
+          });
+
+          assert_noop!(
+            Oracle::confirm_swap(
+              context.alice.clone(),
+              trade_request_id,
+              vec![SwapConfirmation {
+                request_id: trade_request_mm_id,
+                amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+                amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+              },],
+            ),
+            Error::<Test>::InvalidMarketMakerSwapRequestStatus
+          );
         }
       });
     }
@@ -1553,7 +1599,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
             },],
           ),
-          Error::<Test>::MarketMakerNoFunds
+          Error::<Test>::MarketMakerHasNotEnoughTokenToSell
         );
       });
     }
@@ -1589,7 +1635,7 @@ mod confirm_swap {
               amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS.saturating_mul(5),
             },],
           ),
-          Error::<Test>::NoFunds
+          Error::<Test>::TraderHasNotEnoughTokenToSell
         );
       });
     }
@@ -1625,7 +1671,7 @@ mod confirm_swap {
               amount_to_send: BOB_BUYS_200_TEMPS,
             },],
           ),
-          Error::<Test>::Overflow
+          Error::<Test>::TraderCannotOversell
         );
       });
     }
