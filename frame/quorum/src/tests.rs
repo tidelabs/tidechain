@@ -23,32 +23,49 @@ use crate::{
 };
 use frame_support::{assert_noop, assert_ok, traits::Hooks, BoundedVec};
 use pallet_security::CurrentBlockCount as CurrentBlockNumber;
+use sp_runtime::traits::BadOrigin;
 use tidefi_primitives::{
-  pallet::SecurityExt, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
+  pallet::SecurityExt, AssetId, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
 };
+
+const ASSET_1: AssetId = 1u32;
+const ASSET_2: AssetId = 2u32;
+const ALICE_ACCOUNT_ID: u32 = 1;
+const BOB_ACCOUNT_ID: u32 = 2;
+const ONE_TDFY: u128 = 1_000_000_000_000;
+
+type AccountId = u64;
 
 struct Context {
   alice: Origin,
-  public_keys: BoundedVec<(u64, BoundedVec<u8, StringLimit>), PubkeyLimitPerAsset>,
+  bob: Origin,
+  pub_key: Vec<u8>,
+  public_keys: BoundedVec<(AccountId, BoundedVec<u8, StringLimit>), PubkeyLimitPerAsset>,
   proposal_id: Hash,
 }
 
 impl Default for Context {
   fn default() -> Self {
-    let pub_key: BoundedVec<u8, StringLimit> = "pubkey".as_bytes().to_vec().try_into().unwrap();
+    let pub_key_bounded_vec: BoundedVec<u8, StringLimit> =
+      "pubkey".as_bytes().to_vec().try_into().unwrap();
     Self {
-      alice: Origin::signed(1u64),
-      public_keys: vec![(1u64, pub_key)].try_into().unwrap(),
+      alice: Origin::signed(ALICE_ACCOUNT_ID.into()),
+      bob: Origin::signed(BOB_ACCOUNT_ID.into()),
+      pub_key: pub_key_bounded_vec.to_vec(),
+      public_keys: vec![(ALICE_ACCOUNT_ID.into(), pub_key_bounded_vec)]
+        .try_into()
+        .unwrap(),
       proposal_id: Hash::zero(),
     }
   }
 }
 
 impl Context {
-  fn setup(&self) {
-    PublicKeys::<Test>::insert(1, self.public_keys.clone());
-    assert!(Members::<Test>::contains_key(1));
-    assert_eq!(PublicKeys::<Test>::get(1).len(), 1);
+  fn insert_asset1_with_alice_public_key(self) -> Self {
+    PublicKeys::<Test>::insert(ASSET_1, self.public_keys.clone());
+    assert!(Members::<Test>::contains_key(ALICE_ACCOUNT_ID as u64));
+    assert_eq!(PublicKeys::<Test>::get(ASSET_1).len(), 1);
+    self
   }
 }
 
@@ -59,33 +76,35 @@ fn set_current_block(block_number: u64) {
   });
 }
 
-#[test]
-pub fn should_submit_proposal() {
-  new_test_ext().execute_with(|| {
-    let context = Context::default();
-    context.setup();
+mod submit_proposal {
+  use super::*;
 
-    let proposal = ProposalType::Mint(Mint {
-      account_id: 1,
-      currency_id: CurrencyId::Tdfy,
-      mint_amount: 1_000_000_000_000,
-      transaction_id: Vec::new(),
-      compliance_level: ComplianceLevel::Green,
+  #[test]
+  pub fn succeeds() {
+    new_test_ext().execute_with(|| {
+      let context = Context::default().insert_asset1_with_alice_public_key();
+
+      let proposal = ProposalType::Mint(Mint {
+        account_id: ALICE_ACCOUNT_ID.into(),
+        currency_id: CurrencyId::Tdfy,
+        mint_amount: ONE_TDFY,
+        transaction_id: Vec::new(),
+        compliance_level: ComplianceLevel::Green,
+      });
+      assert_ok!(Quorum::submit_proposal(context.alice, proposal));
     });
-    assert_ok!(Quorum::submit_proposal(context.alice, proposal));
-  });
+  }
 }
 
 #[test]
 pub fn should_vote_for_mint() {
   new_test_ext().execute_with(|| {
-    let context = Context::default();
-    context.setup();
+    let context = Context::default().insert_asset1_with_alice_public_key();
 
     let proposal = ProposalType::Mint(Mint {
-      account_id: 1,
+      account_id: ALICE_ACCOUNT_ID.into(),
       currency_id: CurrencyId::Tdfy,
-      mint_amount: 1_000_000_000_000,
+      mint_amount: ONE_TDFY,
       transaction_id: Default::default(),
       compliance_level: ComplianceLevel::Green,
     });
@@ -105,23 +124,22 @@ pub fn should_vote_for_mint() {
 #[test]
 pub fn should_remove_expired() {
   new_test_ext().execute_with(|| {
-    let context = Context::default();
-    context.setup();
+    let context = Context::default().insert_asset1_with_alice_public_key();
 
     let proposal = ProposalType::Mint(Mint {
-      account_id: 1,
+      account_id: ALICE_ACCOUNT_ID.into(),
       currency_id: CurrencyId::Tdfy,
-      mint_amount: 1_000_000_000_000,
+      mint_amount: ONE_TDFY,
       transaction_id: Default::default(),
       compliance_level: ComplianceLevel::Green,
     });
     assert_ok!(Quorum::submit_proposal(context.alice, proposal));
-    assert_eq!(Quorum::on_idle(0, 1_000_000_000_000), 0);
+    assert_eq!(Quorum::on_idle(0, ONE_TDFY.try_into().unwrap()), 0);
     assert_eq!(Proposals::<Test>::get().len(), 1);
 
     set_current_block(ProposalLifetime::get() + 2);
 
-    assert_eq!(Quorum::on_idle(0, 1_000_000_000_000), 0);
+    assert_eq!(Quorum::on_idle(0, ONE_TDFY.try_into().unwrap()), 0);
     assert_eq!(Proposals::<Test>::get().len(), 0);
   });
 }
@@ -144,14 +162,63 @@ pub fn test_vec_shuffle() {
   });
 }
 
+mod submit_public_keys {
+  use super::*;
+
+  #[test]
+  pub fn succeeds() {
+    new_test_ext().execute_with(|| {
+      let context = Context::default().insert_asset1_with_alice_public_key();
+
+      assert_ok!(Quorum::submit_public_keys(
+        context.alice,
+        vec![(ASSET_2, context.pub_key.clone())]
+      ));
+
+      assert!(Quorum::public_keys(ASSET_1).is_empty());
+
+      let asset2_pub_key = Quorum::public_keys(ASSET_2).get(0).unwrap().clone();
+      assert_eq!(ALICE_ACCOUNT_ID as u64, asset2_pub_key.0);
+      assert_eq!(context.pub_key, asset2_pub_key.1.into_inner());
+    });
+  }
+
+  mod fails_when {
+    use super::*;
+
+    #[test]
+    pub fn sender_is_not_signed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        assert_noop!(
+          Quorum::submit_public_keys(Origin::none(), vec![(ASSET_2, context.pub_key)]),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    pub fn sender_is_not_a_member() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        assert_noop!(
+          Quorum::submit_public_keys(context.bob, vec![(ASSET_2, context.pub_key)]),
+          Error::<Test>::AccessDenied
+        );
+      });
+    }
+  }
+}
+
 mod vote_should_fail_for {
   use super::*;
 
   #[test]
   pub fn non_existent_proposal() {
     new_test_ext().execute_with(|| {
-      let context = Context::default();
-      context.setup();
+      let context = Context::default().insert_asset1_with_alice_public_key();
 
       assert_noop!(
         Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
@@ -167,13 +234,12 @@ mod vote_should_fail_for {
   #[test]
   pub fn future_proposal() {
     new_test_ext().execute_with(|| {
-      let context = Context::default();
-      context.setup();
+      let context = Context::default().insert_asset1_with_alice_public_key();
 
       let proposal = ProposalType::Mint(Mint {
-        account_id: 1,
+        account_id: ALICE_ACCOUNT_ID.into(),
         currency_id: CurrencyId::Tdfy,
-        mint_amount: 1_000_000_000_000,
+        mint_amount: ONE_TDFY,
         transaction_id: Default::default(),
         compliance_level: ComplianceLevel::Green,
       });
@@ -198,13 +264,12 @@ mod vote_should_fail_for {
   #[test]
   pub fn expired_proposal() {
     new_test_ext().execute_with(|| {
-      let context = Context::default();
-      context.setup();
+      let context = Context::default().insert_asset1_with_alice_public_key();
 
       let proposal = ProposalType::Mint(Mint {
-        account_id: 1,
+        account_id: ALICE_ACCOUNT_ID.into(),
         currency_id: CurrencyId::Tdfy,
-        mint_amount: 1_000_000_000_000,
+        mint_amount: ONE_TDFY,
         transaction_id: Default::default(),
         compliance_level: ComplianceLevel::Green,
       });
