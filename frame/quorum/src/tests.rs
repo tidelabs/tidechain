@@ -28,13 +28,13 @@ use tidefi_primitives::{
   pallet::SecurityExt, AssetId, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
 };
 
+type AccountId = u64;
+
 const ASSET_1: AssetId = 1u32;
 const ASSET_2: AssetId = 2u32;
 const ALICE_ACCOUNT_ID: u32 = 1;
 const BOB_ACCOUNT_ID: u32 = 2;
 const ONE_TDFY: u128 = 1_000_000_000_000;
-
-type AccountId = u64;
 
 struct Context {
   alice: Origin,
@@ -94,31 +94,6 @@ mod submit_proposal {
       assert_ok!(Quorum::submit_proposal(context.alice, proposal));
     });
   }
-}
-
-#[test]
-pub fn should_vote_for_mint() {
-  new_test_ext().execute_with(|| {
-    let context = Context::default().insert_asset1_with_alice_public_key();
-
-    let proposal = ProposalType::Mint(Mint {
-      account_id: ALICE_ACCOUNT_ID.into(),
-      currency_id: CurrencyId::Tdfy,
-      mint_amount: ONE_TDFY,
-      transaction_id: Default::default(),
-      compliance_level: ComplianceLevel::Green,
-    });
-
-    assert_ok!(Proposals::<Test>::try_append((
-      context.proposal_id,
-      Security::get_current_block_count(),
-      proposal
-    )));
-    assert_ok!(Quorum::acknowledge_proposal(
-      context.alice,
-      context.proposal_id
-    ));
-  });
 }
 
 #[test]
@@ -212,85 +187,141 @@ mod submit_public_keys {
   }
 }
 
-mod vote_should_fail_for {
+// Including tests for both acknowledge_proposal and reject_proposal
+mod voting_for_proposals {
   use super::*;
 
-  #[test]
-  pub fn non_existent_proposal() {
-    new_test_ext().execute_with(|| {
-      let context = Context::default().insert_asset1_with_alice_public_key();
+  mod succeeds_when {
+    use super::*;
 
-      assert_noop!(
-        Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
-        Error::<Test>::ProposalDoesNotExist
-      );
-      assert_noop!(
-        Quorum::reject_proposal(context.alice, context.proposal_id),
-        Error::<Test>::ProposalDoesNotExist
-      );
-    });
+    #[test]
+    pub fn acknowledge_proposal() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        let proposal = ProposalType::Mint(Mint {
+          account_id: ALICE_ACCOUNT_ID.into(),
+          currency_id: CurrencyId::Tdfy,
+          mint_amount: ONE_TDFY,
+          transaction_id: Default::default(),
+          compliance_level: ComplianceLevel::Green,
+        });
+
+        assert_ok!(Proposals::<Test>::try_append((
+          context.proposal_id,
+          Security::get_current_block_count(),
+          proposal
+        )));
+        assert_ok!(Quorum::acknowledge_proposal(
+          context.alice,
+          context.proposal_id
+        ));
+      });
+    }
+
+    #[test]
+    pub fn reject_proposal() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        let proposal = ProposalType::Mint(Mint {
+          account_id: ALICE_ACCOUNT_ID.into(),
+          currency_id: CurrencyId::Tdfy,
+          mint_amount: ONE_TDFY,
+          transaction_id: Default::default(),
+          compliance_level: ComplianceLevel::Green,
+        });
+
+        assert_ok!(Proposals::<Test>::try_append((
+          context.proposal_id,
+          Security::get_current_block_count(),
+          proposal
+        )));
+        assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+      });
+    }
   }
 
-  #[test]
-  pub fn future_proposal() {
-    new_test_ext().execute_with(|| {
-      let context = Context::default().insert_asset1_with_alice_public_key();
+  mod fails_when {
+    use super::*;
 
-      let proposal = ProposalType::Mint(Mint {
-        account_id: ALICE_ACCOUNT_ID.into(),
-        currency_id: CurrencyId::Tdfy,
-        mint_amount: ONE_TDFY,
-        transaction_id: Default::default(),
-        compliance_level: ComplianceLevel::Green,
+    #[test]
+    pub fn proposal_does_not_exist() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        assert_noop!(
+          Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
+          Error::<Test>::ProposalDoesNotExist
+        );
+        assert_noop!(
+          Quorum::reject_proposal(context.alice, context.proposal_id),
+          Error::<Test>::ProposalDoesNotExist
+        );
       });
+    }
 
-      assert_ok!(Proposals::<Test>::try_append((
-        context.proposal_id,
-        Security::get_current_block_count() + 100,
-        proposal
-      )));
+    #[test]
+    pub fn proposal_is_in_future_block() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
 
-      assert_noop!(
-        Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
-        Error::<Test>::ProposalBlockIsInFuture
-      );
-      assert_noop!(
-        Quorum::reject_proposal(context.alice, context.proposal_id),
-        Error::<Test>::ProposalBlockIsInFuture
-      );
-    });
-  }
+        let proposal = ProposalType::Mint(Mint {
+          account_id: ALICE_ACCOUNT_ID.into(),
+          currency_id: CurrencyId::Tdfy,
+          mint_amount: ONE_TDFY,
+          transaction_id: Default::default(),
+          compliance_level: ComplianceLevel::Green,
+        });
 
-  #[test]
-  pub fn expired_proposal() {
-    new_test_ext().execute_with(|| {
-      let context = Context::default().insert_asset1_with_alice_public_key();
+        assert_ok!(Proposals::<Test>::try_append((
+          context.proposal_id,
+          Security::get_current_block_count() + 100,
+          proposal
+        )));
 
-      let proposal = ProposalType::Mint(Mint {
-        account_id: ALICE_ACCOUNT_ID.into(),
-        currency_id: CurrencyId::Tdfy,
-        mint_amount: ONE_TDFY,
-        transaction_id: Default::default(),
-        compliance_level: ComplianceLevel::Green,
+        assert_noop!(
+          Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
+          Error::<Test>::ProposalBlockIsInFuture
+        );
+        assert_noop!(
+          Quorum::reject_proposal(context.alice, context.proposal_id),
+          Error::<Test>::ProposalBlockIsInFuture
+        );
       });
+    }
 
-      let current_block = Security::get_current_block_count();
-      assert_ok!(Proposals::<Test>::try_append((
-        context.proposal_id,
-        current_block,
-        proposal
-      )));
+    #[test]
+    pub fn proposal_is_expired() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
 
-      set_current_block(current_block + ProposalLifetime::get() + 1);
+        let proposal = ProposalType::Mint(Mint {
+          account_id: ALICE_ACCOUNT_ID.into(),
+          currency_id: CurrencyId::Tdfy,
+          mint_amount: ONE_TDFY,
+          transaction_id: Default::default(),
+          compliance_level: ComplianceLevel::Green,
+        });
 
-      assert_noop!(
-        Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
-        Error::<Test>::ProposalExpired
-      );
-      assert_noop!(
-        Quorum::reject_proposal(context.alice, context.proposal_id),
-        Error::<Test>::ProposalExpired
-      );
-    });
+        let current_block = Security::get_current_block_count();
+        assert_ok!(Proposals::<Test>::try_append((
+          context.proposal_id,
+          current_block,
+          proposal
+        )));
+
+        set_current_block(current_block + ProposalLifetime::get() + 1);
+
+        assert_noop!(
+          Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
+          Error::<Test>::ProposalExpired
+        );
+        assert_noop!(
+          Quorum::reject_proposal(context.alice, context.proposal_id),
+          Error::<Test>::ProposalExpired
+        );
+      });
+    }
   }
 }
