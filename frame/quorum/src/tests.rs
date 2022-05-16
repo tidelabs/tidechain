@@ -24,8 +24,9 @@ use crate::{
 use frame_support::{assert_noop, assert_ok, traits::Hooks, BoundedVec};
 use pallet_security::CurrentBlockCount as CurrentBlockNumber;
 use sp_runtime::traits::BadOrigin;
+use std::str::FromStr;
 use tidefi_primitives::{
-  pallet::SecurityExt, AssetId, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType,
+  pallet::SecurityExt, AssetId, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType, Withdrawal,
 };
 
 type AccountId = u64;
@@ -35,6 +36,7 @@ const ASSET_2: AssetId = 2u32;
 const ALICE_ACCOUNT_ID: u32 = 1;
 const BOB_ACCOUNT_ID: u32 = 2;
 const ONE_TDFY: u128 = 1_000_000_000_000;
+const BLOCK_NUMBER_ZERO: u64 = 0;
 
 struct Context {
   alice: Origin,
@@ -55,7 +57,10 @@ impl Default for Context {
       public_keys: vec![(ALICE_ACCOUNT_ID.into(), pub_key_bounded_vec)]
         .try_into()
         .unwrap(),
-      proposal_id: Hash::zero(),
+      proposal_id: Hash::from_str(
+        "0x02a204a25c36f8c88eea76e08cdaa22a0569ef630bf4416db72abb9fb2445f2b",
+      )
+      .unwrap(),
     }
   }
 }
@@ -79,20 +84,105 @@ fn set_current_block(block_number: u64) {
 mod submit_proposal {
   use super::*;
 
-  #[test]
-  pub fn succeeds() {
-    new_test_ext().execute_with(|| {
-      let context = Context::default().insert_asset1_with_alice_public_key();
+  mod succeeds_for {
+    use super::*;
 
-      let proposal = ProposalType::Mint(Mint {
-        account_id: ALICE_ACCOUNT_ID.into(),
-        currency_id: CurrencyId::Tdfy,
-        mint_amount: ONE_TDFY,
-        transaction_id: Vec::new(),
-        compliance_level: ComplianceLevel::Green,
+    #[test]
+    pub fn mint() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        let mint_proposal = ProposalType::Mint(Mint {
+          account_id: ALICE_ACCOUNT_ID.into(),
+          currency_id: CurrencyId::Tdfy,
+          mint_amount: ONE_TDFY,
+          transaction_id: Vec::new(),
+          compliance_level: ComplianceLevel::Green,
+        });
+
+        assert_ok!(Quorum::submit_proposal(
+          context.alice.clone(),
+          mint_proposal
+        ));
+
+        assert_eq!(
+          Quorum::proposals().into_inner().first().unwrap(),
+          &(
+            context.proposal_id,
+            BLOCK_NUMBER_ZERO,
+            ProposalType::Mint(Mint {
+              account_id: ALICE_ACCOUNT_ID.into(),
+              currency_id: CurrencyId::Tdfy,
+              mint_amount: ONE_TDFY,
+              transaction_id: BoundedVec::try_from(Vec::new()).unwrap(),
+              compliance_level: ComplianceLevel::Green,
+            })
+          )
+        );
       });
-      assert_ok!(Quorum::submit_proposal(context.alice, proposal));
-    });
+    }
+
+    #[test]
+    pub fn withdrawal() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        let withdrawal_proposal = ProposalType::Withdrawal(Withdrawal {
+          account_id: ALICE_ACCOUNT_ID.into(),
+          asset_id: CurrencyId::Tdfy,
+          amount: ONE_TDFY,
+          external_address: Vec::new(),
+          block_number: BLOCK_NUMBER_ZERO,
+        });
+
+        assert_ok!(Quorum::submit_proposal(
+          context.alice.clone(),
+          withdrawal_proposal
+        ));
+
+        assert_eq!(
+          Quorum::proposals().into_inner().first().unwrap(),
+          &(
+            context.proposal_id,
+            BLOCK_NUMBER_ZERO,
+            ProposalType::Withdrawal(Withdrawal {
+              account_id: ALICE_ACCOUNT_ID.into(),
+              asset_id: CurrencyId::Tdfy,
+              amount: ONE_TDFY,
+              external_address: BoundedVec::try_from(Vec::new()).unwrap(),
+              block_number: BLOCK_NUMBER_ZERO,
+            })
+          )
+        );
+      });
+    }
+
+    #[test]
+    pub fn update_configuration() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+
+        let new_members = vec![ALICE_ACCOUNT_ID.into(), BOB_ACCOUNT_ID.into()];
+        let new_threshold = 1u16;
+
+        assert_ok!(Quorum::submit_proposal(
+          context.alice,
+          ProposalType::UpdateConfiguration(new_members.clone(), new_threshold)
+        ));
+
+        assert_eq!(
+          Quorum::proposals().into_inner().first().unwrap(),
+          &(
+            context.proposal_id,
+            BLOCK_NUMBER_ZERO,
+            ProposalType::UpdateConfiguration(
+              BoundedVec::try_from(new_members).unwrap(),
+              new_threshold
+            )
+          )
+        );
+      });
+    }
   }
 }
 
