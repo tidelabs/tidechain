@@ -28,7 +28,8 @@ use {
   sc_executor::NativeElseWasmExecutor,
   sc_finality_grandpa::FinalityProofProvider as GrandpaFinalityProofProvider,
   sc_service::{
-    config::PrometheusConfig, Configuration, NativeExecutionDispatch, RpcHandlers, TaskManager,
+    config::PrometheusConfig, Configuration, Error as SubstrateServiceError,
+    NativeExecutionDispatch, RpcHandlers, TaskManager,
   },
   sc_telemetry::{Telemetry, TelemetryWorker},
   sp_api::ConstructRuntimeApi,
@@ -139,7 +140,10 @@ fn new_partial<RuntimeApi, ExecutorDispatch>(
     sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
     sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
     (
-      impl sc_service::RpcExtensionBuilder,
+      impl Fn(
+        tidechain_rpc::DenyUnsafe,
+        tidechain_rpc::SubscriptionTaskExecutor,
+      ) -> Result<tidechain_rpc::RpcExtension, SubstrateServiceError>,
       (
         sc_consensus_babe::BabeBlockImport<
           Block,
@@ -276,6 +280,7 @@ where
     let transaction_pool = transaction_pool.clone();
     let select_chain = select_chain.clone();
     let chain_spec = config.chain_spec.cloned_box();
+    let backend = backend.clone();
 
     move |deny_unsafe, subscription_executor| -> Result<tidechain_rpc::RpcExtension, _> {
       let deps = tidechain_rpc::FullDeps {
@@ -298,7 +303,7 @@ where
         },
       };
 
-      Ok(tidechain_rpc::create_full(deps)?)
+      Ok(tidechain_rpc::create_full(deps, backend.clone())?)
     }
   };
 
@@ -424,7 +429,7 @@ where
     client: client.clone(),
     keystore: keystore_container.sync_keystore(),
     network: network.clone(),
-    rpc_extensions_builder: Box::new(rpc_extensions_builder),
+    rpc_builder: Box::new(rpc_extensions_builder),
     transaction_pool: transaction_pool.clone(),
     task_manager: &mut task_manager,
     system_rpc_tx,

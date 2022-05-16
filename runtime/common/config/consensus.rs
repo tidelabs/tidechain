@@ -227,6 +227,28 @@ impl frame_support::pallet_prelude::Get<Option<(usize, sp_npos_elections::Extend
   }
 }
 
+impl pallet_election_provider_multi_phase::MinerConfig for Runtime {
+  type AccountId = AccountId;
+  type MaxLength = OffchainSolutionLengthLimit;
+  type MaxWeight = OffchainSolutionWeightLimit;
+  type Solution = NposCompactSolution16;
+  type MaxVotesPerVoter = <
+		<Self as pallet_election_provider_multi_phase::Config>::DataProvider
+		as
+		frame_election_provider_support::ElectionDataProvider
+	>::MaxVotesPerVoter;
+
+  // The unsigned submissions have to respect the weight of the submit_unsigned call, thus their
+  // weight estimate function is wired to this call's weight.
+  fn solution_weight(v: u32, t: u32, a: u32, d: u32) -> Weight {
+    <
+			<Self as pallet_election_provider_multi_phase::Config>::WeightInfo
+			as
+			pallet_election_provider_multi_phase::WeightInfo
+		>::submit_unsigned(v, t, a, d)
+  }
+}
+
 /// The numbers configured here could always be more than the the maximum limits of staking pallet
 /// to ensure election snapshot will not run out of memory. For now, we set them to smaller values
 /// since the staking is bounded and the weight pipeline takes hours for this single pallet.
@@ -245,6 +267,7 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type Event = Event;
   type Currency = Balances;
   type EstimateCallFee = TransactionPayment;
+  type SignedPhase = SignedPhase;
   type UnsignedPhase = UnsignedPhase;
   type SignedMaxSubmissions = SignedMaxSubmissions;
   type SignedMaxRefunds = SignedMaxRefunds;
@@ -252,18 +275,16 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type SignedDepositBase = SignedDepositBase;
   type SignedDepositByte = SignedDepositByte;
   type SignedDepositWeight = ();
-  type SignedMaxWeight = Self::MinerMaxWeight;
+  type SignedMaxWeight =
+    <Self::MinerConfig as pallet_election_provider_multi_phase::MinerConfig>::MaxWeight;
+  type MinerConfig = Self;
   type SlashHandler = (); // burn slashes
   type RewardHandler = (); // nothing to do upon rewards
-  type SignedPhase = SignedPhase;
   type BetterUnsignedThreshold = BetterUnsignedThreshold;
   type BetterSignedThreshold = ();
-  type MinerMaxWeight = OffchainSolutionWeightLimit; // For now use the one from staking.
-  type MinerMaxLength = OffchainSolutionLengthLimit;
   type OffchainRepeat = OffchainRepeat;
   type MinerTxPriority = NposSolutionPriority;
   type DataProvider = Staking;
-  type Solution = NposCompactSolution16;
   type Fallback = pallet_election_provider_multi_phase::NoFallback<Self>;
   type GovernanceFallback =
     frame_election_provider_support::onchain::UnboundedExecution<OnChainSeqPhragmen>;
@@ -283,23 +304,19 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
 }
 
 parameter_types! {
-  /// A limit for off-chain phragmen unsigned solution submission.
-    ///
-    /// We want to keep it as high as possible, but can't risk having it reject,
-    /// so we always subtract the base block execution weight.
+  /// A limit for off-chain phragmen unsigned solution length.
+  ///
+  /// We allow up to 90% of the block's size to be consumed by the solution.
+  pub OffchainSolutionLengthLimit: u32 = Perbill::from_rational(90_u32, 100) *
+    *RuntimeBlockLength::get()
+    .max
+    .get(DispatchClass::Normal);
+
   pub OffchainSolutionWeightLimit: Weight = RuntimeBlockWeights::get()
     .get(DispatchClass::Normal)
     .max_extrinsic
     .expect("Normal extrinsics have weight limit configured by default; qed")
     .saturating_sub(BlockExecutionWeight::get());
-
-  /// A limit for off-chain phragmen unsigned solution length.
-    ///
-    /// We allow up to 90% of the block's size to be consumed by the solution.
-  pub OffchainSolutionLengthLimit: u32 = Perbill::from_rational(90_u32, 100) *
-    *RuntimeBlockLength::get()
-    .max
-    .get(DispatchClass::Normal);
 }
 
 pallet_staking_reward_curve::build! {
@@ -323,7 +340,7 @@ parameter_types! {
    pub const MaxNominatorRewardedPerValidator: u32 = 256;
    pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
    // 16
-  pub const MaxNominations: u32 = <NposCompactSolution16 as frame_election_provider_support::NposSolution>::LIMIT as u32;
+   pub const MaxNominations: u32 = <NposCompactSolution16 as frame_election_provider_support::NposSolution>::LIMIT as u32;
 }
 
 /// A reasonable benchmarking config for staking pallet.
