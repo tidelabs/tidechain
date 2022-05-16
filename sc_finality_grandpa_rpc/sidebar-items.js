@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["gen_client","The generated client module."]],"struct":[["GrandpaApiClient","The Client."],["GrandpaRpcHandler","Implements the GrandpaApi RPC trait for interacting with GRANDPA."]],"trait":[["GrandpaApi","Provides RPC methods for interacting with GRANDPA."]]});
+initSidebarItems({"struct":[["GrandpaRpc","Provides RPC methods for interacting with GRANDPA."]],"trait":[["GrandpaApiClient","Client implementation for the `GrandpaApi` RPC API."],["GrandpaApiServer","Server trait implementation for the `GrandpaApi` RPC API."]]});

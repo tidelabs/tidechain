@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","State RPC errors."]],"type":[["FutureResult","State RPC future Result type."],["Result","State RPC Result type."]]});
+initSidebarItems({"enum":[["Error","State RPC errors."]],"type":[["Result","State RPC Result type."]]});

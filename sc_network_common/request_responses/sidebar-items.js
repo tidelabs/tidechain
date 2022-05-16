@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["IncomingRequest","A single request received by a peer on a request-response protocol."],["OutgoingResponse","Response for an incoming request to be send by a request protocol handler."],["ProtocolConfig","Configuration for a single request-response protocol."]]});

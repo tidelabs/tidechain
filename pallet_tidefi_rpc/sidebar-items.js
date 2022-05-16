@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error",""]],"mod":[["gen_client","The generated client module."]],"struct":[["Tidefi","A struct that implements the [`TidefiApi`]."],["TidefiApiClient","The Client."]],"trait":[["TidefiApi",""],["TidefiRuntimeApi",""]]});
+initSidebarItems({"enum":[["Error",""]],"struct":[["TidefiRpc","A struct that implements the [`TidefiApi`]."]],"trait":[["TidefiApiClient","Client implementation for the `TidefiApi` RPC API."],["TidefiApiServer","Server trait implementation for the `TidefiApi` RPC API."],["TidefiRuntimeApi",""]]});

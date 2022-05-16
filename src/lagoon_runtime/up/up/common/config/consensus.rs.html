@@ -381,6 +381,23 @@
 <span id="379">379</span>
 <span id="380">380</span>
 <span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -610,6 +627,28 @@
   }
 }
 
+<span class="kw">impl</span> <span class="ident">pallet_election_provider_multi_phase::MinerConfig</span> <span class="kw">for</span> <span class="ident">Runtime</span> {
+  <span class="kw">type</span> <span class="ident">AccountId</span> <span class="op">=</span> <span class="ident">AccountId</span>;
+  <span class="kw">type</span> <span class="ident">MaxLength</span> <span class="op">=</span> <span class="ident">OffchainSolutionLengthLimit</span>;
+  <span class="kw">type</span> <span class="ident">MaxWeight</span> <span class="op">=</span> <span class="ident">OffchainSolutionWeightLimit</span>;
+  <span class="kw">type</span> <span class="ident">Solution</span> <span class="op">=</span> <span class="ident">NposCompactSolution16</span>;
+  <span class="kw">type</span> <span class="ident">MaxVotesPerVoter</span> <span class="op">=</span> <span class="op">&lt;</span>
+		<span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">pallet_election_provider_multi_phase::Config</span><span class="op">&gt;</span><span class="ident">::DataProvider</span>
+		<span class="kw">as</span>
+		<span class="ident">frame_election_provider_support::ElectionDataProvider</span>
+	<span class="op">&gt;</span><span class="ident">::MaxVotesPerVoter</span>;
+
+  <span class="comment">// The unsigned submissions have to respect the weight of the submit_unsigned call, thus their</span>
+  <span class="comment">// weight estimate function is wired to this call&#39;s weight.</span>
+  <span class="kw">fn</span> <span class="ident">solution_weight</span>(<span class="ident">v</span>: <span class="ident">u32</span>, <span class="ident">t</span>: <span class="ident">u32</span>, <span class="ident">a</span>: <span class="ident">u32</span>, <span class="ident">d</span>: <span class="ident">u32</span>) -&gt; <span class="ident">Weight</span> {
+    <span class="op">&lt;</span>
+			<span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">pallet_election_provider_multi_phase::Config</span><span class="op">&gt;</span><span class="ident">::WeightInfo</span>
+			<span class="kw">as</span>
+			<span class="ident">pallet_election_provider_multi_phase::WeightInfo</span>
+		<span class="op">&gt;</span><span class="ident">::submit_unsigned</span>(<span class="ident">v</span>, <span class="ident">t</span>, <span class="ident">a</span>, <span class="ident">d</span>)
+  }
+}
+
 <span class="doccomment">/// The numbers configured here could always be more than the the maximum limits of staking pallet</span>
 <span class="doccomment">/// to ensure election snapshot will not run out of memory. For now, we set them to smaller values</span>
 <span class="doccomment">/// since the staking is bounded and the weight pipeline takes hours for this single pallet.</span>
@@ -628,6 +667,7 @@
   <span class="kw">type</span> <span class="ident">Event</span> <span class="op">=</span> <span class="ident">Event</span>;
   <span class="kw">type</span> <span class="ident">Currency</span> <span class="op">=</span> <span class="ident">Balances</span>;
   <span class="kw">type</span> <span class="ident">EstimateCallFee</span> <span class="op">=</span> <span class="ident">TransactionPayment</span>;
+  <span class="kw">type</span> <span class="ident">SignedPhase</span> <span class="op">=</span> <span class="ident">SignedPhase</span>;
   <span class="kw">type</span> <span class="ident">UnsignedPhase</span> <span class="op">=</span> <span class="ident">UnsignedPhase</span>;
   <span class="kw">type</span> <span class="ident">SignedMaxSubmissions</span> <span class="op">=</span> <span class="ident">SignedMaxSubmissions</span>;
   <span class="kw">type</span> <span class="ident">SignedMaxRefunds</span> <span class="op">=</span> <span class="ident">SignedMaxRefunds</span>;
@@ -635,18 +675,16 @@
   <span class="kw">type</span> <span class="ident">SignedDepositBase</span> <span class="op">=</span> <span class="ident">SignedDepositBase</span>;
   <span class="kw">type</span> <span class="ident">SignedDepositByte</span> <span class="op">=</span> <span class="ident">SignedDepositByte</span>;
   <span class="kw">type</span> <span class="ident">SignedDepositWeight</span> <span class="op">=</span> ();
-  <span class="kw">type</span> <span class="ident">SignedMaxWeight</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::MinerMaxWeight</span>;
+  <span class="kw">type</span> <span class="ident">SignedMaxWeight</span> <span class="op">=</span>
+    <span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::MinerConfig</span> <span class="kw">as</span> <span class="ident">pallet_election_provider_multi_phase::MinerConfig</span><span class="op">&gt;</span><span class="ident">::MaxWeight</span>;
+  <span class="kw">type</span> <span class="ident">MinerConfig</span> <span class="op">=</span> <span class="self">Self</span>;
   <span class="kw">type</span> <span class="ident">SlashHandler</span> <span class="op">=</span> (); <span class="comment">// burn slashes</span>
   <span class="kw">type</span> <span class="ident">RewardHandler</span> <span class="op">=</span> (); <span class="comment">// nothing to do upon rewards</span>
-  <span class="kw">type</span> <span class="ident">SignedPhase</span> <span class="op">=</span> <span class="ident">SignedPhase</span>;
   <span class="kw">type</span> <span class="ident">BetterUnsignedThreshold</span> <span class="op">=</span> <span class="ident">BetterUnsignedThreshold</span>;
   <span class="kw">type</span> <span class="ident">BetterSignedThreshold</span> <span class="op">=</span> ();
-  <span class="kw">type</span> <span class="ident">MinerMaxWeight</span> <span class="op">=</span> <span class="ident">OffchainSolutionWeightLimit</span>; <span class="comment">// For now use the one from staking.</span>
-  <span class="kw">type</span> <span class="ident">MinerMaxLength</span> <span class="op">=</span> <span class="ident">OffchainSolutionLengthLimit</span>;
   <span class="kw">type</span> <span class="ident">OffchainRepeat</span> <span class="op">=</span> <span class="ident">OffchainRepeat</span>;
   <span class="kw">type</span> <span class="ident">MinerTxPriority</span> <span class="op">=</span> <span class="ident">NposSolutionPriority</span>;
   <span class="kw">type</span> <span class="ident">DataProvider</span> <span class="op">=</span> <span class="ident">Staking</span>;
-  <span class="kw">type</span> <span class="ident">Solution</span> <span class="op">=</span> <span class="ident">NposCompactSolution16</span>;
   <span class="kw">type</span> <span class="ident">Fallback</span> <span class="op">=</span> <span class="ident">pallet_election_provider_multi_phase::NoFallback</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
   <span class="kw">type</span> <span class="ident">GovernanceFallback</span> <span class="op">=</span>
     <span class="ident">frame_election_provider_support::onchain::UnboundedExecution</span><span class="op">&lt;</span><span class="ident">OnChainSeqPhragmen</span><span class="op">&gt;</span>;
@@ -666,23 +704,19 @@
 }
 
 <span class="macro">parameter_types!</span> {
-  <span class="doccomment">/// A limit for off-chain phragmen unsigned solution submission.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// We want to keep it as high as possible, but can&#39;t risk having it reject,</span>
-    <span class="doccomment">/// so we always subtract the base block execution weight.</span>
+  <span class="doccomment">/// A limit for off-chain phragmen unsigned solution length.</span>
+  <span class="doccomment">///</span>
+  <span class="doccomment">/// We allow up to 90% of the block&#39;s size to be consumed by the solution.</span>
+  <span class="kw">pub</span> <span class="ident">OffchainSolutionLengthLimit</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="ident">Perbill::from_rational</span>(<span class="number">90_u32</span>, <span class="number">100</span>) <span class="op">*</span>
+    <span class="kw-2">*</span><span class="ident">RuntimeBlockLength::get</span>()
+    .<span class="ident">max</span>
+    .<span class="ident">get</span>(<span class="ident">DispatchClass::Normal</span>);
+
   <span class="kw">pub</span> <span class="ident">OffchainSolutionWeightLimit</span>: <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">RuntimeBlockWeights::get</span>()
     .<span class="ident">get</span>(<span class="ident">DispatchClass::Normal</span>)
     .<span class="ident">max_extrinsic</span>
     .<span class="ident">expect</span>(<span class="string">&quot;Normal extrinsics have weight limit configured by default; qed&quot;</span>)
     .<span class="ident">saturating_sub</span>(<span class="ident">BlockExecutionWeight::get</span>());
-
-  <span class="doccomment">/// A limit for off-chain phragmen unsigned solution length.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// We allow up to 90% of the block&#39;s size to be consumed by the solution.</span>
-  <span class="kw">pub</span> <span class="ident">OffchainSolutionLengthLimit</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="ident">Perbill::from_rational</span>(<span class="number">90_u32</span>, <span class="number">100</span>) <span class="op">*</span>
-    <span class="kw-2">*</span><span class="ident">RuntimeBlockLength::get</span>()
-    .<span class="ident">max</span>
-    .<span class="ident">get</span>(<span class="ident">DispatchClass::Normal</span>);
 }
 
 <span class="macro">pallet_staking_reward_curve::build!</span> {
@@ -706,7 +740,7 @@
    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxNominatorRewardedPerValidator</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">256</span>;
    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OffendingValidatorsThreshold</span>: <span class="ident">Perbill</span> <span class="op">=</span> <span class="ident">Perbill::from_percent</span>(<span class="number">17</span>);
    <span class="comment">// 16</span>
-  <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxNominations</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">NposCompactSolution16</span> <span class="kw">as</span> <span class="ident">frame_election_provider_support::NposSolution</span><span class="op">&gt;</span><span class="ident">::LIMIT</span> <span class="kw">as</span> <span class="ident">u32</span>;
+   <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MaxNominations</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">NposCompactSolution16</span> <span class="kw">as</span> <span class="ident">frame_election_provider_support::NposSolution</span><span class="op">&gt;</span><span class="ident">::LIMIT</span> <span class="kw">as</span> <span class="ident">u32</span>;
 }
 
 <span class="doccomment">/// A reasonable benchmarking config for staking pallet.</span>

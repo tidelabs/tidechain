@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["migration_status","Check trie migration status."]],"struct":[["MigrationRpc","An implementation of state migration specific RPC methods."],["MigrationStatusResult",""]],"trait":[["StateMigrationApiServer","Server trait implementation for the `StateMigrationApi` RPC API."]]});

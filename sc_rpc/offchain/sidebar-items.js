@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["error","Offchain RPC errors."],["gen_client","The generated client module."]],"struct":[["Offchain","Offchain API"],["OffchainApiClient","The Client."],["OffchainClient","The Client."]],"trait":[["OffchainApi","Substrate offchain RPC API"]]});
+initSidebarItems({"mod":[["error","Offchain RPC errors."]],"struct":[["Offchain","Offchain API"]],"trait":[["OffchainApiClient","Client implementation for the `OffchainApi` RPC API."],["OffchainApiServer","Server trait implementation for the `OffchainApi` RPC API."]]});

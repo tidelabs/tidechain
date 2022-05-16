@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["error","System RPC module errors."],["gen_client","The generated client module."],["helpers","Substrate system API helpers."]],"struct":[["SystemApiClient","The Client."],["SystemClient","The Client."]],"trait":[["SystemApi","Substrate system RPC API"]]});
+initSidebarItems({"mod":[["error","System RPC module errors."],["helpers","Substrate system API helpers."]],"trait":[["SystemApiClient","Client implementation for the `SystemApi` RPC API."],["SystemApiServer","Server trait implementation for the `SystemApi` RPC API."]]});
