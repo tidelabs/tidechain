@@ -50,6 +50,11 @@ impl<T: frame_system::Config> pallet_utility::WeightInfo for WeightInfo<T> {
 			// Standard Error: 6_000
 			.saturating_add((3_914_000 as Weight).saturating_mul(c as Weight))
 	}
+	fn force_batch(c: u32, ) -> Weight {
+		(45_686_000 as Weight)
+			// Standard Error: 6_000
+			.saturating_add((4_984_000 as Weight).saturating_mul(c as Weight))
+	}
 	fn as_derivative() -> Weight {
 		(2_098_000 as Weight)
 	}
