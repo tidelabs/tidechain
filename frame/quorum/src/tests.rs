@@ -26,7 +26,8 @@ use pallet_security::CurrentBlockCount as CurrentBlockNumber;
 use sp_runtime::traits::BadOrigin;
 use std::str::FromStr;
 use tidefi_primitives::{
-  pallet::SecurityExt, AssetId, ComplianceLevel, CurrencyId, Hash, Mint, ProposalType, Withdrawal,
+  pallet::SecurityExt, AssetId, ComplianceLevel, CurrencyId, Hash, Mint, ProposalStatus,
+  ProposalType, ProposalVotes, Withdrawal,
 };
 
 type AccountId = u64;
@@ -113,6 +114,32 @@ impl Context {
     PublicKeys::<Test>::insert(ASSET_1, self.public_keys.clone());
     assert!(Members::<Test>::contains_key(ALICE_ACCOUNT_ID as u64));
     assert_eq!(PublicKeys::<Test>::get(ASSET_1).len(), 1);
+    self
+  }
+
+  fn insert_a_valid_mint_proposal(self) -> Self {
+    let proposal = ProposalType::Mint(Mint {
+      account_id: ALICE_ACCOUNT_ID.into(),
+      currency_id: CurrencyId::Tdfy,
+      mint_amount: ONE_TDFY,
+      transaction_id: Default::default(),
+      compliance_level: ComplianceLevel::Green,
+    });
+    assert_ok!(Proposals::<Test>::try_append((
+      self.proposal_id,
+      Security::get_current_block_count(),
+      proposal
+    )));
+    self
+  }
+
+  fn set_vote_for_alice(self, is_acknowledge: bool) -> Self {
+    let mut votes = ProposalVotes::default();
+    match is_acknowledge {
+      true => votes.votes_for = BoundedVec::try_from(vec![ALICE_ACCOUNT_ID as u64]).unwrap(),
+      false => votes.votes_against = BoundedVec::try_from(vec![ALICE_ACCOUNT_ID as u64]).unwrap(),
+    }
+    Votes::<Test>::insert(self.proposal_id, votes);
     self
   }
 
@@ -354,21 +381,10 @@ mod voting_for_proposals {
     #[test]
     pub fn acknowledge_proposal() {
       new_test_ext().execute_with(|| {
-        let context = Context::default().insert_asset1_with_alice_public_key();
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal();
 
-        let proposal = ProposalType::Mint(Mint {
-          account_id: ALICE_ACCOUNT_ID.into(),
-          currency_id: CurrencyId::Tdfy,
-          mint_amount: ONE_TDFY,
-          transaction_id: Default::default(),
-          compliance_level: ComplianceLevel::Green,
-        });
-
-        assert_ok!(Proposals::<Test>::try_append((
-          context.proposal_id,
-          Security::get_current_block_count(),
-          proposal
-        )));
         assert_ok!(Quorum::acknowledge_proposal(
           context.alice,
           context.proposal_id
@@ -379,21 +395,10 @@ mod voting_for_proposals {
     #[test]
     pub fn reject_proposal() {
       new_test_ext().execute_with(|| {
-        let context = Context::default().insert_asset1_with_alice_public_key();
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal();
 
-        let proposal = ProposalType::Mint(Mint {
-          account_id: ALICE_ACCOUNT_ID.into(),
-          currency_id: CurrencyId::Tdfy,
-          mint_amount: ONE_TDFY,
-          transaction_id: Default::default(),
-          compliance_level: ComplianceLevel::Green,
-        });
-
-        assert_ok!(Proposals::<Test>::try_append((
-          context.proposal_id,
-          Security::get_current_block_count(),
-          proposal
-        )));
         assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
       });
     }
@@ -401,6 +406,42 @@ mod voting_for_proposals {
 
   mod fails_when {
     use super::*;
+
+    #[test]
+    pub fn sender_is_not_signed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal();
+
+        assert_noop!(
+          Quorum::acknowledge_proposal(Origin::none(), context.proposal_id),
+          BadOrigin
+        );
+        assert_noop!(
+          Quorum::reject_proposal(Origin::none(), context.proposal_id),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    pub fn sender_is_not_a_member() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal();
+
+        assert_noop!(
+          Quorum::acknowledge_proposal(context.bob.clone(), context.proposal_id),
+          Error::<Test>::AccessDenied
+        );
+        assert_noop!(
+          Quorum::reject_proposal(context.bob, context.proposal_id),
+          Error::<Test>::AccessDenied
+        );
+      });
+    }
 
     #[test]
     pub fn proposal_does_not_exist() {
@@ -419,7 +460,7 @@ mod voting_for_proposals {
     }
 
     #[test]
-    pub fn proposal_is_in_future_block() {
+    pub fn proposal_block_is_in_future() {
       new_test_ext().execute_with(|| {
         let context = Context::default().insert_asset1_with_alice_public_key();
 
@@ -444,6 +485,28 @@ mod voting_for_proposals {
         assert_noop!(
           Quorum::reject_proposal(context.alice, context.proposal_id),
           Error::<Test>::ProposalBlockIsInFuture
+        );
+      });
+    }
+
+    #[test]
+    pub fn proposal_is_already_completed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal();
+
+        let mut votes = ProposalVotes::default();
+        votes.status = ProposalStatus::Approved;
+        Votes::<Test>::insert(context.proposal_id, votes);
+
+        assert_noop!(
+          Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
+          Error::<Test>::ProposalAlreadyComplete
+        );
+        assert_noop!(
+          Quorum::reject_proposal(context.alice, context.proposal_id),
+          Error::<Test>::ProposalAlreadyComplete
         );
       });
     }
@@ -477,6 +540,27 @@ mod voting_for_proposals {
         assert_noop!(
           Quorum::reject_proposal(context.alice, context.proposal_id),
           Error::<Test>::ProposalExpired
+        );
+      });
+    }
+
+    #[test]
+    pub fn member_already_voted() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal()
+          .set_vote_for_alice(true);
+
+        assert_noop!(
+          Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
+          Error::<Test>::MemberAlreadyVoted
+        );
+
+        let context = Context::default().set_vote_for_alice(false);
+        assert_noop!(
+          Quorum::reject_proposal(context.alice, context.proposal_id),
+          Error::<Test>::MemberAlreadyVoted
         );
       });
     }
