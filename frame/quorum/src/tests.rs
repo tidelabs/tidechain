@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, Origin, ProposalLifetime, PubkeyLimitPerAsset, Quorum, Security, StringLimit,
-    System, Test,
+    new_test_ext, Event as MockEvent, Origin, ProposalLifetime, PubkeyLimitPerAsset, Quorum,
+    Security, StringLimit, System, Test, VotesLimit,
   },
   pallet::*,
 };
@@ -143,6 +143,30 @@ impl Context {
     self
   }
 
+  fn set_multiple_dummy_votes(self, number_of_mock_votes: u32, is_acknowledge: bool) -> Self {
+    let mut votes = ProposalVotes::default();
+
+    match is_acknowledge {
+      true => {
+        votes.votes_for = BoundedVec::try_from(vec![
+          BOB_ACCOUNT_ID as u64;
+          usize::try_from(number_of_mock_votes).unwrap()
+        ])
+        .unwrap()
+      }
+      false => {
+        votes.votes_against = BoundedVec::try_from(vec![
+          BOB_ACCOUNT_ID as u64;
+          usize::try_from(number_of_mock_votes)
+            .unwrap()
+        ])
+        .unwrap()
+      }
+    }
+    Votes::<Test>::insert(self.proposal_id, votes);
+    self
+  }
+
   fn get_valid_proposals(
     &self,
   ) -> Vec<ProposalType<AccountId, BlockNumber, Vec<u8>, Vec<AccountId>>> {
@@ -194,6 +218,10 @@ mod submit_proposal {
             })
           )
         );
+
+        System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
+          proposal_id: context.proposal_id,
+        }));
       });
     }
 
@@ -222,6 +250,10 @@ mod submit_proposal {
             })
           )
         );
+
+        System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
+          proposal_id: context.proposal_id,
+        }));
       });
     }
 
@@ -246,6 +278,10 @@ mod submit_proposal {
             )
           )
         );
+
+        System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
+          proposal_id: context.proposal_id,
+        }));
       });
     }
   }
@@ -276,6 +312,63 @@ mod submit_proposal {
           );
         }
       });
+    }
+
+    #[ignore]
+    #[test]
+    pub fn mint_transaction_id_is_bad() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+        let proposal = ProposalType::Mint(Mint {
+          account_id: context.valid_mint.account_id,
+          currency_id: context.valid_mint.currency_id,
+          mint_amount: context.valid_mint.mint_amount,
+          transaction_id: vec![0; u32::MAX.try_into().unwrap()],
+          compliance_level: context.valid_mint.compliance_level,
+        });
+
+        assert_noop!(
+          Quorum::submit_proposal(context.alice, proposal),
+          Error::<Test>::BadTransactionId
+        );
+      });
+    }
+
+    #[ignore]
+    #[test]
+    pub fn withdrawal_external_address_is_bad() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+        let proposal = ProposalType::Withdrawal(Withdrawal {
+          account_id: context.valid_withdrawal.account_id,
+          asset_id: context.valid_withdrawal.asset_id,
+          amount: context.valid_withdrawal.amount,
+          external_address: vec![0; u32::MAX.try_into().unwrap()],
+          block_number: BLOCK_NUMBER_ZERO,
+        });
+
+        assert_noop!(
+          Quorum::submit_proposal(context.alice, proposal),
+          Error::<Test>::BadExternalAddress
+        );
+      });
+    }
+
+    #[ignore]
+    #[test]
+    pub fn update_configuration_with_members_overflow() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().insert_asset1_with_alice_public_key();
+        let proposal = ProposalType::UpdateConfiguration(
+          vec![0u64; u16::MAX as usize],
+          context.valid_update_configuration.threshold,
+        );
+
+        assert_noop!(
+          Quorum::submit_proposal(context.alice, proposal),
+          Error::<Test>::MembersOverflow
+        );
+      })
     }
   }
 }
@@ -389,6 +482,8 @@ mod voting_for_proposals {
           context.alice,
           context.proposal_id
         ));
+
+        // TODO: Assert event is emitted and storage is updated
       });
     }
 
@@ -561,6 +656,36 @@ mod voting_for_proposals {
         assert_noop!(
           Quorum::reject_proposal(context.alice, context.proposal_id),
           Error::<Test>::MemberAlreadyVoted
+        );
+      });
+    }
+
+    #[test]
+    pub fn votes_for_overflow() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal()
+          .set_multiple_dummy_votes(VotesLimit::get(), true);
+
+        assert_noop!(
+          Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
+          Error::<Test>::VotesForOverflow
+        );
+      });
+    }
+
+    #[test]
+    pub fn votes_against_overflow() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .insert_a_valid_mint_proposal()
+          .set_multiple_dummy_votes(VotesLimit::get(), false);
+
+        assert_noop!(
+          Quorum::reject_proposal(context.alice, context.proposal_id),
+          Error::<Test>::VotesAgainstOverflow
         );
       });
     }
