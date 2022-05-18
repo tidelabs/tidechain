@@ -167,6 +167,11 @@ impl Context {
     self
   }
 
+  fn set_threshold(self, threshold: u16) -> Self {
+    Threshold::<Test>::put(threshold);
+    self
+  }
+
   fn get_valid_proposals(
     &self,
   ) -> Vec<ProposalType<AccountId, BlockNumber, Vec<u8>, Vec<AccountId>>> {
@@ -476,14 +481,24 @@ mod voting_for_proposals {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .insert_asset1_with_alice_public_key()
-          .insert_a_valid_mint_proposal();
+          .insert_a_valid_mint_proposal()
+          .set_threshold(2);
 
         assert_ok!(Quorum::acknowledge_proposal(
           context.alice,
           context.proposal_id
         ));
 
-        // TODO: Assert event is emitted and storage is updated
+        assert!(Quorum::proposal_votes(context.proposal_id)
+          .unwrap()
+          .votes_for
+          .into_inner()
+          .contains(&(ALICE_ACCOUNT_ID as u64)));
+
+        System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
+          account_id: ALICE_ACCOUNT_ID as u64,
+          proposal_id: context.proposal_id,
+        }));
       });
     }
 
@@ -492,9 +507,21 @@ mod voting_for_proposals {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .insert_asset1_with_alice_public_key()
-          .insert_a_valid_mint_proposal();
+          .insert_a_valid_mint_proposal()
+          .set_threshold(2);
 
         assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+
+        assert!(Quorum::proposal_votes(context.proposal_id)
+          .unwrap()
+          .votes_against
+          .into_inner()
+          .contains(&(ALICE_ACCOUNT_ID as u64)));
+
+        System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
+          account_id: ALICE_ACCOUNT_ID as u64,
+          proposal_id: context.proposal_id,
+        }));
       });
     }
   }
