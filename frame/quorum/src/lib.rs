@@ -760,36 +760,20 @@ pub mod pallet {
 
           let threshold = Self::threshold();
           let total_members = Members::<T>::count() as u16;
-          let status = if votes.votes_for.len() >= threshold as usize {
-            votes.status = ProposalStatus::Approved;
-            ProposalStatus::Approved
+          if votes.votes_for.len() >= threshold as usize {
+            Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
+            Self::process_proposal(proposal_id)?;
+            Self::delete_proposal(proposal_id)?;
+            *proposal_votes = None;
           } else if total_members >= threshold
             && votes.votes_against.len() as u16 + threshold > total_members
           {
-            votes.status = ProposalStatus::Rejected;
-            ProposalStatus::Rejected
-          } else {
-            ProposalStatus::Initiated
-          };
-
-          *proposal_votes = Some(votes.clone());
-          match status {
-            ProposalStatus::Approved => {
-              Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
-              Self::process_proposal(proposal_id)?;
-              Self::delete_proposal(proposal_id)?;
-              *proposal_votes = None;
-              Ok(())
-            }
-            ProposalStatus::Rejected => {
-              // FIXME: Maybe add some slashing for the proposer?
-              Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
-              Self::delete_proposal(proposal_id)?;
-              *proposal_votes = None;
-              Ok(())
-            }
-            _ => Ok(()),
+            // FIXME: Maybe add some slashing for the proposer?
+            Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
+            Self::delete_proposal(proposal_id)?;
+            *proposal_votes = None;
           }
+          Ok(())
         }
         None => Err(Error::<T>::ProposalDoesNotExist),
       })
