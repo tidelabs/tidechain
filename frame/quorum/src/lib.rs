@@ -521,7 +521,7 @@ pub mod pallet {
       ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
 
       // 3. Delete all existing public keys of this member
-      Self::delete_public_keys_for_account(&sender)?;
+      Self::delete_public_keys_for_account(&sender);
 
       // 4. Register new public keys
       for (asset_id, public_key) in public_keys {
@@ -612,13 +612,12 @@ pub mod pallet {
     }
 
     // Delete all member public keys
-    fn delete_public_keys_for_account(who: &T::AccountId) -> Result<(), DispatchError> {
+    fn delete_public_keys_for_account(who: &T::AccountId) {
       for asset_id in PublicKeys::<T>::iter_keys() {
         PublicKeys::<T>::mutate(asset_id, |public_keys| {
           public_keys.retain(|(account_id, _)| *account_id != *who);
         });
       }
-      Ok(())
     }
 
     // Add member public key for a specific asset id
@@ -804,7 +803,7 @@ pub mod pallet {
         ProposalType::Withdrawal(withdrawal) => Self::process_withdrawal(proposal_id, &withdrawal)?,
         // update quorum configuration (threshold & member set)
         ProposalType::UpdateConfiguration(members, threshold) => {
-          Self::process_update_configuration(&members, threshold)?
+          Self::process_update_configuration(&members, threshold)
         }
       };
       Self::deposit_event(Event::<T>::ProposalProcessed { proposal_id });
@@ -915,10 +914,7 @@ pub mod pallet {
     }
 
     // Process configuration update
-    fn process_update_configuration(
-      members: &Vec<T::AccountId>,
-      threshold: u16,
-    ) -> Result<(), Error<T>> {
+    fn process_update_configuration(members: &Vec<T::AccountId>, threshold: u16) {
       // 1. Remove all members existing
       Members::<T>::remove_all();
 
@@ -940,8 +936,6 @@ pub mod pallet {
         threshold,
         members: members.clone(),
       });
-
-      Ok(())
     }
 
     // Delete specific proposal
