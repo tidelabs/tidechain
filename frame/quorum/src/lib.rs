@@ -975,24 +975,39 @@ pub mod pallet {
         transaction_id: transaction_id.clone(),
       };
 
-      AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
-        match account_watch_list {
-          Some(current_watch_list) => current_watch_list
-            .try_push(watch_list)
-            .map_err(|_| Error::<T>::WatchlistOverflow),
-          None => {
-            let empty_bounded_vec: BoundedVec<
-              WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
-              <T as pallet::Config>::WatchListLimit,
-            > = vec![watch_list]
-              .try_into()
-              .map_err(|_| Error::<T>::UnknownError)?;
-
-            AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
-            Ok(())
+      if AccountWatchList::<T>::contains_key(account_id) {
+        let mut watch_list_for_account_id_is_none: bool = false;
+        AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
+          match account_watch_list {
+            Some(current_watch_list) => current_watch_list
+              .try_push(watch_list.clone())
+              .map_err(|_| Error::<T>::WatchlistOverflow),
+            None => {
+              watch_list_for_account_id_is_none = true;
+              Ok(())
+            }
           }
+        })?;
+
+        if watch_list_for_account_id_is_none {
+          AccountWatchList::<T>::mutate_exists(account_id, |account_watch_list| {
+            *account_watch_list = Some(
+              vec![watch_list]
+                .try_into()
+                .expect("Watch list should be created"),
+            );
+          })
         }
-      })?;
+      } else {
+        let empty_bounded_vec: BoundedVec<
+          WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
+          <T as pallet::Config>::WatchListLimit,
+        > = vec![watch_list]
+          .try_into()
+          .expect("Watch list should be created");
+
+        AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
+      }
 
       Self::deposit_event(Event::<T>::WatchTransactionAdded {
         account_id: account_id.clone(),
