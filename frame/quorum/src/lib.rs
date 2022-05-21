@@ -975,7 +975,16 @@ pub mod pallet {
         transaction_id: transaction_id.clone(),
       };
 
-      if AccountWatchList::<T>::contains_key(account_id) {
+      if !AccountWatchList::<T>::contains_key(account_id) {
+        let empty_bounded_vec: BoundedVec<
+          WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
+          <T as pallet::Config>::WatchListLimit,
+        > = vec![watch_list]
+          .try_into()
+          .expect("Watch list should be created");
+
+        AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
+      } else {
         let mut watch_list_for_account_id_is_none: bool = false;
         AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
           match account_watch_list {
@@ -998,15 +1007,6 @@ pub mod pallet {
             );
           })
         }
-      } else {
-        let empty_bounded_vec: BoundedVec<
-          WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
-          <T as pallet::Config>::WatchListLimit,
-        > = vec![watch_list]
-          .try_into()
-          .expect("Watch list should be created");
-
-        AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
       }
 
       Self::deposit_event(Event::<T>::WatchTransactionAdded {
