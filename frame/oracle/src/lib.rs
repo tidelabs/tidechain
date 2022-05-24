@@ -302,20 +302,25 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::InvalidMarketMakerRequestId { index: index as u8 })?;
 
               // validate user slippage tolerance
-              let pay_per_token = trade.amount_from as f64 / trade.amount_to as f64;
-              let pay_per_token_offered = mm.amount_to_receive as f64 / mm.amount_to_send as f64;
-              let allowed_slippage = trade.slippage.deconstruct() as f64 / 1_000_000_f64;
+              let pay_per_token =
+                FixedU128::from(trade.amount_from) / FixedU128::from(trade.amount_to);
+              let pay_per_token_offered =
+                FixedU128::from(mm.amount_to_receive) / FixedU128::from(mm.amount_to_send);
+              let allowed_slippage = trade.slippage;
 
               // limit order can match with smaller price
               if trade.swap_type != SwapType::Limit {
-                let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+                let minimum_per_token =
+                  pay_per_token - pay_per_token.saturating_mul(allowed_slippage.into());
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanSwapLowerBound { index: index as u8 }
                 );
               }
 
-              let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
+              let maximum_per_token =
+                pay_per_token + pay_per_token.saturating_mul(allowed_slippage.into());
+
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
                 Error::OfferIsGreaterThanSwapUpperBound { index: index as u8 }
