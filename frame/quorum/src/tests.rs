@@ -16,14 +16,17 @@
 
 use crate::{
   mock::{
-    new_test_ext, Adapter, Event as MockEvent, Origin, ProposalLifetime, PubkeyLimitPerAsset,
-    Quorum, Security, StringLimit, System, Test, VotesLimit, WatchListLimit,
+    new_test_ext, Adapter, Assets, BurnedCap, Event as MockEvent, Origin, ProposalLifetime,
+    PubkeyLimitPerAsset, Quorum, Security, StringLimit, System, Test, VotesLimit, WatchListLimit,
   },
   pallet::*,
 };
 use frame_support::{
   assert_err, assert_noop, assert_ok,
-  traits::{fungibles::Inspect, Hooks},
+  traits::{
+    fungibles::{Inspect, Mutate},
+    Hooks,
+  },
   BoundedVec,
 };
 use sp_core::H256;
@@ -32,7 +35,7 @@ use std::str::FromStr;
 
 use pallet_security::CurrentBlockCount as CurrentBlockNumber;
 use tidefi_primitives::{
-  pallet::SecurityExt, AssetId, ComplianceLevel, CurrencyId, Hash, Mint, ProposalStatus,
+  pallet::SecurityExt, AssetId, Balance, ComplianceLevel, CurrencyId, Hash, Mint, ProposalStatus,
   ProposalType, ProposalVotes, WatchList, WatchListAction, Withdrawal,
 };
 
@@ -46,10 +49,20 @@ const BLOCK_NUMBER_ZERO: u64 = 0;
 
 // TEMP Asset
 const TEMP_ASSET_ID: AssetId = 4;
+const TEMP_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEMP_ASSET_ID);
+const TEMP_ASSET_IS_SUFFICIENT: bool = true;
+const TEMP_ASSET_MIN_BALANCE: u128 = 1;
+
+// TEMP Asset Metadata
+const TEMP_ASSET_NAME: &str = "TEMP";
+const TEMP_ASSET_SYMBOL: &str = "TEMP";
+const TEMP_ASSET_NUMBER_OF_DECIMAL_PLACES: u8 = 2;
 
 // Asset Units
 const ONE_TEMP: u128 = 100;
 const ONE_TDFY: u128 = 1_000_000_000_000;
+
+const INITIAL_10000_TEMPS: Balance = 10_000 * ONE_TEMP;
 
 #[derive(Clone)]
 struct UpdateConfiguration {
@@ -121,6 +134,40 @@ impl Default for Context {
 }
 
 impl Context {
+  fn create_temp_asset_and_metadata(self) -> Self {
+    let temp_asset_owner = ALICE_ACCOUNT_ID as u64;
+
+    assert_ok!(Assets::force_create(
+      Origin::root(),
+      TEMP_ASSET_ID,
+      temp_asset_owner,
+      TEMP_ASSET_IS_SUFFICIENT,
+      TEMP_ASSET_MIN_BALANCE
+    ));
+
+    assert_ok!(Assets::set_metadata(
+      Origin::signed(temp_asset_owner),
+      TEMP_ASSET_ID,
+      TEMP_ASSET_NAME.into(),
+      TEMP_ASSET_SYMBOL.into(),
+      TEMP_ASSET_NUMBER_OF_DECIMAL_PLACES
+    ));
+
+    self
+  }
+
+  fn mint_tdfy(self, account: AccountId, amount: u128) -> Self {
+    Self::mint_asset_for_accounts(vec![account], CurrencyId::Tdfy, amount);
+    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &account), amount);
+    self
+  }
+
+  fn mint_temp(self, account: AccountId, amount: u128) -> Self {
+    Self::mint_asset_for_accounts(vec![account], TEMP_CURRENCY_ID, amount);
+    assert_eq!(Adapter::balance(TEMP_CURRENCY_ID, &account), amount);
+    self
+  }
+
   fn insert_asset1_with_alice_public_key(self) -> Self {
     PublicKeys::<Test>::insert(ASSET_1, self.public_keys.clone());
     assert!(Members::<Test>::contains_key(ALICE_ACCOUNT_ID as u64));
@@ -245,6 +292,12 @@ impl Context {
         self.valid_update_configuration.threshold,
       ),
     ]
+  }
+
+  fn mint_asset_for_accounts(accounts: Vec<AccountId>, asset: CurrencyId, amount: u128) {
+    for account in accounts {
+      assert_ok!(Adapter::mint_into(asset, &account, amount));
+    }
   }
 }
 
@@ -916,6 +969,227 @@ mod voting_for_proposals {
     }
   }
 
+  mod withdrawal_proposal_is_successfully_committed {
+    use super::*;
+
+    mod and_resolved {
+      use super::*;
+
+      #[test]
+      pub fn acknowledged() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .insert_asset1_with_alice_public_key()
+            .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+            .create_temp_asset_and_metadata()
+            .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
+            .insert_a_valid_withdrawal_proposal();
+
+          let asset_balance_before_withdrawal = Adapter::balance(
+            context.valid_withdrawal.asset_id,
+            &context.valid_withdrawal.account_id,
+          );
+
+          assert_ok!(Quorum::acknowledge_proposal(
+            context.alice,
+            context.proposal_id
+          ));
+
+          assert!(Quorum::proposals()
+            .iter()
+            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
+            .is_none());
+
+          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
+
+          assert_eq!(
+            asset_balance_before_withdrawal - context.valid_withdrawal.amount,
+            Adapter::balance(
+              context.valid_withdrawal.asset_id,
+              &context.valid_withdrawal.account_id,
+            )
+          );
+
+          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
+            account_id: ALICE_ACCOUNT_ID as u64,
+            proposal_id: context.proposal_id,
+          }));
+
+          System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
+            proposal_id: context.proposal_id,
+          }));
+
+          System::assert_has_event(MockEvent::Quorum(Event::BurnedInitialized {
+            proposal_id: context.proposal_id,
+            account_id: context.valid_withdrawal.account_id,
+            currency_id: context.valid_withdrawal.asset_id,
+            amount: context.valid_withdrawal.amount,
+          }));
+
+          System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
+            proposal_id: context.proposal_id,
+          }));
+        });
+      }
+
+      #[test]
+      pub fn rejected() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .insert_asset1_with_alice_public_key()
+            .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+            .create_temp_asset_and_metadata()
+            .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
+            .insert_a_valid_withdrawal_proposal();
+
+          let asset_balance_before_mint = Adapter::balance(
+            context.valid_withdrawal.asset_id,
+            &context.valid_withdrawal.account_id,
+          );
+
+          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+
+          assert!(Quorum::proposals()
+            .iter()
+            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
+            .is_none());
+
+          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
+
+          assert_eq!(
+            asset_balance_before_mint,
+            Adapter::balance(
+              context.valid_withdrawal.asset_id,
+              &context.valid_withdrawal.account_id,
+            )
+          );
+
+          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
+            account_id: ALICE_ACCOUNT_ID as u64,
+            proposal_id: context.proposal_id,
+          }));
+        });
+      }
+    }
+
+    mod but_not_resolved {
+      use super::*;
+
+      #[test]
+      pub fn acknowledged() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .insert_asset1_with_alice_public_key()
+            .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+            .create_temp_asset_and_metadata()
+            .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
+            .insert_a_valid_withdrawal_proposal()
+            .set_threshold(2);
+
+          let asset_balance_before_withdrawal = Adapter::balance(
+            context.valid_withdrawal.asset_id,
+            &context.valid_withdrawal.account_id,
+          );
+
+          assert_ok!(Quorum::acknowledge_proposal(
+            context.alice,
+            context.proposal_id
+          ));
+
+          assert_eq!(
+            Quorum::proposals().into_inner().first().unwrap(),
+            &(
+              context.proposal_id,
+              BLOCK_NUMBER_ZERO,
+              ProposalType::Withdrawal(Withdrawal {
+                account_id: context.valid_withdrawal.account_id,
+                asset_id: context.valid_withdrawal.asset_id,
+                amount: context.valid_withdrawal.amount,
+                external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
+                  .unwrap(),
+                block_number: context.valid_withdrawal.block_number,
+              })
+            )
+          );
+
+          assert!(Quorum::proposal_votes(context.proposal_id)
+            .unwrap()
+            .votes_for
+            .into_inner()
+            .contains(&(ALICE_ACCOUNT_ID as u64)));
+
+          assert_eq!(
+            asset_balance_before_withdrawal,
+            Adapter::balance(
+              context.valid_withdrawal.asset_id,
+              &context.valid_withdrawal.account_id,
+            )
+          );
+
+          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
+            account_id: ALICE_ACCOUNT_ID as u64,
+            proposal_id: context.proposal_id,
+          }));
+        });
+      }
+
+      #[test]
+      pub fn rejected() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .insert_asset1_with_alice_public_key()
+            .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+            .create_temp_asset_and_metadata()
+            .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
+            .insert_a_valid_withdrawal_proposal()
+            .set_threshold(2);
+
+          let asset_balance_before_mint = Adapter::balance(
+            context.valid_withdrawal.asset_id,
+            &context.valid_withdrawal.account_id,
+          );
+
+          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+
+          assert_eq!(
+            Quorum::proposals().into_inner().first().unwrap(),
+            &(
+              context.proposal_id,
+              BLOCK_NUMBER_ZERO,
+              ProposalType::Withdrawal(Withdrawal {
+                account_id: context.valid_withdrawal.account_id,
+                asset_id: context.valid_withdrawal.asset_id,
+                amount: context.valid_withdrawal.amount,
+                external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
+                  .unwrap(),
+                block_number: context.valid_withdrawal.block_number,
+              })
+            )
+          );
+
+          assert!(Quorum::proposal_votes(context.proposal_id)
+            .unwrap()
+            .votes_against
+            .into_inner()
+            .contains(&(ALICE_ACCOUNT_ID as u64)));
+
+          assert_eq!(
+            asset_balance_before_mint,
+            Adapter::balance(
+              context.valid_withdrawal.asset_id,
+              &context.valid_withdrawal.account_id,
+            )
+          );
+
+          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
+            account_id: ALICE_ACCOUNT_ID as u64,
+            proposal_id: context.proposal_id,
+          }));
+        });
+      }
+    }
+  }
+
   mod update_configuration_proposal_is_successfully_committed {
     use super::*;
 
@@ -1504,6 +1778,146 @@ mod voting_for_proposals {
             }));
           });
         }
+
+        #[test]
+        pub fn burn_failed() {
+          new_test_ext().execute_with(|| {
+            let context = Context::default()
+              .insert_asset1_with_alice_public_key()
+              .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+              .create_temp_asset_and_metadata()
+              .insert_a_valid_withdrawal_proposal();
+
+            let asset_balance_before_withdrawal = Adapter::balance(
+              context.valid_withdrawal.asset_id,
+              &context.valid_withdrawal.account_id,
+            );
+
+            assert_err!(
+              Quorum::acknowledge_proposal(context.alice, context.proposal_id),
+              Error::<Test>::BurnFailed
+            );
+
+            assert_eq!(
+              Quorum::proposals().into_inner().first().unwrap(),
+              &(
+                context.proposal_id,
+                BLOCK_NUMBER_ZERO,
+                ProposalType::Withdrawal(Withdrawal {
+                  account_id: context.valid_withdrawal.account_id,
+                  asset_id: context.valid_withdrawal.asset_id,
+                  amount: context.valid_withdrawal.amount,
+                  external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
+                    .unwrap(),
+                  block_number: context.valid_withdrawal.block_number,
+                })
+              )
+            );
+
+            assert!(Quorum::proposal_votes(context.proposal_id)
+              .unwrap()
+              .votes_for
+              .into_inner()
+              .contains(&(ALICE_ACCOUNT_ID as u64)));
+
+            assert_eq!(
+              asset_balance_before_withdrawal,
+              Adapter::balance(
+                context.valid_withdrawal.asset_id,
+                &context.valid_withdrawal.account_id,
+              )
+            );
+
+            System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
+              account_id: ALICE_ACCOUNT_ID as u64,
+              proposal_id: context.proposal_id,
+            }));
+
+            System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
+              proposal_id: context.proposal_id,
+            }));
+          });
+        }
+
+        #[test]
+        pub fn burned_queue_overflow() {
+          new_test_ext().execute_with(|| {
+            let context = Context::default()
+              .insert_asset1_with_alice_public_key()
+              .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+              .create_temp_asset_and_metadata()
+              .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
+              .insert_a_valid_withdrawal_proposal();
+
+            let asset_balance_before_mint = Adapter::balance(
+              context.valid_withdrawal.asset_id,
+              &context.valid_withdrawal.account_id,
+            );
+
+            let withdrawal: Withdrawal<AccountId, BlockNumber, BoundedVec<u8, StringLimit>> =
+              Withdrawal {
+                account_id: context.valid_withdrawal.account_id,
+                asset_id: context.valid_withdrawal.asset_id,
+                amount: context.valid_withdrawal.amount,
+                external_address: BoundedVec::try_from(
+                  context.valid_withdrawal.external_address.clone(),
+                )
+                .unwrap(),
+                block_number: context.valid_withdrawal.block_number,
+              };
+
+            for _ in 0..BurnedCap::get().try_into().unwrap() {
+              assert_ok!(BurnedQueue::<Test>::try_append((
+                context.proposal_id,
+                withdrawal.clone()
+              )));
+            }
+
+            assert_err!(
+              Quorum::acknowledge_proposal(context.alice, context.proposal_id),
+              Error::<Test>::BurnedQueueOverflow
+            );
+
+            assert_eq!(
+              Quorum::proposals().into_inner().first().unwrap(),
+              &(
+                context.proposal_id,
+                BLOCK_NUMBER_ZERO,
+                ProposalType::Withdrawal(Withdrawal {
+                  account_id: context.valid_withdrawal.account_id,
+                  asset_id: context.valid_withdrawal.asset_id,
+                  amount: context.valid_withdrawal.amount,
+                  external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
+                    .unwrap(),
+                  block_number: context.valid_withdrawal.block_number,
+                })
+              )
+            );
+
+            assert!(Quorum::proposal_votes(context.proposal_id)
+              .unwrap()
+              .votes_for
+              .into_inner()
+              .contains(&(ALICE_ACCOUNT_ID as u64)));
+
+            assert_eq!(
+              asset_balance_before_mint - context.valid_withdrawal.amount,
+              Adapter::balance(
+                context.valid_withdrawal.asset_id,
+                &context.valid_withdrawal.account_id,
+              )
+            );
+
+            System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
+              account_id: ALICE_ACCOUNT_ID as u64,
+              proposal_id: context.proposal_id,
+            }));
+
+            System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
+              proposal_id: context.proposal_id,
+            }));
+          });
+        }
       }
     }
   }
@@ -1741,7 +2155,7 @@ mod eval_proposal_state {
           .set_threshold(2)
           .commit_a_valid_vote(true);
 
-        let asset_balance_before_mint = Adapter::balance(
+        let asset_balance_before_withdrawal = Adapter::balance(
           context.valid_withdrawal.asset_id,
           &context.valid_withdrawal.account_id,
         );
@@ -1768,12 +2182,65 @@ mod eval_proposal_state {
           .contains(&(ALICE_ACCOUNT_ID as u64)));
 
         assert_eq!(
-          asset_balance_before_mint,
+          asset_balance_before_withdrawal,
           Adapter::balance(
             context.valid_withdrawal.asset_id,
             &context.valid_withdrawal.account_id,
           )
         );
+      });
+    }
+
+    #[test]
+    pub fn approved() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
+          .insert_a_valid_withdrawal_proposal()
+          .commit_a_valid_vote(true);
+
+        let asset_balance_before_withdrawal = Adapter::balance(
+          context.valid_withdrawal.asset_id,
+          &context.valid_withdrawal.account_id,
+        );
+
+        assert_ok!(Quorum::eval_proposal_state(
+          context.alice,
+          context.proposal_id
+        ));
+
+        assert!(Quorum::proposals()
+          .iter()
+          .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
+          .is_none());
+
+        assert!(Quorum::proposal_votes(context.proposal_id).is_none());
+
+        assert_eq!(
+          asset_balance_before_withdrawal - context.valid_withdrawal.amount,
+          Adapter::balance(
+            context.valid_withdrawal.asset_id,
+            &context.valid_withdrawal.account_id,
+          )
+        );
+
+        System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
+          proposal_id: context.proposal_id,
+        }));
+
+        System::assert_has_event(MockEvent::Quorum(Event::BurnedInitialized {
+          proposal_id: context.proposal_id,
+          account_id: context.valid_withdrawal.account_id,
+          currency_id: context.valid_withdrawal.asset_id,
+          amount: context.valid_withdrawal.amount,
+        }));
+
+        System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
+          proposal_id: context.proposal_id,
+        }));
       });
     }
 
