@@ -42,8 +42,8 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
-  use sp_runtime::traits::{AccountIdConversion, Saturating};
-  use sp_runtime::{FixedU128, Permill};
+  use sp_runtime::traits::AccountIdConversion;
+  use sp_runtime::{traits::Saturating, FixedU128, Permill};
   use sp_std::vec;
   use tidefi_primitives::{
     assets::USDT,
