@@ -42,8 +42,8 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
-  use sp_runtime::traits::AccountIdConversion;
-  use sp_runtime::Permill;
+  use sp_runtime::traits::{AccountIdConversion, Saturating};
+  use sp_runtime::{FixedU128, Permill};
   use sp_std::vec;
   use tidefi_primitives::{
     assets::USDT,
@@ -322,21 +322,25 @@ pub mod pallet {
               );
 
               // validate mm slippage tolerance
-              let pay_per_token =
-                mm_trade_request.amount_from as f64 / mm_trade_request.amount_to as f64;
-              let pay_per_token_offered = mm.amount_to_send as f64 / mm.amount_to_receive as f64;
-              let allowed_slippage = mm_trade_request.slippage.deconstruct() as f64 / 1_000_000_f64;
+              let pay_per_token = FixedU128::from(mm_trade_request.amount_from)
+                / FixedU128::from(mm_trade_request.amount_to);
 
+              let pay_per_token_offered =
+                FixedU128::from(mm.amount_to_send) / FixedU128::from(mm.amount_to_receive);
+              let allowed_slippage = mm_trade_request.slippage;
               // limit order can match with smaller price
               if mm_trade_request.swap_type != SwapType::Limit {
-                let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+                let minimum_per_token =
+                  pay_per_token - pay_per_token.saturating_mul(allowed_slippage.into());
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanMarketMakerSwapLowerBound { index: index as u8 }
                 );
               }
 
-              let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
+              let maximum_per_token =
+                pay_per_token + pay_per_token.saturating_mul(allowed_slippage.into());
+
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
                 Error::OfferIsGreaterThanMarketMakerSwapUpperBound { index: index as u8 }

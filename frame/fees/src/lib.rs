@@ -402,6 +402,9 @@ pub mod pallet {
               active_era.last_session_block = Some(real_block);
 
               if current_session >= expected_end_session_for_era {
+                Self::deposit_event(Event::<T>::EraEnded {
+                  era_index: active_era.index,
+                });
                 // increment the era index
                 active_era.index = active_era.index.saturating_add(1);
                 // reset the era values
@@ -409,9 +412,6 @@ pub mod pallet {
                 active_era.start_block = None;
                 active_era.start_session_index = None;
                 active_era.start = None;
-                Self::deposit_event(Event::<T>::EraEnded {
-                  era_index: active_era.index,
-                });
               }
 
               // update active era

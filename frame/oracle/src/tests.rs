@@ -47,10 +47,22 @@ const TEMP_ASSET_MIN_BALANCE: u128 = 1;
 // TEMP Asset Metadata
 const TEMP_ASSET_NAME: &str = "TEMP";
 const TEMP_ASSET_SYMBOL: &str = "TEMP";
-const TEMP_ASSET_NUMBER_OF_DECIMAL_PLACES: u8 = 2;
+const TEMP_ASSET_NUMBER_OF_DECIMAL_PLACES: u8 = 8;
+
+// ZEMP Asset
+const ZEMP_ASSET_ID: u32 = 5;
+const ZEMP_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(ZEMP_ASSET_ID);
+const ZEMP_ASSET_IS_SUFFICIENT: bool = true;
+const ZEMP_ASSET_MIN_BALANCE: u128 = 1;
+
+// ZEMP Asset Metadata
+const ZEMP_ASSET_NAME: &str = "ZEMP";
+const ZEMP_ASSET_SYMBOL: &str = "ZEMP";
+const ZEMP_ASSET_NUMBER_OF_DECIMAL_PLACES: u8 = 18;
 
 // Asset Units
-const ONE_TEMP: u128 = 100;
+const ONE_TEMP: u128 = 100_000_000;
+const ONE_ZEMP: u128 = 1_000_000_000_000_000_000;
 const ONE_TDFY: u128 = 1_000_000_000_000;
 
 // Test Accounts
@@ -135,6 +147,28 @@ impl Context {
     self
   }
 
+  fn create_zemp_asset_and_metadata(self) -> Self {
+    let zemp_asset_owner = ALICE_ACCOUNT_ID;
+
+    assert_ok!(Assets::force_create(
+      Origin::root(),
+      ZEMP_ASSET_ID,
+      zemp_asset_owner,
+      ZEMP_ASSET_IS_SUFFICIENT,
+      ZEMP_ASSET_MIN_BALANCE
+    ));
+
+    assert_ok!(Assets::set_metadata(
+      Origin::signed(zemp_asset_owner),
+      ZEMP_ASSET_ID,
+      ZEMP_ASSET_NAME.into(),
+      ZEMP_ASSET_SYMBOL.into(),
+      ZEMP_ASSET_NUMBER_OF_DECIMAL_PLACES
+    ));
+
+    self
+  }
+
   fn mint_tdfy(self, account: AccountId, amount: u128) -> Self {
     Self::mint_asset_for_accounts(vec![account], CurrencyId::Tdfy, amount);
     assert_eq!(Adapter::balance(CurrencyId::Tdfy, &account), amount);
@@ -144,6 +178,12 @@ impl Context {
   fn mint_temp(self, account: AccountId, amount: u128) -> Self {
     Self::mint_asset_for_accounts(vec![account], TEMP_CURRENCY_ID, amount);
     assert_eq!(Adapter::balance(TEMP_CURRENCY_ID, &account), amount);
+    self
+  }
+
+  fn mint_zemp(self, account: AccountId, amount: u128) -> Self {
+    Self::mint_asset_for_accounts(vec![account], ZEMP_CURRENCY_ID, amount);
+    assert_eq!(Adapter::balance(ZEMP_CURRENCY_ID, &account), amount);
     self
   }
 
@@ -197,6 +237,28 @@ impl Context {
     )
   }
 
+  fn create_temp_to_zemp_limit_swap_request(
+    &self,
+    requester_account_id: AccountId,
+    temp_amount: Balance,
+    zemp_amount: Balance,
+    extrinsic_hash: [u8; 32],
+    slippage: Permill,
+  ) -> Hash {
+    add_new_swap_and_assert_results(
+      requester_account_id,
+      TEMP_CURRENCY_ID,
+      temp_amount,
+      ZEMP_CURRENCY_ID,
+      zemp_amount,
+      CURRENT_BLOCK_NUMBER,
+      extrinsic_hash,
+      self.market_makers.contains(&requester_account_id),
+      SwapType::Limit,
+      slippage,
+    )
+  }
+
   fn create_tdfy_to_temp_market_swap_request(
     &self,
     requester_account_id: AccountId,
@@ -209,6 +271,28 @@ impl Context {
       requester_account_id,
       CurrencyId::Tdfy,
       tdfy_amount,
+      TEMP_CURRENCY_ID,
+      temp_amount,
+      CURRENT_BLOCK_NUMBER,
+      extrinsic_hash,
+      self.market_makers.contains(&requester_account_id),
+      SwapType::Market,
+      slippage,
+    )
+  }
+
+  fn create_zemp_to_temp_market_swap_request(
+    &self,
+    requester_account_id: AccountId,
+    zemp_amount: Balance,
+    temp_amount: Balance,
+    extrinsic_hash: [u8; 32],
+    slippage: Permill,
+  ) -> Hash {
+    add_new_swap_and_assert_results(
+      requester_account_id,
+      ZEMP_CURRENCY_ID,
+      zemp_amount,
       TEMP_CURRENCY_ID,
       temp_amount,
       CURRENT_BLOCK_NUMBER,
@@ -270,7 +354,7 @@ fn add_new_swap_and_assert_results(
   )
   .unwrap();
 
-  assert_swap_cost_is_suspended(account_id, asset_id_from, amount_from);
+  assert_swap_cost_is_suspended(account_id, asset_id_from, amount_from, is_market_maker);
 
   if asset_id_from != CurrencyId::Tdfy {
     assert_sold_tokens_are_deducted(
@@ -278,6 +362,7 @@ fn add_new_swap_and_assert_results(
       asset_id_from,
       initial_from_token_balance,
       amount_from,
+      is_market_maker,
     );
   }
 
@@ -286,6 +371,7 @@ fn add_new_swap_and_assert_results(
     asset_id_from,
     initial_from_token_balance,
     amount_from,
+    is_market_maker,
   );
 
   assert_eq!(trade_request.status, SwapStatus::Pending);
@@ -306,10 +392,12 @@ fn assert_swap_cost_is_suspended(
   account_id: AccountId,
   currency_id: CurrencyId,
   sell_amount: Balance,
+  is_market_maker: bool,
 ) {
-  let swap_fee_rate = match currency_id {
-    CurrencyId::Tdfy => REQUESTER_SWAP_FEE_RATE,
-    _ => MARKET_MAKER_SWAP_FEE_RATE,
+  let swap_fee_rate = if is_market_maker {
+    MARKET_MAKER_SWAP_FEE_RATE
+  } else {
+    REQUESTER_SWAP_FEE_RATE
   };
 
   assert_eq!(
@@ -323,10 +411,12 @@ fn assert_spendable_balance_is_updated(
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
+  is_market_maker: bool,
 ) {
-  let swap_fee_rate = match currency_id {
-    CurrencyId::Tdfy => REQUESTER_SWAP_FEE_RATE,
-    _ => MARKET_MAKER_SWAP_FEE_RATE,
+  let swap_fee_rate = if is_market_maker {
+    MARKET_MAKER_SWAP_FEE_RATE
+  } else {
+    REQUESTER_SWAP_FEE_RATE
   };
 
   let expected_reducible_balance = initial_balance
@@ -357,10 +447,12 @@ fn assert_sold_tokens_are_deducted(
   currency_id: CurrencyId,
   initial_balance: Balance,
   sell_amount: Balance,
+  is_market_maker: bool,
 ) {
-  let swap_fee_rate = match currency_id {
-    CurrencyId::Tdfy => REQUESTER_SWAP_FEE_RATE,
-    _ => MARKET_MAKER_SWAP_FEE_RATE,
+  let swap_fee_rate = if is_market_maker {
+    MARKET_MAKER_SWAP_FEE_RATE
+  } else {
+    REQUESTER_SWAP_FEE_RATE
   };
 
   assert_eq!(
@@ -642,6 +734,7 @@ pub fn confirm_swap_partial_filling() {
       TEMP_CURRENCY_ID,
       CHARLIE_INITIAL_10000_TEMPS,
       CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+      true,
     );
 
     assert_eq!(
@@ -666,6 +759,74 @@ pub fn confirm_swap_partial_filling() {
       Adapter::balance_on_hold(TEMP_CURRENCY_ID, &DAVE_ACCOUNT_ID),
       Zero::zero()
     );
+  });
+}
+
+#[test]
+pub fn confirm_swap_temp_zemp() {
+  new_test_ext().execute_with(|| {
+    const BOB_INITIAL_ZEMPS: Balance = 10 * ONE_ZEMP;
+    const CHARLIE_INITIAL_TEMPS: Balance = 2 * ONE_TEMP;
+
+    let context = Context::default()
+      .set_oracle_status(true)
+      .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+      .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+      .mint_tdfy(BOB_ACCOUNT_ID, ONE_TDFY)
+      .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+      .create_temp_asset_and_metadata()
+      .create_zemp_asset_and_metadata()
+      .mint_zemp(BOB_ACCOUNT_ID, BOB_INITIAL_ZEMPS)
+      .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_TEMPS);
+
+    const BOB_SELLS_ZEMPS: Balance = 4_889_975_550_122_249_389;
+    const BOB_BUYS_TEMPS: Balance = 40_000_000;
+    let trade_request_id = context.create_zemp_to_temp_market_swap_request(
+      BOB_ACCOUNT_ID,
+      BOB_SELLS_ZEMPS,
+      BOB_BUYS_TEMPS,
+      EXTRINSIC_HASH_0,
+      SLIPPAGE_2_PERCENTS,
+    );
+
+    assert_eq!(
+      trade_request_id,
+      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
+        .unwrap_or_default()
+    );
+
+    // 0.80478930
+    const CHARLIE_SELLS_TEMPS: Balance = 80_478_930;
+    // 9.838500000000000000
+    const CHARLIE_BUYS_ZEMPS: Balance = 9_838_500_000_000_000_000;
+
+    let trade_request_mm_id = context.create_temp_to_zemp_limit_swap_request(
+      CHARLIE_ACCOUNT_ID,
+      CHARLIE_SELLS_TEMPS,
+      CHARLIE_BUYS_ZEMPS,
+      EXTRINSIC_HASH_1,
+      SLIPPAGE_0_PERCENT,
+    );
+
+    assert_eq!(
+      trade_request_mm_id,
+      Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
+        .unwrap_or_default()
+    );
+
+    // partial filling
+    assert_ok!(Oracle::confirm_swap(
+      context.alice.clone(),
+      trade_request_id,
+      vec![
+        // charlie
+        SwapConfirmation {
+          request_id: trade_request_mm_id,
+          amount_to_receive: BOB_SELLS_ZEMPS,
+          amount_to_send: BOB_BUYS_TEMPS,
+        },
+      ],
+    ));
   });
 }
 
