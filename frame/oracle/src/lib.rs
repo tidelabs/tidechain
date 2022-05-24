@@ -306,12 +306,11 @@ pub mod pallet {
                 FixedU128::from(trade.amount_from) / FixedU128::from(trade.amount_to);
               let pay_per_token_offered =
                 FixedU128::from(mm.amount_to_receive) / FixedU128::from(mm.amount_to_send);
-              let allowed_slippage = trade.slippage;
 
               // limit order can match with smaller price
               if trade.swap_type != SwapType::Limit {
                 let minimum_per_token =
-                  pay_per_token - pay_per_token.saturating_mul(allowed_slippage.into());
+                  pay_per_token - pay_per_token.saturating_mul(trade.slippage.into());
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanSwapLowerBound { index: index as u8 }
@@ -319,7 +318,7 @@ pub mod pallet {
               }
 
               let maximum_per_token =
-                pay_per_token + pay_per_token.saturating_mul(allowed_slippage.into());
+                pay_per_token + pay_per_token.saturating_mul(trade.slippage.into());
 
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
@@ -332,11 +331,11 @@ pub mod pallet {
 
               let pay_per_token_offered =
                 FixedU128::from(mm.amount_to_send) / FixedU128::from(mm.amount_to_receive);
-              let allowed_slippage = mm_trade_request.slippage;
+
               // limit order can match with smaller price
               if mm_trade_request.swap_type != SwapType::Limit {
                 let minimum_per_token =
-                  pay_per_token - pay_per_token.saturating_mul(allowed_slippage.into());
+                  pay_per_token - pay_per_token.saturating_mul(mm_trade_request.slippage.into());
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanMarketMakerSwapLowerBound { index: index as u8 }
@@ -344,7 +343,7 @@ pub mod pallet {
               }
 
               let maximum_per_token =
-                pay_per_token + pay_per_token.saturating_mul(allowed_slippage.into());
+                pay_per_token + pay_per_token.saturating_mul(mm_trade_request.slippage.into());
 
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
