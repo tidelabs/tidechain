@@ -43,7 +43,10 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
-  use sp_runtime::{traits::Saturating, FixedU128, Permill};
+  use sp_runtime::{
+    traits::{CheckedDiv, Saturating},
+    FixedU128, Permill,
+  };
   use sp_std::vec;
   use tidefi_primitives::{
     assets::USDT,
@@ -254,6 +257,8 @@ pub mod pallet {
     UpdateMarketMakerAccountSwapRequestStatusFailed,
     /// Swaps cap reached for this account id
     SwapOverflow,
+    /// Unable to calculate slippage
+    SlippageOverflow,
     /// Unknown Error.
     UnknownError,
   }
@@ -302,10 +307,13 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::InvalidMarketMakerRequestId { index: index as u8 })?;
 
               // validate user slippage tolerance
-              let pay_per_token =
-                FixedU128::from(trade.amount_from) / FixedU128::from(trade.amount_to);
-              let pay_per_token_offered =
-                FixedU128::from(mm.amount_to_receive) / FixedU128::from(mm.amount_to_send);
+              let pay_per_token = FixedU128::from(trade.amount_from)
+                .checked_div(&FixedU128::from(trade.amount_to))
+                .ok_or(Error::<T>::SlippageOverflow)?;
+
+              let pay_per_token_offered = FixedU128::from(mm.amount_to_receive)
+                .checked_div(&FixedU128::from(mm.amount_to_send))
+                .ok_or(Error::<T>::SlippageOverflow)?;
 
               // limit order can match with smaller price
               if trade.swap_type != SwapType::Limit {
@@ -327,10 +335,12 @@ pub mod pallet {
 
               // validate mm slippage tolerance
               let pay_per_token = FixedU128::from(mm_trade_request.amount_from)
-                / FixedU128::from(mm_trade_request.amount_to);
+                .checked_div(&FixedU128::from(mm_trade_request.amount_to))
+                .ok_or(Error::<T>::SlippageOverflow)?;
 
-              let pay_per_token_offered =
-                FixedU128::from(mm.amount_to_send) / FixedU128::from(mm.amount_to_receive);
+              let pay_per_token_offered = FixedU128::from(mm.amount_to_send)
+                .checked_div(&FixedU128::from(mm.amount_to_receive))
+                .ok_or(Error::<T>::SlippageOverflow)?;
 
               // limit order can match with smaller price
               if mm_trade_request.swap_type != SwapType::Limit {
