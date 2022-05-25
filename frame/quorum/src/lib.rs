@@ -358,8 +358,10 @@ pub mod pallet {
     WatchlistOverflow,
     /// Members cap reached
     MembersOverflow,
-    /// Votes cap reached for this proposal
-    VotesOverflow,
+    /// Votes for cap reached for this proposal
+    VotesForOverflow,
+    /// Votes against cap reached for this proposal
+    VotesAgainstOverflow,
     /// Public keys cap reached for this asset id
     PublicKeysOverflow,
     // Unknown error
@@ -521,7 +523,7 @@ pub mod pallet {
       ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
 
       // 3. Delete all existing public keys of this member
-      Self::delete_public_keys_for_account(&sender)?;
+      Self::delete_public_keys_for_account(&sender);
 
       // 4. Register new public keys
       for (asset_id, public_key) in public_keys {
@@ -612,13 +614,12 @@ pub mod pallet {
     }
 
     // Delete all member public keys
-    fn delete_public_keys_for_account(who: &T::AccountId) -> Result<(), DispatchError> {
+    fn delete_public_keys_for_account(who: &T::AccountId) {
       for asset_id in PublicKeys::<T>::iter_keys() {
         PublicKeys::<T>::mutate(asset_id, |public_keys| {
           public_keys.retain(|(account_id, _)| *account_id != *who);
         });
       }
-      Ok(())
     }
 
     // Add member public key for a specific asset id
@@ -714,7 +715,7 @@ pub mod pallet {
       );
       ensure!(votes.expiry >= current_block, Error::<T>::ProposalExpired);
       ensure!(
-        !votes.votes_for.contains(&who) || !votes.votes_against.contains(&who),
+        !votes.votes_for.contains(&who) && !votes.votes_against.contains(&who),
         Error::<T>::MemberAlreadyVoted
       );
 
@@ -722,7 +723,7 @@ pub mod pallet {
         votes
           .votes_for
           .try_push(who.clone())
-          .map_err(|_| Error::<T>::VotesOverflow)?;
+          .map_err(|_| Error::<T>::VotesForOverflow)?;
         Self::deposit_event(Event::<T>::VoteFor {
           account_id: who,
           proposal_id,
@@ -731,7 +732,7 @@ pub mod pallet {
         votes
           .votes_against
           .try_push(who.clone())
-          .map_err(|_| Error::<T>::VotesOverflow)?;
+          .map_err(|_| Error::<T>::VotesAgainstOverflow)?;
 
         Self::deposit_event(Event::<T>::VoteAgainst {
           account_id: who,
@@ -760,36 +761,20 @@ pub mod pallet {
 
           let threshold = Self::threshold();
           let total_members = Members::<T>::count() as u16;
-          let status = if votes.votes_for.len() >= threshold as usize {
-            votes.status = ProposalStatus::Approved;
-            ProposalStatus::Approved
+          if votes.votes_for.len() >= threshold as usize {
+            Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
+            Self::process_proposal(proposal_id)?;
+            Self::delete_proposal(proposal_id)?;
+            *proposal_votes = None;
           } else if total_members >= threshold
             && votes.votes_against.len() as u16 + threshold > total_members
           {
-            votes.status = ProposalStatus::Rejected;
-            ProposalStatus::Rejected
-          } else {
-            ProposalStatus::Initiated
-          };
-
-          *proposal_votes = Some(votes.clone());
-          match status {
-            ProposalStatus::Approved => {
-              Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
-              Self::process_proposal(proposal_id)?;
-              Self::delete_proposal(proposal_id)?;
-              *proposal_votes = None;
-              Ok(())
-            }
-            ProposalStatus::Rejected => {
-              // FIXME: Maybe add some slashing for the proposer?
-              Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
-              Self::delete_proposal(proposal_id)?;
-              *proposal_votes = None;
-              Ok(())
-            }
-            _ => Ok(()),
+            // FIXME: Maybe add some slashing for the proposer?
+            Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
+            Self::delete_proposal(proposal_id)?;
+            *proposal_votes = None;
           }
+          Ok(())
         }
         None => Err(Error::<T>::ProposalDoesNotExist),
       })
@@ -804,7 +789,7 @@ pub mod pallet {
         ProposalType::Withdrawal(withdrawal) => Self::process_withdrawal(proposal_id, &withdrawal)?,
         // update quorum configuration (threshold & member set)
         ProposalType::UpdateConfiguration(members, threshold) => {
-          Self::process_update_configuration(&members, threshold)?
+          Self::process_update_configuration(&members, threshold)
         }
       };
       Self::deposit_event(Event::<T>::ProposalProcessed { proposal_id });
@@ -915,10 +900,7 @@ pub mod pallet {
     }
 
     // Process configuration update
-    fn process_update_configuration(
-      members: &Vec<T::AccountId>,
-      threshold: u16,
-    ) -> Result<(), Error<T>> {
+    fn process_update_configuration(members: &Vec<T::AccountId>, threshold: u16) {
       // 1. Remove all members existing
       Members::<T>::remove_all();
 
@@ -940,8 +922,6 @@ pub mod pallet {
         threshold,
         members: members.clone(),
       });
-
-      Ok(())
     }
 
     // Delete specific proposal
@@ -978,17 +958,14 @@ pub mod pallet {
       AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
         match account_watch_list {
           Some(current_watch_list) => current_watch_list
-            .try_push(watch_list)
+            .try_push(watch_list.clone())
             .map_err(|_| Error::<T>::WatchlistOverflow),
           None => {
-            let empty_bounded_vec: BoundedVec<
-              WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
-              <T as pallet::Config>::WatchListLimit,
-            > = vec![watch_list]
-              .try_into()
-              .map_err(|_| Error::<T>::UnknownError)?;
-
-            AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
+            *account_watch_list = Some(
+              vec![watch_list]
+                .try_into()
+                .expect("Watch list should be created"),
+            );
             Ok(())
           }
         }

@@ -49,6 +49,15 @@ const TEMP_ASSET_NAME: &str = "TEMP";
 const TEMP_ASSET_SYMBOL: &str = "TEMP";
 const TEMP_ASSET_NUMBER_OF_DECIMAL_PLACES: u8 = 8;
 
+// TEMP2 Asset
+const TEMP2_ASSET_ID: u32 = TEMP_ASSET_ID + 1;
+const TEMP2_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEMP2_ASSET_ID);
+
+// TEMP2 Asset Metadata
+const TEMP2_ASSET_NAME: &str = "TEMP2";
+const TEMP2_ASSET_SYMBOL: &str = "TEMP2";
+const TEMP2_ASSET_NUMBER_OF_DECIMAL_PLACES: u8 = 2;
+
 // ZEMP Asset
 const ZEMP_ASSET_ID: u32 = 5;
 const ZEMP_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(ZEMP_ASSET_ID);
@@ -147,6 +156,28 @@ impl Context {
     self
   }
 
+  fn create_temp2_asset_metadata(self) -> Self {
+    let temp2_asset_owner = ALICE_ACCOUNT_ID;
+
+    assert_ok!(Assets::force_create(
+      Origin::root(),
+      TEMP2_ASSET_ID,
+      temp2_asset_owner,
+      TEMP_ASSET_IS_SUFFICIENT,
+      TEMP_ASSET_MIN_BALANCE
+    ));
+
+    assert_ok!(Assets::set_metadata(
+      Origin::signed(temp2_asset_owner),
+      TEMP2_ASSET_ID,
+      TEMP2_ASSET_NAME.into(),
+      TEMP2_ASSET_SYMBOL.into(),
+      TEMP2_ASSET_NUMBER_OF_DECIMAL_PLACES
+    ));
+
+    self
+  }
+
   fn create_zemp_asset_and_metadata(self) -> Self {
     let zemp_asset_owner = ALICE_ACCOUNT_ID;
 
@@ -178,6 +209,12 @@ impl Context {
   fn mint_temp(self, account: AccountId, amount: u128) -> Self {
     Self::mint_asset_for_accounts(vec![account], TEMP_CURRENCY_ID, amount);
     assert_eq!(Adapter::balance(TEMP_CURRENCY_ID, &account), amount);
+    self
+  }
+
+  fn mint_temp2(self, account: AccountId, amount: u128) -> Self {
+    Self::mint_asset_for_accounts(vec![account], TEMP2_CURRENCY_ID, amount);
+    assert_eq!(Adapter::balance(TEMP2_CURRENCY_ID, &account), amount);
     self
   }
 
@@ -1876,6 +1913,58 @@ mod confirm_swap {
             },],
           ),
           Error::<Test>::TraderCannotOversell
+        );
+      });
+    }
+
+    #[test]
+    fn market_maker_swaps_buy_token_is_different_from_swap_sell_token() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS)
+          .create_temp2_asset_metadata()
+          .mint_temp2(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
+          &context,
+        );
+
+        // Add a new market maker swap with a different token TEMP2
+        let trade_request_mm1_id = add_new_swap_and_assert_results(
+          CHARLIE_ACCOUNT_ID,
+          TEMP2_CURRENCY_ID,
+          CHARLIE_SELLS_4000_TEMPS,
+          CurrencyId::Tdfy,
+          CHARLIE_BUYS_200_TDFYS,
+          CURRENT_BLOCK_NUMBER,
+          EXTRINSIC_HASH_1,
+          true,
+          SwapType::Limit,
+          SLIPPAGE_4_PERCENTS,
+        );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm1_id,
+              amount_to_receive: BOB_SELLS_10_TDFYS,
+              amount_to_send: BOB_BUYS_200_TEMPS,
+            },],
+          ),
+          Error::<Test>::MarketMakerBuyTokenNotMatchSwapSellToken
         );
       });
     }
