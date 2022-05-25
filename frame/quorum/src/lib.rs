@@ -358,8 +358,10 @@ pub mod pallet {
     WatchlistOverflow,
     /// Members cap reached
     MembersOverflow,
-    /// Votes cap reached for this proposal
-    VotesOverflow,
+    /// Votes for cap reached for this proposal
+    VotesForOverflow,
+    /// Votes against cap reached for this proposal
+    VotesAgainstOverflow,
     /// Public keys cap reached for this asset id
     PublicKeysOverflow,
     // Unknown error
@@ -721,7 +723,7 @@ pub mod pallet {
         votes
           .votes_for
           .try_push(who.clone())
-          .map_err(|_| Error::<T>::VotesOverflow)?;
+          .map_err(|_| Error::<T>::VotesForOverflow)?;
         Self::deposit_event(Event::<T>::VoteFor {
           account_id: who,
           proposal_id,
@@ -730,7 +732,7 @@ pub mod pallet {
         votes
           .votes_against
           .try_push(who.clone())
-          .map_err(|_| Error::<T>::VotesOverflow)?;
+          .map_err(|_| Error::<T>::VotesAgainstOverflow)?;
 
         Self::deposit_event(Event::<T>::VoteAgainst {
           account_id: who,
