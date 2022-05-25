@@ -523,7 +523,7 @@ pub mod pallet {
       ensure!(Self::is_member(&sender), Error::<T>::AccessDenied);
 
       // 3. Delete all existing public keys of this member
-      Self::delete_public_keys_for_account(&sender)?;
+      Self::delete_public_keys_for_account(&sender);
 
       // 4. Register new public keys
       for (asset_id, public_key) in public_keys {
@@ -614,13 +614,12 @@ pub mod pallet {
     }
 
     // Delete all member public keys
-    fn delete_public_keys_for_account(who: &T::AccountId) -> Result<(), DispatchError> {
+    fn delete_public_keys_for_account(who: &T::AccountId) {
       for asset_id in PublicKeys::<T>::iter_keys() {
         PublicKeys::<T>::mutate(asset_id, |public_keys| {
           public_keys.retain(|(account_id, _)| *account_id != *who);
         });
       }
-      Ok(())
     }
 
     // Add member public key for a specific asset id
@@ -762,36 +761,20 @@ pub mod pallet {
 
           let threshold = Self::threshold();
           let total_members = Members::<T>::count() as u16;
-          let status = if votes.votes_for.len() >= threshold as usize {
-            votes.status = ProposalStatus::Approved;
-            ProposalStatus::Approved
+          if votes.votes_for.len() >= threshold as usize {
+            Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
+            Self::process_proposal(proposal_id)?;
+            Self::delete_proposal(proposal_id)?;
+            *proposal_votes = None;
           } else if total_members >= threshold
             && votes.votes_against.len() as u16 + threshold > total_members
           {
-            votes.status = ProposalStatus::Rejected;
-            ProposalStatus::Rejected
-          } else {
-            ProposalStatus::Initiated
-          };
-
-          *proposal_votes = Some(votes.clone());
-          match status {
-            ProposalStatus::Approved => {
-              Self::deposit_event(Event::<T>::ProposalApproved { proposal_id });
-              Self::process_proposal(proposal_id)?;
-              Self::delete_proposal(proposal_id)?;
-              *proposal_votes = None;
-              Ok(())
-            }
-            ProposalStatus::Rejected => {
-              // FIXME: Maybe add some slashing for the proposer?
-              Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
-              Self::delete_proposal(proposal_id)?;
-              *proposal_votes = None;
-              Ok(())
-            }
-            _ => Ok(()),
+            // FIXME: Maybe add some slashing for the proposer?
+            Self::deposit_event(Event::<T>::ProposalRejected { proposal_id });
+            Self::delete_proposal(proposal_id)?;
+            *proposal_votes = None;
           }
+          Ok(())
         }
         None => Err(Error::<T>::ProposalDoesNotExist),
       })
@@ -806,7 +789,7 @@ pub mod pallet {
         ProposalType::Withdrawal(withdrawal) => Self::process_withdrawal(proposal_id, &withdrawal)?,
         // update quorum configuration (threshold & member set)
         ProposalType::UpdateConfiguration(members, threshold) => {
-          Self::process_update_configuration(&members, threshold)?
+          Self::process_update_configuration(&members, threshold)
         }
       };
       Self::deposit_event(Event::<T>::ProposalProcessed { proposal_id });
@@ -917,10 +900,7 @@ pub mod pallet {
     }
 
     // Process configuration update
-    fn process_update_configuration(
-      members: &Vec<T::AccountId>,
-      threshold: u16,
-    ) -> Result<(), Error<T>> {
+    fn process_update_configuration(members: &Vec<T::AccountId>, threshold: u16) {
       // 1. Remove all members existing
       Members::<T>::remove_all();
 
@@ -942,8 +922,6 @@ pub mod pallet {
         threshold,
         members: members.clone(),
       });
-
-      Ok(())
     }
 
     // Delete specific proposal
