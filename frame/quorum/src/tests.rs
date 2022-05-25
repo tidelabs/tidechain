@@ -301,6 +301,17 @@ impl Context {
   }
 }
 
+fn get_alice_tdfy_balance() -> Balance {
+  Adapter::balance(CurrencyId::Tdfy, &(ALICE_ACCOUNT_ID as u64))
+}
+
+fn get_alice_temp_balance() -> Balance {
+  Adapter::balance(
+    CurrencyId::Wrapped(TEMP_ASSET_ID),
+    &(ALICE_ACCOUNT_ID as u64),
+  )
+}
+
 fn set_current_block(block_number: u64) {
   <CurrentBlockNumber<Test>>::mutate(|n| {
     *n = block_number;
@@ -325,6 +336,100 @@ fn insert_mint_proposal(
     Security::get_current_block_count(),
     proposal
   )));
+}
+
+fn assert_proposal_and_its_votes_have_been_deleted(proposal_id: Hash) {
+  assert!(Quorum::proposals()
+    .iter()
+    .find(|&&(proposal_id, _, _)| proposal_id == proposal_id)
+    .is_none());
+
+  assert!(Quorum::proposal_votes(proposal_id).is_none());
+}
+
+fn assert_event_is_emitted_proposal_submitted(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
+    proposal_id: context.proposal_id,
+  }));
+}
+
+fn assert_event_is_emitted_vote_for(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
+    account_id: ALICE_ACCOUNT_ID as u64,
+    proposal_id: context.proposal_id,
+  }));
+}
+
+fn assert_event_is_emitted_vote_against(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
+    account_id: ALICE_ACCOUNT_ID as u64,
+    proposal_id: context.proposal_id,
+  }));
+}
+
+fn assert_event_is_emitted_proposal_approved(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
+    proposal_id: context.proposal_id,
+  }));
+}
+
+fn assert_event_is_emitted_proposal_rejected(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::ProposalRejected {
+    proposal_id: context.proposal_id,
+  }));
+}
+
+fn assert_event_is_emitted_minted(context: &Context, compliance_level: ComplianceLevel) {
+  System::assert_has_event(MockEvent::Quorum(Event::Minted {
+    proposal_id: context.proposal_id,
+    account_id: context.valid_mint.account_id,
+    currency_id: context.valid_mint.currency_id,
+    amount: context.valid_mint.mint_amount,
+    transaction_id: context.valid_mint.transaction_id.clone(),
+    compliance_level: compliance_level,
+  }));
+}
+
+fn assert_event_is_emitted_burned_initialized(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::BurnedInitialized {
+    proposal_id: context.proposal_id,
+    account_id: context.valid_withdrawal.account_id,
+    currency_id: context.valid_withdrawal.asset_id,
+    amount: context.valid_withdrawal.amount,
+  }));
+}
+
+fn assert_event_is_emitted_burned_acknowledged(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::BurnedAcknowledged {
+    proposal_id: context.proposal_id,
+  }));
+}
+
+fn assert_event_is_emitted_configuration_updated(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::ConfigurationUpdated {
+    threshold: context.valid_update_configuration.threshold,
+    members: context.valid_update_configuration.members.clone(),
+  }));
+}
+
+fn assert_event_is_emitted_proposal_processed(context: &Context) {
+  System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
+    proposal_id: context.proposal_id,
+  }));
+}
+
+fn assert_event_is_emitted_watch_transaction_added(
+  context: &Context,
+  compliance_level: ComplianceLevel,
+) {
+  System::assert_has_event(MockEvent::Quorum(Event::WatchTransactionAdded {
+    account_id: context.valid_mint.account_id,
+    currency_id: context.valid_mint.currency_id,
+    amount: context.valid_mint.mint_amount,
+    compliance_level: compliance_level,
+    watch_action: WatchListAction::Mint,
+    transaction_id: context.valid_mint.transaction_id.clone(),
+  }));
 }
 
 #[test]
@@ -381,7 +486,7 @@ mod submit_proposal {
 
         assert_ok!(Quorum::submit_proposal(
           context.alice.clone(),
-          context.valid_mint_proposal
+          context.valid_mint_proposal.clone()
         ));
 
         assert_eq!(
@@ -393,15 +498,14 @@ mod submit_proposal {
               account_id: context.valid_mint.account_id,
               currency_id: context.valid_mint.currency_id,
               mint_amount: context.valid_mint.mint_amount,
-              transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id).unwrap(),
-              compliance_level: context.valid_mint.compliance_level,
+              transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
+                .unwrap(),
+              compliance_level: context.valid_mint.compliance_level.clone(),
             })
           )
         );
 
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
-          proposal_id: context.proposal_id,
-        }));
+        assert_event_is_emitted_proposal_submitted(&context);
       });
     }
 
@@ -412,7 +516,7 @@ mod submit_proposal {
 
         assert_ok!(Quorum::submit_proposal(
           context.alice.clone(),
-          context.valid_withdrawal_proposal
+          context.valid_withdrawal_proposal.clone()
         ));
 
         assert_eq!(
@@ -424,16 +528,16 @@ mod submit_proposal {
               account_id: context.valid_withdrawal.account_id,
               asset_id: context.valid_withdrawal.asset_id,
               amount: context.valid_withdrawal.amount,
-              external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
-                .unwrap(),
+              external_address: BoundedVec::try_from(
+                context.valid_withdrawal.external_address.clone()
+              )
+              .unwrap(),
               block_number: context.valid_withdrawal.block_number,
             })
           )
         );
 
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
-          proposal_id: context.proposal_id,
-        }));
+        assert_event_is_emitted_proposal_submitted(&context);
       });
     }
 
@@ -443,8 +547,8 @@ mod submit_proposal {
         let context = Context::default().insert_asset1_with_alice_public_key();
 
         assert_ok!(Quorum::submit_proposal(
-          context.alice,
-          context.valid_update_configuration_proposal
+          context.alice.clone(),
+          context.valid_update_configuration_proposal.clone()
         ));
 
         assert_eq!(
@@ -453,15 +557,13 @@ mod submit_proposal {
             context.proposal_id,
             BLOCK_NUMBER_ZERO,
             ProposalType::UpdateConfiguration(
-              BoundedVec::try_from(context.valid_update_configuration.members).unwrap(),
+              BoundedVec::try_from(context.valid_update_configuration.members.clone()).unwrap(),
               context.valid_update_configuration.threshold
             )
           )
         );
 
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
-          proposal_id: context.proposal_id,
-        }));
+        assert_event_is_emitted_proposal_submitted(&context);
       });
     }
   }
@@ -570,52 +672,22 @@ mod voting_for_proposals {
             .insert_asset1_with_alice_public_key()
             .insert_a_valid_mint_proposal_with_green_compliance_level();
 
-          let asset_balance_before_mint = Adapter::balance(
-            context.valid_mint.currency_id,
-            &context.valid_mint.account_id,
-          );
+          let asset_balance_before = get_alice_tdfy_balance();
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
           assert_eq!(
-            asset_balance_before_mint + context.valid_mint.mint_amount,
-            Adapter::balance(
-              context.valid_mint.currency_id,
-              &context.valid_mint.account_id,
-            )
+            asset_balance_before + context.valid_mint.mint_amount,
+            get_alice_tdfy_balance()
           );
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::Minted {
-            proposal_id: context.proposal_id,
-            account_id: context.valid_mint.account_id,
-            currency_id: context.valid_mint.currency_id,
-            amount: context.valid_mint.mint_amount,
-            transaction_id: context.valid_mint.transaction_id,
-            compliance_level: context.valid_mint.compliance_level,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-            proposal_id: context.proposal_id,
-          }));
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_for(&context);
+          assert_event_is_emitted_proposal_approved(&context);
+          assert_event_is_emitted_minted(&context, ComplianceLevel::Green);
+          assert_event_is_emitted_proposal_processed(&context);
         });
       }
 
@@ -626,52 +698,23 @@ mod voting_for_proposals {
             .insert_asset1_with_alice_public_key()
             .insert_a_valid_mint_proposal_with_amber_compliance_level();
 
-          let asset_balance_before_mint = Adapter::balance(
-            context.valid_mint.currency_id,
-            &context.valid_mint.account_id,
-          );
+          let asset_balance_before = get_alice_tdfy_balance();
+          let compliance_level = ComplianceLevel::Amber;
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
           assert_eq!(
-            asset_balance_before_mint + context.valid_mint.mint_amount,
-            Adapter::balance(
-              context.valid_mint.currency_id,
-              &context.valid_mint.account_id,
-            )
+            asset_balance_before + context.valid_mint.mint_amount,
+            get_alice_tdfy_balance()
           );
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::Minted {
-            proposal_id: context.proposal_id,
-            account_id: context.valid_mint.account_id,
-            currency_id: context.valid_mint.currency_id,
-            amount: context.valid_mint.mint_amount,
-            transaction_id: context.valid_mint.transaction_id.clone(),
-            compliance_level: ComplianceLevel::Amber,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-            proposal_id: context.proposal_id,
-          }));
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_for(&context);
+          assert_event_is_emitted_proposal_approved(&context);
+          assert_event_is_emitted_minted(&context, compliance_level.clone());
+          assert_event_is_emitted_proposal_processed(&context);
 
           assert_eq!(
             Quorum::account_watch_list(ALICE_ACCOUNT_ID as u64)
@@ -682,7 +725,7 @@ mod voting_for_proposals {
             &WatchList {
               amount: context.valid_mint.mint_amount,
               block_number: BLOCK_NUMBER_ZERO,
-              compliance_level: ComplianceLevel::Amber,
+              compliance_level: compliance_level.clone(),
               currency_id: context.valid_mint.currency_id,
               watch_action: WatchListAction::Mint,
               transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
@@ -690,14 +733,7 @@ mod voting_for_proposals {
             }
           );
 
-          System::assert_has_event(MockEvent::Quorum(Event::WatchTransactionAdded {
-            account_id: context.valid_mint.account_id,
-            currency_id: context.valid_mint.currency_id,
-            amount: context.valid_mint.mint_amount,
-            compliance_level: ComplianceLevel::Amber,
-            watch_action: WatchListAction::Mint,
-            transaction_id: context.valid_mint.transaction_id,
-          }));
+          assert_event_is_emitted_watch_transaction_added(&context, compliance_level);
         });
       }
 
@@ -709,29 +745,14 @@ mod voting_for_proposals {
             .insert_a_valid_mint_proposal_with_red_compliance_level();
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-            proposal_id: context.proposal_id,
-          }));
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_for(&context);
+          assert_event_is_emitted_proposal_approved(&context);
+          assert_event_is_emitted_proposal_processed(&context);
 
           assert_eq!(
             Quorum::account_watch_list(ALICE_ACCOUNT_ID as u64)
@@ -750,14 +771,7 @@ mod voting_for_proposals {
             }
           );
 
-          System::assert_has_event(MockEvent::Quorum(Event::WatchTransactionAdded {
-            account_id: context.valid_mint.account_id,
-            currency_id: context.valid_mint.currency_id,
-            amount: context.valid_mint.mint_amount,
-            compliance_level: ComplianceLevel::Red,
-            watch_action: WatchListAction::Mint,
-            transaction_id: context.valid_mint.transaction_id,
-          }));
+          assert_event_is_emitted_watch_transaction_added(&context, ComplianceLevel::Red);
         });
       }
 
@@ -768,36 +782,17 @@ mod voting_for_proposals {
             .insert_asset1_with_alice_public_key()
             .insert_a_valid_mint_proposal_with_green_compliance_level();
 
-          let asset_balance_before_mint = Adapter::balance(
-            context.valid_mint.currency_id,
-            &context.valid_mint.account_id,
-          );
+          let asset_balance_before = get_alice_tdfy_balance();
 
-          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+          assert_ok!(Quorum::reject_proposal(
+            context.alice.clone(),
+            context.proposal_id
+          ));
 
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
-          assert_eq!(
-            asset_balance_before_mint,
-            Adapter::balance(
-              context.valid_mint.currency_id,
-              &context.valid_mint.account_id,
-            )
-          );
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalRejected {
-            proposal_id: context.proposal_id,
-          }));
+          assert_eq!(asset_balance_before, get_alice_tdfy_balance());
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_against(&context);
+          assert_event_is_emitted_proposal_rejected(&context);
         });
       }
 
@@ -808,6 +803,8 @@ mod voting_for_proposals {
             .insert_asset1_with_alice_public_key()
             .insert_a_valid_mint_proposal_with_amber_compliance_level();
 
+          let compliance_level = ComplianceLevel::Amber;
+
           assert_ok!(Quorum::acknowledge_proposal(
             context.alice.clone(),
             context.proposal_id
@@ -815,7 +812,7 @@ mod voting_for_proposals {
 
           insert_mint_proposal(
             Default::default(),
-            ComplianceLevel::Amber,
+            compliance_level.clone(),
             context.proposal_id,
           );
 
@@ -840,7 +837,7 @@ mod voting_for_proposals {
             &WatchList {
               amount: context.valid_mint.mint_amount,
               block_number: BLOCK_NUMBER_ZERO,
-              compliance_level: ComplianceLevel::Amber,
+              compliance_level: compliance_level.clone(),
               currency_id: context.valid_mint.currency_id,
               watch_action: WatchListAction::Mint,
               transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
@@ -855,7 +852,7 @@ mod voting_for_proposals {
             WatchList {
               amount: context.valid_mint.mint_amount,
               block_number: BLOCK_NUMBER_ZERO,
-              compliance_level: ComplianceLevel::Amber,
+              compliance_level: compliance_level,
               currency_id: context.valid_mint.currency_id,
               watch_action: WatchListAction::Mint,
               transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
@@ -877,23 +874,14 @@ mod voting_for_proposals {
             .insert_a_valid_mint_proposal_with_green_compliance_level()
             .set_threshold(2);
 
-          let asset_balance_before_mint = Adapter::balance(
-            context.valid_mint.currency_id,
-            &context.valid_mint.account_id,
-          );
+          let asset_balance_before = get_alice_tdfy_balance();
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
-          assert_eq!(
-            asset_balance_before_mint,
-            Adapter::balance(
-              context.valid_mint.currency_id,
-              &context.valid_mint.account_id,
-            )
-          );
+          assert_eq!(asset_balance_before, get_alice_tdfy_balance());
 
           assert_eq!(
             Quorum::proposals().into_inner().first().unwrap(),
@@ -904,8 +892,9 @@ mod voting_for_proposals {
                 account_id: context.valid_mint.account_id,
                 currency_id: context.valid_mint.currency_id,
                 mint_amount: context.valid_mint.mint_amount,
-                transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id).unwrap(),
-                compliance_level: context.valid_mint.compliance_level,
+                transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
+                  .unwrap(),
+                compliance_level: context.valid_mint.compliance_level.clone(),
               })
             )
           );
@@ -916,10 +905,7 @@ mod voting_for_proposals {
             .into_inner()
             .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
+          assert_event_is_emitted_vote_for(&context);
         });
       }
 
@@ -931,7 +917,10 @@ mod voting_for_proposals {
             .insert_a_valid_mint_proposal_with_green_compliance_level()
             .set_threshold(2);
 
-          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+          assert_ok!(Quorum::reject_proposal(
+            context.alice.clone(),
+            context.proposal_id
+          ));
 
           assert!(Quorum::proposal_votes(context.proposal_id)
             .unwrap()
@@ -948,8 +937,9 @@ mod voting_for_proposals {
                 account_id: context.valid_mint.account_id,
                 currency_id: context.valid_mint.currency_id,
                 mint_amount: context.valid_mint.mint_amount,
-                transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id).unwrap(),
-                compliance_level: context.valid_mint.compliance_level,
+                transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
+                  .unwrap(),
+                compliance_level: context.valid_mint.compliance_level.clone(),
               })
             )
           );
@@ -960,10 +950,7 @@ mod voting_for_proposals {
             .into_inner()
             .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
+          assert_event_is_emitted_vote_against(&context);
         });
       }
     }
@@ -985,50 +972,22 @@ mod voting_for_proposals {
             .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
             .insert_a_valid_withdrawal_proposal();
 
-          let asset_balance_before_withdrawal = Adapter::balance(
-            context.valid_withdrawal.asset_id,
-            &context.valid_withdrawal.account_id,
-          );
+          let asset_balance_before = get_alice_temp_balance();
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
           assert_eq!(
-            asset_balance_before_withdrawal - context.valid_withdrawal.amount,
-            Adapter::balance(
-              context.valid_withdrawal.asset_id,
-              &context.valid_withdrawal.account_id,
-            )
+            asset_balance_before - context.valid_withdrawal.amount,
+            get_alice_temp_balance()
           );
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::BurnedInitialized {
-            proposal_id: context.proposal_id,
-            account_id: context.valid_withdrawal.account_id,
-            currency_id: context.valid_withdrawal.asset_id,
-            amount: context.valid_withdrawal.amount,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-            proposal_id: context.proposal_id,
-          }));
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_for(&context);
+          assert_event_is_emitted_proposal_approved(&context);
+          assert_event_is_emitted_burned_initialized(&context);
+          assert_event_is_emitted_proposal_processed(&context);
         });
       }
 
@@ -1042,32 +1001,16 @@ mod voting_for_proposals {
             .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
             .insert_a_valid_withdrawal_proposal();
 
-          let asset_balance_before_mint = Adapter::balance(
-            context.valid_withdrawal.asset_id,
-            &context.valid_withdrawal.account_id,
-          );
+          let asset_balance_before = get_alice_temp_balance();
 
-          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+          assert_ok!(Quorum::reject_proposal(
+            context.alice.clone(),
+            context.proposal_id
+          ));
 
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
-          assert_eq!(
-            asset_balance_before_mint,
-            Adapter::balance(
-              context.valid_withdrawal.asset_id,
-              &context.valid_withdrawal.account_id,
-            )
-          );
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
+          assert_eq!(asset_balance_before, get_alice_temp_balance());
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_against(&context);
         });
       }
     }
@@ -1086,13 +1029,10 @@ mod voting_for_proposals {
             .insert_a_valid_withdrawal_proposal()
             .set_threshold(2);
 
-          let asset_balance_before_withdrawal = Adapter::balance(
-            context.valid_withdrawal.asset_id,
-            &context.valid_withdrawal.account_id,
-          );
+          let asset_balance_before = get_alice_temp_balance();
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
@@ -1105,8 +1045,10 @@ mod voting_for_proposals {
                 account_id: context.valid_withdrawal.account_id,
                 asset_id: context.valid_withdrawal.asset_id,
                 amount: context.valid_withdrawal.amount,
-                external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
-                  .unwrap(),
+                external_address: BoundedVec::try_from(
+                  context.valid_withdrawal.external_address.clone()
+                )
+                .unwrap(),
                 block_number: context.valid_withdrawal.block_number,
               })
             )
@@ -1118,18 +1060,8 @@ mod voting_for_proposals {
             .into_inner()
             .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-          assert_eq!(
-            asset_balance_before_withdrawal,
-            Adapter::balance(
-              context.valid_withdrawal.asset_id,
-              &context.valid_withdrawal.account_id,
-            )
-          );
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
+          assert_eq!(asset_balance_before, get_alice_temp_balance());
+          assert_event_is_emitted_vote_for(&context);
         });
       }
 
@@ -1144,12 +1076,12 @@ mod voting_for_proposals {
             .insert_a_valid_withdrawal_proposal()
             .set_threshold(2);
 
-          let asset_balance_before_mint = Adapter::balance(
-            context.valid_withdrawal.asset_id,
-            &context.valid_withdrawal.account_id,
-          );
+          let asset_balance_before = get_alice_temp_balance();
 
-          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+          assert_ok!(Quorum::reject_proposal(
+            context.alice.clone(),
+            context.proposal_id
+          ));
 
           assert_eq!(
             Quorum::proposals().into_inner().first().unwrap(),
@@ -1160,8 +1092,10 @@ mod voting_for_proposals {
                 account_id: context.valid_withdrawal.account_id,
                 asset_id: context.valid_withdrawal.asset_id,
                 amount: context.valid_withdrawal.amount,
-                external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
-                  .unwrap(),
+                external_address: BoundedVec::try_from(
+                  context.valid_withdrawal.external_address.clone()
+                )
+                .unwrap(),
                 block_number: context.valid_withdrawal.block_number,
               })
             )
@@ -1173,18 +1107,8 @@ mod voting_for_proposals {
             .into_inner()
             .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-          assert_eq!(
-            asset_balance_before_mint,
-            Adapter::balance(
-              context.valid_withdrawal.asset_id,
-              &context.valid_withdrawal.account_id,
-            )
-          );
-
-          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
+          assert_eq!(asset_balance_before, get_alice_temp_balance());
+          assert_event_is_emitted_vote_against(&context);
         });
       }
     }
@@ -1208,16 +1132,9 @@ mod voting_for_proposals {
           let threshold_before = Quorum::threshold();
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
-
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
 
           assert_eq!(true, Quorum::members(ALICE_ACCOUNT_ID as u64).unwrap());
           assert_eq!(true, Quorum::members(BOB_ACCOUNT_ID as u64).unwrap());
@@ -1227,23 +1144,11 @@ mod voting_for_proposals {
             Quorum::threshold()
           );
 
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ConfigurationUpdated {
-            threshold: context.valid_update_configuration.threshold,
-            members: context.valid_update_configuration.members,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-            proposal_id: context.proposal_id,
-          }));
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_for(&context);
+          assert_event_is_emitted_proposal_approved(&context);
+          assert_event_is_emitted_configuration_updated(&context);
+          assert_event_is_emitted_proposal_processed(&context);
         });
       }
 
@@ -1258,27 +1163,18 @@ mod voting_for_proposals {
           assert!(Quorum::members(BOB_ACCOUNT_ID as u64).is_none());
           let threshold_before = Quorum::threshold();
 
-          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
-
-          assert!(Quorum::proposals()
-            .iter()
-            .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-            .is_none());
-
-          assert!(Quorum::proposal_votes(context.proposal_id).is_none());
+          assert_ok!(Quorum::reject_proposal(
+            context.alice.clone(),
+            context.proposal_id
+          ));
 
           assert_eq!(true, Quorum::members(ALICE_ACCOUNT_ID as u64).unwrap());
           assert!(Quorum::members(BOB_ACCOUNT_ID as u64).is_none());
           assert!(threshold_before == Quorum::threshold());
 
-          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
-
-          System::assert_has_event(MockEvent::Quorum(Event::ProposalRejected {
-            proposal_id: context.proposal_id,
-          }));
+          assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+          assert_event_is_emitted_vote_against(&context);
+          assert_event_is_emitted_proposal_rejected(&context);
         });
       }
     }
@@ -1299,7 +1195,7 @@ mod voting_for_proposals {
           let threshold_before = Quorum::threshold();
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
@@ -1313,7 +1209,7 @@ mod voting_for_proposals {
               context.proposal_id,
               BLOCK_NUMBER_ZERO,
               ProposalType::UpdateConfiguration(
-                BoundedVec::try_from(context.valid_update_configuration.members).unwrap(),
+                BoundedVec::try_from(context.valid_update_configuration.members.clone()).unwrap(),
                 context.valid_update_configuration.threshold
               )
             )
@@ -1325,10 +1221,7 @@ mod voting_for_proposals {
             .into_inner()
             .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-          System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
+          assert_event_is_emitted_vote_for(&context);
         });
       }
 
@@ -1344,7 +1237,10 @@ mod voting_for_proposals {
           assert!(Quorum::members(BOB_ACCOUNT_ID as u64).is_none());
           let threshold_before = Quorum::threshold();
 
-          assert_ok!(Quorum::reject_proposal(context.alice, context.proposal_id));
+          assert_ok!(Quorum::reject_proposal(
+            context.alice.clone(),
+            context.proposal_id
+          ));
 
           assert_eq!(true, Quorum::members(ALICE_ACCOUNT_ID as u64).unwrap());
           assert!(Quorum::members(BOB_ACCOUNT_ID as u64).is_none());
@@ -1356,7 +1252,7 @@ mod voting_for_proposals {
               context.proposal_id,
               BLOCK_NUMBER_ZERO,
               ProposalType::UpdateConfiguration(
-                BoundedVec::try_from(context.valid_update_configuration.members).unwrap(),
+                BoundedVec::try_from(context.valid_update_configuration.members.clone()).unwrap(),
                 context.valid_update_configuration.threshold
               )
             )
@@ -1368,10 +1264,7 @@ mod voting_for_proposals {
             .into_inner()
             .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-          System::assert_has_event(MockEvent::Quorum(Event::VoteAgainst {
-            account_id: ALICE_ACCOUNT_ID as u64,
-            proposal_id: context.proposal_id,
-          }));
+          assert_event_is_emitted_vote_against(&context);
         });
       }
     }
@@ -1575,6 +1468,9 @@ mod voting_for_proposals {
       mod mint {
         use super::*;
 
+        // TODO: Unreachable error: BadTransactionId, UnknownError => Nothing or Replace map_error with expect
+        // TODO: Figure out how to arrange test for MintFailed error
+
         #[test]
         pub fn asset_is_disabled() {
           new_test_ext().execute_with(|| {
@@ -1599,7 +1495,7 @@ mod voting_for_proposals {
               Adapter::balance(disabled_asset_id, &context.valid_mint.account_id);
 
             assert_err!(
-              Quorum::acknowledge_proposal(context.alice, context.proposal_id),
+              Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
               Error::<Test>::AssetDisabled
             );
 
@@ -1630,14 +1526,8 @@ mod voting_for_proposals {
               Adapter::balance(disabled_asset_id, &context.valid_mint.account_id,)
             );
 
-            System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-              account_id: ALICE_ACCOUNT_ID as u64,
-              proposal_id: context.proposal_id,
-            }));
-
-            System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-              proposal_id: context.proposal_id,
-            }));
+            assert_event_is_emitted_vote_for(&context);
+            assert_event_is_emitted_proposal_approved(&context);
           });
         }
 
@@ -1648,10 +1538,7 @@ mod voting_for_proposals {
               .insert_asset1_with_alice_public_key()
               .insert_a_valid_mint_proposal_with_amber_compliance_level();
 
-            let asset_balance_before_mint = Adapter::balance(
-              context.valid_mint.currency_id,
-              &context.valid_mint.account_id,
-            );
+            let asset_balance_before = get_alice_tdfy_balance();
 
             let watch_list = WatchList {
               amount: context.valid_mint.mint_amount,
@@ -1672,7 +1559,7 @@ mod voting_for_proposals {
             AccountWatchList::<Test>::insert(context.valid_mint.account_id, max_watch_list);
 
             assert_err!(
-              Quorum::acknowledge_proposal(context.alice, context.proposal_id),
+              Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
               Error::<Test>::WatchlistOverflow
             );
 
@@ -1698,22 +1585,9 @@ mod voting_for_proposals {
               .into_inner()
               .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-            assert_eq!(
-              asset_balance_before_mint,
-              Adapter::balance(
-                context.valid_mint.currency_id,
-                &context.valid_mint.account_id,
-              )
-            );
-
-            System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-              account_id: ALICE_ACCOUNT_ID as u64,
-              proposal_id: context.proposal_id,
-            }));
-
-            System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-              proposal_id: context.proposal_id,
-            }));
+            assert_eq!(asset_balance_before, get_alice_tdfy_balance());
+            assert_event_is_emitted_vote_for(&context);
+            assert_event_is_emitted_proposal_approved(&context);
           });
         }
       }
@@ -1728,13 +1602,10 @@ mod voting_for_proposals {
               .insert_asset1_with_alice_public_key()
               .insert_a_valid_withdrawal_proposal();
 
-            let temp_asset_balance_before_mint = Adapter::balance(
-              context.valid_withdrawal.asset_id,
-              &context.valid_withdrawal.account_id,
-            );
+            let temp_asset_balance_before_mint = get_alice_temp_balance();
 
             assert_err!(
-              Quorum::acknowledge_proposal(context.alice, context.proposal_id),
+              Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
               Error::<Test>::AssetDisabled
             );
 
@@ -1747,8 +1618,10 @@ mod voting_for_proposals {
                   account_id: context.valid_withdrawal.account_id,
                   asset_id: context.valid_withdrawal.asset_id,
                   amount: context.valid_withdrawal.amount,
-                  external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
-                    .unwrap(),
+                  external_address: BoundedVec::try_from(
+                    context.valid_withdrawal.external_address.clone()
+                  )
+                  .unwrap(),
                   block_number: context.valid_withdrawal.block_number,
                 })
               )
@@ -1760,22 +1633,9 @@ mod voting_for_proposals {
               .into_inner()
               .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-            assert_eq!(
-              temp_asset_balance_before_mint,
-              Adapter::balance(
-                context.valid_withdrawal.asset_id,
-                &context.valid_withdrawal.account_id,
-              )
-            );
-
-            System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-              account_id: ALICE_ACCOUNT_ID as u64,
-              proposal_id: context.proposal_id,
-            }));
-
-            System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-              proposal_id: context.proposal_id,
-            }));
+            assert_eq!(temp_asset_balance_before_mint, get_alice_temp_balance());
+            assert_event_is_emitted_vote_for(&context);
+            assert_event_is_emitted_proposal_approved(&context);
           });
         }
 
@@ -1788,13 +1648,10 @@ mod voting_for_proposals {
               .create_temp_asset_and_metadata()
               .insert_a_valid_withdrawal_proposal();
 
-            let asset_balance_before_withdrawal = Adapter::balance(
-              context.valid_withdrawal.asset_id,
-              &context.valid_withdrawal.account_id,
-            );
+            let asset_balance_before = get_alice_temp_balance();
 
             assert_err!(
-              Quorum::acknowledge_proposal(context.alice, context.proposal_id),
+              Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
               Error::<Test>::BurnFailed
             );
 
@@ -1807,8 +1664,10 @@ mod voting_for_proposals {
                   account_id: context.valid_withdrawal.account_id,
                   asset_id: context.valid_withdrawal.asset_id,
                   amount: context.valid_withdrawal.amount,
-                  external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
-                    .unwrap(),
+                  external_address: BoundedVec::try_from(
+                    context.valid_withdrawal.external_address.clone()
+                  )
+                  .unwrap(),
                   block_number: context.valid_withdrawal.block_number,
                 })
               )
@@ -1820,22 +1679,9 @@ mod voting_for_proposals {
               .into_inner()
               .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-            assert_eq!(
-              asset_balance_before_withdrawal,
-              Adapter::balance(
-                context.valid_withdrawal.asset_id,
-                &context.valid_withdrawal.account_id,
-              )
-            );
-
-            System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-              account_id: ALICE_ACCOUNT_ID as u64,
-              proposal_id: context.proposal_id,
-            }));
-
-            System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-              proposal_id: context.proposal_id,
-            }));
+            assert_eq!(asset_balance_before, get_alice_temp_balance());
+            assert_event_is_emitted_vote_for(&context);
+            assert_event_is_emitted_proposal_approved(&context);
           });
         }
 
@@ -1849,10 +1695,7 @@ mod voting_for_proposals {
               .mint_temp(ALICE_ACCOUNT_ID as u64, INITIAL_10000_TEMPS)
               .insert_a_valid_withdrawal_proposal();
 
-            let asset_balance_before_mint = Adapter::balance(
-              context.valid_withdrawal.asset_id,
-              &context.valid_withdrawal.account_id,
-            );
+            let asset_balance_before = get_alice_temp_balance();
 
             let withdrawal: Withdrawal<AccountId, BlockNumber, BoundedVec<u8, StringLimit>> =
               Withdrawal {
@@ -1874,7 +1717,7 @@ mod voting_for_proposals {
             }
 
             assert_err!(
-              Quorum::acknowledge_proposal(context.alice, context.proposal_id),
+              Quorum::acknowledge_proposal(context.alice.clone(), context.proposal_id),
               Error::<Test>::BurnedQueueOverflow
             );
 
@@ -1887,8 +1730,10 @@ mod voting_for_proposals {
                   account_id: context.valid_withdrawal.account_id,
                   asset_id: context.valid_withdrawal.asset_id,
                   amount: context.valid_withdrawal.amount,
-                  external_address: BoundedVec::try_from(context.valid_withdrawal.external_address)
-                    .unwrap(),
+                  external_address: BoundedVec::try_from(
+                    context.valid_withdrawal.external_address.clone()
+                  )
+                  .unwrap(),
                   block_number: context.valid_withdrawal.block_number,
                 })
               )
@@ -1901,21 +1746,11 @@ mod voting_for_proposals {
               .contains(&(ALICE_ACCOUNT_ID as u64)));
 
             assert_eq!(
-              asset_balance_before_mint - context.valid_withdrawal.amount,
-              Adapter::balance(
-                context.valid_withdrawal.asset_id,
-                &context.valid_withdrawal.account_id,
-              )
+              asset_balance_before - context.valid_withdrawal.amount,
+              get_alice_temp_balance()
             );
-
-            System::assert_has_event(MockEvent::Quorum(Event::VoteFor {
-              account_id: ALICE_ACCOUNT_ID as u64,
-              proposal_id: context.proposal_id,
-            }));
-
-            System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-              proposal_id: context.proposal_id,
-            }));
+            assert_event_is_emitted_vote_for(&context);
+            assert_event_is_emitted_proposal_approved(&context);
           });
         }
       }
@@ -1940,7 +1775,7 @@ mod acknowledge_burned {
       ));
 
       assert_ok!(Quorum::acknowledge_burned(
-        context.alice,
+        context.alice.clone(),
         context.proposal_id
       ));
 
@@ -1949,9 +1784,7 @@ mod acknowledge_burned {
         .find(|&&(proposal_id, _)| proposal_id == context.proposal_id)
         .is_none());
 
-      System::assert_has_event(MockEvent::Quorum(Event::BurnedAcknowledged {
-        proposal_id: context.proposal_id,
-      }));
+      assert_event_is_emitted_burned_acknowledged(&context);
     });
   }
 
@@ -2015,10 +1848,7 @@ mod eval_proposal_state {
           .set_threshold(2)
           .commit_a_valid_vote(true);
 
-        let asset_balance_before_mint = Adapter::balance(
-          context.valid_mint.currency_id,
-          &context.valid_mint.account_id,
-        );
+        let asset_balance_before = get_alice_tdfy_balance();
 
         assert_ok!(Quorum::eval_proposal_state(
           context.alice,
@@ -2041,13 +1871,7 @@ mod eval_proposal_state {
           .into_inner()
           .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-        assert_eq!(
-          asset_balance_before_mint,
-          Adapter::balance(
-            context.valid_mint.currency_id,
-            &context.valid_mint.account_id,
-          )
-        );
+        assert_eq!(asset_balance_before, get_alice_tdfy_balance());
       });
     }
 
@@ -2059,47 +1883,21 @@ mod eval_proposal_state {
           .insert_a_valid_mint_proposal_with_green_compliance_level()
           .commit_a_valid_vote(true);
 
-        let asset_balance_before_mint = Adapter::balance(
-          context.valid_mint.currency_id,
-          &context.valid_mint.account_id,
-        );
+        let asset_balance_before = get_alice_tdfy_balance();
 
         assert_ok!(Quorum::eval_proposal_state(
-          context.alice,
+          context.alice.clone(),
           context.proposal_id
         ));
 
-        assert!(Quorum::proposals()
-          .iter()
-          .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-          .is_none());
-
-        assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
         assert_eq!(
-          asset_balance_before_mint + context.valid_mint.mint_amount,
-          Adapter::balance(
-            context.valid_mint.currency_id,
-            &context.valid_mint.account_id,
-          )
+          asset_balance_before + context.valid_mint.mint_amount,
+          get_alice_tdfy_balance()
         );
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-          proposal_id: context.proposal_id,
-        }));
-
-        System::assert_has_event(MockEvent::Quorum(Event::Minted {
-          proposal_id: context.proposal_id,
-          account_id: context.valid_mint.account_id,
-          currency_id: context.valid_mint.currency_id,
-          amount: context.valid_mint.mint_amount,
-          transaction_id: context.valid_mint.transaction_id,
-          compliance_level: context.valid_mint.compliance_level,
-        }));
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-          proposal_id: context.proposal_id,
-        }));
+        assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+        assert_event_is_emitted_proposal_approved(&context);
+        assert_event_is_emitted_minted(&context, context.valid_mint.compliance_level.clone());
+        assert_event_is_emitted_proposal_processed(&context);
       });
     }
 
@@ -2111,34 +1909,16 @@ mod eval_proposal_state {
           .insert_a_valid_mint_proposal_with_green_compliance_level()
           .commit_a_valid_vote(false);
 
-        let asset_balance_before_mint = Adapter::balance(
-          context.valid_mint.currency_id,
-          &context.valid_mint.account_id,
-        );
+        let asset_balance_before = get_alice_tdfy_balance();
 
         assert_ok!(Quorum::eval_proposal_state(
-          context.alice,
+          context.alice.clone(),
           context.proposal_id
         ));
 
-        assert!(Quorum::proposals()
-          .iter()
-          .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-          .is_none());
-
-        assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
-        assert_eq!(
-          asset_balance_before_mint,
-          Adapter::balance(
-            context.valid_mint.currency_id,
-            &context.valid_mint.account_id,
-          )
-        );
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalRejected {
-          proposal_id: context.proposal_id,
-        }));
+        assert_eq!(asset_balance_before, get_alice_tdfy_balance());
+        assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+        assert_event_is_emitted_proposal_rejected(&context);
       });
     }
   }
@@ -2155,10 +1935,7 @@ mod eval_proposal_state {
           .set_threshold(2)
           .commit_a_valid_vote(true);
 
-        let asset_balance_before_withdrawal = Adapter::balance(
-          context.valid_withdrawal.asset_id,
-          &context.valid_withdrawal.account_id,
-        );
+        let asset_balance_before = get_alice_temp_balance();
 
         assert_ok!(Quorum::eval_proposal_state(
           context.alice,
@@ -2181,13 +1958,7 @@ mod eval_proposal_state {
           .into_inner()
           .contains(&(ALICE_ACCOUNT_ID as u64)));
 
-        assert_eq!(
-          asset_balance_before_withdrawal,
-          Adapter::balance(
-            context.valid_withdrawal.asset_id,
-            &context.valid_withdrawal.account_id,
-          )
-        );
+        assert_eq!(asset_balance_before, get_alice_temp_balance());
       });
     }
 
@@ -2202,45 +1973,21 @@ mod eval_proposal_state {
           .insert_a_valid_withdrawal_proposal()
           .commit_a_valid_vote(true);
 
-        let asset_balance_before_withdrawal = Adapter::balance(
-          context.valid_withdrawal.asset_id,
-          &context.valid_withdrawal.account_id,
-        );
+        let asset_balance_before = get_alice_temp_balance();
 
         assert_ok!(Quorum::eval_proposal_state(
-          context.alice,
+          context.alice.clone(),
           context.proposal_id
         ));
 
-        assert!(Quorum::proposals()
-          .iter()
-          .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-          .is_none());
-
-        assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
         assert_eq!(
-          asset_balance_before_withdrawal - context.valid_withdrawal.amount,
-          Adapter::balance(
-            context.valid_withdrawal.asset_id,
-            &context.valid_withdrawal.account_id,
-          )
+          asset_balance_before - context.valid_withdrawal.amount,
+          get_alice_temp_balance()
         );
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-          proposal_id: context.proposal_id,
-        }));
-
-        System::assert_has_event(MockEvent::Quorum(Event::BurnedInitialized {
-          proposal_id: context.proposal_id,
-          account_id: context.valid_withdrawal.account_id,
-          currency_id: context.valid_withdrawal.asset_id,
-          amount: context.valid_withdrawal.amount,
-        }));
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-          proposal_id: context.proposal_id,
-        }));
+        assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+        assert_event_is_emitted_proposal_approved(&context);
+        assert_event_is_emitted_burned_initialized(&context);
+        assert_event_is_emitted_proposal_processed(&context);
       });
     }
 
@@ -2252,34 +1999,16 @@ mod eval_proposal_state {
           .insert_a_valid_withdrawal_proposal()
           .commit_a_valid_vote(false);
 
-        let asset_balance_before_withdrawal = Adapter::balance(
-          context.valid_withdrawal.asset_id,
-          &context.valid_withdrawal.account_id,
-        );
+        let asset_balance_before = get_alice_temp_balance();
 
         assert_ok!(Quorum::eval_proposal_state(
-          context.alice,
+          context.alice.clone(),
           context.proposal_id
         ));
 
-        assert!(Quorum::proposals()
-          .iter()
-          .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-          .is_none());
-
-        assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
-        assert_eq!(
-          asset_balance_before_withdrawal,
-          Adapter::balance(
-            context.valid_withdrawal.asset_id,
-            &context.valid_withdrawal.account_id,
-          )
-        );
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalRejected {
-          proposal_id: context.proposal_id,
-        }));
+        assert_eq!(asset_balance_before, get_alice_temp_balance());
+        assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+        assert_event_is_emitted_proposal_rejected(&context);
       });
     }
   }
@@ -2328,29 +2057,14 @@ mod eval_proposal_state {
           .commit_a_valid_vote(true);
 
         assert_ok!(Quorum::eval_proposal_state(
-          context.alice,
+          context.alice.clone(),
           context.proposal_id
         ));
 
-        assert!(Quorum::proposals()
-          .iter()
-          .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-          .is_none());
-
-        assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalApproved {
-          proposal_id: context.proposal_id,
-        }));
-
-        System::assert_has_event(MockEvent::Quorum(Event::ConfigurationUpdated {
-          threshold: context.valid_update_configuration.threshold,
-          members: context.valid_update_configuration.members.clone(),
-        }));
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalProcessed {
-          proposal_id: context.proposal_id,
-        }));
+        assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+        assert_event_is_emitted_proposal_approved(&context);
+        assert_event_is_emitted_configuration_updated(&context);
+        assert_event_is_emitted_proposal_processed(&context);
       });
     }
 
@@ -2363,20 +2077,12 @@ mod eval_proposal_state {
           .commit_a_valid_vote(false);
 
         assert_ok!(Quorum::eval_proposal_state(
-          context.alice,
+          context.alice.clone(),
           context.proposal_id
         ));
 
-        assert!(Quorum::proposals()
-          .iter()
-          .find(|&&(proposal_id, _, _)| proposal_id == context.proposal_id)
-          .is_none());
-
-        assert!(Quorum::proposal_votes(context.proposal_id).is_none());
-
-        System::assert_has_event(MockEvent::Quorum(Event::ProposalRejected {
-          proposal_id: context.proposal_id,
-        }));
+        assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+        assert_event_is_emitted_proposal_rejected(&context);
       });
     }
   }
