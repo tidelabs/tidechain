@@ -419,6 +419,27 @@ fn assert_voted_proposal_status_is_initiated(context: &Context) {
   );
 }
 
+fn assert_vote_for_mint_exists_in_account_watch_list(
+  context: &Context,
+  compliance_level: ComplianceLevel,
+) {
+  assert_eq!(
+    Quorum::account_watch_list(ALICE_ACCOUNT_ID as u64)
+      .unwrap()
+      .into_inner()
+      .first()
+      .unwrap(),
+    &WatchList {
+      amount: context.valid_mint.mint_amount,
+      block_number: BLOCK_NUMBER_ZERO,
+      compliance_level: compliance_level,
+      currency_id: context.valid_mint.currency_id,
+      watch_action: WatchListAction::Mint,
+      transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone()).unwrap(),
+    }
+  );
+}
+
 fn assert_event_is_emitted_proposal_submitted(context: &Context) {
   System::assert_has_event(MockEvent::Quorum(Event::ProposalSubmitted {
     proposal_id: context.proposal_id,
@@ -748,23 +769,7 @@ mod voting_for_proposals {
           assert_event_is_emitted_minted(&context, compliance_level.clone());
           assert_event_is_emitted_proposal_processed(&context);
 
-          assert_eq!(
-            Quorum::account_watch_list(ALICE_ACCOUNT_ID as u64)
-              .unwrap()
-              .into_inner()
-              .first()
-              .unwrap(),
-            &WatchList {
-              amount: context.valid_mint.mint_amount,
-              block_number: BLOCK_NUMBER_ZERO,
-              compliance_level: compliance_level.clone(),
-              currency_id: context.valid_mint.currency_id,
-              watch_action: WatchListAction::Mint,
-              transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
-                .unwrap(),
-            }
-          );
-
+          assert_vote_for_mint_exists_in_account_watch_list(&context, compliance_level.clone());
           assert_event_is_emitted_watch_transaction_added(&context, compliance_level);
         });
       }
@@ -786,23 +791,7 @@ mod voting_for_proposals {
           assert_event_is_emitted_proposal_approved(&context);
           assert_event_is_emitted_proposal_processed(&context);
 
-          assert_eq!(
-            Quorum::account_watch_list(ALICE_ACCOUNT_ID as u64)
-              .unwrap()
-              .into_inner()
-              .first()
-              .unwrap(),
-            &WatchList {
-              amount: context.valid_mint.mint_amount,
-              block_number: BLOCK_NUMBER_ZERO,
-              compliance_level: ComplianceLevel::Red,
-              currency_id: context.valid_mint.currency_id,
-              watch_action: WatchListAction::Mint,
-              transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
-                .unwrap(),
-            }
-          );
-
+          assert_vote_for_mint_exists_in_account_watch_list(&context, ComplianceLevel::Red);
           assert_event_is_emitted_watch_transaction_added(&context, ComplianceLevel::Red);
         });
       }
@@ -849,7 +838,7 @@ mod voting_for_proposals {
           );
 
           assert_ok!(Quorum::acknowledge_proposal(
-            context.alice,
+            context.alice.clone(),
             context.proposal_id
           ));
 
@@ -860,23 +849,7 @@ mod voting_for_proposals {
             2
           );
 
-          assert_eq!(
-            Quorum::account_watch_list(ALICE_ACCOUNT_ID as u64)
-              .unwrap()
-              .into_inner()
-              .first()
-              .unwrap(),
-            &WatchList {
-              amount: context.valid_mint.mint_amount,
-              block_number: BLOCK_NUMBER_ZERO,
-              compliance_level: compliance_level.clone(),
-              currency_id: context.valid_mint.currency_id,
-              watch_action: WatchListAction::Mint,
-              transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
-                .unwrap(),
-            }
-          );
-
+          assert_vote_for_mint_exists_in_account_watch_list(&context, compliance_level.clone());
           assert_eq!(
             Quorum::account_watch_list(ALICE_ACCOUNT_ID as u64)
               .unwrap()
