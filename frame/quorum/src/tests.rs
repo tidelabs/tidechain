@@ -1356,9 +1356,6 @@ mod voting_for_proposals {
       mod mint {
         use super::*;
 
-        // TODO: Unreachable error: BadTransactionId, UnknownError => Nothing or Replace map_error with expect
-        // TODO: Figure out how to arrange test for MintFailed error
-
         #[test]
         pub fn asset_is_disabled() {
           new_test_ext().execute_with(|| {
