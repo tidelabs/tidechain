@@ -716,7 +716,7 @@ pub mod pallet {
       );
       ensure!(votes.expiry >= current_block, Error::<T>::ProposalExpired);
       ensure!(
-        !votes.votes_for.contains(&who) || !votes.votes_against.contains(&who),
+        !votes.votes_for.contains(&who) && !votes.votes_against.contains(&who),
         Error::<T>::MemberAlreadyVoted
       );
 
