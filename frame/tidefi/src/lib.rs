@@ -280,7 +280,12 @@ pub mod pallet {
       // 7. Make sure the account have enough funds for the `asset_id_from`
       match T::CurrencyTidefi::can_withdraw(currency_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
-          let real_slippage_tolerance = slippage_tolerance.unwrap_or(Permill::zero());
+          let mut real_slippage_tolerance = slippage_tolerance.unwrap_or(Permill::zero());
+
+          // Allow 0.000001% slippage (for dust and quick market change)
+          if real_slippage_tolerance.is_zero() && swap_type == SwapType::Limit {
+            real_slippage_tolerance = Permill::from(1);
+          }
 
           // 7. a) Add trade in queue
           let (trade_id, _) = T::Oracle::add_new_swap_in_queue(
