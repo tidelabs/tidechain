@@ -43,7 +43,10 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
-  use sp_runtime::Permill;
+  use sp_runtime::{
+    traits::{CheckedDiv, Saturating},
+    FixedU128, Permill,
+  };
   use sp_std::vec;
   use tidefi_primitives::{
     assets::USDT,
@@ -254,6 +257,8 @@ pub mod pallet {
     UpdateMarketMakerAccountSwapRequestStatusFailed,
     /// Swaps cap reached for this account id
     SwapOverflow,
+    /// Unable to calculate slippage
+    SlippageOverflow,
     /// Unknown Error.
     UnknownError,
   }
@@ -302,41 +307,54 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::InvalidMarketMakerRequestId { index: index as u8 })?;
 
               // validate user slippage tolerance
-              let pay_per_token = trade.amount_from as f64 / trade.amount_to as f64;
-              let pay_per_token_offered = mm.amount_to_receive as f64 / mm.amount_to_send as f64;
-              let allowed_slippage = trade.slippage.deconstruct() as f64 / 1_000_000_f64;
+              let pay_per_token = FixedU128::from(trade.amount_from)
+                .checked_div(&FixedU128::from(trade.amount_to))
+                .ok_or(Error::<T>::SlippageOverflow)?;
+
+              let pay_per_token_offered = FixedU128::from(mm.amount_to_receive)
+                .checked_div(&FixedU128::from(mm.amount_to_send))
+                .ok_or(Error::<T>::SlippageOverflow)?;
 
               // limit order can match with smaller price
               if trade.swap_type != SwapType::Limit {
-                let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+                let minimum_per_token =
+                  pay_per_token - pay_per_token.saturating_mul(trade.slippage.into());
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanSwapLowerBound { index: index as u8 }
                 );
               }
 
-              let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
+              let maximum_per_token =
+                pay_per_token + pay_per_token.saturating_mul(trade.slippage.into());
+
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
                 Error::OfferIsGreaterThanSwapUpperBound { index: index as u8 }
               );
 
               // validate mm slippage tolerance
-              let pay_per_token =
-                mm_trade_request.amount_from as f64 / mm_trade_request.amount_to as f64;
-              let pay_per_token_offered = mm.amount_to_send as f64 / mm.amount_to_receive as f64;
-              let allowed_slippage = mm_trade_request.slippage.deconstruct() as f64 / 1_000_000_f64;
+              let pay_per_token = FixedU128::from(mm_trade_request.amount_from)
+                .checked_div(&FixedU128::from(mm_trade_request.amount_to))
+                .ok_or(Error::<T>::SlippageOverflow)?;
+
+              let pay_per_token_offered = FixedU128::from(mm.amount_to_send)
+                .checked_div(&FixedU128::from(mm.amount_to_receive))
+                .ok_or(Error::<T>::SlippageOverflow)?;
 
               // limit order can match with smaller price
               if mm_trade_request.swap_type != SwapType::Limit {
-                let minimum_per_token = pay_per_token - (allowed_slippage * pay_per_token);
+                let minimum_per_token =
+                  pay_per_token - pay_per_token.saturating_mul(mm_trade_request.slippage.into());
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanMarketMakerSwapLowerBound { index: index as u8 }
                 );
               }
 
-              let maximum_per_token = pay_per_token + (allowed_slippage * pay_per_token);
+              let maximum_per_token =
+                pay_per_token + pay_per_token.saturating_mul(mm_trade_request.slippage.into());
+
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
                 Error::OfferIsGreaterThanMarketMakerSwapUpperBound { index: index as u8 }
