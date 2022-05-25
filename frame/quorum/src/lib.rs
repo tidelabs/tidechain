@@ -978,17 +978,14 @@ pub mod pallet {
       AccountWatchList::<T>::try_mutate_exists(account_id, |account_watch_list| {
         match account_watch_list {
           Some(current_watch_list) => current_watch_list
-            .try_push(watch_list)
+            .try_push(watch_list.clone())
             .map_err(|_| Error::<T>::WatchlistOverflow),
           None => {
-            let empty_bounded_vec: BoundedVec<
-              WatchList<T::BlockNumber, BoundedVec<u8, <T as pallet::Config>::StringLimit>>,
-              <T as pallet::Config>::WatchListLimit,
-            > = vec![watch_list]
-              .try_into()
-              .map_err(|_| Error::<T>::UnknownError)?;
-
-            AccountWatchList::<T>::insert(account_id, empty_bounded_vec);
+            *account_watch_list = Some(
+              vec![watch_list]
+                .try_into()
+                .expect("Watch list should be created"),
+            );
             Ok(())
           }
         }
