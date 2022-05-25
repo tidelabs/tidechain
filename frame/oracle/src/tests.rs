@@ -28,12 +28,12 @@ use frame_support::{
 use sp_core::H256;
 use sp_runtime::{
   traits::{BadOrigin, Zero},
-  Permill,
+  FixedPointNumber, FixedU128, Permill,
 };
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
-  Balance, CurrencyId, Hash, SwapConfirmation, SwapStatus, SwapType,
+  Balance, CurrencyId, Hash, OracleImAlive, SwapConfirmation, SwapStatus, SwapType,
 };
 
 const CURRENT_BLOCK_NUMBER: BlockNumber = 0;
@@ -1224,6 +1224,49 @@ pub fn test_slippage() {
     assert!(Oracle::swaps(trade_request_id).is_none());
     // limit order isnt deleted as its not fully filled
     assert!(Oracle::swaps(trade_request_mm_id).is_some());
+  });
+}
+
+#[test]
+pub fn test_imalive() {
+  new_test_ext().execute_with(|| {
+    let context = Context::default()
+      .set_oracle_status(true)
+      .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+      .create_temp_asset_and_metadata()
+      .create_zemp_asset_and_metadata();
+
+    assert_ok!(Oracle::im_alive(
+      context.alice.clone(),
+      OracleImAlive {
+        // How many X for 1 USDT
+        usdt_value: vec![
+          // 10 Tdfy / USDT
+          (CurrencyId::Tdfy, 10_000_000_000_000),
+        ],
+        // How many X for 1 TDFY
+        tdfy_value: vec![
+          // 0.10 USDT (6 decimals) / Tdfy
+          (4, 100_000),
+        ]
+      }
+    ));
+
+    let fee =
+      Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 100_000_000, SwapType::Limit, false);
+    assert_eq!(
+      Fees::calculate_tide_reward_for_pool(
+        // 125%
+        FixedU128::saturating_from_rational(125, 100),
+        // 2$ USDT in fee
+        // Should have total 2.5$ USDT in reward
+        // 2.5 / 0.1 = 25 TDFY final
+        &fee,
+        CurrencyId::Wrapped(4)
+      )
+      .unwrap(),
+      25_000_000_000_000
+    );
   });
 }
 

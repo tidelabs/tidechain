@@ -329,6 +329,10 @@ pub mod pallet {
     AccountFeeOverflow,
     /// Balance overflow
     BalanceOverflow,
+    /// Invalid USDT value in the order book
+    InvalidUsdtValue,
+    /// Invalid TDFY value in the order book
+    InvalidTdfyValue,
   }
 
   // hooks
@@ -357,7 +361,7 @@ pub mod pallet {
               session_start_block.saturating_add(T::BlocksPerSession::get());
 
             // end of session
-            if real_block >= expected_end_block_for_session {
+            if real_block == expected_end_block_for_session {
               let current_session = CurrentSession::<T>::get();
 
               let expected_end_session_for_era = match active_era.start_session_index {
@@ -367,7 +371,7 @@ pub mod pallet {
               .saturating_add(T::SessionsPerEra::get());
 
               log!(
-                info,
+                debug,
                 "Fees compound session #{} started in block #{:?}, and is now expired.",
                 current_session,
                 start_block
@@ -558,7 +562,7 @@ pub mod pallet {
       )
     }
 
-    // Based on the price provided by Oracle, try to convert the asset balance to USDT balance
+    // Based on the value provided by Oracle, try to convert the asset balance to USDT balance
     pub(crate) fn try_get_usdt_value(
       currency_id: CurrencyId,
       amount: FixedU128,
@@ -577,7 +581,9 @@ pub mod pallet {
         return Ok(0);
       }
 
-      let currency_wanted = (amount / order_book_price)
+      let currency_wanted = amount
+        .checked_div(&order_book_price)
+        .ok_or(Error::<T>::InvalidUsdtValue)?
         .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
         .ok_or(Error::<T>::BalanceOverflow)?;
 
@@ -591,7 +597,7 @@ pub mod pallet {
       )
     }
 
-    // Based on the price provided by Oracle, try to convert the asset balance to TDFY balance
+    // Based on the value provided by Oracle, try to convert the asset balance to TDFY balance
     pub(crate) fn try_get_tide_value(
       currency_id: CurrencyId,
       amount: FixedU128,
@@ -600,13 +606,19 @@ pub mod pallet {
         .try_into()
         .map_err(|_| Error::<T>::InvalidAsset)?;
 
-      let order_book_price = Self::order_book_price(currency_id, CurrencyId::Tdfy);
+      let order_book_price = if currency_id == CurrencyId::Tdfy {
+        FixedU128::from(1)
+      } else {
+        Self::order_book_price(currency_id, CurrencyId::Tdfy)
+      };
 
       if order_book_price.is_zero() {
         return Ok(0);
       }
 
-      let currency_wanted = (amount / order_book_price)
+      let currency_wanted = amount
+        .checked_div(&order_book_price)
+        .ok_or(Error::<T>::InvalidTdfyValue)?
         .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
         .ok_or(Error::<T>::BalanceOverflow)?;
 
@@ -676,7 +688,7 @@ pub mod pallet {
     }
 
     // Calculate the Sunrise rewards (TDFY balance) from the currency and the fee
-    pub(crate) fn calculate_tide_reward_for_pool(
+    pub fn calculate_tide_reward_for_pool(
       rebates: FixedU128,
       fee: &Fee,
       currency_id: CurrencyId,
