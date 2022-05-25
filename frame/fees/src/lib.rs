@@ -62,7 +62,7 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   use sp_arithmetic::traits::Zero;
   use sp_runtime::{
-    traits::{AccountIdConversion, CheckedDiv, Saturating},
+    traits::{AccountIdConversion, CheckedDiv, CheckedMul, Saturating},
     FixedPointNumber, FixedU128, Percent, Permill, SaturatedConversion,
   };
   use sp_std::{borrow::ToOwned, vec};
@@ -405,7 +405,7 @@ pub mod pallet {
               // record the session change for the era
               active_era.last_session_block = Some(real_block);
 
-              if current_session >= expected_end_session_for_era {
+              if current_session == expected_end_session_for_era {
                 Self::deposit_event(Event::<T>::EraEnded {
                   era_index: active_era.index,
                 });
@@ -556,9 +556,11 @@ pub mod pallet {
 
       Ok(
         currency_wanted
-          .saturating_mul(FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .checked_mul(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .ok_or(Error::<T>::InvalidUsdtValue)?
           .into_inner()
-          .saturating_div(FixedU128::DIV),
+          .checked_div(FixedU128::DIV)
+          .ok_or(Error::<T>::BalanceOverflow)?,
       )
     }
 
@@ -593,7 +595,8 @@ pub mod pallet {
             10_u128.pow(Asset::Tether.exponent() as u32),
           ))
           .into_inner()
-          .saturating_div(FixedU128::DIV),
+          .checked_div(FixedU128::DIV)
+          .ok_or(Error::<T>::InvalidUsdtValue)?,
       )
     }
 
@@ -624,9 +627,11 @@ pub mod pallet {
 
       Ok(
         currency_wanted
-          .saturating_mul(FixedU128::from(10_u128.pow(Asset::Tdfy.exponent() as u32)))
+          .checked_mul(&FixedU128::from(10_u128.pow(Asset::Tdfy.exponent() as u32)))
+          .ok_or(Error::<T>::InvalidTdfyValue)?
           .into_inner()
-          .saturating_div(FixedU128::DIV),
+          .checked_div(FixedU128::DIV)
+          .ok_or(Error::<T>::BalanceOverflow)?,
       )
     }
 
@@ -695,12 +700,18 @@ pub mod pallet {
     ) -> Result<Balance, DispatchError> {
       let maximum_usdt_value = Asset::Tether.saturating_mul(10_000);
       let real_fee_with_rebates = (if fee.fee_usdt > maximum_usdt_value {
-        rebates * Self::try_get_value_from_usdt(currency_id, maximum_usdt_value.into())?.into()
+        FixedU128::from(Self::try_get_value_from_usdt(
+          currency_id,
+          maximum_usdt_value.into(),
+        )?)
       } else {
-        rebates * fee.fee.into()
-      } as FixedU128)
-        .into_inner()
-        .saturating_div(FixedU128::DIV);
+        FixedU128::from(fee.fee)
+      })
+      .checked_mul(&rebates)
+      .ok_or(Error::<T>::InvalidTdfyValue)?
+      .into_inner()
+      .checked_div(FixedU128::DIV)
+      .ok_or(Error::<T>::BalanceOverflow)?;
 
       Self::try_get_tide_value(currency_id, real_fee_with_rebates.into())
     }
