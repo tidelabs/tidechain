@@ -44,7 +44,7 @@ pub mod pallet {
   #[cfg(feature = "std")]
   use sp_runtime::traits::AccountIdConversion;
   use sp_runtime::{
-    traits::{CheckedDiv, Saturating},
+    traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub},
     FixedU128, Permill,
   };
   use sp_std::vec;
@@ -261,6 +261,8 @@ pub mod pallet {
     SlippageOverflow,
     /// Unknown Error.
     UnknownError,
+    /// Arithmetic error
+    ArithmeticError,
   }
 
   #[pallet::call]
@@ -317,16 +319,27 @@ pub mod pallet {
 
               // limit order can match with smaller price
               if trade.swap_type != SwapType::Limit {
-                let minimum_per_token =
-                  pay_per_token - pay_per_token.saturating_mul(trade.slippage.into());
+                let minimum_per_token = pay_per_token
+                  .checked_sub(
+                    &pay_per_token
+                      .checked_mul(&trade.slippage.into())
+                      .ok_or(Error::<T>::ArithmeticError)?,
+                  )
+                  .ok_or(Error::<T>::SlippageOverflow)?;
+
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanSwapLowerBound { index: index as u8 }
                 );
               }
 
-              let maximum_per_token =
-                pay_per_token + pay_per_token.saturating_mul(trade.slippage.into());
+              let maximum_per_token = pay_per_token
+                .checked_add(
+                  &pay_per_token
+                    .checked_mul(&trade.slippage.into())
+                    .ok_or(Error::<T>::ArithmeticError)?,
+                )
+                .ok_or(Error::<T>::SlippageOverflow)?;
 
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
@@ -344,16 +357,27 @@ pub mod pallet {
 
               // limit order can match with smaller price
               if mm_trade_request.swap_type != SwapType::Limit {
-                let minimum_per_token =
-                  pay_per_token - pay_per_token.saturating_mul(mm_trade_request.slippage.into());
+                let minimum_per_token = pay_per_token
+                  .checked_sub(
+                    &pay_per_token
+                      .checked_mul(&mm_trade_request.slippage.into())
+                      .ok_or(Error::<T>::SlippageOverflow)?,
+                  )
+                  .ok_or(Error::<T>::SlippageOverflow)?;
+
                 ensure!(
                   minimum_per_token <= pay_per_token_offered,
                   Error::OfferIsLessThanMarketMakerSwapLowerBound { index: index as u8 }
                 );
               }
 
-              let maximum_per_token =
-                pay_per_token + pay_per_token.saturating_mul(mm_trade_request.slippage.into());
+              let maximum_per_token = pay_per_token
+                .checked_add(
+                  &pay_per_token
+                    .checked_mul(&mm_trade_request.slippage.into())
+                    .ok_or(Error::<T>::SlippageOverflow)?,
+                )
+                .ok_or(Error::<T>::SlippageOverflow)?;
 
               ensure!(
                 maximum_per_token >= pay_per_token_offered,
@@ -421,18 +445,28 @@ pub mod pallet {
                   }
 
                   // 11. c) make sure market maker have enough funds in the trade intent request
-                  let available_funds = market_maker_trade_intent.amount_from
-                    - market_maker_trade_intent.amount_from_filled;
+                  let available_funds = market_maker_trade_intent
+                    .amount_from
+                    .checked_sub(market_maker_trade_intent.amount_from_filled)
+                    .ok_or(Error::<T>::MarketMakerHasNotEnoughTokenLeftToSell)?;
 
                   if available_funds
-                    .saturating_add(market_maker_trade_intent.slippage * available_funds)
+                    .checked_add(market_maker_trade_intent.slippage * available_funds)
+                    .ok_or(Error::<T>::ArithmeticError)?
                     < mm.amount_to_send
                   {
                     return Err(Error::<T>::MarketMakerHasNotEnoughTokenLeftToSell);
                   }
 
-                  market_maker_trade_intent.amount_from_filled += mm.amount_to_send;
-                  market_maker_trade_intent.amount_to_filled += mm.amount_to_receive;
+                  market_maker_trade_intent.amount_from_filled = market_maker_trade_intent
+                    .amount_from_filled
+                    .checked_add(mm.amount_to_send)
+                    .ok_or(Error::<T>::ArithmeticError)?;
+
+                  market_maker_trade_intent.amount_to_filled = market_maker_trade_intent
+                    .amount_to_filled
+                    .checked_add(mm.amount_to_receive)
+                    .ok_or(Error::<T>::ArithmeticError)?;
 
                   if market_maker_trade_intent.amount_from_filled
                     == market_maker_trade_intent.amount_from
@@ -817,9 +851,16 @@ pub mod pallet {
       let amount_to_release = trade
         .amount_from
         // reduce filled amount
-        .saturating_sub(trade.amount_from_filled)
+        .checked_sub(trade.amount_from_filled)
+        .ok_or(Error::<T>::ArithmeticError)?
         // reduce un-needed locked fee
-        .saturating_add(fees_with_slippage.fee.saturating_sub(real_fees_amount.fee));
+        .checked_add(
+          fees_with_slippage
+            .fee
+            .checked_sub(real_fees_amount.fee)
+            .ok_or(Error::<T>::SlippageOverflow)?,
+        )
+        .ok_or(Error::<T>::ArithmeticError)?;
 
       T::CurrencyTidefi::release(
         trade.token_from,
@@ -923,7 +964,9 @@ pub mod pallet {
       T::CurrencyTidefi::hold(
         asset_id_from,
         &account_id,
-        amount_from.saturating_add(amount_and_fee.fee),
+        amount_from
+          .checked_add(amount_and_fee.fee)
+          .ok_or(Error::<T>::ArithmeticError)?,
       )?;
 
       Swaps::<T>::insert(request_id, swap.clone());
@@ -969,12 +1012,15 @@ pub mod pallet {
           let amount_to_release = swap_intent
             .amount_from
             // amount filled
-            .saturating_sub(swap_intent.amount_from_filled);
+            .checked_sub(swap_intent.amount_from_filled)
+            .ok_or(Error::<T>::ArithmeticError)?;
 
           // FIXME: Should we refund the swap fee?
           // swap fee
           let real_amount_to_release = if swap_intent.amount_from_filled == 0 {
-            amount_to_release.saturating_add(amount_and_fee.fee)
+            amount_to_release
+              .checked_add(amount_and_fee.fee)
+              .ok_or(Error::<T>::ArithmeticError)?
           } else {
             // real fees required
             let fees_amount_filled = T::Fees::calculate_swap_fees(
@@ -990,7 +1036,14 @@ pub mod pallet {
               swap_intent.is_market_maker,
             );
 
-            amount_to_release.saturating_add(fees_amount.fee.saturating_sub(fees_amount_filled.fee))
+            amount_to_release
+              .checked_add(
+                fees_amount
+                  .fee
+                  .checked_sub(fees_amount_filled.fee)
+                  .ok_or(Error::<T>::ArithmeticError)?,
+              )
+              .ok_or(Error::<T>::ArithmeticError)?
           };
 
           T::CurrencyTidefi::release(
