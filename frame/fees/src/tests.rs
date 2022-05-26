@@ -32,16 +32,16 @@ pub fn check_genesis_config() {
 #[test]
 pub fn calculate_trading_fees() {
   new_test_ext().execute_with(|| {
-    // 1 USDT = 1 TIFI
+    // 1 USDT = 1 TDFY
     OrderBookPrice::<Test>::insert(
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       CurrencyId::Wrapped(4),
       FixedU128::saturating_from_rational(1, 1),
     );
 
     // 100 tifi @ 2% should cost 2 TIFIs
     let calculated_fee = Fees::calculate_swap_fees(
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       100_000_000_000_000,
       SwapType::Limit,
       false,
@@ -50,7 +50,7 @@ pub fn calculate_trading_fees() {
     assert_eq!(calculated_fee.fee, 2_000_000_000_000);
 
     let calculated_fee =
-      Fees::calculate_swap_fees(CurrencyId::Tifi, 100_000_000_000_000, SwapType::Limit, true);
+      Fees::calculate_swap_fees(CurrencyId::Tdfy, 100_000_000_000_000, SwapType::Limit, true);
     assert_eq!(calculated_fee.amount, 100_000_000_000_000);
     assert_eq!(calculated_fee.fee, 1_000_000_000_000);
   });
@@ -59,9 +59,9 @@ pub fn calculate_trading_fees() {
 #[test]
 pub fn register_swap_fees() {
   new_test_ext().execute_with(|| {
-    // 1 USDT = 1 TIFI
+    // 1 USDT = 1 TDFY
     OrderBookPrice::<Test>::insert(
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       CurrencyId::Wrapped(4),
       FixedU128::saturating_from_rational(1, 1),
     );
@@ -74,7 +74,7 @@ pub fn register_swap_fees() {
     // 100 tifi @ 2% should cost 2 TIFIs
     let calculated_fee = Fees::register_swap_fees(
       3u64.into(),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       100_000_000_000_000,
       SwapType::Limit,
       false,
@@ -95,7 +95,7 @@ pub fn register_swap_fees() {
     // make sure it increment the value
     assert_ok!(Fees::register_swap_fees(
       3u64.into(),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       100_000_000_000_000,
       SwapType::Limit,
       false
@@ -112,10 +112,10 @@ pub fn register_swap_fees() {
 #[test]
 pub fn test_calc_reward() {
   new_test_ext().execute_with(|| {
-    // 0.7 USDT = 1 TIFI
+    // 0.7 USDT = 1 TDFY
     OrderBookPrice::<Test>::insert(
       CurrencyId::Wrapped(4),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       FixedU128::saturating_from_rational(700_000, 1_000_000),
     );
 
@@ -127,7 +127,7 @@ pub fn test_calc_reward() {
         FixedU128::saturating_from_rational(125, 100),
         // 2$ USDT in fee
         // Should have total 2.5$ USDT in reward
-        // 2.5 / 0.7 = 3.57142857143 TIFI final
+        // 2.5 / 0.7 = 3.57142857143 TDFY final
         &fee,
         CurrencyId::Wrapped(4)
       )
@@ -140,23 +140,23 @@ pub fn test_calc_reward() {
 #[test]
 pub fn test_calc_reward_small_numbers() {
   new_test_ext().execute_with(|| {
-    // 0.5 USDT = 1 TIFI
+    // 0.5 USDT = 1 TDFY
     OrderBookPrice::<Test>::insert(
       CurrencyId::Wrapped(4),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       FixedU128::saturating_from_rational(500_000, 1_000_000),
     );
 
     let fee = Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 1_000_000, SwapType::Limit, false);
 
-    // We should receive 0.15625 TIFI in reward
+    // We should receive 0.15625 TDFY in reward
     assert_eq!(
       Fees::calculate_tide_reward_for_pool(
         // 125%
         FixedU128::saturating_from_rational(125, 100),
         // 0.2 in fee
         // Should have total 0.25$ USDT in reward
-        // 0.25 / 0.5 = 0.5 TIFI final
+        // 0.25 / 0.5 = 0.5 TDFY final
         &fee,
         CurrencyId::Wrapped(4)
       )
@@ -176,23 +176,23 @@ pub fn test_calc_reward_other_assets() {
       FixedU128::saturating_from_rational(1, 10_000),
     );
 
-    // 100_000 TIFI = 1 BTC
+    // 100_000 TDFY = 1 BTC
     OrderBookPrice::<Test>::insert(
       CurrencyId::Wrapped(2),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       FixedU128::saturating_from_rational(1, 100_000),
     );
 
     let fee =
       Fees::calculate_swap_fees(CurrencyId::Wrapped(2), 100_000_000, SwapType::Limit, false);
-    // We should receive 2500 TIFI in reward
+    // We should receive 2500 TDFY in reward
     assert_eq!(
       Fees::calculate_tide_reward_for_pool(
         // 125%
         FixedU128::saturating_from_rational(125, 100),
         // 0.02 BTC in fee
         // Should have total 0.025BTC in reward
-        // 0.025 * 100_000 = 2500 TIFI
+        // 0.025 * 100_000 = 2500 TDFY
         &fee,
         CurrencyId::Wrapped(2)
       )
@@ -206,11 +206,11 @@ pub fn test_calc_reward_other_assets() {
 
     assert_eq!(max_amount_in_btc, 100_000_000);
 
-    // TIFI amount
+    // TDFY amount
     let max_amount_in_tide =
       Fees::try_get_tide_value(CurrencyId::Wrapped(2), max_amount_in_btc.into()).unwrap();
 
-    // 100k TIFI maximum fees allocation
+    // 100k TDFY maximum fees allocation
     assert_eq!(max_amount_in_tide, 100_000_000_000_000_000);
 
     // 1_000 BTC transaction
@@ -222,7 +222,7 @@ pub fn test_calc_reward_other_assets() {
       false,
     );
 
-    // We should receive 125_000 TIFI in reward
+    // We should receive 125_000 TDFY in reward
     assert_eq!(
       Fees::calculate_tide_reward_for_pool(
         // 125% of 10k USDT = 12_500

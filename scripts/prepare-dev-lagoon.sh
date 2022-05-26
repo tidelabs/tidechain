@@ -47,7 +47,7 @@ generate_address_and_account_id() {
 # INVESTORS
 for i in $(seq 1 $I_NUM); do
 	ADDRESS=$(generate_address_and_account_id investor$i stash)
-	INVESTORS+="(assets::Asset::Tifi.currency_id(),\n$ADDRESS\n// 10_000 TIFI\nassets::Asset::Tifi.saturating_mul(10_000)),\n"
+	INVESTORS+="(assets::Asset::Tdfy.currency_id(),\n$ADDRESS\n// 10_000 TDFY\nassets::Asset::Tdfy.saturating_mul(10_000)),\n"
 	INVESTORS+="(assets::Asset::Tether.currency_id(),\n$ADDRESS\n// 10_000 USDT\nassets::Asset::Tether.saturating_mul(10_000)),\n"
 	INVESTORS+="(assets::Asset::USDCoin.currency_id(),\n$ADDRESS\n// 10_000 USDC\nassets::Asset::USDCoin.saturating_mul(10_000)),\n"
 	INVESTORS+="(assets::Asset::Bitcoin.currency_id(),\n$ADDRESS\n// 10_000 BTC\nassets::Asset::Bitcoin.saturating_mul(10_000)),\n"
@@ -57,7 +57,7 @@ done
 # DEVS
 for i in $(seq 1 $D_NUM); do
 	ADDRESS=$(generate_address_and_account_id dev$i stash)
-	DEVS+="(assets::Asset::Tifi.currency_id(),\n$ADDRESS\n// 1_000_000 TIFI\nassets::Asset::Tifi.saturating_mul(1_000_000)),\n"
+	DEVS+="(assets::Asset::Tdfy.currency_id(),\n$ADDRESS\n// 1_000_000 TDFY\nassets::Asset::Tdfy.saturating_mul(1_000_000)),\n"
 	DEVS+="(assets::Asset::Tether.currency_id(),\n$ADDRESS\n// 1_000_000 USDT\nassets::Asset::Tether.saturating_mul(1_000_000)),\n"
 	DEVS+="(assets::Asset::USDCoin.currency_id(),\n$ADDRESS\n// 1_000_000 USDC\nassets::Asset::USDCoin.saturating_mul(1_000_000)),\n"
 	DEVS+="(assets::Asset::Bitcoin.currency_id(),\n$ADDRESS\n// 1_000_000 BTC\nassets::Asset::Bitcoin.saturating_mul(1_000_000)),\n"
@@ -67,7 +67,7 @@ for i in $(seq 1 $D_NUM); do
 done
 
 # FAUCET
-FAUCET="(CurrencyId::Tifi,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TIFI\nassets::Asset::Tifi.saturating_mul(10_000)),\n"
+FAUCET="(CurrencyId::Tdfy,\n$(generate_address_and_account_id faucet controller)\n// 10_000 TDFY\nassets::Asset::Tdfy.saturating_mul(10_000)),\n"
 
 printf "\nvec![\n$MARKET_MAKERS]"
 printf "\nvec![\n"

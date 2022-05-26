@@ -16,9 +16,11 @@
 
 use crate::cli::{Cli, Subcommand};
 #[cfg(feature = "runtime-benchmarks")]
-use frame_benchmarking_cli::BenchmarkCmd;
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::future::TryFutureExt;
 use log::info;
+#[cfg(feature = "pyroscope")]
+use pyroscope_pprofrs::{pprof_backend, PprofConfig};
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 #[cfg(feature = "pyroscope")]
 use std::net::ToSocketAddrs;
@@ -222,14 +224,17 @@ pub fn run() -> Result<()> {
       .map_err(Error::AddressResolutionFailure)?
       .next()
       .ok_or_else(|| Error::AddressResolutionMissing)?;
-    let mut agent = pyro::PyroscopeAgent::builder(
-      "http://".to_string() + address.to_string().as_str(),
-      "tidechain".to_owned(),
-    )
-    .sample_rate(113)
-    .build()?;
-    agent.start();
-    Some(agent)
+
+    println!("address {}", address.to_string());
+
+    let agent = pyro::PyroscopeAgent::builder("http://localhost:4040", "tidechain")
+      .backend(pprof_backend(PprofConfig::new()))
+      .build()?;
+    println!("agent created");
+
+    let agent_running = agent.start()?;
+    println!("agent running");
+    Some(agent_running)
   } else {
     None
   };
@@ -463,9 +468,11 @@ pub fn run() -> Result<()> {
           Err(tidechain_service::Error::NoRuntime.into())
         }
 
-        BenchmarkCmd::Machine(cmd) => {
-          runner.sync_run(|config| cmd.run(&config).map_err(Error::SubstrateCli))
-        }
+        BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
+          cmd
+            .run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())
+            .map_err(Error::SubstrateCli)
+        }),
         // NOTE: this allows the Tidechain client to leniently implement
         // new benchmark commands.
         #[allow(unreachable_patterns)]
@@ -508,8 +515,9 @@ pub fn run() -> Result<()> {
   }?;
 
   #[cfg(feature = "pyroscope")]
-  if let Some(mut pyroscope_agent) = pyroscope_agent_maybe.take() {
-    pyroscope_agent.stop();
+  if let Some(pyroscope_agent) = pyroscope_agent_maybe.take() {
+    let agent_ready = pyroscope_agent.stop()?;
+    agent_ready.shutdown();
   }
   Ok(())
 }

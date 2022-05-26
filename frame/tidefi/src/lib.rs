@@ -199,8 +199,8 @@ pub mod pallet {
         Error::<T>::AssetDisabled
       );
 
-      // 4. Make sure the currency not a TIFI as it's not supported.
-      ensure!(currency_id != CurrencyId::Tifi, Error::<T>::UnknownAsset);
+      // 4. Make sure the currency not a TDFY as it's not supported.
+      ensure!(currency_id != CurrencyId::Tdfy, Error::<T>::UnknownAsset);
 
       // 5. Make sure the account have enough funds
       match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {
@@ -280,7 +280,10 @@ pub mod pallet {
       // 7. Make sure the account have enough funds for the `asset_id_from`
       match T::CurrencyTidefi::can_withdraw(currency_id_from, &account_id, amount_from) {
         WithdrawConsequence::Success => {
-          let real_slippage_tolerance = slippage_tolerance.unwrap_or(Permill::zero());
+          let mut real_slippage_tolerance = slippage_tolerance.unwrap_or(Permill::zero());
+          if real_slippage_tolerance.is_zero() && swap_type == SwapType::Limit {
+            real_slippage_tolerance = Permill::from_parts(1);
+          }
 
           // 7. a) Add trade in queue
           let (trade_id, _) = T::Oracle::add_new_swap_in_queue(

@@ -31,14 +31,14 @@ pub fn request_swap_event() {
 
     // add 1 tifi to alice & all MMs
     assert_ok!(Adapter::mint_into(
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       &1u64,
       1_000_000_000_000
     ));
 
     // add 20 tides to bob
     assert_ok!(Adapter::mint_into(
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       &2u64,
       20_000_000_000_000
     ));
@@ -67,7 +67,7 @@ pub fn request_swap_event() {
     // Submit request
     assert_ok!(Tidefi::swap(
       Origin::signed(2u64),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       10_000_000_000_000,
       CurrencyId::Wrapped(temp_asset_id),
       20_000,
@@ -82,7 +82,7 @@ pub fn request_swap_event() {
       )
       .unwrap_or_default(),
       account: 2u64,
-      currency_id_from: CurrencyId::Tifi,
+      currency_id_from: CurrencyId::Tdfy,
       amount_from: 10_000_000_000_000,
       currency_id_to: CurrencyId::Wrapped(temp_asset_id),
       amount_to: 20_000,
@@ -90,7 +90,7 @@ pub fn request_swap_event() {
         14, 87, 81, 192, 38, 229, 67, 178, 232, 171, 46, 176, 96, 153, 218, 161, 209, 229, 223, 71,
         119, 143, 119, 135, 250, 171, 69, 205, 241, 47, 227, 168,
       ],
-      slippage_tolerance: Permill::zero(),
+      slippage_tolerance: Permill::from_parts(1),
       swap_type: SwapType::Limit,
       is_market_maker: false,
     }));

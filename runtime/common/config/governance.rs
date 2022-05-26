@@ -16,7 +16,7 @@
 
 use crate::{
   constants::{
-    currency::{deposit, CENTS, DOLLARS, TIFI},
+    currency::{deposit, CENTS, DOLLARS, TDFY},
     time::DAYS,
   },
   types::{AccountId, Balance, BlockNumber, EnsureRootOrHalfCouncil},
@@ -32,7 +32,7 @@ use sp_runtime::Permill;
 use static_assertions::const_assert;
 
 parameter_types! {
-   pub const CandidacyBond: Balance = 100 * TIFI;
+   pub const CandidacyBond: Balance = 100 * TDFY;
    // 1 storage item created, key size is 32 bytes, value size is 16+16.
    pub const VotingBondBase: Balance = deposit(1, 64);
    // additional data per vote is 32 bytes (account id).

@@ -111,19 +111,19 @@ pub fn should_stake_native_asset() {
     let alice_origin = Origin::signed(alice);
 
     // mint token to user
-    Adapter::mint_into(CurrencyId::Tifi, &alice, 1_000_000_000_000_000)
+    Adapter::mint_into(CurrencyId::Tdfy, &alice, 1_000_000_000_000_000)
       .expect("Unable to mint token");
 
     assert_ok!(TidefiStaking::stake(
       alice_origin,
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       1_000_000_000_000,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tifi),
+      TidefiStaking::staking_pool(CurrencyId::Tdfy),
       Some(1_000_000_000_000)
     );
 
@@ -146,23 +146,23 @@ pub fn should_stake_and_unstake() {
     let alice_origin = Origin::signed(alice);
 
     // mint token to user
-    Adapter::mint_into(CurrencyId::Tifi, &alice, 1_000_000_000_000_000)
+    Adapter::mint_into(CurrencyId::Tdfy, &alice, 1_000_000_000_000_000)
       .expect("Unable to mint token");
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       1_000_000_000_000_000
     );
 
     assert_ok!(TidefiStaking::stake(
       alice_origin.clone(),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       1_000_000_000_000,
       FIFTEEN_DAYS
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       1_000_000_000_000_000 - 1_000_000_000_000
     );
 
@@ -173,7 +173,7 @@ pub fn should_stake_and_unstake() {
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tifi),
+      TidefiStaking::staking_pool(CurrencyId::Tdfy),
       Some(1_000_000_000_000)
     );
 
@@ -197,7 +197,7 @@ pub fn should_stake_and_unstake() {
     assert!(TidefiStaking::account_stakes(alice).len() == 0);
     // balance is returned
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       1_000_000_000_000_000
     );
   });
@@ -212,19 +212,19 @@ pub fn should_stake_and_unstake_queue() {
     let initial_mint = 1_000_000_000_000_000;
 
     // mint token to user
-    Adapter::mint_into(CurrencyId::Tifi, &alice, initial_mint).expect("Unable to mint token");
+    Adapter::mint_into(CurrencyId::Tdfy, &alice, initial_mint).expect("Unable to mint token");
 
-    assert_eq!(Adapter::balance(CurrencyId::Tifi, &1u64), initial_mint);
+    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &1u64), initial_mint);
 
     assert_ok!(TidefiStaking::stake(
       alice_origin.clone(),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       initial_stake,
       FIFTEEN_DAYS
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       initial_mint - initial_stake
     );
 
@@ -235,7 +235,7 @@ pub fn should_stake_and_unstake_queue() {
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tifi),
+      TidefiStaking::staking_pool(CurrencyId::Tdfy),
       Some(initial_stake)
     );
 
@@ -260,7 +260,7 @@ pub fn should_stake_and_unstake_queue() {
 
     let unstake_fee = TidefiStaking::unstake_fee() * initial_stake;
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       initial_mint - initial_stake - unstake_fee
     );
     // 1 % of 1_000_000_000_000 = 10_000_000_000
@@ -302,21 +302,21 @@ pub fn should_stake_multiple_and_unstake_queue() {
     let initial_mint = 1_000_000_000_000_000;
 
     // mint token to user
-    Adapter::mint_into(CurrencyId::Tifi, &alice, initial_mint).expect("Unable to mint token");
-    Adapter::mint_into(CurrencyId::Tifi, &bob, initial_mint).expect("Unable to mint token");
+    Adapter::mint_into(CurrencyId::Tdfy, &alice, initial_mint).expect("Unable to mint token");
+    Adapter::mint_into(CurrencyId::Tdfy, &bob, initial_mint).expect("Unable to mint token");
 
-    assert_eq!(Adapter::balance(CurrencyId::Tifi, &alice), initial_mint);
-    assert_eq!(Adapter::balance(CurrencyId::Tifi, &bob), initial_mint);
+    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &alice), initial_mint);
+    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &bob), initial_mint);
 
     assert_ok!(TidefiStaking::stake(
       alice_origin.clone(),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       initial_stake,
       FIFTEEN_DAYS
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       initial_mint - initial_stake
     );
 
@@ -327,7 +327,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tifi),
+      TidefiStaking::staking_pool(CurrencyId::Tdfy),
       Some(initial_stake)
     );
 
@@ -349,7 +349,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
 
     assert_ok!(TidefiStaking::stake(
       bob_origin.clone(),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       initial_stake_bob,
       FIFTEEN_DAYS
     ));
@@ -361,7 +361,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
 
     assert_ok!(TidefiStaking::stake(
       bob_origin.clone(),
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       initial_stake_bob,
       FIFTEEN_DAYS * 2
     ));
@@ -393,7 +393,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     let unstake_fee_bob = TidefiStaking::unstake_fee() * initial_stake_bob;
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       initial_mint - initial_stake - unstake_fee
     );
 
@@ -439,13 +439,13 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert!(TidefiStaking::unstake_queue().is_empty());
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &1u64),
       initial_mint - unstake_fee
     );
 
     assert!(TidefiStaking::account_stakes(bob).len() == 1);
     assert_eq!(
-      Adapter::balance(CurrencyId::Tifi, &2u64),
+      Adapter::balance(CurrencyId::Tdfy, &2u64),
       // we still have a stake active
       initial_mint - unstake_fee_bob - initial_stake_bob
     );
@@ -459,11 +459,11 @@ pub fn stake_with_invalid_duration() {
     let alice_origin = Origin::signed(alice);
 
     // mint token to user
-    Adapter::mint_into(CurrencyId::Tifi, &alice, 1_000_000_000_000_000)
+    Adapter::mint_into(CurrencyId::Tdfy, &alice, 1_000_000_000_000_000)
       .expect("Unable to mint token");
 
     assert_noop!(
-      TidefiStaking::stake(alice_origin, CurrencyId::Tifi, 1_000_000_000_000, 999),
+      TidefiStaking::stake(alice_origin, CurrencyId::Tdfy, 1_000_000_000_000, 999),
       Error::<Test>::InvalidDuration
     );
   });
@@ -482,23 +482,23 @@ pub fn should_calculate_rewards() {
     System::set_block_number(1);
 
     // mint token to user
-    Adapter::mint_into(CurrencyId::Tifi, &alice, 1_000_000_000_000_000)
+    Adapter::mint_into(CurrencyId::Tdfy, &alice, 1_000_000_000_000_000)
       .expect("Unable to mint token");
-    Adapter::mint_into(CurrencyId::Tifi, &bob, 1_000_000_000_000_000)
+    Adapter::mint_into(CurrencyId::Tdfy, &bob, 1_000_000_000_000_000)
       .expect("Unable to mint token");
-    Adapter::mint_into(CurrencyId::Tifi, &charlie, 1_000_000_000_000_000)
+    Adapter::mint_into(CurrencyId::Tdfy, &charlie, 1_000_000_000_000_000)
       .expect("Unable to mint token");
 
     assert_ok!(TidefiStaking::stake(
       alice_origin,
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       100_000_000_000_000,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tifi),
+      TidefiStaking::staking_pool(CurrencyId::Tdfy),
       Some(100_000_000_000_000)
     );
 
@@ -512,11 +512,11 @@ pub fn should_calculate_rewards() {
       100_000_000_000_000
     );
 
-    // 100 for TIFI in fees for session 1
+    // 100 for TDFY in fees for session 1
     // 15 days should get 2%, so 2 tides
     assert_ok!(TidefiStaking::on_session_end(
       1,
-      vec![(CurrencyId::Tifi, 100_000_000_000_000)]
+      vec![(CurrencyId::Tdfy, 100_000_000_000_000)]
     ));
 
     // run on idle hook
@@ -536,22 +536,22 @@ pub fn should_calculate_rewards() {
 
     assert_ok!(TidefiStaking::stake(
       bob_origin,
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       100_000_000_000_000,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tifi),
+      TidefiStaking::staking_pool(CurrencyId::Tdfy),
       Some(200_000_000_000_000)
     );
 
-    // 100 for TIFI in fees for session 1
+    // 100 for TDFY in fees for session 1
     // 15 days should get 2%, so 2 tides
     assert_ok!(TidefiStaking::on_session_end(
       2,
-      vec![(CurrencyId::Tifi, 100_000_000_000_000)]
+      vec![(CurrencyId::Tdfy, 100_000_000_000_000)]
     ));
 
     // run on idle hook
@@ -602,14 +602,14 @@ pub fn should_calculate_rewards() {
 
     assert_ok!(TidefiStaking::stake(
       charlie_origin,
-      CurrencyId::Tifi,
+      CurrencyId::Tdfy,
       400_000_000_000_000,
       FIFTEEN_DAYS
     ));
 
     assert_ok!(TidefiStaking::on_session_end(
       5,
-      vec![(CurrencyId::Tifi, 100_000_000_000_000)]
+      vec![(CurrencyId::Tdfy, 100_000_000_000_000)]
     ));
 
     assert_eq!(

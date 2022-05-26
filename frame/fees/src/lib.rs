@@ -62,7 +62,7 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   use sp_arithmetic::traits::Zero;
   use sp_runtime::{
-    traits::{AccountIdConversion, CheckedDiv, Saturating},
+    traits::{AccountIdConversion, CheckedDiv, CheckedMul, Saturating},
     FixedPointNumber, FixedU128, Percent, Permill, SaturatedConversion,
   };
   use sp_std::{borrow::ToOwned, vec};
@@ -174,13 +174,13 @@ pub mod pallet {
   #[pallet::getter(fn stored_sessions)]
   pub type StoredSessions<T: Config> = StorageMap<_, Blake2_128Concat, SessionIndex, ()>;
 
-  /// Tifi price of the orderbook reported by oracle every X minutes at the current market price.
+  /// Tdfy price of the orderbook reported by oracle every X minutes at the current market price.
   /// We keep in sync order book of USDT values for our sunrise pool.
   ///
   /// CurrencyId → USDT
-  /// USDT → TIFI
+  /// USDT → TDFY
   ///
-  /// To get current TIFI USDT value;
+  /// To get current TDFY USDT value;
   ///
   #[pallet::storage]
   #[pallet::getter(fn order_book_price)]
@@ -269,9 +269,9 @@ pub mod pallet {
 
       // Create Fee account
       let account_id = <Pallet<T>>::account_id();
-      let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tifi);
-      if T::CurrencyTidefi::reducible_balance(CurrencyId::Tifi, &account_id, false) < min {
-        if let Err(err) = T::CurrencyTidefi::mint_into(CurrencyId::Tifi, &account_id, min) {
+      let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tdfy);
+      if T::CurrencyTidefi::reducible_balance(CurrencyId::Tdfy, &account_id, false) < min {
+        if let Err(err) = T::CurrencyTidefi::mint_into(CurrencyId::Tdfy, &account_id, min) {
           log!(
             error,
             "Unable to mint fee pallet minimum balance: {:?}",
@@ -329,6 +329,10 @@ pub mod pallet {
     AccountFeeOverflow,
     /// Balance overflow
     BalanceOverflow,
+    /// Invalid USDT value in the order book
+    InvalidUsdtValue,
+    /// Invalid TDFY value in the order book
+    InvalidTdfyValue,
   }
 
   // hooks
@@ -357,7 +361,7 @@ pub mod pallet {
               session_start_block.saturating_add(T::BlocksPerSession::get());
 
             // end of session
-            if real_block >= expected_end_block_for_session {
+            if real_block == expected_end_block_for_session {
               let current_session = CurrentSession::<T>::get();
 
               let expected_end_session_for_era = match active_era.start_session_index {
@@ -367,7 +371,7 @@ pub mod pallet {
               .saturating_add(T::SessionsPerEra::get());
 
               log!(
-                info,
+                debug,
                 "Fees compound session #{} started in block #{:?}, and is now expired.",
                 current_session,
                 start_block
@@ -401,7 +405,10 @@ pub mod pallet {
               // record the session change for the era
               active_era.last_session_block = Some(real_block);
 
-              if current_session >= expected_end_session_for_era {
+              if current_session == expected_end_session_for_era {
+                Self::deposit_event(Event::<T>::EraEnded {
+                  era_index: active_era.index,
+                });
                 // increment the era index
                 active_era.index = active_era.index.saturating_add(1);
                 // reset the era values
@@ -409,9 +416,6 @@ pub mod pallet {
                 active_era.start_block = None;
                 active_era.start_session_index = None;
                 active_era.start = None;
-                Self::deposit_event(Event::<T>::EraEnded {
-                  era_index: active_era.index,
-                });
               }
 
               // update active era
@@ -495,7 +499,7 @@ pub mod pallet {
           }
 
           // transfer funds
-          T::CurrencyTidefi::transfer(CurrencyId::Tifi, &Self::account_id(), who, *reward, true)?;
+          T::CurrencyTidefi::transfer(CurrencyId::Tdfy, &Self::account_id(), who, *reward, true)?;
 
           // emit event
           Self::deposit_event(Event::<T>::SunriseClaimed {
@@ -552,13 +556,15 @@ pub mod pallet {
 
       Ok(
         currency_wanted
-          .saturating_mul(FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .checked_mul(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .ok_or(Error::<T>::InvalidUsdtValue)?
           .into_inner()
-          .saturating_div(FixedU128::DIV),
+          .checked_div(FixedU128::DIV)
+          .ok_or(Error::<T>::BalanceOverflow)?,
       )
     }
 
-    // Based on the price provided by Oracle, try to convert the asset balance to USDT balance
+    // Based on the value provided by Oracle, try to convert the asset balance to USDT balance
     pub(crate) fn try_get_usdt_value(
       currency_id: CurrencyId,
       amount: FixedU128,
@@ -577,7 +583,9 @@ pub mod pallet {
         return Ok(0);
       }
 
-      let currency_wanted = (amount / order_book_price)
+      let currency_wanted = amount
+        .checked_div(&order_book_price)
+        .ok_or(Error::<T>::InvalidUsdtValue)?
         .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
         .ok_or(Error::<T>::BalanceOverflow)?;
 
@@ -587,11 +595,12 @@ pub mod pallet {
             10_u128.pow(Asset::Tether.exponent() as u32),
           ))
           .into_inner()
-          .saturating_div(FixedU128::DIV),
+          .checked_div(FixedU128::DIV)
+          .ok_or(Error::<T>::InvalidUsdtValue)?,
       )
     }
 
-    // Based on the price provided by Oracle, try to convert the asset balance to TIFI balance
+    // Based on the value provided by Oracle, try to convert the asset balance to TDFY balance
     pub(crate) fn try_get_tide_value(
       currency_id: CurrencyId,
       amount: FixedU128,
@@ -600,21 +609,29 @@ pub mod pallet {
         .try_into()
         .map_err(|_| Error::<T>::InvalidAsset)?;
 
-      let order_book_price = Self::order_book_price(currency_id, CurrencyId::Tifi);
+      let order_book_price = if currency_id == CurrencyId::Tdfy {
+        FixedU128::from(1)
+      } else {
+        Self::order_book_price(currency_id, CurrencyId::Tdfy)
+      };
 
       if order_book_price.is_zero() {
         return Ok(0);
       }
 
-      let currency_wanted = (amount / order_book_price)
+      let currency_wanted = amount
+        .checked_div(&order_book_price)
+        .ok_or(Error::<T>::InvalidTdfyValue)?
         .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
         .ok_or(Error::<T>::BalanceOverflow)?;
 
       Ok(
         currency_wanted
-          .saturating_mul(FixedU128::from(10_u128.pow(Asset::Tifi.exponent() as u32)))
+          .checked_mul(&FixedU128::from(10_u128.pow(Asset::Tdfy.exponent() as u32)))
+          .ok_or(Error::<T>::InvalidTdfyValue)?
           .into_inner()
-          .saturating_div(FixedU128::DIV),
+          .checked_div(FixedU128::DIV)
+          .ok_or(Error::<T>::BalanceOverflow)?,
       )
     }
 
@@ -675,20 +692,26 @@ pub mod pallet {
       });
     }
 
-    // Calculate the Sunrise rewards (TIFI balance) from the currency and the fee
-    pub(crate) fn calculate_tide_reward_for_pool(
+    // Calculate the Sunrise rewards (TDFY balance) from the currency and the fee
+    pub fn calculate_tide_reward_for_pool(
       rebates: FixedU128,
       fee: &Fee,
       currency_id: CurrencyId,
     ) -> Result<Balance, DispatchError> {
       let maximum_usdt_value = Asset::Tether.saturating_mul(10_000);
       let real_fee_with_rebates = (if fee.fee_usdt > maximum_usdt_value {
-        rebates * Self::try_get_value_from_usdt(currency_id, maximum_usdt_value.into())?.into()
+        FixedU128::from(Self::try_get_value_from_usdt(
+          currency_id,
+          maximum_usdt_value.into(),
+        )?)
       } else {
-        rebates * fee.fee.into()
-      } as FixedU128)
-        .into_inner()
-        .saturating_div(FixedU128::DIV);
+        FixedU128::from(fee.fee)
+      })
+      .checked_mul(&rebates)
+      .ok_or(Error::<T>::InvalidTdfyValue)?
+      .into_inner()
+      .checked_div(FixedU128::DIV)
+      .ok_or(Error::<T>::BalanceOverflow)?;
 
       Self::try_get_tide_value(currency_id, real_fee_with_rebates.into())
     }

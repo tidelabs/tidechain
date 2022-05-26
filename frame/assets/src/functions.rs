@@ -126,12 +126,13 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     id: T::AssetId,
     who: &T::AccountId,
     amount: T::Balance,
+    increase_supply: bool,
   ) -> DepositConsequence {
     let details = match Asset::<T, I>::get(id) {
       Some(details) => details,
       None => return DepositConsequence::UnknownAsset,
     };
-    if details.supply.checked_add(&amount).is_none() {
+    if increase_supply && details.supply.checked_add(&amount).is_none() {
       return DepositConsequence::Overflow;
     }
     if let Some(balance) = Self::maybe_balance(id, who) {
@@ -303,7 +304,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       (true, Some(dust)) => (amount, Some(dust)),
       _ => (debit, None),
     };
-    Self::can_increase(id, dest, credit).into_result()?;
+    Self::can_increase(id, dest, credit, false).into_result()?;
     Ok((credit, maybe_burn))
   }
 
@@ -410,7 +411,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       return Ok(());
     }
 
-    Self::can_increase(id, beneficiary, amount).into_result()?;
+    Self::can_increase(id, beneficiary, amount, true).into_result()?;
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
       let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
 

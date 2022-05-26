@@ -35,7 +35,7 @@ Emergency proposals deal with major problems with the network that need to be "f
 
 Anyone can propose a referendum by depositing the minimum amount of tokens for a certain period (number of blocks). If someone agrees with the proposal, they may deposit the same amount of tokens to support it - this action is called _seconding_. The proposal with the highest amount of bonded support will be selected to be a referendum in the next voting cycle.
 
-Note that this may be different from the absolute number of seconds; for instance, three accounts bonding 20 TIFI each would "outweigh" ten accounts bonding a single TIFI each. The bonded tokens will be released once the proposal is tabled (that is, brought to a vote).
+Note that this may be different from the absolute number of seconds; for instance, three accounts bonding 20 TDFY each would "outweigh" ten accounts bonding a single TDFY each. The bonded tokens will be released once the proposal is tabled (that is, brought to a vote).
 
 There can be a maximum of 100 public proposals in the proposal queue.
 
@@ -65,14 +65,14 @@ It is possible to vote without locking at all, but your vote is worth a small fr
 ```
 Example:
 
-Peter: Votes `No` with 10 TIFI for a 128 week lock period  => 10 * 6 = 60 Votes
+Peter: Votes `No` with 10 TDFY for a 128 week lock period  => 10 * 6 = 60 Votes
 
-Logan: Votes `Yes` with 20 TIFI for a 4 week lock period => 20 * 1 = 20 Votes
+Logan: Votes `Yes` with 20 TDFY for a 4 week lock period => 20 * 1 = 20 Votes
 
-Kevin: Votes `Yes` with 15 TIFI for a 8 week lock period => 15 * 2 = 30 Votes
+Kevin: Votes `Yes` with 15 TDFY for a 8 week lock period => 15 * 2 = 30 Votes
 ```
 
-Even though combined both Logan and Kevin vote with more TIFI than Peter, the lock period for both of
+Even though combined both Logan and Kevin vote with more TDFY than Peter, the lock period for both of
 them is less than Peter, leading to their voting power counting as less.
 
 #### Tallying
@@ -94,7 +94,7 @@ against - the number of nay votes
 
 turnout - the total number of voting tokens (does not include conviction)
 
-electorate - the total number of TIFI tokens issued in the network
+electorate - the total number of TDFY tokens issued in the network
 ```
 
 ##### Super-Majority Approve
@@ -120,14 +120,14 @@ proposal is carried, no matter how much stake votes on the proposal.
 Example:
 
 Assume:
-- We only have 1_500 TIFI tokens in total.
+- We only have 1_500 TDFY tokens in total.
 - Public proposal
 
-John  - 500 TIFI
-Peter - 100 TIFI
-Lilly - 150 TIFI
-JJ    - 150 TIFI
-Ken   - 600 TIFI
+John  - 500 TDFY
+Peter - 100 TDFY
+Lilly - 150 TDFY
+JJ    - 150 TDFY
+Ken   - 600 TDFY
 
 John: Votes `Yes` for a 4 week lock period  => 500 * 1 = 500 Votes
 
@@ -200,7 +200,7 @@ Upon seeing their proposal removed, a submitter who is not properly introduced t
 
 ### How to be a council member?
 
-All TIFI stakeholders are free to signal their approval of any of the registered candidates.
+All TDFY stakeholders are free to signal their approval of any of the registered candidates.
 
 Council elections are handled by the same Phragmén election process that selects validators from the available pool based on nominations. However, token holders' votes for councillors are isolated from any of the nominations they may have on validators. Council terms last for one day.
 
