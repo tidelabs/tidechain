@@ -217,10 +217,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     keep_alive: bool,
   ) -> Result<T::Balance, DispatchError> {
     let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-    ensure!(!details.is_frozen, Error::<T, I>::Frozen);
+    ensure!(!details.is_frozen, Error::<T, I>::AssetFrozen);
 
     let account = Account::<T, I>::get(who, id).ok_or(Error::<T, I>::NoAccount)?;
-    ensure!(!account.is_frozen, Error::<T, I>::Frozen);
+    ensure!(!account.is_frozen, Error::<T, I>::AccountFrozen);
 
     let amount = if let Some(frozen) = T::Freezer::frozen_balance(id, who) {
       // Frozen balance: account CANNOT be deleted
@@ -346,8 +346,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       account.balance.is_zero() || allow_burn,
       Error::<T, I>::WouldBurn
     );
-    ensure!(!details.is_frozen, Error::<T, I>::Frozen);
-    ensure!(!account.is_frozen, Error::<T, I>::Frozen);
+    ensure!(!details.is_frozen, Error::<T, I>::AssetFrozen);
+    ensure!(!account.is_frozen, Error::<T, I>::AccountFrozen);
 
     T::Currency::unreserve(&who, deposit);
 
@@ -732,7 +732,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     amount: T::Balance,
   ) -> DispatchResult {
     let mut d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-    ensure!(!d.is_frozen, Error::<T, I>::Frozen);
+    ensure!(!d.is_frozen, Error::<T, I>::AssetFrozen);
     Approvals::<T, I>::try_mutate(
       (id, &owner, &delegate),
       |maybe_approved| -> DispatchResult {
@@ -1057,10 +1057,10 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     who: &T::AccountId,
   ) -> Result<T::Balance, DispatchError> {
     let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-    ensure!(!details.is_frozen, Error::<T, I>::Frozen);
+    ensure!(!details.is_frozen, Error::<T, I>::AssetFrozen);
 
     let account = Account::<T, I>::get(who, id).ok_or(Error::<T, I>::NoAccount)?;
-    ensure!(!account.is_frozen, Error::<T, I>::Frozen);
+    ensure!(!account.is_frozen, Error::<T, I>::AccountFrozen);
 
     Ok(account.reserved)
   }
