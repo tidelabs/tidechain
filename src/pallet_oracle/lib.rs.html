@@ -1017,6 +1017,59 @@
 <span id="1015">1015</span>
 <span id="1016">1016</span>
 <span id="1017">1017</span>
+<span id="1018">1018</span>
+<span id="1019">1019</span>
+<span id="1020">1020</span>
+<span id="1021">1021</span>
+<span id="1022">1022</span>
+<span id="1023">1023</span>
+<span id="1024">1024</span>
+<span id="1025">1025</span>
+<span id="1026">1026</span>
+<span id="1027">1027</span>
+<span id="1028">1028</span>
+<span id="1029">1029</span>
+<span id="1030">1030</span>
+<span id="1031">1031</span>
+<span id="1032">1032</span>
+<span id="1033">1033</span>
+<span id="1034">1034</span>
+<span id="1035">1035</span>
+<span id="1036">1036</span>
+<span id="1037">1037</span>
+<span id="1038">1038</span>
+<span id="1039">1039</span>
+<span id="1040">1040</span>
+<span id="1041">1041</span>
+<span id="1042">1042</span>
+<span id="1043">1043</span>
+<span id="1044">1044</span>
+<span id="1045">1045</span>
+<span id="1046">1046</span>
+<span id="1047">1047</span>
+<span id="1048">1048</span>
+<span id="1049">1049</span>
+<span id="1050">1050</span>
+<span id="1051">1051</span>
+<span id="1052">1052</span>
+<span id="1053">1053</span>
+<span id="1054">1054</span>
+<span id="1055">1055</span>
+<span id="1056">1056</span>
+<span id="1057">1057</span>
+<span id="1058">1058</span>
+<span id="1059">1059</span>
+<span id="1060">1060</span>
+<span id="1061">1061</span>
+<span id="1062">1062</span>
+<span id="1063">1063</span>
+<span id="1064">1064</span>
+<span id="1065">1065</span>
+<span id="1066">1066</span>
+<span id="1067">1067</span>
+<span id="1068">1068</span>
+<span id="1069">1069</span>
+<span id="1070">1070</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -1063,7 +1116,7 @@
   <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
   <span class="kw">use</span> <span class="ident">sp_runtime::traits::AccountIdConversion</span>;
   <span class="kw">use</span> <span class="ident">sp_runtime</span>::{
-    <span class="ident">traits</span>::{<span class="ident">CheckedDiv</span>, <span class="ident">Saturating</span>},
+    <span class="ident">traits</span>::{<span class="ident">CheckedAdd</span>, <span class="ident">CheckedDiv</span>, <span class="ident">CheckedMul</span>, <span class="ident">CheckedSub</span>},
     <span class="ident">FixedU128</span>, <span class="ident">Permill</span>,
   };
   <span class="kw">use</span> <span class="ident">sp_std::vec</span>;
@@ -1280,6 +1333,8 @@
     <span class="ident">SlippageOverflow</span>,
     <span class="doccomment">/// Unknown Error.</span>
     <span class="ident">UnknownError</span>,
+    <span class="doccomment">/// Arithmetic error</span>
+    <span class="ident">ArithmeticError</span>,
   }
 
   <span class="attribute">#[<span class="ident">pallet::call</span>]</span>
@@ -1336,16 +1391,27 @@
 
               <span class="comment">// limit order can match with smaller price</span>
               <span class="kw">if</span> <span class="ident">trade</span>.<span class="ident">swap_type</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapType::Limit</span> {
-                <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span>
-                  <span class="ident">pay_per_token</span> <span class="op">-</span> <span class="ident">pay_per_token</span>.<span class="ident">saturating_mul</span>(<span class="ident">trade</span>.<span class="ident">slippage</span>.<span class="ident">into</span>());
+                <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span>
+                  .<span class="ident">checked_sub</span>(
+                    <span class="kw-2">&amp;</span><span class="ident">pay_per_token</span>
+                      .<span class="ident">checked_mul</span>(<span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">slippage</span>.<span class="ident">into</span>())
+                      .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>,
+                  )
+                  .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SlippageOverflow</span>)<span class="question-mark">?</span>;
+
                 <span class="macro">ensure!</span>(
                   <span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
                   <span class="ident">Error::OfferIsLessThanSwapLowerBound</span> { <span class="ident">index</span>: <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u8</span> }
                 );
               }
 
-              <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span>
-                <span class="ident">pay_per_token</span> <span class="op">+</span> <span class="ident">pay_per_token</span>.<span class="ident">saturating_mul</span>(<span class="ident">trade</span>.<span class="ident">slippage</span>.<span class="ident">into</span>());
+              <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span>
+                .<span class="ident">checked_add</span>(
+                  <span class="kw-2">&amp;</span><span class="ident">pay_per_token</span>
+                    .<span class="ident">checked_mul</span>(<span class="kw-2">&amp;</span><span class="ident">trade</span>.<span class="ident">slippage</span>.<span class="ident">into</span>())
+                    .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>,
+                )
+                .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SlippageOverflow</span>)<span class="question-mark">?</span>;
 
               <span class="macro">ensure!</span>(
                 <span class="ident">maximum_per_token</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
@@ -1363,16 +1429,27 @@
 
               <span class="comment">// limit order can match with smaller price</span>
               <span class="kw">if</span> <span class="ident">mm_trade_request</span>.<span class="ident">swap_type</span> <span class="op">!</span><span class="op">=</span> <span class="ident">SwapType::Limit</span> {
-                <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span>
-                  <span class="ident">pay_per_token</span> <span class="op">-</span> <span class="ident">pay_per_token</span>.<span class="ident">saturating_mul</span>(<span class="ident">mm_trade_request</span>.<span class="ident">slippage</span>.<span class="ident">into</span>());
+                <span class="kw">let</span> <span class="ident">minimum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span>
+                  .<span class="ident">checked_sub</span>(
+                    <span class="kw-2">&amp;</span><span class="ident">pay_per_token</span>
+                      .<span class="ident">checked_mul</span>(<span class="kw-2">&amp;</span><span class="ident">mm_trade_request</span>.<span class="ident">slippage</span>.<span class="ident">into</span>())
+                      .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SlippageOverflow</span>)<span class="question-mark">?</span>,
+                  )
+                  .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SlippageOverflow</span>)<span class="question-mark">?</span>;
+
                 <span class="macro">ensure!</span>(
                   <span class="ident">minimum_per_token</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
                   <span class="ident">Error::OfferIsLessThanMarketMakerSwapLowerBound</span> { <span class="ident">index</span>: <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u8</span> }
                 );
               }
 
-              <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span>
-                <span class="ident">pay_per_token</span> <span class="op">+</span> <span class="ident">pay_per_token</span>.<span class="ident">saturating_mul</span>(<span class="ident">mm_trade_request</span>.<span class="ident">slippage</span>.<span class="ident">into</span>());
+              <span class="kw">let</span> <span class="ident">maximum_per_token</span> <span class="op">=</span> <span class="ident">pay_per_token</span>
+                .<span class="ident">checked_add</span>(
+                  <span class="kw-2">&amp;</span><span class="ident">pay_per_token</span>
+                    .<span class="ident">checked_mul</span>(<span class="kw-2">&amp;</span><span class="ident">mm_trade_request</span>.<span class="ident">slippage</span>.<span class="ident">into</span>())
+                    .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SlippageOverflow</span>)<span class="question-mark">?</span>,
+                )
+                .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SlippageOverflow</span>)<span class="question-mark">?</span>;
 
               <span class="macro">ensure!</span>(
                 <span class="ident">maximum_per_token</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">pay_per_token_offered</span>,
@@ -1440,18 +1517,28 @@
                   }
 
                   <span class="comment">// 11. c) make sure market maker have enough funds in the trade intent request</span>
-                  <span class="kw">let</span> <span class="ident">available_funds</span> <span class="op">=</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from</span>
-                    <span class="op">-</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span>;
+                  <span class="kw">let</span> <span class="ident">available_funds</span> <span class="op">=</span> <span class="ident">market_maker_trade_intent</span>
+                    .<span class="ident">amount_from</span>
+                    .<span class="ident">checked_sub</span>(<span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span>)
+                    .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::MarketMakerHasNotEnoughTokenLeftToSell</span>)<span class="question-mark">?</span>;
 
                   <span class="kw">if</span> <span class="ident">available_funds</span>
-                    .<span class="ident">saturating_add</span>(<span class="ident">market_maker_trade_intent</span>.<span class="ident">slippage</span> <span class="op">*</span> <span class="ident">available_funds</span>)
+                    .<span class="ident">checked_add</span>(<span class="ident">market_maker_trade_intent</span>.<span class="ident">slippage</span> <span class="op">*</span> <span class="ident">available_funds</span>)
+                    .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>
                     <span class="op">&lt;</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span>
                   {
                     <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::MarketMakerHasNotEnoughTokenLeftToSell</span>);
                   }
 
-                  <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span> <span class="op">+</span><span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_send</span>;
-                  <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_to_filled</span> <span class="op">+</span><span class="op">=</span> <span class="ident">mm</span>.<span class="ident">amount_to_receive</span>;
+                  <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span> <span class="op">=</span> <span class="ident">market_maker_trade_intent</span>
+                    .<span class="ident">amount_from_filled</span>
+                    .<span class="ident">checked_add</span>(<span class="ident">mm</span>.<span class="ident">amount_to_send</span>)
+                    .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>;
+
+                  <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_to_filled</span> <span class="op">=</span> <span class="ident">market_maker_trade_intent</span>
+                    .<span class="ident">amount_to_filled</span>
+                    .<span class="ident">checked_add</span>(<span class="ident">mm</span>.<span class="ident">amount_to_receive</span>)
+                    .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>;
 
                   <span class="kw">if</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from_filled</span>
                     <span class="op">==</span> <span class="ident">market_maker_trade_intent</span>.<span class="ident">amount_from</span>
@@ -1836,9 +1923,16 @@
       <span class="kw">let</span> <span class="ident">amount_to_release</span> <span class="op">=</span> <span class="ident">trade</span>
         .<span class="ident">amount_from</span>
         <span class="comment">// reduce filled amount</span>
-        .<span class="ident">saturating_sub</span>(<span class="ident">trade</span>.<span class="ident">amount_from_filled</span>)
+        .<span class="ident">checked_sub</span>(<span class="ident">trade</span>.<span class="ident">amount_from_filled</span>)
+        .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>
         <span class="comment">// reduce un-needed locked fee</span>
-        .<span class="ident">saturating_add</span>(<span class="ident">fees_with_slippage</span>.<span class="ident">fee</span>.<span class="ident">saturating_sub</span>(<span class="ident">real_fees_amount</span>.<span class="ident">fee</span>));
+        .<span class="ident">checked_add</span>(
+          <span class="ident">fees_with_slippage</span>
+            .<span class="ident">fee</span>
+            .<span class="ident">checked_sub</span>(<span class="ident">real_fees_amount</span>.<span class="ident">fee</span>)
+            .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::SlippageOverflow</span>)<span class="question-mark">?</span>,
+        )
+        .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>;
 
       <span class="ident">T::CurrencyTidefi::release</span>(
         <span class="ident">trade</span>.<span class="ident">token_from</span>,
@@ -1942,7 +2036,9 @@
       <span class="ident">T::CurrencyTidefi::hold</span>(
         <span class="ident">asset_id_from</span>,
         <span class="kw-2">&amp;</span><span class="ident">account_id</span>,
-        <span class="ident">amount_from</span>.<span class="ident">saturating_add</span>(<span class="ident">amount_and_fee</span>.<span class="ident">fee</span>),
+        <span class="ident">amount_from</span>
+          .<span class="ident">checked_add</span>(<span class="ident">amount_and_fee</span>.<span class="ident">fee</span>)
+          .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>,
       )<span class="question-mark">?</span>;
 
       <span class="ident">Swaps</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::insert</span>(<span class="ident">request_id</span>, <span class="ident">swap</span>.<span class="ident">clone</span>());
@@ -1988,12 +2084,15 @@
           <span class="kw">let</span> <span class="ident">amount_to_release</span> <span class="op">=</span> <span class="ident">swap_intent</span>
             .<span class="ident">amount_from</span>
             <span class="comment">// amount filled</span>
-            .<span class="ident">saturating_sub</span>(<span class="ident">swap_intent</span>.<span class="ident">amount_from_filled</span>);
+            .<span class="ident">checked_sub</span>(<span class="ident">swap_intent</span>.<span class="ident">amount_from_filled</span>)
+            .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>;
 
           <span class="comment">// FIXME: Should we refund the swap fee?</span>
           <span class="comment">// swap fee</span>
           <span class="kw">let</span> <span class="ident">real_amount_to_release</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">swap_intent</span>.<span class="ident">amount_from_filled</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="ident">amount_to_release</span>.<span class="ident">saturating_add</span>(<span class="ident">amount_and_fee</span>.<span class="ident">fee</span>)
+            <span class="ident">amount_to_release</span>
+              .<span class="ident">checked_add</span>(<span class="ident">amount_and_fee</span>.<span class="ident">fee</span>)
+              .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>
           } <span class="kw">else</span> {
             <span class="comment">// real fees required</span>
             <span class="kw">let</span> <span class="ident">fees_amount_filled</span> <span class="op">=</span> <span class="ident">T::Fees::calculate_swap_fees</span>(
@@ -2009,7 +2108,14 @@
               <span class="ident">swap_intent</span>.<span class="ident">is_market_maker</span>,
             );
 
-            <span class="ident">amount_to_release</span>.<span class="ident">saturating_add</span>(<span class="ident">fees_amount</span>.<span class="ident">fee</span>.<span class="ident">saturating_sub</span>(<span class="ident">fees_amount_filled</span>.<span class="ident">fee</span>))
+            <span class="ident">amount_to_release</span>
+              .<span class="ident">checked_add</span>(
+                <span class="ident">fees_amount</span>
+                  .<span class="ident">fee</span>
+                  .<span class="ident">checked_sub</span>(<span class="ident">fees_amount_filled</span>.<span class="ident">fee</span>)
+                  .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>,
+              )
+              .<span class="ident">ok_or</span>(<span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::ArithmeticError</span>)<span class="question-mark">?</span>
           };
 
           <span class="ident">T::CurrencyTidefi::release</span>(
