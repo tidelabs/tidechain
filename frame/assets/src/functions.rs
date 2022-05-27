@@ -191,12 +191,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
         }
       }
 
-      let is_provider = false;
-      let is_required = is_provider && !frame_system::Pallet::<T>::can_dec_provider(who);
-      let must_keep_alive = keep_alive || is_required;
-
       if rest < details.min_balance {
-        if must_keep_alive {
+        if keep_alive {
           WouldDie
         } else {
           ReducedToZero(rest)
@@ -216,8 +212,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     who: &T::AccountId,
     keep_alive: bool,
   ) -> Result<T::Balance, DispatchError> {
-    let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-    ensure!(!details.is_frozen, Error::<T, I>::Frozen);
+    let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
+    ensure!(!details.is_frozen, Error::<T, I>::AssetFrozen);
 
     let account = Account::<T, I>::get(who, id).ok_or(Error::<T, I>::NoAccount)?;
     ensure!(!account.is_frozen, Error::<T, I>::Frozen);
@@ -315,7 +311,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       Error::<T, I>::AlreadyExists
     );
     let deposit = T::AssetAccountDeposit::get();
-    let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::Unknown)?;
+    let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
     let reason = Self::new_account(&who, &mut details, Some(deposit))?;
     T::Currency::reserve(&who, deposit)?;
     Asset::<T, I>::insert(&id, details);
@@ -340,7 +336,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       .reason
       .take_deposit()
       .ok_or(Error::<T, I>::NoDeposit)?;
-    let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::Unknown)?;
+    let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
 
     ensure!(
       account.balance.is_zero() || allow_burn,
@@ -413,7 +409,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
     Self::can_increase(id, beneficiary, amount, true).into_result()?;
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
-      let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+      let details = maybe_details
+        .as_mut()
+        .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
 
       check(details)?;
 
@@ -499,7 +497,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     let actual = Self::prep_debit(id, target, amount, f)?;
 
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
-      let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+      let details = maybe_details
+        .as_mut()
+        .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
 
       check(actual, details)?;
 
@@ -553,7 +553,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     let mut source_account = Account::<T, I>::get(&source, id).ok_or(Error::<T, I>::NoAccount)?;
 
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
-      let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+      let details = maybe_details
+        .as_mut()
+        .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
 
       // Check admin rights.
       if let Some(need_admin) = maybe_need_admin {
@@ -676,7 +678,9 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     maybe_check_owner: Option<T::AccountId>,
   ) -> Result<DestroyWitness, DispatchError> {
     Asset::<T, I>::try_mutate_exists(id, |maybe_details| {
-      let details = maybe_details.take().ok_or(Error::<T, I>::Unknown)?;
+      let details = maybe_details
+        .take()
+        .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
       if let Some(check_owner) = maybe_check_owner {
         ensure!(details.owner == check_owner, Error::<T, I>::NoPermission);
       }
@@ -731,8 +735,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     delegate: &T::AccountId,
     amount: T::Balance,
   ) -> DispatchResult {
-    let mut d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-    ensure!(!d.is_frozen, Error::<T, I>::Frozen);
+    let mut d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
+    ensure!(!d.is_frozen, Error::<T, I>::AssetFrozen);
     Approvals::<T, I>::try_mutate(
       (id, &owner, &delegate),
       |maybe_approved| -> DispatchResult {
@@ -830,7 +834,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
       .try_into()
       .map_err(|_| Error::<T, I>::BadMetadata)?;
 
-    let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+    let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
     ensure!(from == &d.owner, Error::<T, I>::NoPermission);
 
     Metadata::<T, I>::try_mutate_exists(id, |metadata| {
@@ -980,12 +984,14 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     let mut source_account = Account::<T, I>::get(&source, id).ok_or(Error::<T, I>::NoAccount)?;
 
     Asset::<T, I>::try_mutate(id, |maybe_details| -> DispatchResult {
-      let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+      let details = maybe_details
+        .as_mut()
+        .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
 
       // Unlock fund if transfer to itself
       if source == dest {
         Account::<T, I>::try_mutate(&dest, id, |maybe_account| -> DispatchResult {
-          let d = maybe_account.as_mut().ok_or(Error::<T, I>::Unknown)?;
+          let d = maybe_account.as_mut().ok_or(Error::<T, I>::NoAccount)?;
           // Debit balance from source; this will not saturate since it's already checked in prep.
           debug_assert!(d.reserved >= debit, "checked in prep; qed");
           d.reserved = d.reserved.saturating_sub(debit);
@@ -1056,8 +1062,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     id: T::AssetId,
     who: &T::AccountId,
   ) -> Result<T::Balance, DispatchError> {
-    let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-    ensure!(!details.is_frozen, Error::<T, I>::Frozen);
+    let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
+    ensure!(!details.is_frozen, Error::<T, I>::AssetFrozen);
 
     let account = Account::<T, I>::get(who, id).ok_or(Error::<T, I>::NoAccount)?;
     ensure!(!account.is_frozen, Error::<T, I>::Frozen);
