@@ -15,7 +15,7 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-  mock::{new_test_ext, Adapter, Assets, Event as MockEvent, Origin, System, Test, Tidefi},
+  mock::{new_test_ext, Adapter, Assets, Event as MockEvent, Oracle, Origin, System, Test, Tidefi},
   pallet::*,
 };
 use frame_support::{
@@ -24,6 +24,7 @@ use frame_support::{
 };
 use pallet_assets::Error as AssetsError;
 use pallet_balances::Error as BalancesError;
+use pallet_oracle::Error as OracleError;
 use sp_runtime::{traits::BadOrigin, Permill};
 use std::str::FromStr;
 use tidefi_primitives::{Balance, CurrencyId, Hash, SwapType};
@@ -66,6 +67,15 @@ impl Default for Context {
 }
 
 impl Context {
+  fn set_oracle_status(self, status: bool) -> Self {
+    assert_ok!(Oracle::set_status(Origin::signed(ALICE_ACCOUNT_ID), status));
+    match status {
+      true => assert!(Oracle::status()),
+      false => assert!(!Oracle::status()),
+    }
+    self
+  }
+
   fn mint_tdfy(self, account: AccountId, amount: u128) -> Self {
     Self::mint_asset_for_accounts(vec![account], CurrencyId::Tdfy, amount);
     assert_eq!(Adapter::balance(CurrencyId::Tdfy, &account), amount);
@@ -128,7 +138,7 @@ mod transfer {
   use super::*;
 
   #[test]
-  pub fn succeeds() {
+  fn succeeds() {
     new_test_ext().execute_with(|| {
       let context = Context::default()
         .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
@@ -282,7 +292,7 @@ mod transfer {
     }
 
     #[test]
-    pub fn receiver_has_not_enough_tdfy_to_exist() {
+    fn receiver_has_not_enough_tdfy_to_exist() {
       new_test_ext().execute_with(|| {
         let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY);
 
@@ -304,7 +314,7 @@ mod swap {
   use super::*;
 
   #[test]
-  pub fn succeeds() {
+  fn succeeds() {
     new_test_ext().execute_with(|| {
       Context::default()
         .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
@@ -343,5 +353,113 @@ mod swap {
         is_market_maker: false,
       }));
     })
+  }
+
+  mod fails_when {
+    use super::*;
+
+    #[test]
+    fn not_signed() {
+      new_test_ext().execute_with(|| {
+        Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP);
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::none(),
+            CurrencyId::Tdfy,
+            10 * ONE_TDFY,
+            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            200 * ONE_TEMP,
+            SwapType::Limit,
+            None
+          ),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    fn oracle_is_paused() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+          .set_oracle_status(false);
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::signed(context.sender),
+            CurrencyId::Tdfy,
+            10 * ONE_TDFY,
+            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            200 * ONE_TEMP,
+            SwapType::Limit,
+            None
+          ),
+          Error::<Test>::OraclePaused
+        );
+      });
+    }
+
+    #[test]
+    fn asset_is_disabled() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY);
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::signed(context.sender),
+            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            200 * ONE_TEMP,
+            CurrencyId::Tdfy,
+            10 * ONE_TDFY,
+            SwapType::Limit,
+            None
+          ),
+          Error::<Test>::AssetDisabled
+        );
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::signed(context.sender),
+            CurrencyId::Tdfy,
+            10 * ONE_TDFY,
+            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            200 * ONE_TEMP,
+            SwapType::Limit,
+            None
+          ),
+          Error::<Test>::AssetDisabled
+        );
+      });
+    }
+  }
+}
+
+mod cancel_swap {
+  use super::*;
+
+  mod fails_when {
+    use super::*;
+
+    #[test]
+    fn request_id_is_invalid() {
+      new_test_ext().execute_with(|| {
+        Context::default();
+
+        assert_noop!(
+          Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), Hash::zero()),
+          OracleError::<Test>::InvalidRequestId
+        );
+      })
+    }
   }
 }
