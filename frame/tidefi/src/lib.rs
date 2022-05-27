@@ -119,10 +119,18 @@ pub mod pallet {
   pub enum Error<T> {
     /// Asset is currently disabled or do not exist on chain
     AssetDisabled,
-    /// Unknown Asset
-    UnknownAsset,
+    /// Cannot withdraw TDFY
+    CannotWithdrawTdfy,
     /// No Funds available for this Asset Id
     NoFunds,
+    /// Withdraw amount is greater than account balance
+    WithdrawAmountGreaterThanAccountBalance,
+    /// Withdraw amount is greater than asset supply
+    WithdrawAmountGreaterThanAssetSupply,
+    /// Asset account is frozen
+    AccountAssetFrozen,
+    /// Balance will become zero after withdrawal
+    ReducedToZero,
     /// Unknown Error
     UnknownError,
     /// Quorum is paused. Withdrawal is not allowed
@@ -200,7 +208,10 @@ pub mod pallet {
       );
 
       // 4. Make sure the currency not a TDFY as it's not supported.
-      ensure!(currency_id != CurrencyId::Tdfy, Error::<T>::UnknownAsset);
+      ensure!(
+        currency_id != CurrencyId::Tdfy,
+        Error::<T>::CannotWithdrawTdfy
+      );
 
       // 5. Make sure the account have enough funds
       match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {
@@ -222,8 +233,14 @@ pub mod pallet {
 
           Ok(().into())
         }
-        WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),
-        WithdrawConsequence::UnknownAsset => Err(Error::<T>::UnknownAsset.into()),
+        WithdrawConsequence::NoFunds => {
+          Err(Error::<T>::WithdrawAmountGreaterThanAccountBalance.into())
+        }
+        WithdrawConsequence::Underflow => {
+          Err(Error::<T>::WithdrawAmountGreaterThanAssetSupply.into())
+        }
+        WithdrawConsequence::Frozen => Err(Error::<T>::AccountAssetFrozen.into()),
+        WithdrawConsequence::ReducedToZero(_) => Err(Error::<T>::ReducedToZero.into()),
         _ => Err(Error::<T>::UnknownError.into()),
       }
     }
@@ -316,7 +333,6 @@ pub mod pallet {
           Ok(().into())
         }
         WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),
-        WithdrawConsequence::UnknownAsset => Err(Error::<T>::UnknownAsset.into()),
         _ => Err(Error::<T>::UnknownError.into()),
       }
     }
