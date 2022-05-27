@@ -553,6 +553,48 @@ mod withdrawal {
 mod swap {
   use super::*;
 
+  #[test]
+  fn succeeds() {
+    new_test_ext().execute_with(|| {
+      Context::default()
+        .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+        .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+        .create_temp_asset_and_metadata()
+        .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP);
+
+      // Submit request
+      assert_ok!(Tidefi::swap(
+        Origin::signed(BOB_ACCOUNT_ID),
+        CurrencyId::Tdfy,
+        10 * ONE_TDFY,
+        CurrencyId::Wrapped(TEMP_ASSET_ID),
+        200 * ONE_TEMP,
+        SwapType::Limit,
+        None
+      ));
+
+      // swap confirmation for bob (user)
+      System::assert_has_event(MockEvent::Tidefi(Event::Swap {
+        request_id: Hash::from_str(
+          "0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e",
+        )
+        .unwrap_or_default(),
+        account: BOB_ACCOUNT_ID,
+        currency_id_from: CurrencyId::Tdfy,
+        amount_from: 10 * ONE_TDFY,
+        currency_id_to: CurrencyId::Wrapped(TEMP_ASSET_ID),
+        amount_to: 200 * ONE_TEMP,
+        extrinsic_hash: [
+          14, 87, 81, 192, 38, 229, 67, 178, 232, 171, 46, 176, 96, 153, 218, 161, 209, 229, 223,
+          71, 119, 143, 119, 135, 250, 171, 69, 205, 241, 47, 227, 168,
+        ],
+        slippage_tolerance: Permill::from_parts(1),
+        swap_type: SwapType::Limit,
+        is_market_maker: false,
+      }));
+    })
+  }
+
   mod fails_when {
     use super::*;
 
