@@ -1347,8 +1347,7 @@ pub fn test_slippage() {
         trade_request_id,
         vec![SwapConfirmation {
           request_id: trade_request_mm_id,
-          amount_to_receive: BOB_SELLS_10_TDFYS
-            .saturating_mul(BOB_BUYS_400_TEMPS.saturating_div(MM_BOB_SELLS_500_TEMPS)),
+          amount_to_receive: BOB_SELLS_10_TDFYS.saturating_add(ONE_TDFY),
           amount_to_send: BOB_BUYS_400_TEMPS,
         },],
       ),
@@ -1361,12 +1360,8 @@ pub fn test_slippage() {
       trade_request_id,
       vec![SwapConfirmation {
         request_id: trade_request_mm_id,
-        amount_to_receive: BOB_SELLS_10_TDFYS.saturating_sub(
-          BOB_SELLS_10_TDFYS
-            .saturating_mul(SLIPPAGE_2_PERCENTS.deconstruct().into()) // 20_000
-            .saturating_div(1_000_000)
-        ),
-        amount_to_send: BOB_BUYS_400_TEMPS,
+        amount_to_receive: BOB_SELLS_10_TDFYS,
+        amount_to_send: BOB_BUYS_400_TEMPS.saturating_sub(SLIPPAGE_2_PERCENTS * BOB_BUYS_400_TEMPS),
       },],
     ));
 
@@ -1466,6 +1461,18 @@ mod confirm_swap {
       BOB_SELLS_10_TDFYS,
       BOB_BUYS_200_TEMPS,
       EXTRINSIC_HASH_0,
+      SLIPPAGE_2_PERCENTS,
+    )
+  }
+
+  fn create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_2_percents_slippage(
+    context: &Context,
+  ) -> Hash {
+    context.create_temp_to_tdfy_limit_swap_request(
+      CHARLIE_ACCOUNT_ID,
+      CHARLIE_SELLS_4000_TEMPS,
+      CHARLIE_BUYS_200_TDFYS,
+      EXTRINSIC_HASH_1,
       SLIPPAGE_2_PERCENTS,
     )
   }
@@ -1786,7 +1793,7 @@ mod confirm_swap {
           );
 
         let trade_request_mm_id =
-          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_2_percents_slippage(
             &context,
           );
 
@@ -1797,8 +1804,8 @@ mod confirm_swap {
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
               amount_to_receive: BOB_SELLS_10_TDFYS
-                .saturating_sub(SLIPPAGE_2_PERCENTS * BOB_SELLS_10_TDFYS)
-                .saturating_sub(ONE_TDFY),
+                .saturating_add(SLIPPAGE_2_PERCENTS * BOB_SELLS_10_TDFYS)
+                .saturating_add(ONE_TDFY),
               amount_to_send: BOB_BUYS_200_TEMPS,
             }],
           ),
@@ -1834,7 +1841,7 @@ mod confirm_swap {
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
-              amount_to_receive: BOB_SELLS_10_TDFYS * 2,
+              amount_to_receive: ONE_TDFY,
               amount_to_send: BOB_BUYS_200_TEMPS,
             }],
           ),
@@ -1894,7 +1901,7 @@ mod confirm_swap {
           .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
 
         let trade_request_id =
-          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_5_percents_slippage(
             &context,
           );
         let trade_request_mm_id =
@@ -1910,8 +1917,7 @@ mod confirm_swap {
               request_id: trade_request_mm_id,
               amount_to_receive: BOB_SELLS_10_TDFYS,
               amount_to_send: BOB_BUYS_200_TEMPS
-                .saturating_add(SLIPPAGE_4_PERCENTS * BOB_BUYS_200_TEMPS)
-                .saturating_add(ONE_TEMP),
+                .saturating_add(SLIPPAGE_5_PERCENTS * BOB_BUYS_200_TEMPS),
             },],
           ),
           Error::<Test>::OfferIsGreaterThanMarketMakerSwapUpperBound { index: 0 }
