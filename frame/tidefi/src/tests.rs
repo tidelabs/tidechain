@@ -25,12 +25,14 @@ use frame_support::{
   traits::fungibles::{Inspect, Mutate},
   BoundedVec,
 };
-use pallet_assets::Error as AssetsError;
+use pallet_assets::{Account, Error as AssetsError};
 use pallet_balances::Error as BalancesError;
 use pallet_oracle::Error as OracleError;
 use sp_runtime::{traits::BadOrigin, Permill};
 use std::str::FromStr;
-use tidefi_primitives::{Balance, CurrencyId, Hash, ProposalType, SwapType, Withdrawal};
+use tidefi_primitives::{
+  pallet::OracleExt, Balance, CurrencyId, Hash, ProposalType, SwapStatus, SwapType, Withdrawal,
+};
 
 type AccountId = u64;
 
@@ -132,6 +134,56 @@ impl Context {
 
     self
   }
+
+  fn add_tdfy_to_temp_limit_swap(self, account_id: AccountId, tdfys: u128, temps: u128) -> Self {
+    Oracle::add_new_swap_in_queue(
+      account_id,
+      CurrencyId::Tdfy,
+      tdfys,
+      CurrencyId::Wrapped(TEMP_ASSET_ID),
+      temps,
+      BLOCK_NUMBER_ZERO,
+      [0u8; 32],
+      false,
+      SwapType::Limit,
+      Permill::from_parts(1),
+    )
+    .unwrap();
+
+    assert_eq!(
+      Oracle::account_swaps(BOB_ACCOUNT_ID)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == self.request_id),
+      Some(&(self.request_id, SwapStatus::Pending))
+    );
+    self
+  }
+
+  fn add_temp_to_tdfy_limit_swap(self, account_id: AccountId, temps: u128, tdfys: u128) -> Self {
+    Oracle::add_new_swap_in_queue(
+      account_id,
+      CurrencyId::Wrapped(TEMP_ASSET_ID),
+      temps,
+      CurrencyId::Tdfy,
+      tdfys,
+      BLOCK_NUMBER_ZERO,
+      [0u8; 32],
+      false,
+      SwapType::Limit,
+      Permill::from_parts(1),
+    )
+    .unwrap();
+
+    assert_eq!(
+      Oracle::account_swaps(BOB_ACCOUNT_ID)
+        .unwrap()
+        .iter()
+        .find(|(request_id, _)| *request_id == self.request_id),
+      Some(&(self.request_id, SwapStatus::Pending))
+    );
+    self
+  }
 }
 
 fn get_alice_balance(currency_id: CurrencyId) -> Balance {
@@ -159,6 +211,20 @@ fn assert_withdrawal_proposal_exists_in_storage(context: &Context) {
   );
 }
 
+fn assert_cancelled_swap_is_set_to_none(context: &Context) {
+  assert!(Oracle::swaps(context.request_id).is_none());
+}
+
+fn assert_cancelled_swap_is_deleted_from_account_swaps(context: &Context) {
+  assert_eq!(
+    Oracle::account_swaps(BOB_ACCOUNT_ID)
+      .unwrap()
+      .iter()
+      .find(|(request_id, _)| *request_id == context.request_id),
+    None
+  );
+}
+
 fn assert_event_is_emitted_transfer(context: &Context, currency_id: CurrencyId) {
   System::assert_has_event(MockEvent::Tidefi(Event::Transfer {
     from_account_id: context.sender,
@@ -174,6 +240,12 @@ fn assert_event_is_emitted_withdrawal(context: &Context, currency_id: CurrencyId
     currency_id: currency_id,
     amount: context.amount,
     external_address: context.external_address.clone(),
+  }));
+}
+
+fn assert_event_is_emitted_swap_cancelled(context: &Context) {
+  System::assert_has_event(MockEvent::Tidefi(Event::SwapCancelled {
+    request_id: context.request_id,
   }));
 }
 
@@ -556,7 +628,7 @@ mod swap {
   #[test]
   fn succeeds() {
     new_test_ext().execute_with(|| {
-      Context::default()
+      let context = Context::default()
         .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
         .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
         .create_temp_asset_and_metadata()
@@ -575,10 +647,7 @@ mod swap {
 
       // swap confirmation for bob (user)
       System::assert_has_event(MockEvent::Tidefi(Event::Swap {
-        request_id: Hash::from_str(
-          "0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e",
-        )
-        .unwrap_or_default(),
+        request_id: context.request_id,
         account: BOB_ACCOUNT_ID,
         currency_id_from: CurrencyId::Tdfy,
         amount_from: 10 * ONE_TDFY,
@@ -687,40 +756,178 @@ mod swap {
 mod cancel_swap {
   use super::*;
 
-  #[ignore]
-  #[test]
-  fn succeeds() {
-    new_test_ext().execute_with(|| {
-      let context = Context::default()
-        .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
-        .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
-        .create_temp_asset_and_metadata()
-        .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP);
+  mod succeeds {
+    use super::*;
 
-      assert_ok!(Tidefi::cancel_swap(
-        Origin::signed(BOB_ACCOUNT_ID),
-        context.request_id
-      ));
+    #[test]
+    fn by_requester() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+          .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
-      System::assert_has_event(MockEvent::Tidefi(Event::SwapCancelled {
-        request_id: context.request_id,
-      }));
-    })
+        let requester_balance_before = Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID);
+
+        assert_ok!(Tidefi::cancel_swap(
+          Origin::signed(BOB_ACCOUNT_ID),
+          context.request_id,
+        ));
+
+        assert_eq!(
+          Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
+          requester_balance_before + 10 * ONE_TDFY
+        );
+
+        assert_cancelled_swap_is_set_to_none(&context);
+        assert_cancelled_swap_is_deleted_from_account_swaps(&context);
+        assert_event_is_emitted_swap_cancelled(&context);
+      })
+    }
+
+    #[test]
+    fn by_tidefy_owner() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+          .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
+
+        assert_ok!(Tidefi::cancel_swap(
+          Origin::signed(ALICE_ACCOUNT_ID),
+          context.request_id,
+        ));
+
+        assert_cancelled_swap_is_set_to_none(&context);
+        assert_cancelled_swap_is_deleted_from_account_swaps(&context);
+        assert_event_is_emitted_swap_cancelled(&context);
+      })
+    }
   }
 
   mod fails_when {
     use super::*;
 
     #[test]
+    fn not_signed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+          .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
+
+        assert_noop!(
+          Tidefi::cancel_swap(Origin::none(), context.request_id),
+          BadOrigin
+        );
+      })
+    }
+
+    #[test]
+    fn oracle_is_paused() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+          .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP)
+          .set_oracle_status(false);
+
+        assert_noop!(
+          Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), context.request_id),
+          Error::<Test>::OraclePaused
+        );
+      });
+    }
+
+    #[test]
     fn request_id_is_invalid() {
       new_test_ext().execute_with(|| {
-        Context::default();
+        Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+          .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
         assert_noop!(
           Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), Hash::zero()),
           OracleError::<Test>::InvalidRequestId
         );
       })
+    }
+
+    #[test]
+    fn sender_is_not_requester_or_tidefi_pallet_owner() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+          .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
+
+        const UNKNOWN_ACCOUNT: u64 = 100;
+        assert_noop!(
+          Tidefi::cancel_swap(Origin::signed(UNKNOWN_ACCOUNT), context.request_id),
+          OracleError::<Test>::AccessDenied
+        );
+      });
+    }
+
+    mod release_fails {
+      use super::*;
+
+      #[test]
+      fn as_account_asset_does_not_exist() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+            .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+            .create_temp_asset_and_metadata()
+            .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+            .add_temp_to_tdfy_limit_swap(BOB_ACCOUNT_ID, 200 * ONE_TEMP, 10 * ONE_TDFY);
+
+          Account::<Test>::remove(&BOB_ACCOUNT_ID, TEMP_ASSET_ID);
+
+          assert_noop!(
+            Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), context.request_id),
+            OracleError::<Test>::ReleaseFailed
+          );
+        });
+      }
+
+      #[test]
+      fn as_release_amount_is_greater_than_reserved_amount() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+            .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+            .create_temp_asset_and_metadata()
+            .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
+            .add_temp_to_tdfy_limit_swap(BOB_ACCOUNT_ID, 200 * ONE_TEMP, 10 * ONE_TDFY);
+
+          Account::<Test>::try_mutate(BOB_ACCOUNT_ID, TEMP_ASSET_ID, |maybe_account| {
+            maybe_account
+              .as_mut()
+              .ok_or(())
+              .map(|account| account.reserved = 200 * ONE_TEMP + 1)
+          })
+          .unwrap();
+
+          assert_noop!(
+            Tidefi::cancel_swap(Origin::signed(BOB_ACCOUNT_ID), context.request_id),
+            OracleError::<Test>::ReleaseFailed
+          );
+        });
+      }
     }
   }
 }
