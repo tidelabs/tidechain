@@ -918,7 +918,7 @@ mod cancel_swap {
             maybe_account
               .as_mut()
               .ok_or(())
-              .map(|account| account.reserved = 200 * ONE_TEMP + 1)
+              .map(|account| account.reserved = account.reserved - 1)
           })
           .unwrap();
 
