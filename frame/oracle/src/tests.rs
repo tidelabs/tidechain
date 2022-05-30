@@ -340,6 +340,50 @@ impl Context {
     )
   }
 
+  fn create_zemp_to_temp_limit_swap_request(
+    &self,
+    requester_account_id: AccountId,
+    zemp_amount: Balance,
+    temp_amount: Balance,
+    extrinsic_hash: [u8; 32],
+    slippage: Permill,
+  ) -> Hash {
+    add_new_swap_and_assert_results(
+      requester_account_id,
+      ZEMP_CURRENCY_ID,
+      zemp_amount,
+      TEMP_CURRENCY_ID,
+      temp_amount,
+      CURRENT_BLOCK_NUMBER,
+      extrinsic_hash,
+      self.market_makers.contains(&requester_account_id),
+      SwapType::Limit,
+      slippage,
+    )
+  }
+
+  fn create_temp_to_zemp_market_swap_request(
+    &self,
+    requester_account_id: AccountId,
+    temp_amount: Balance,
+    zemp_amount: Balance,
+    extrinsic_hash: [u8; 32],
+    slippage: Permill,
+  ) -> Hash {
+    add_new_swap_and_assert_results(
+      requester_account_id,
+      TEMP_CURRENCY_ID,
+      temp_amount,
+      ZEMP_CURRENCY_ID,
+      zemp_amount,
+      CURRENT_BLOCK_NUMBER,
+      extrinsic_hash,
+      self.market_makers.contains(&requester_account_id),
+      SwapType::Market,
+      slippage,
+    )
+  }
+
   fn create_temp_to_tdfy_market_swap_request(
     &self,
     requester_account_id: AccountId,
@@ -868,6 +912,75 @@ pub fn confirm_swap_temp_zemp() {
 }
 
 #[test]
+pub fn confirm_swap_zemp_temp() {
+  new_test_ext().execute_with(|| {
+    const BOB_INITIAL_TEMPS: Balance = 900_000 * ONE_TEMP;
+    const CHARLIE_INITIAL_ZEMPS: Balance = 900_000 * ONE_ZEMP;
+
+    let context = Context::default()
+      .set_oracle_status(true)
+      .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+      .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+      .mint_tdfy(BOB_ACCOUNT_ID, ONE_TDFY)
+      .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+      .create_temp_asset_and_metadata()
+      .create_zemp_asset_and_metadata()
+      .mint_temp(BOB_ACCOUNT_ID, BOB_INITIAL_TEMPS)
+      .mint_zemp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ZEMPS);
+
+    const BOB_SELLS_TEMPS: Balance = 10_000_000;
+    const BOB_BUYS_ZEMPS: Balance = 12_500_000_000_000_000_000;
+
+    let trade_request_id = context.create_temp_to_zemp_market_swap_request(
+      BOB_ACCOUNT_ID,
+      BOB_SELLS_TEMPS,
+      BOB_BUYS_ZEMPS,
+      EXTRINSIC_HASH_0,
+      SLIPPAGE_2_PERCENTS,
+    );
+
+    assert_eq!(
+      trade_request_id,
+      Hash::from_str("0xd22a9d9ea0e217ddb07923d83c86f89687b682d1f81bb752d60b54abda0e7a3e")
+        .unwrap_or_default()
+    );
+
+    // 0.80478930
+    const CHARLIE_SELLS_ZEMPS: Balance = 1_000_000_000_000_000_000_000;
+    // 9.838500000000000000
+    const CHARLIE_BUYS_TEMPS: Balance = 800_000_000;
+
+    let trade_request_mm_id = context.create_zemp_to_temp_limit_swap_request(
+      CHARLIE_ACCOUNT_ID,
+      CHARLIE_SELLS_ZEMPS,
+      CHARLIE_BUYS_TEMPS,
+      EXTRINSIC_HASH_1,
+      SLIPPAGE_0_PERCENT,
+    );
+
+    assert_eq!(
+      trade_request_mm_id,
+      Hash::from_str("0x9ee76e89d3eae9ddad2e0b731e29ddcfa0781f7035600c5eb885637592e1d2c2")
+        .unwrap_or_default()
+    );
+
+    // partial filling
+    assert_ok!(Oracle::confirm_swap(
+      context.alice.clone(),
+      trade_request_id,
+      vec![
+        // charlie
+        SwapConfirmation {
+          request_id: trade_request_mm_id,
+          amount_to_receive: BOB_SELLS_TEMPS,
+          amount_to_send: BOB_BUYS_ZEMPS,
+        },
+      ],
+    ));
+  });
+}
+
+#[test]
 pub fn confirm_swap_with_fees() {
   new_test_ext().execute_with(|| {
     const BOB_INITIAL_20_TDFYS: Balance = 20 * ONE_TDFY;
@@ -1234,8 +1347,7 @@ pub fn test_slippage() {
         trade_request_id,
         vec![SwapConfirmation {
           request_id: trade_request_mm_id,
-          amount_to_receive: BOB_SELLS_10_TDFYS
-            .saturating_mul(BOB_BUYS_400_TEMPS.saturating_div(MM_BOB_SELLS_500_TEMPS)),
+          amount_to_receive: BOB_SELLS_10_TDFYS.saturating_add(ONE_TDFY),
           amount_to_send: BOB_BUYS_400_TEMPS,
         },],
       ),
@@ -1248,12 +1360,8 @@ pub fn test_slippage() {
       trade_request_id,
       vec![SwapConfirmation {
         request_id: trade_request_mm_id,
-        amount_to_receive: BOB_SELLS_10_TDFYS.saturating_sub(
-          BOB_SELLS_10_TDFYS
-            .saturating_mul(SLIPPAGE_2_PERCENTS.deconstruct().into()) // 20_000
-            .saturating_div(1_000_000)
-        ),
-        amount_to_send: BOB_BUYS_400_TEMPS,
+        amount_to_receive: BOB_SELLS_10_TDFYS,
+        amount_to_send: BOB_BUYS_400_TEMPS.saturating_sub(SLIPPAGE_2_PERCENTS * BOB_BUYS_400_TEMPS),
       },],
     ));
 
@@ -1353,6 +1461,18 @@ mod confirm_swap {
       BOB_SELLS_10_TDFYS,
       BOB_BUYS_200_TEMPS,
       EXTRINSIC_HASH_0,
+      SLIPPAGE_2_PERCENTS,
+    )
+  }
+
+  fn create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_2_percents_slippage(
+    context: &Context,
+  ) -> Hash {
+    context.create_temp_to_tdfy_limit_swap_request(
+      CHARLIE_ACCOUNT_ID,
+      CHARLIE_SELLS_4000_TEMPS,
+      CHARLIE_BUYS_200_TDFYS,
+      EXTRINSIC_HASH_1,
       SLIPPAGE_2_PERCENTS,
     )
   }
@@ -1673,7 +1793,7 @@ mod confirm_swap {
           );
 
         let trade_request_mm_id =
-          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_4_percents_slippage(
+          create_charlie_limit_swap_request_from_4000_temps_to_200_tdfys_with_2_percents_slippage(
             &context,
           );
 
@@ -1684,8 +1804,8 @@ mod confirm_swap {
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
               amount_to_receive: BOB_SELLS_10_TDFYS
-                .saturating_sub(SLIPPAGE_2_PERCENTS * BOB_SELLS_10_TDFYS)
-                .saturating_sub(ONE_TDFY),
+                .saturating_add(SLIPPAGE_2_PERCENTS * BOB_SELLS_10_TDFYS)
+                .saturating_add(ONE_TDFY),
               amount_to_send: BOB_BUYS_200_TEMPS,
             }],
           ),
@@ -1721,7 +1841,7 @@ mod confirm_swap {
             trade_request_id,
             vec![SwapConfirmation {
               request_id: trade_request_mm_id,
-              amount_to_receive: BOB_SELLS_10_TDFYS * 2,
+              amount_to_receive: ONE_TDFY,
               amount_to_send: BOB_BUYS_200_TEMPS,
             }],
           ),
@@ -1781,7 +1901,7 @@ mod confirm_swap {
           .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
 
         let trade_request_id =
-          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_5_percents_slippage(
             &context,
           );
         let trade_request_mm_id =
@@ -1797,8 +1917,7 @@ mod confirm_swap {
               request_id: trade_request_mm_id,
               amount_to_receive: BOB_SELLS_10_TDFYS,
               amount_to_send: BOB_BUYS_200_TEMPS
-                .saturating_add(SLIPPAGE_4_PERCENTS * BOB_BUYS_200_TEMPS)
-                .saturating_add(ONE_TEMP),
+                .saturating_add(SLIPPAGE_5_PERCENTS * BOB_BUYS_200_TEMPS),
             },],
           ),
           Error::<Test>::OfferIsGreaterThanMarketMakerSwapUpperBound { index: 0 }

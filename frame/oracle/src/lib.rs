@@ -45,11 +45,11 @@ pub mod pallet {
   use sp_runtime::traits::AccountIdConversion;
   use sp_runtime::{
     traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub},
-    FixedU128, Permill,
+    FixedPointNumber, FixedU128, Permill,
   };
   use sp_std::vec;
   use tidefi_primitives::{
-    assets::USDT,
+    assets::{Asset, USDT},
     pallet::{FeesExt, OracleExt, SecurityExt},
     AssetId, Balance, CurrencyId, Hash, OracleImAlive, Swap, SwapConfirmation, SwapStatus,
     SwapType,
@@ -300,6 +300,18 @@ pub mod pallet {
               return Err(Error::<T>::InvalidSwapRequestStatus);
             }
 
+            let token_to: Asset = trade
+              .token_to
+              .try_into()
+              .map_err(|_| Error::<T>::UnknownAsset)?;
+            let token_to_one_unit = token_to.saturating_mul(1);
+
+            let token_from: Asset = trade
+              .token_from
+              .try_into()
+              .map_err(|_| Error::<T>::UnknownAsset)?;
+            let token_from_one_unit = token_from.saturating_mul(1);
+
             // 6. Calculate totals and all market makers
             let mut total_from: Balance = 0;
             let mut total_to: Balance = 0;
@@ -308,14 +320,21 @@ pub mod pallet {
               let mm_trade_request = Swaps::<T>::try_get(mm.request_id)
                 .map_err(|_| Error::<T>::InvalidMarketMakerRequestId { index: index as u8 })?;
 
-              // validate user slippage tolerance
-              let pay_per_token = FixedU128::from(trade.amount_from)
-                .checked_div(&FixedU128::from(trade.amount_to))
-                .ok_or(Error::<T>::SlippageOverflow)?;
+              let pay_per_token =
+                FixedU128::saturating_from_rational(trade.amount_to, token_to_one_unit)
+                  .checked_div(&FixedU128::saturating_from_rational(
+                    trade.amount_from,
+                    token_from_one_unit,
+                  ))
+                  .ok_or(Error::<T>::SlippageOverflow)?;
 
-              let pay_per_token_offered = FixedU128::from(mm.amount_to_receive)
-                .checked_div(&FixedU128::from(mm.amount_to_send))
-                .ok_or(Error::<T>::SlippageOverflow)?;
+              let pay_per_token_offered =
+                FixedU128::saturating_from_rational(mm.amount_to_send, token_to_one_unit)
+                  .checked_div(&FixedU128::saturating_from_rational(
+                    mm.amount_to_receive,
+                    token_from_one_unit,
+                  ))
+                  .ok_or(Error::<T>::SlippageOverflow)?;
 
               // limit order can match with smaller price
               if trade.swap_type != SwapType::Limit {
@@ -347,13 +366,23 @@ pub mod pallet {
               );
 
               // validate mm slippage tolerance
-              let pay_per_token = FixedU128::from(mm_trade_request.amount_from)
-                .checked_div(&FixedU128::from(mm_trade_request.amount_to))
-                .ok_or(Error::<T>::SlippageOverflow)?;
+              let pay_per_token = FixedU128::saturating_from_rational(
+                mm_trade_request.amount_from,
+                token_to_one_unit,
+              )
+              .checked_div(&FixedU128::saturating_from_rational(
+                mm_trade_request.amount_to,
+                token_from_one_unit,
+              ))
+              .ok_or(Error::<T>::SlippageOverflow)?;
 
-              let pay_per_token_offered = FixedU128::from(mm.amount_to_send)
-                .checked_div(&FixedU128::from(mm.amount_to_receive))
-                .ok_or(Error::<T>::SlippageOverflow)?;
+              let pay_per_token_offered =
+                FixedU128::saturating_from_rational(mm.amount_to_send, token_to_one_unit)
+                  .checked_div(&FixedU128::saturating_from_rational(
+                    mm.amount_to_receive,
+                    token_from_one_unit,
+                  ))
+                  .ok_or(Error::<T>::SlippageOverflow)?;
 
               // limit order can match with smaller price
               if mm_trade_request.swap_type != SwapType::Limit {
