@@ -131,6 +131,8 @@ pub mod pallet {
     AccountAssetFrozen,
     /// Balance will become zero after withdrawal
     ReducedToZero,
+    /// Unknown extrinsic index
+    UnknownExtrinsicIndex,
     /// Unknown Error
     UnknownError,
     /// Quorum is paused. Withdrawal is not allowed
@@ -288,7 +290,7 @@ pub mod pallet {
 
       // 5. Grab the extrinsic hash of the current extrinsic for better traceability
       let extrinsic_hash = blake2_256(&<frame_system::Pallet<T>>::extrinsic_data(
-        <frame_system::Pallet<T>>::extrinsic_index().ok_or(Error::<T>::UnknownError)?,
+        <frame_system::Pallet<T>>::extrinsic_index().ok_or(Error::<T>::UnknownExtrinsicIndex)?,
       ));
 
       // 6. Validate if the user is a market maker when the swap is requested to allocate the correct fees
@@ -332,7 +334,14 @@ pub mod pallet {
 
           Ok(().into())
         }
-        WithdrawConsequence::NoFunds => Err(Error::<T>::NoFunds.into()),
+        WithdrawConsequence::NoFunds => {
+          Err(Error::<T>::WithdrawAmountGreaterThanAccountBalance.into())
+        }
+        WithdrawConsequence::Underflow => {
+          Err(Error::<T>::WithdrawAmountGreaterThanAssetSupply.into())
+        }
+        WithdrawConsequence::Frozen => Err(Error::<T>::AccountAssetFrozen.into()),
+        WithdrawConsequence::ReducedToZero(_) => Err(Error::<T>::ReducedToZero.into()),
         _ => Err(Error::<T>::UnknownError.into()),
       }
     }

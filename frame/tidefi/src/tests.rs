@@ -16,19 +16,19 @@
 
 use crate::{
   mock::{
-    new_test_ext, Adapter, Assets, Balances, Event as MockEvent, Oracle, Origin, Quorum, System,
-    Test, Tidefi,
+    new_test_ext, Adapter, Assets, Balances, Event as MockEvent, Oracle, Origin, Quorum,
+    SwapLimitByAccount, System, Test, Tidefi,
   },
   pallet::*,
 };
 use frame_support::{
-  assert_noop, assert_ok,
+  assert_err, assert_noop, assert_ok,
   traits::fungibles::{Inspect, Mutate},
   BoundedVec,
 };
 use pallet_assets::{Account, Error as AssetsError};
 use pallet_balances::Error as BalancesError;
-use pallet_oracle::Error as OracleError;
+use pallet_oracle::{AccountSwaps, Error as OracleError};
 use sp_runtime::{traits::BadOrigin, Permill};
 use std::str::FromStr;
 use tidefi_primitives::{
@@ -40,7 +40,6 @@ type AccountId = u64;
 const ALICE_ACCOUNT_ID: AccountId = 1;
 const BOB_ACCOUNT_ID: AccountId = 2;
 
-const TDFY_CURRENCY_ID: CurrencyId = CurrencyId::Tdfy;
 const ONE_TDFY: u128 = 1_000_000_000_000;
 
 const TEMP_ASSET_ID: u32 = 4;
@@ -71,7 +70,7 @@ impl Default for Context {
     Context {
       sender: ALICE_ACCOUNT_ID,
       receiver: BOB_ACCOUNT_ID,
-      test_assets: vec![TDFY_CURRENCY_ID, TEMP_CURRENCY_ID],
+      test_assets: vec![CurrencyId::Tdfy, TEMP_CURRENCY_ID],
       amount: 10,
       external_address: vec![0; 32],
       request_id: Hash::from_str(
@@ -141,7 +140,7 @@ impl Context {
       account_id,
       CurrencyId::Tdfy,
       tdfys,
-      CurrencyId::Wrapped(TEMP_ASSET_ID),
+      TEMP_CURRENCY_ID,
       temps,
       BLOCK_NUMBER_ZERO,
       [0u8; 32],
@@ -164,7 +163,7 @@ impl Context {
   fn add_temp_to_tdfy_limit_swap(self, account_id: AccountId, temps: u128, tdfys: u128) -> Self {
     Oracle::add_new_swap_in_queue(
       account_id,
-      CurrencyId::Wrapped(TEMP_ASSET_ID),
+      TEMP_CURRENCY_ID,
       temps,
       CurrencyId::Tdfy,
       tdfys,
@@ -376,7 +375,7 @@ mod transfer {
           Tidefi::transfer(
             Origin::signed(context.sender),
             context.receiver,
-            TDFY_CURRENCY_ID,
+            CurrencyId::Tdfy,
             10 * ONE_TDFY + 1
           ),
           BalancesError::<Test>::InsufficientBalance
@@ -413,7 +412,7 @@ mod transfer {
           Tidefi::transfer(
             Origin::signed(context.sender),
             context.receiver,
-            TDFY_CURRENCY_ID,
+            CurrencyId::Tdfy,
             10 * ONE_TDFY
           ),
           BalancesError::<Test>::KeepAlive
@@ -430,7 +429,7 @@ mod transfer {
           Tidefi::transfer(
             Origin::signed(context.sender),
             context.receiver,
-            TDFY_CURRENCY_ID,
+            CurrencyId::Tdfy,
             context.amount
           ),
           BalancesError::<Test>::ExistentialDeposit
@@ -536,7 +535,7 @@ mod withdrawal {
         assert_noop!(
           Tidefi::withdrawal(
             Origin::signed(context.sender),
-            TDFY_CURRENCY_ID,
+            CurrencyId::Tdfy,
             context.amount,
             context.external_address.clone(),
           ),
@@ -654,7 +653,7 @@ mod swap {
         Origin::signed(BOB_ACCOUNT_ID),
         CurrencyId::Tdfy,
         10 * ONE_TDFY,
-        CurrencyId::Wrapped(TEMP_ASSET_ID),
+        TEMP_CURRENCY_ID,
         200 * ONE_TEMP,
         SwapType::Limit,
         None
@@ -666,7 +665,7 @@ mod swap {
         account: BOB_ACCOUNT_ID,
         currency_id_from: CurrencyId::Tdfy,
         amount_from: 10 * ONE_TDFY,
-        currency_id_to: CurrencyId::Wrapped(TEMP_ASSET_ID),
+        currency_id_to: TEMP_CURRENCY_ID,
         amount_to: 200 * ONE_TEMP,
         extrinsic_hash: [
           14, 87, 81, 192, 38, 229, 67, 178, 232, 171, 46, 176, 96, 153, 218, 161, 209, 229, 223,
@@ -696,7 +695,7 @@ mod swap {
             Origin::none(),
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
-            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            TEMP_CURRENCY_ID,
             200 * ONE_TEMP,
             SwapType::Limit,
             None
@@ -721,7 +720,7 @@ mod swap {
             Origin::signed(context.sender),
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
-            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            TEMP_CURRENCY_ID,
             200 * ONE_TEMP,
             SwapType::Limit,
             None
@@ -741,7 +740,7 @@ mod swap {
         assert_noop!(
           Tidefi::swap(
             Origin::signed(context.sender),
-            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            TEMP_CURRENCY_ID,
             200 * ONE_TEMP,
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
@@ -756,12 +755,147 @@ mod swap {
             Origin::signed(context.sender),
             CurrencyId::Tdfy,
             10 * ONE_TDFY,
-            CurrencyId::Wrapped(TEMP_ASSET_ID),
+            TEMP_CURRENCY_ID,
             200 * ONE_TEMP,
             SwapType::Limit,
             None
           ),
           Error::<Test>::AssetDisabled
+        );
+      });
+    }
+
+    #[test]
+    fn account_swap_overflow() {
+      new_test_ext().execute_with(|| {
+        Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 20 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP);
+
+        AccountSwaps::<Test>::insert(
+          BOB_ACCOUNT_ID,
+          BoundedVec::try_from(vec![
+            (Hash::zero(), SwapStatus::Pending);
+            usize::try_from(SwapLimitByAccount::get()).unwrap()
+          ])
+          .unwrap(),
+        );
+
+        assert_err!(
+          Tidefi::swap(
+            Origin::signed(BOB_ACCOUNT_ID),
+            CurrencyId::Tdfy,
+            10 * ONE_TDFY,
+            TEMP_CURRENCY_ID,
+            200 * ONE_TEMP,
+            SwapType::Limit,
+            None
+          ),
+          OracleError::<Test>::SwapOverflow
+        );
+      });
+    }
+
+    #[test]
+    fn sell_asset_amount_is_greater_than_requester_balance() {
+      new_test_ext().execute_with(|| {
+        let total_temp_supply = 20 * ONE_TEMP;
+        let bob_temp_balance = 10 * ONE_TEMP;
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, total_temp_supply - bob_temp_balance)
+          .mint_temp(BOB_ACCOUNT_ID, bob_temp_balance);
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::signed(context.sender),
+            TEMP_CURRENCY_ID,
+            bob_temp_balance + 1,
+            CurrencyId::Tdfy,
+            ONE_TDFY,
+            SwapType::Limit,
+            None
+          ),
+          Error::<Test>::WithdrawAmountGreaterThanAccountBalance
+        );
+      });
+    }
+
+    #[test]
+    fn sell_asset_amount_is_greater_than_asset_supply() {
+      new_test_ext().execute_with(|| {
+        let initial_temp_amount = 10 * ONE_TEMP;
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, initial_temp_amount);
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::signed(context.sender),
+            TEMP_CURRENCY_ID,
+            initial_temp_amount + 1,
+            CurrencyId::Tdfy,
+            ONE_TDFY,
+            SwapType::Limit,
+            None
+          ),
+          Error::<Test>::WithdrawAmountGreaterThanAssetSupply
+        );
+      });
+    }
+
+    #[test]
+    fn account_asset_is_frozen() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
+
+        assert_ok!(Assets::freeze(
+          Origin::signed(context.sender),
+          TEMP_ASSET_ID,
+          ALICE_ACCOUNT_ID
+        ));
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::signed(context.sender),
+            TEMP_CURRENCY_ID,
+            10 * ONE_TEMP,
+            CurrencyId::Tdfy,
+            ONE_TDFY,
+            SwapType::Limit,
+            None
+          ),
+          Error::<Test>::AccountAssetFrozen
+        );
+      });
+    }
+
+    #[test]
+    fn sender_balance_would_be_reduced_to_zero() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
+
+        assert_noop!(
+          Tidefi::swap(
+            Origin::signed(context.sender),
+            TEMP_CURRENCY_ID,
+            10 * ONE_TEMP,
+            CurrencyId::Tdfy,
+            ONE_TDFY,
+            SwapType::Limit,
+            None
+          ),
+          Error::<Test>::ReducedToZero
         );
       });
     }
@@ -787,8 +921,8 @@ mod cancel_swap {
             .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
             .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
-          let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, TDFY_CURRENCY_ID);
-          let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, TDFY_CURRENCY_ID);
+          let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+          let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
 
           assert_ok!(Tidefi::cancel_swap(
             Origin::signed(BOB_ACCOUNT_ID),
@@ -849,8 +983,8 @@ mod cancel_swap {
             .mint_temp(BOB_ACCOUNT_ID, 10_000 * ONE_TEMP)
             .add_tdfy_to_temp_limit_swap(BOB_ACCOUNT_ID, 10 * ONE_TDFY, 200 * ONE_TEMP);
 
-          let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, TDFY_CURRENCY_ID);
-          let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, TDFY_CURRENCY_ID);
+          let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+          let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
 
           assert_ok!(Tidefi::cancel_swap(
             Origin::signed(ALICE_ACCOUNT_ID),
