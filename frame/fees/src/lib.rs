@@ -583,12 +583,19 @@ pub mod pallet {
         return Ok(0);
       }
 
-      let currency_wanted = amount
-        .checked_div(&order_book_price)
-        .ok_or(Error::<T>::InvalidUsdtValue)?
-        .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
-        .ok_or(Error::<T>::BalanceOverflow)?;
-
+      let currency_wanted = if order_book_price > FixedU128::saturating_from_rational(1, 1) {
+        amount
+          .checked_mul(&order_book_price)
+          .ok_or(Error::<T>::InvalidUsdtValue)?
+          .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .ok_or(Error::<T>::BalanceOverflow)?
+      } else {
+        amount
+          .checked_div(&order_book_price)
+          .ok_or(Error::<T>::InvalidUsdtValue)?
+          .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .ok_or(Error::<T>::BalanceOverflow)?
+      };
       Ok(
         currency_wanted
           .saturating_mul(FixedU128::from(
@@ -601,7 +608,7 @@ pub mod pallet {
     }
 
     // Based on the value provided by Oracle, try to convert the asset balance to TDFY balance
-    pub(crate) fn try_get_tide_value(
+    pub(crate) fn try_get_tdfy_value(
       currency_id: CurrencyId,
       amount: FixedU128,
     ) -> Result<Balance, DispatchError> {
@@ -619,11 +626,19 @@ pub mod pallet {
         return Ok(0);
       }
 
-      let currency_wanted = amount
-        .checked_div(&order_book_price)
-        .ok_or(Error::<T>::InvalidTdfyValue)?
-        .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
-        .ok_or(Error::<T>::BalanceOverflow)?;
+      let currency_wanted = if order_book_price > FixedU128::saturating_from_rational(1, 1) {
+        amount
+          .checked_mul(&order_book_price)
+          .ok_or(Error::<T>::InvalidTdfyValue)?
+          .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .ok_or(Error::<T>::BalanceOverflow)?
+      } else {
+        amount
+          .checked_div(&order_book_price)
+          .ok_or(Error::<T>::InvalidTdfyValue)?
+          .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
+          .ok_or(Error::<T>::BalanceOverflow)?
+      };
 
       Ok(
         currency_wanted
@@ -639,9 +654,10 @@ pub mod pallet {
     pub(crate) fn try_select_first_eligible_sunrise_pool(
       fee: &Fee,
       currency_id: CurrencyId,
-    ) -> Result<Option<SunriseSwapPool>, DispatchError> {
+    ) -> Option<SunriseSwapPool> {
       // get all pools
-      let current_usdt_trade_value = Self::try_get_usdt_value(currency_id, fee.amount.into())?;
+      let current_usdt_trade_value =
+        Self::try_get_usdt_value(currency_id, fee.amount.into()).unwrap_or_default();
 
       let mut all_pools = SunrisePools::<T>::get()
         .iter()
@@ -666,11 +682,9 @@ pub mod pallet {
           .unwrap_or(sp_std::cmp::Ordering::Equal)
       });
 
-      Ok(
-        all_pools
-          .first()
-          .map(|sunrise_pool| sunrise_pool.to_owned()),
-      )
+      all_pools
+        .first()
+        .map(|sunrise_pool| sunrise_pool.to_owned())
     }
 
     // Initialize new era
@@ -713,7 +727,7 @@ pub mod pallet {
       .checked_div(FixedU128::DIV)
       .ok_or(Error::<T>::BalanceOverflow)?;
 
-      Self::try_get_tide_value(currency_id, real_fee_with_rebates.into())
+      Self::try_get_tdfy_value(currency_id, real_fee_with_rebates.into())
     }
   }
 
@@ -777,13 +791,15 @@ pub mod pallet {
           );
 
           if let Some(sunrise_pool_available) =
-            Self::try_select_first_eligible_sunrise_pool(&new_fee, currency_id)?
+            Self::try_select_first_eligible_sunrise_pool(&new_fee, currency_id)
           {
             let real_fees_in_tide_with_rebates = Self::calculate_tide_reward_for_pool(
               sunrise_pool_available.rebates,
               &new_fee,
               currency_id,
-            )?;
+            )
+            .unwrap_or_default();
+
             // Update sunrise pool
             SunrisePools::<T>::try_mutate::<(), DispatchError, _>(|pools| {
               let sunrise_pool = pools

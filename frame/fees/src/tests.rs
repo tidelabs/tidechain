@@ -208,7 +208,7 @@ pub fn test_calc_reward_other_assets() {
 
     // TDFY amount
     let max_amount_in_tide =
-      Fees::try_get_tide_value(CurrencyId::Wrapped(2), max_amount_in_btc.into()).unwrap();
+      Fees::try_get_tdfy_value(CurrencyId::Wrapped(2), max_amount_in_btc.into()).unwrap();
 
     // 100k TDFY maximum fees allocation
     assert_eq!(max_amount_in_tide, 100_000_000_000_000_000);
