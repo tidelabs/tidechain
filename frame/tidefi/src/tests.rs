@@ -29,7 +29,9 @@ use frame_support::{
 use pallet_assets::{Account, Error as AssetsError};
 use pallet_balances::Error as BalancesError;
 use pallet_oracle::{AccountSwaps, Error as OracleError};
-use sp_runtime::{traits::BadOrigin, Permill};
+use sp_runtime::{
+  traits::BadOrigin, ArithmeticError::Overflow, DispatchError::Arithmetic, Permill,
+};
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::OracleExt, Balance, CurrencyId, Hash, ProposalType, SwapStatus, SwapType, Withdrawal,
@@ -270,37 +272,65 @@ fn assert_event_is_emitted_swap_cancelled(context: &Context) {
 mod transfer {
   use super::*;
 
-  #[test]
-  fn succeeds() {
-    new_test_ext().execute_with(|| {
-      let context = Context::default()
-        .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
-        .mint_tdfy(BOB_ACCOUNT_ID, 10 * ONE_TDFY)
-        .create_temp_asset_and_metadata()
-        .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
+  mod succeeds_when {
+    use super::*;
 
-      for currency_id in context.test_assets.clone() {
-        let alice_balance_before = get_alice_balance(currency_id);
-        let bob_balance_before = get_bob_balance(currency_id);
+    #[test]
+    fn sender_and_receiver_accounts_are_different() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
 
-        assert_ok!(Tidefi::transfer(
-          Origin::signed(context.sender),
-          context.receiver,
-          currency_id,
-          context.amount
-        ));
+        for currency_id in context.test_assets.clone() {
+          let alice_balance_before = get_alice_balance(currency_id);
+          let bob_balance_before = get_bob_balance(currency_id);
 
-        assert_eq!(
-          alice_balance_before - context.amount,
-          get_alice_balance(currency_id)
-        );
-        assert_eq!(
-          bob_balance_before + context.amount,
-          get_bob_balance(currency_id)
-        );
-        assert_event_is_emitted_transfer(&context, currency_id);
-      }
-    });
+          assert_ok!(Tidefi::transfer(
+            Origin::signed(context.sender),
+            context.receiver,
+            currency_id,
+            context.amount
+          ));
+
+          assert_eq!(
+            alice_balance_before - context.amount,
+            get_alice_balance(currency_id)
+          );
+          assert_eq!(
+            bob_balance_before + context.amount,
+            get_bob_balance(currency_id)
+          );
+          assert_event_is_emitted_transfer(&context, currency_id);
+        }
+      });
+    }
+
+    #[test]
+    fn sender_and_receiver_accounts_are_the_same() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
+
+        for currency_id in context.test_assets.clone() {
+          let alice_balance_before = get_alice_balance(currency_id);
+
+          assert_ok!(Tidefi::transfer(
+            Origin::signed(context.sender),
+            context.sender,
+            currency_id,
+            context.amount
+          ));
+
+          assert_eq!(alice_balance_before, get_alice_balance(currency_id));
+        }
+      });
+    }
   }
 
   mod fails_when {
