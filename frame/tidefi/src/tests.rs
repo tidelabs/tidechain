@@ -29,9 +29,7 @@ use frame_support::{
 use pallet_assets::{Account, Error as AssetsError};
 use pallet_balances::Error as BalancesError;
 use pallet_oracle::{AccountSwaps, Error as OracleError};
-use sp_runtime::{
-  traits::BadOrigin, ArithmeticError::Overflow, DispatchError::Arithmetic, Permill,
-};
+use sp_runtime::{traits::BadOrigin, Permill};
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::OracleExt, Balance, CurrencyId, Hash, ProposalType, SwapStatus, SwapType, Withdrawal,
@@ -518,28 +516,6 @@ mod withdrawal {
             context.external_address.clone(),
           ),
           BadOrigin
-        );
-      });
-    }
-
-    #[ignore]
-    #[test]
-    fn quorum_is_paused() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default()
-          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
-          .create_temp_asset_and_metadata()
-          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP)
-          .set_oracle_status(false);
-
-        assert_noop!(
-          Tidefi::withdrawal(
-            Origin::signed(context.sender),
-            TEMP_CURRENCY_ID,
-            context.amount,
-            context.external_address.clone(),
-          ),
-          Error::<Test>::QuorumPaused
         );
       });
     }
