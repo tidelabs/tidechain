@@ -54,7 +54,7 @@ pub mod pallet {
     log,
     pallet_prelude::*,
     traits::{
-      tokens::fungibles::{Inspect, Mutate, Transfer},
+      tokens::fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
       StorageVersion,
     },
     BoundedVec, PalletId,
@@ -107,7 +107,9 @@ pub mod pallet {
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
-      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + InspectHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + MutateHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
   }
 
   #[pallet::pallet]
@@ -243,6 +245,19 @@ pub mod pallet {
       for (currency_id, staking_meta) in self.staking_meta.clone() {
         StakingCurrencyMeta::<T>::insert(currency_id, staking_meta);
       }
+
+      // Create Tidefi Stake account
+      let account_id = <Pallet<T>>::account_id();
+      let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tdfy);
+      if T::CurrencyTidefi::reducible_balance(CurrencyId::Tdfy, &account_id, false) < min {
+        if let Err(err) = T::CurrencyTidefi::mint_into(CurrencyId::Tdfy, &account_id, min) {
+          log!(
+            error,
+            "Unable to mint tidefi stake pallet minimum balance: {:?}",
+            err
+          );
+        }
+      }
     }
   }
 
@@ -293,6 +308,8 @@ pub mod pallet {
     AmountTooSmall,
     /// The staked amount is above the maximum stake amount for this currency.
     AmountTooLarge,
+    /// Something went wrong with funds release
+    ReleaseFailed,
   }
 
   #[pallet::hooks]
@@ -476,7 +493,7 @@ pub mod pallet {
           &account_id,
           &Self::account_id(),
           unstaking_fee,
-          true,
+          false,
         )
         .map_err(|_| Error::<T>::TransferFeesFailed)?;
 
@@ -515,12 +532,8 @@ pub mod pallet {
       // create unique hash
       let unique_stake_request_id = <T as Config>::Security::get_unique_id(account_id.clone());
 
-      // 3. Transfer the funds into the staking pool
-      T::CurrencyTidefi::can_withdraw(currency_id, account_id, amount)
-        .into_result()
-        .map_err(|_| Error::<T>::InsufficientBalance)?;
-
-      T::CurrencyTidefi::transfer(currency_id, account_id, &Self::account_id(), amount, false)?;
+      // 3. Lock the funds
+      T::CurrencyTidefi::hold(currency_id, account_id, amount)?;
 
       // 4. Update our `StakingPool` storage
       StakingPool::<T>::try_mutate(currency_id, |balance| -> DispatchResult {
@@ -566,22 +579,36 @@ pub mod pallet {
       AccountStakes::<T>::try_mutate_exists(account_id, |account_stakes| match account_stakes {
         None => Err(Error::<T>::InvalidStakeId),
         Some(stakes) => {
-          T::CurrencyTidefi::can_withdraw(
+          // release initial balance
+          T::CurrencyTidefi::release(
             current_stake.currency_id,
-            &Self::account_id(),
-            current_stake.principal,
-          )
-          .into_result()
-          .map_err(|_| Error::<T>::InsufficientBalance)?;
-
-          T::CurrencyTidefi::transfer(
-            current_stake.currency_id,
-            &Self::account_id(),
             &account_id,
-            current_stake.principal,
+            current_stake.initial_balance,
             false,
           )
-          .map_err(|_| Error::<T>::TransferFailed)?;
+          .map_err(|_| Error::<T>::ReleaseFailed)?;
+
+          // transfer the accrued rewards
+          let reward_amount = current_stake
+            .principal
+            .saturating_sub(current_stake.initial_balance);
+
+          if reward_amount > 0 {
+            T::CurrencyTidefi::transfer(
+              current_stake.currency_id,
+              &Self::account_id(),
+              &account_id,
+              reward_amount,
+              false,
+            )
+            .map_err(|_| Error::<T>::TransferFailed)?;
+          }
+
+          StakingPool::<T>::mutate(current_stake.currency_id, |maybe_balance| {
+            if let Some(balance) = maybe_balance {
+              *maybe_balance = Some(balance.saturating_sub(current_stake.principal));
+            }
+          });
 
           if stakes.len() > 1 {
             stakes.retain(|stake| stake.unique_id != stake_id);

@@ -150,7 +150,7 @@ pub fn should_stake_and_unstake() {
       .expect("Unable to mint token");
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       1_000_000_000_000_000
     );
 
@@ -162,7 +162,7 @@ pub fn should_stake_and_unstake() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       1_000_000_000_000_000 - 1_000_000_000_000
     );
 
@@ -197,9 +197,12 @@ pub fn should_stake_and_unstake() {
     assert!(TidefiStaking::account_stakes(alice).len() == 0);
     // balance is returned
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       1_000_000_000_000_000
     );
+
+    // make sure the staking pool has been updated
+    assert_eq!(TidefiStaking::staking_pool(CurrencyId::Tdfy), Some(0));
   });
 }
 
@@ -214,7 +217,10 @@ pub fn should_stake_and_unstake_queue() {
     // mint token to user
     Adapter::mint_into(CurrencyId::Tdfy, &alice, initial_mint).expect("Unable to mint token");
 
-    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &1u64), initial_mint);
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
+      initial_mint
+    );
 
     assert_ok!(TidefiStaking::stake(
       alice_origin.clone(),
@@ -224,7 +230,7 @@ pub fn should_stake_and_unstake_queue() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       initial_mint - initial_stake
     );
 
@@ -260,7 +266,7 @@ pub fn should_stake_and_unstake_queue() {
 
     let unstake_fee = TidefiStaking::unstake_fee() * initial_stake;
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       initial_mint - initial_stake - unstake_fee
     );
     // 1 % of 1_000_000_000_000 = 10_000_000_000
@@ -305,8 +311,14 @@ pub fn should_stake_multiple_and_unstake_queue() {
     Adapter::mint_into(CurrencyId::Tdfy, &alice, initial_mint).expect("Unable to mint token");
     Adapter::mint_into(CurrencyId::Tdfy, &bob, initial_mint).expect("Unable to mint token");
 
-    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &alice), initial_mint);
-    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &bob), initial_mint);
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &alice, false),
+      initial_mint
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &bob, false),
+      initial_mint
+    );
 
     assert_ok!(TidefiStaking::stake(
       alice_origin.clone(),
@@ -316,7 +328,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       initial_mint - initial_stake
     );
 
@@ -393,7 +405,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     let unstake_fee_bob = TidefiStaking::unstake_fee() * initial_stake_bob;
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       initial_mint - initial_stake - unstake_fee
     );
 
@@ -439,13 +451,13 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert!(TidefiStaking::unstake_queue().is_empty());
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       initial_mint - unstake_fee
     );
 
     assert!(TidefiStaking::account_stakes(bob).len() == 1);
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &2u64),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &2u64, false),
       // we still have a stake active
       initial_mint - unstake_fee_bob - initial_stake_bob
     );
