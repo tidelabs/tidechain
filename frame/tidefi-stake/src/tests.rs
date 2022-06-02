@@ -211,26 +211,27 @@ pub fn should_stake_and_unstake_queue() {
   new_test_ext().execute_with(|| {
     let alice = 1u64;
     let alice_origin = Origin::signed(alice);
-    let initial_stake = 1_000_000_000_000;
-    let initial_mint = 1_000_000_000_000_000;
+    let initial_stake = 250_000_000;
+    let initial_mint = 500_000_000;
 
     // mint token to user
-    Adapter::mint_into(CurrencyId::Tdfy, &alice, initial_mint).expect("Unable to mint token");
+    Adapter::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &alice, initial_mint)
+      .expect("Unable to mint token");
 
     assert_eq!(
-      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
+      Adapter::reducible_balance(CurrencyId::Wrapped(TEST_TOKEN), &1u64, false),
       initial_mint
     );
 
     assert_ok!(TidefiStaking::stake(
       alice_origin.clone(),
-      CurrencyId::Tdfy,
+      CurrencyId::Wrapped(TEST_TOKEN),
       initial_stake,
       FIFTEEN_DAYS
     ));
 
     assert_eq!(
-      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
+      Adapter::reducible_balance(CurrencyId::Wrapped(TEST_TOKEN), &1u64, false),
       initial_mint - initial_stake
     );
 
@@ -241,7 +242,7 @@ pub fn should_stake_and_unstake_queue() {
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tdfy),
+      TidefiStaking::staking_pool(CurrencyId::Wrapped(TEST_TOKEN)),
       Some(initial_stake)
     );
 
@@ -266,11 +267,11 @@ pub fn should_stake_and_unstake_queue() {
 
     let unstake_fee = TidefiStaking::unstake_fee() * initial_stake;
     assert_eq!(
-      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
-      initial_mint - initial_stake - unstake_fee
+      Adapter::reducible_balance(CurrencyId::Wrapped(TEST_TOKEN), &1u64, false),
+      initial_mint
+        .saturating_sub(initial_stake)
+        .saturating_sub(unstake_fee)
     );
-    // 1 % of 1_000_000_000_000 = 10_000_000_000
-    assert_eq!(unstake_fee, 10_000_000_000);
 
     // BlocksForceUnstake is set to 10, so let skip at least 10 blocks
     <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
