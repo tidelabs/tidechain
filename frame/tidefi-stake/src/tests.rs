@@ -15,12 +15,12 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-  mock::{new_test_ext, Adapter, Origin, Security, System, Test, TidefiStaking},
+  mock::{
+    new_test_ext, AccountId, Adapter, Assets, Balance, Origin, Security, System, Test,
+    TidefiStaking,
+  },
   Error,
 };
-use sp_runtime::Percent;
-use tidefi_primitives::BlockNumber;
-
 use frame_support::{
   assert_noop, assert_ok,
   traits::{
@@ -28,11 +28,58 @@ use frame_support::{
     Hooks,
   },
 };
-use tidefi_primitives::{pallet::StakingExt, CurrencyId};
+use sp_runtime::{traits::BadOrigin, Percent};
+use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId};
 
 const TEST_TOKEN: u32 = 2;
+const TEST_TOKEN_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEST_TOKEN);
 const FIFTEEN_DAYS: BlockNumber = 14400 * 15;
 const BLOCKS_FORCE_UNLOCK: BlockNumber = 256;
+
+// Asset Units
+const ONE_TDFY: Balance = 1_000_000_000_000;
+const ONE_TEST_TOKEN: Balance = 100;
+
+// Test Accounts
+const ALICE_ACCOUNT_ID: AccountId = 1;
+
+struct Context {
+  staker: AccountId,
+  tdfy_amount: Balance,
+  test_token_amount: Balance,
+  duration: BlockNumber,
+}
+
+impl Default for Context {
+  fn default() -> Self {
+    Self {
+      staker: ALICE_ACCOUNT_ID,
+      tdfy_amount: ONE_TDFY,
+      test_token_amount: ONE_TEST_TOKEN,
+      duration: FIFTEEN_DAYS,
+    }
+  }
+}
+
+impl Context {
+  fn mint_tdfy(self, account: AccountId, amount: Balance) -> Self {
+    Self::mint_asset_for_accounts(vec![account], CurrencyId::Tdfy, amount);
+    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &account), amount);
+    self
+  }
+
+  fn mint_test_token(self, account: AccountId, amount: Balance) -> Self {
+    Self::mint_asset_for_accounts(vec![account], TEST_TOKEN_CURRENCY_ID, amount);
+    assert_eq!(Adapter::balance(TEST_TOKEN_CURRENCY_ID, &account), amount);
+    self
+  }
+
+  fn mint_asset_for_accounts(accounts: Vec<AccountId>, asset: CurrencyId, amount: u128) {
+    for account in accounts {
+      assert_ok!(Adapter::mint_into(asset, &account, amount));
+    }
+  }
+}
 
 #[test]
 pub fn check_genesis_config() {
@@ -46,97 +93,150 @@ pub fn check_genesis_config() {
   });
 }
 
-#[test]
-pub fn should_stake_wrapped_asset() {
-  new_test_ext().execute_with(|| {
-    let alice = 1u64;
-    let alice_origin = Origin::signed(alice);
+mod stake {
+  use super::*;
 
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &alice, 1_000_000_000_000)
-      .expect("Unable to mint token");
+  mod succeeds {
+    use super::*;
 
-    assert_ok!(TidefiStaking::stake(
-      alice_origin,
-      CurrencyId::Wrapped(TEST_TOKEN),
-      // maximum amount
-      500_000_000,
-      FIFTEEN_DAYS
-    ));
+    #[test]
+    fn for_native_asset() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY);
 
-    // make sure the staking pool has been updated
-    assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Wrapped(TEST_TOKEN)),
-      Some(500_000_000)
-    );
+        assert_ok!(TidefiStaking::stake(
+          Origin::signed(context.staker),
+          CurrencyId::Tdfy,
+          context.tdfy_amount,
+          context.duration
+        ));
 
-    // make sure the staking has been recorded in the storage
-    assert!(TidefiStaking::account_stakes(alice).len() == 1);
-    assert!(
-      TidefiStaking::account_stakes(alice)
-        .first()
-        .unwrap()
-        .initial_balance
-        == 500_000_000
-    );
-  });
-}
+        // make sure the staking pool has been updated
+        assert_eq!(
+          TidefiStaking::staking_pool(CurrencyId::Tdfy),
+          Some(context.tdfy_amount)
+        );
 
-#[test]
-pub fn should_fails_amount_too_small() {
-  new_test_ext().execute_with(|| {
-    let alice = 1u64;
-    let alice_origin = Origin::signed(alice);
+        // make sure the staking has been recorded in the storage
+        assert!(TidefiStaking::account_stakes(context.staker).len() == 1);
+        assert!(
+          TidefiStaking::account_stakes(context.staker)
+            .first()
+            .unwrap()
+            .initial_balance
+            == context.tdfy_amount
+        );
+      });
+    }
 
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Wrapped(TEST_TOKEN), &alice, 1_000_000_000_000)
-      .expect("Unable to mint token");
+    #[test]
+    fn for_wrapped_asset() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN);
 
-    assert_noop!(
-      TidefiStaking::stake(
-        alice_origin,
-        CurrencyId::Wrapped(TEST_TOKEN),
-        10,
-        FIFTEEN_DAYS
-      ),
-      Error::<Test>::AmountTooSmall,
-    );
-  });
-}
+        assert_ok!(TidefiStaking::stake(
+          Origin::signed(context.staker),
+          TEST_TOKEN_CURRENCY_ID,
+          context.test_token_amount,
+          context.duration
+        ));
 
-#[test]
-pub fn should_stake_native_asset() {
-  new_test_ext().execute_with(|| {
-    let alice = 1u64;
-    let alice_origin = Origin::signed(alice);
+        // make sure the staking pool has been updated
+        assert_eq!(
+          TidefiStaking::staking_pool(TEST_TOKEN_CURRENCY_ID),
+          Some(context.test_token_amount)
+        );
 
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Tdfy, &alice, 1_000_000_000_000_000)
-      .expect("Unable to mint token");
+        // make sure the staking has been recorded in the storage
+        assert!(TidefiStaking::account_stakes(context.staker).len() == 1);
+        assert!(
+          TidefiStaking::account_stakes(context.staker)
+            .first()
+            .unwrap()
+            .initial_balance
+            == context.test_token_amount
+        );
+      });
+    }
+  }
 
-    assert_ok!(TidefiStaking::stake(
-      alice_origin,
-      CurrencyId::Tdfy,
-      1_000_000_000_000,
-      FIFTEEN_DAYS
-    ));
+  mod fails_when {
+    use super::*;
 
-    // make sure the staking pool has been updated
-    assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tdfy),
-      Some(1_000_000_000_000)
-    );
+    #[test]
+    fn not_signed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY);
 
-    // make sure the staking has been recorded in the storage
-    assert!(TidefiStaking::account_stakes(alice).len() == 1);
-    assert!(
-      TidefiStaking::account_stakes(alice)
-        .first()
-        .unwrap()
-        .initial_balance
-        == 1_000_000_000_000
-    );
-  });
+        assert_noop!(
+          TidefiStaking::stake(
+            Origin::none(),
+            CurrencyId::Tdfy,
+            context.tdfy_amount,
+            context.duration
+          ),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    fn duration_is_invalid() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY);
+
+        assert_noop!(
+          TidefiStaking::stake(
+            Origin::signed(context.staker),
+            CurrencyId::Tdfy,
+            context.tdfy_amount,
+            1
+          ),
+          Error::<Test>::InvalidDuration
+        );
+      });
+    }
+
+    #[test]
+    fn stake_amount_is_too_small() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN);
+
+        assert_noop!(
+          TidefiStaking::stake(
+            Origin::signed(context.staker),
+            TEST_TOKEN_CURRENCY_ID,
+            ONE_TEST_TOKEN - 1,
+            context.duration
+          ),
+          Error::<Test>::AmountTooSmall
+        );
+      });
+    }
+
+    #[test]
+    fn stake_amount_is_too_large() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN);
+
+        assert_noop!(
+          TidefiStaking::stake(
+            Origin::signed(context.staker),
+            TEST_TOKEN_CURRENCY_ID,
+            u128::MAX,
+            context.duration
+          ),
+          Error::<Test>::AmountTooLarge
+        );
+      });
+    }
+  }
 }
 
 #[test]
@@ -448,23 +548,6 @@ pub fn should_stake_multiple_and_unstake_queue() {
       Adapter::balance(CurrencyId::Tdfy, &2u64),
       // we still have a stake active
       initial_mint - unstake_fee_bob - initial_stake_bob
-    );
-  });
-}
-
-#[test]
-pub fn stake_with_invalid_duration() {
-  new_test_ext().execute_with(|| {
-    let alice = 1u64;
-    let alice_origin = Origin::signed(alice);
-
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Tdfy, &alice, 1_000_000_000_000_000)
-      .expect("Unable to mint token");
-
-    assert_noop!(
-      TidefiStaking::stake(alice_origin, CurrencyId::Tdfy, 1_000_000_000_000, 999),
-      Error::<Test>::InvalidDuration
     );
   });
 }
