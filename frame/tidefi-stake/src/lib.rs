@@ -60,7 +60,10 @@ pub mod pallet {
     BoundedVec, PalletId,
   };
   use frame_system::pallet_prelude::*;
-  use sp_runtime::{traits::AccountIdConversion, ArithmeticError, Percent, Perquintill};
+  use sp_runtime::{
+    traits::{AccountIdConversion, Saturating},
+    ArithmeticError, Percent, Perquintill,
+  };
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta,
