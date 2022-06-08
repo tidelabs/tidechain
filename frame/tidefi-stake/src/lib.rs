@@ -546,7 +546,7 @@ pub mod pallet {
             principal: amount,
             duration,
           })
-          .map_err(|_| DispatchError::Other("Invalid stake; eqd")) // TODO: If invalid stake, better to rollback changes in staking pool
+          .map_err(|_| DispatchError::Other("Invalid stake; eqd"))
       })?;
 
       Ok(unique_stake_request_id)
