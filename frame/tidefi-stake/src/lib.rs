@@ -443,17 +443,17 @@ pub mod pallet {
         Self::get_account_stake(&account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
 
       // 3. Check the expiration and if we are forcing it (queue)
-      let expected_block_expiration = stake.initial_block + stake.duration;
-      let staking_duration_is_finished =
-        T::Security::get_current_block_count() >= expected_block_expiration;
-      let unstaking_is_ready = staking_duration_is_finished || force_unstake;
+      let expected_block_expiration = stake.initial_block.saturating_add(stake.duration);
+      let staking_is_expired = T::Security::get_current_block_count() >= expected_block_expiration;
+      let unstaking_is_ready = staking_is_expired || force_unstake;
       ensure!(unstaking_is_ready, Error::<T>::UnstakingNotReady);
 
       // FIXME: Validate not already queued
 
       // we should add to unstaking queue and take immeditately the extra fees
       // for the queue storage
-      if force_unstake {
+      let unstaking_is_forced = !staking_is_expired && force_unstake;
+      if unstaking_is_forced {
         // take the fee
         // FIXME: would be great to convert to TDFY
         let unstaking_fee = Self::unstake_fee() * stake.initial_balance;
@@ -543,7 +543,7 @@ pub mod pallet {
             principal: amount,
             duration,
           })
-          .map_err(|_| DispatchError::Other("Invalid stake; eqd"))
+          .map_err(|_| DispatchError::Other("Invalid stake; eqd")) // TODO: If invalid stake, better to rollback changes in staking pool
       })?;
 
       Ok(unique_stake_request_id)
