@@ -444,8 +444,9 @@ pub mod pallet {
 
       // 3. Check the expiration and if we are forcing it (queue)
       let expected_block_expiration = stake.initial_block + stake.duration;
-      let staking_is_expired = T::Security::get_current_block_count() >= expected_block_expiration;
-      let unstaking_is_ready = staking_is_expired || force_unstake;
+      let staking_duration_is_finished =
+        T::Security::get_current_block_count() >= expected_block_expiration;
+      let unstaking_is_ready = staking_duration_is_finished || force_unstake;
       ensure!(unstaking_is_ready, Error::<T>::UnstakingNotReady);
 
       // FIXME: Validate not already queued
