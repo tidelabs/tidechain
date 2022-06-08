@@ -327,6 +327,43 @@ mod unstake {
         });
       }
     }
+
+    mod without_force_unstake {
+      use super::*;
+
+      #[test]
+      fn for_native_asset() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+            .stake_tdfy()
+            .set_current_block_to_pass_stake_duration(FIFTEEN_DAYS + 1);
+
+          assert_ok!(TidefiStaking::unstake(
+            Origin::signed(context.staker),
+            context.stake_id,
+            false
+          ));
+        });
+      }
+
+      #[test]
+      fn for_wrapped_asset() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+            .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
+            .stake_test_tokens()
+            .set_current_block_to_pass_stake_duration(FIFTEEN_DAYS + 1);
+
+          assert_ok!(TidefiStaking::unstake(
+            Origin::signed(context.staker),
+            context.stake_id,
+            false
+          ));
+        });
+      }
+    }
   }
 
   mod fails_when {
