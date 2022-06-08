@@ -337,8 +337,6 @@ mod stake {
           .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
           .insert_asset_balance_in_staking_pool_to_max(TEST_TOKEN_CURRENCY_ID, u128::MAX);
 
-        let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
-
         assert_noop!(
           TidefiStaking::stake(
             Origin::signed(context.staker),
@@ -379,42 +377,7 @@ mod unstake {
   mod succeeds {
     use super::*;
 
-    mod with_force_unstake {
-      use super::*;
-
-      #[test]
-      fn for_native_asset() {
-        new_test_ext().execute_with(|| {
-          let context = Context::default()
-            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-            .stake_tdfy();
-
-          assert_ok!(TidefiStaking::unstake(
-            Origin::signed(context.staker),
-            context.stake_id,
-            true
-          ));
-        });
-      }
-
-      #[test]
-      fn for_wrapped_asset() {
-        new_test_ext().execute_with(|| {
-          let context = Context::default()
-            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-            .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
-            .stake_test_tokens();
-
-          assert_ok!(TidefiStaking::unstake(
-            Origin::signed(context.staker),
-            context.stake_id,
-            true
-          ));
-        });
-      }
-    }
-
-    mod without_force_unstake {
+    mod after_unstaking_becomes_ready {
       use super::*;
 
       #[test]
@@ -425,11 +388,18 @@ mod unstake {
             .stake_tdfy()
             .set_current_block_to_pass_stake_duration(FIFTEEN_DAYS + 1);
 
+          let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
+
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
             context.stake_id,
             false
           ));
+
+          assert_eq!(
+            staker_balance_before + context.tdfy_amount,
+            Adapter::balance(CurrencyId::Tdfy, &context.staker)
+          );
         });
       }
 
@@ -442,11 +412,69 @@ mod unstake {
             .stake_test_tokens()
             .set_current_block_to_pass_stake_duration(FIFTEEN_DAYS + 1);
 
+          let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
+
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
             context.stake_id,
             false
           ));
+
+          assert_eq!(
+            staker_balance_before + context.test_token_amount,
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
+          );
+        });
+      }
+    }
+
+    mod when_force_unstake_before_staking_duration_expires {
+      use super::*;
+
+      #[test]
+      fn for_native_asset() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+            .stake_tdfy();
+
+          let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
+
+          assert_ok!(TidefiStaking::unstake(
+            Origin::signed(context.staker),
+            context.stake_id,
+            true
+          ));
+
+          let unstaking_fee = TidefiStaking::unstake_fee() * context.tdfy_amount;
+          assert_eq!(
+            staker_balance_before - unstaking_fee,
+            Adapter::balance(CurrencyId::Tdfy, &context.staker)
+          );
+        });
+      }
+
+      #[test]
+      fn for_wrapped_asset() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+            .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
+            .stake_test_tokens();
+
+          let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
+
+          assert_ok!(TidefiStaking::unstake(
+            Origin::signed(context.staker),
+            context.stake_id,
+            true
+          ));
+
+          let unstaking_fee = TidefiStaking::unstake_fee() * context.test_token_amount;
+          assert_eq!(
+            staker_balance_before - unstaking_fee,
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
+          );
         });
       }
     }
@@ -484,7 +512,7 @@ mod unstake {
     }
 
     #[test]
-    fn staking_is_not_ready() {
+    fn staking_is_not_expired_yet_and_not_force_unstake() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
@@ -492,7 +520,7 @@ mod unstake {
 
         assert_noop!(
           TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, false),
-          Error::<Test>::StakingNotReady
+          Error::<Test>::UnstakingNotReady
         );
       });
     }
