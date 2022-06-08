@@ -16,22 +16,22 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Balance, Origin, Security, System, Test, TidefiStaking,
-    UnstakeQueueCap,
+    new_test_ext, AccountId, Adapter, Balance, Origin, Security, StakeAccountCap, System, Test,
+    TidefiStaking, UnstakeQueueCap,
   },
-  Error, UnstakeQueue,
+  AccountStakes, Error, StakingPool, UnstakeQueue,
 };
 use frame_support::{
-  assert_noop, assert_ok,
+  assert_err, assert_noop, assert_ok,
   traits::{
     fungibles::{Inspect, Mutate},
     Hooks,
   },
   BoundedVec,
 };
-use sp_runtime::{traits::BadOrigin, Percent};
+use sp_runtime::{traits::BadOrigin, ArithmeticError, DispatchError, Percent};
 use std::str::FromStr;
-use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId, Hash};
+use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId, Hash, Stake};
 
 const TEST_TOKEN: u32 = 2;
 const TEST_TOKEN_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEST_TOKEN);
@@ -117,7 +117,7 @@ impl Context {
     self
   }
 
-  fn add_mock_unstakes_to_queue(self, number_of_unstakes: u32) -> Self {
+  fn add_mock_unstakes_to_queue(self, number_of_unstakes: usize) -> Self {
     UnstakeQueue::<Test>::put(
       BoundedVec::try_from(vec![
         (self.staker, self.stake_id, BLOCK_NUMBER_ZERO);
@@ -125,6 +125,35 @@ impl Context {
       ])
       .unwrap(),
     );
+    self
+  }
+
+  fn add_mock_account_stakes(self, account_id: AccountId, number_of_stakes: usize) -> Self {
+    AccountStakes::<Test>::insert(
+      &account_id,
+      BoundedVec::try_from(vec![
+        Stake {
+          currency_id: CurrencyId::Tdfy,
+          unique_id: Hash::zero(),
+          last_session_index_compound: 0,
+          initial_block: BLOCK_NUMBER_ZERO,
+          initial_balance: self.tdfy_amount,
+          principal: self.tdfy_amount,
+          duration: self.duration,
+        };
+        number_of_stakes
+      ])
+      .unwrap(),
+    );
+    self
+  }
+
+  fn insert_asset_balance_in_staking_pool_to_max(
+    self,
+    currency_id: CurrencyId,
+    new_balance: Balance,
+  ) -> Self {
+    StakingPool::<Test>::insert(currency_id, new_balance);
     self
   }
 }
@@ -281,6 +310,47 @@ mod stake {
             context.duration
           ),
           Error::<Test>::AmountTooLarge
+        );
+      });
+    }
+
+    #[test]
+    fn staking_pool_reaches_its_cap() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
+          .insert_asset_balance_in_staking_pool_to_max(TEST_TOKEN_CURRENCY_ID, u128::MAX);
+
+        assert_err!(
+          TidefiStaking::stake(
+            Origin::signed(context.staker),
+            TEST_TOKEN_CURRENCY_ID,
+            context.test_token_amount,
+            context.duration
+          ),
+          ArithmeticError::Overflow
+        );
+
+        assert!(TidefiStaking::account_stakes(context.staker).is_empty());
+      });
+    }
+
+    #[test]
+    fn account_stakes_reaches_its_cap() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 2 * ONE_TDFY)
+          .add_mock_account_stakes(ALICE_ACCOUNT_ID, StakeAccountCap::get() as usize);
+
+        assert_err!(
+          TidefiStaking::stake(
+            Origin::signed(context.staker),
+            CurrencyId::Tdfy,
+            context.tdfy_amount,
+            context.duration
+          ),
+          DispatchError::Other("Invalid stake; eqd")
         );
       });
     }
@@ -446,7 +516,7 @@ mod unstake {
         let context = Context::default()
           .mint_tdfy(ALICE_ACCOUNT_ID, 2 * ONE_TDFY)
           .stake_tdfy()
-          .add_mock_unstakes_to_queue(UnstakeQueueCap::get());
+          .add_mock_unstakes_to_queue(UnstakeQueueCap::get() as usize);
 
         assert_noop!(
           TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
