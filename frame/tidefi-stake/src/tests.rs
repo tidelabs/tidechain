@@ -16,10 +16,10 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Assets, Balance, Origin, Security, System, Test,
-    TidefiStaking,
+    new_test_ext, AccountId, Adapter, Balance, Origin, Security, System, Test, TidefiStaking,
+    UnstakeQueueCap,
   },
-  Error,
+  Error, UnstakeQueue,
 };
 use frame_support::{
   assert_noop, assert_ok,
@@ -27,9 +27,11 @@ use frame_support::{
     fungibles::{Inspect, Mutate},
     Hooks,
   },
+  BoundedVec,
 };
 use sp_runtime::{traits::BadOrigin, Percent};
-use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId};
+use std::str::FromStr;
+use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId, Hash};
 
 const TEST_TOKEN: u32 = 2;
 const TEST_TOKEN_CURRENCY_ID: CurrencyId = CurrencyId::Wrapped(TEST_TOKEN);
@@ -43,10 +45,13 @@ const ONE_TEST_TOKEN: Balance = 100;
 // Test Accounts
 const ALICE_ACCOUNT_ID: AccountId = 1;
 
+const BLOCK_NUMBER_ZERO: BlockNumber = 0;
+
 struct Context {
   staker: AccountId,
   tdfy_amount: Balance,
   test_token_amount: Balance,
+  stake_id: Hash,
   duration: BlockNumber,
 }
 
@@ -56,6 +61,10 @@ impl Default for Context {
       staker: ALICE_ACCOUNT_ID,
       tdfy_amount: ONE_TDFY,
       test_token_amount: ONE_TEST_TOKEN,
+      stake_id: Hash::from_str(
+        "0x02a204a25c36f8c88eea76e08cdaa22a0569ef630bf4416db72abb9fb2445f2b",
+      )
+      .unwrap_or_default(),
       duration: FIFTEEN_DAYS,
     }
   }
@@ -78,6 +87,45 @@ impl Context {
     for account in accounts {
       assert_ok!(Adapter::mint_into(asset, &account, amount));
     }
+  }
+
+  fn stake_tdfy(self) -> Self {
+    assert_ok!(TidefiStaking::stake(
+      Origin::signed(self.staker),
+      CurrencyId::Tdfy,
+      self.tdfy_amount,
+      self.duration
+    ));
+    self
+  }
+
+  fn stake_test_tokens(self) -> Self {
+    assert_ok!(TidefiStaking::stake(
+      Origin::signed(self.staker),
+      TEST_TOKEN_CURRENCY_ID,
+      self.test_token_amount,
+      self.duration
+    ));
+    self
+  }
+
+  fn set_current_block_to_pass_stake_duration(self, block_number: BlockNumber) -> Self {
+    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
+      *n = block_number;
+      *n
+    });
+    self
+  }
+
+  fn add_mock_unstakes_to_queue(self, number_of_unstakes: u32) -> Self {
+    UnstakeQueue::<Test>::put(
+      BoundedVec::try_from(vec![
+        (self.staker, self.stake_id, BLOCK_NUMBER_ZERO);
+        number_of_unstakes as usize
+      ])
+      .unwrap(),
+    );
+    self
   }
 }
 
@@ -233,6 +281,139 @@ mod stake {
             context.duration
           ),
           Error::<Test>::AmountTooLarge
+        );
+      });
+    }
+  }
+}
+
+mod unstake {
+  use super::*;
+
+  mod succeeds {
+    use super::*;
+
+    mod with_force_unstake {
+      use super::*;
+
+      #[test]
+      fn for_native_asset() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+            .stake_tdfy();
+
+          assert_ok!(TidefiStaking::unstake(
+            Origin::signed(context.staker),
+            context.stake_id,
+            true
+          ));
+        });
+      }
+
+      #[test]
+      fn for_wrapped_asset() {
+        new_test_ext().execute_with(|| {
+          let context = Context::default()
+            .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+            .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
+            .stake_test_tokens();
+
+          assert_ok!(TidefiStaking::unstake(
+            Origin::signed(context.staker),
+            context.stake_id,
+            true
+          ));
+        });
+      }
+    }
+  }
+
+  mod fails_when {
+    use super::*;
+
+    #[test]
+    fn not_signed() {
+      new_test_ext().execute_with(|| {
+        Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .stake_tdfy();
+
+        assert_noop!(
+          TidefiStaking::unstake(Origin::none(), Hash::zero(), true),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    fn stake_id_is_invalid() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .stake_tdfy();
+
+        assert_noop!(
+          TidefiStaking::unstake(Origin::signed(context.staker), Hash::zero(), true),
+          Error::<Test>::InvalidStakeId
+        );
+      });
+    }
+
+    #[test]
+    fn staking_is_not_ready() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .stake_tdfy();
+
+        assert_noop!(
+          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, false),
+          Error::<Test>::StakingNotReady
+        );
+      });
+    }
+
+    #[test]
+    fn native_asset_has_insufficient_balance() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .stake_tdfy();
+
+        assert_noop!(
+          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
+          Error::<Test>::InsufficientBalance
+        );
+      });
+    }
+
+    #[test]
+    fn wrapped_asset_has_insufficient_balance() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_test_token(ALICE_ACCOUNT_ID, ONE_TEST_TOKEN)
+          .stake_test_tokens();
+
+        assert_noop!(
+          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
+          Error::<Test>::InsufficientBalance
+        );
+      });
+    }
+
+    #[test]
+    fn unstake_queue_exceeds_its_cap() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 2 * ONE_TDFY)
+          .stake_tdfy()
+          .add_mock_unstakes_to_queue(UnstakeQueueCap::get());
+
+        assert_noop!(
+          TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
+          Error::<Test>::UnstakeQueueCapExceeded
         );
       });
     }
