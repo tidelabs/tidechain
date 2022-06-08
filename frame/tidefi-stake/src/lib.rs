@@ -283,8 +283,8 @@ pub mod pallet {
     InsufficientBalance,
     /// Invalid stake request ID
     InvalidStakeId,
-    /// Stake is not ready
-    StakingNotReady,
+    /// Unstake is not ready
+    UnstakingNotReady,
     /// Something went wrong with fees transfer
     TransferFeesFailed,
     /// Something went wrong with funds transfer
@@ -444,18 +444,15 @@ pub mod pallet {
 
       // 3. Check the expiration and if we are forcing it (queue)
       let expected_block_expiration = stake.initial_block + stake.duration;
-      let staking_is_ready =
-        expected_block_expiration <= T::Security::get_current_block_count() || force_unstake;
-      let staking_is_forced =
-        expected_block_expiration > T::Security::get_current_block_count() && force_unstake;
-
-      ensure!(staking_is_ready, Error::<T>::StakingNotReady);
+      let staking_is_expired = T::Security::get_current_block_count() >= expected_block_expiration;
+      let unstaking_is_ready = staking_is_expired || force_unstake;
+      ensure!(unstaking_is_ready, Error::<T>::UnstakingNotReady);
 
       // FIXME: Validate not already queued
 
       // we should add to unstaking queue and take immeditately the extra fees
       // for the queue storage
-      if staking_is_forced {
+      if force_unstake {
         // take the fee
         // FIXME: would be great to convert to TDFY
         let unstaking_fee = Self::unstake_fee() * stake.initial_balance;
