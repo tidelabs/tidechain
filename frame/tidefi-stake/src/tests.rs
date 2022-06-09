@@ -111,14 +111,6 @@ impl Context {
     self
   }
 
-  fn set_current_block(self, block_number: BlockNumber) -> Self {
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = block_number;
-      *n
-    });
-    self
-  }
-
   fn add_mock_unstakes_to_queue(self, number_of_unstakes: usize) -> Self {
     UnstakeQueue::<Test>::put(
       BoundedVec::try_from(vec![
@@ -158,6 +150,13 @@ impl Context {
     StakingPool::<Test>::insert(currency_id, new_balance);
     self
   }
+}
+
+fn set_current_block(block_number: BlockNumber) {
+  <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
+    *n = block_number;
+    *n
+  });
 }
 
 fn run_on_idle_hook(block_number: BlockNumber, remaining_weights: Balance) {
@@ -392,8 +391,9 @@ mod unstake {
         new_test_ext().execute_with(|| {
           let context = Context::default()
             .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-            .stake_tdfy()
-            .set_current_block(FIFTEEN_DAYS + 1);
+            .stake_tdfy();
+
+          set_current_block(FIFTEEN_DAYS + 1);
 
           let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
 
@@ -416,8 +416,9 @@ mod unstake {
           let context = Context::default()
             .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
             .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
-            .stake_test_tokens()
-            .set_current_block(FIFTEEN_DAYS + 1);
+            .stake_test_tokens();
+
+          set_current_block(FIFTEEN_DAYS + 1);
 
           let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
 
@@ -616,10 +617,7 @@ pub fn should_stake_and_unstake() {
         == ONE_TDFY
     );
 
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS + 1;
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS + 1);
 
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS + 1);
     assert_ok!(TidefiStaking::unstake(
@@ -677,10 +675,7 @@ pub fn should_stake_and_unstake_queue() {
         == initial_stake
     );
 
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS - 1_000;
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS - 1_000);
 
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 1_000);
     assert_ok!(TidefiStaking::unstake(
@@ -699,10 +694,7 @@ pub fn should_stake_and_unstake_queue() {
     assert_eq!(unstake_fee, 10_000_000_000);
 
     // BlocksForceUnstake is set to 10, so let skip at least 10 blocks
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS - 1_000 + BLOCKS_FORCE_UNLOCK + 1;
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS - 1_000 + BLOCKS_FORCE_UNLOCK + 1);
     assert_eq!(
       Security::current_block_number(),
       FIFTEEN_DAYS - 1_000 + BLOCKS_FORCE_UNLOCK + 1
@@ -725,8 +717,9 @@ pub fn should_stake_multiple_and_unstake_queue() {
 
     Context::default()
       .mint_tdfy(ALICE_ACCOUNT_ID, initial_mint)
-      .mint_tdfy(BOB_ACCOUNT_ID, initial_mint)
-      .set_current_block(1);
+      .mint_tdfy(BOB_ACCOUNT_ID, initial_mint);
+
+    set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
@@ -761,10 +754,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
         == initial_stake
     );
 
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS - 3_000;
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS - 3_000);
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 3_000);
 
     assert_ok!(TidefiStaking::stake(
@@ -786,10 +776,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
       FIFTEEN_DAYS * 2
     ));
 
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS - 2_000;
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS - 2_000);
     assert_eq!(Security::current_block_number(), FIFTEEN_DAYS - 2_000);
 
     assert_ok!(TidefiStaking::unstake(
@@ -798,10 +785,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
       true
     ));
 
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS - 2_000 + (BLOCKS_FORCE_UNLOCK / 2);
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS - 2_000 + (BLOCKS_FORCE_UNLOCK / 2));
     assert_eq!(
       Security::current_block_number(),
       FIFTEEN_DAYS - 2_000 + (BLOCKS_FORCE_UNLOCK / 2)
@@ -829,10 +813,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert_eq!(unstake_fee, 10_000_000_000);
 
     // BlocksForceUnstake is set to 10, so let skip at least 10 blocks
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + 1;
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + 1);
 
     assert_eq!(
       Security::current_block_number(),
@@ -845,10 +826,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
 
     assert_eq!(TidefiStaking::unstake_queue().len(), 1);
 
-    <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
-      *n = FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + (BLOCKS_FORCE_UNLOCK / 2) + 1;
-      *n
-    });
+    set_current_block(FIFTEEN_DAYS - 2_000 + BLOCKS_FORCE_UNLOCK + (BLOCKS_FORCE_UNLOCK / 2) + 1);
 
     assert_eq!(
       Security::current_block_number(),
@@ -879,8 +857,9 @@ pub fn should_calculate_rewards() {
     Context::default()
       .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
       .mint_tdfy(BOB_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .set_current_block(1);
+      .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY);
+
+    set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
