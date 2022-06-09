@@ -448,15 +448,25 @@ pub mod pallet {
       // 3. Check the expiration and if we are forcing it (queue)
       let expected_block_expiration = stake.initial_block.saturating_add(stake.duration);
       let staking_is_expired = T::Security::get_current_block_count() >= expected_block_expiration;
-      let unstaking_is_ready = staking_is_expired || force_unstake;
-      ensure!(unstaking_is_ready, Error::<T>::UnstakingNotReady);
 
-      // FIXME: Validate not already queued
+      if staking_is_expired {
+        // we can process to unstaking immediately
+        Self::process_unstake(&account_id, stake_id)?;
+        Self::deposit_event(Event::<T>::Unstaked {
+          request_id: stake_id,
+          account_id,
+          currency_id: stake.currency_id,
+          initial_balance: stake.initial_balance,
+          final_balance: stake.principal,
+        });
+      } else {
+        ensure!(force_unstake, Error::<T>::UnstakingNotReady);
 
-      // we should add to unstaking queue and take immeditately the extra fees
-      // for the queue storage
-      let unstaking_is_forced = !staking_is_expired && force_unstake;
-      if unstaking_is_forced {
+        // FIXME: Validate not already queued
+
+        // we should add to unstaking queue and take immeditately the extra fees
+        // for the queue storage
+
         // take the fee
         // FIXME: would be great to convert to TDFY
         let unstaking_fee = Self::unstake_fee() * stake.initial_balance;
@@ -484,16 +494,6 @@ pub mod pallet {
         Self::deposit_event(Event::<T>::UnstakeQueued {
           request_id: stake_id,
           account_id,
-        });
-      } else {
-        // we can process to unstaking immediately
-        Self::process_unstake(&account_id, stake_id)?;
-        Self::deposit_event(Event::<T>::Unstaked {
-          request_id: stake_id,
-          account_id,
-          currency_id: stake.currency_id,
-          initial_balance: stake.initial_balance,
-          final_balance: stake.principal,
         });
       }
 
