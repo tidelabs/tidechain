@@ -16,7 +16,7 @@
 
 use crate::{
   mock::{
-    new_test_ext, AccountId, Adapter, Balance, Origin, Security, StakeAccountCap, System, Test,
+    new_test_ext, AccountId, Adapter, Balance, Origin, Security, StakeAccountCap, Test,
     TidefiStaking, UnstakeQueueCap,
   },
   AccountStakes, Error, StakingPool, UnstakeQueue,
@@ -111,7 +111,7 @@ impl Context {
     self
   }
 
-  fn set_current_block_to_pass_stake_duration(self, block_number: BlockNumber) -> Self {
+  fn set_current_block(self, block_number: BlockNumber) -> Self {
     <pallet_security::CurrentBlockCount<Test>>::mutate(|n| {
       *n = block_number;
       *n
@@ -393,7 +393,7 @@ mod unstake {
           let context = Context::default()
             .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
             .stake_tdfy()
-            .set_current_block_to_pass_stake_duration(FIFTEEN_DAYS + 1);
+            .set_current_block(FIFTEEN_DAYS + 1);
 
           let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
 
@@ -417,7 +417,7 @@ mod unstake {
             .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
             .mint_test_token(ALICE_ACCOUNT_ID, 1_000 * ONE_TEST_TOKEN)
             .stake_test_tokens()
-            .set_current_block_to_pass_stake_duration(FIFTEEN_DAYS + 1);
+            .set_current_block(FIFTEEN_DAYS + 1);
 
           let staker_balance_before = Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker);
 
@@ -581,14 +581,7 @@ mod unstake {
 #[test]
 pub fn should_stake_and_unstake() {
   new_test_ext().execute_with(|| {
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .expect("Unable to mint token");
-
-    assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
-      1_000 * ONE_TDFY
-    );
+    Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
@@ -649,11 +642,7 @@ pub fn should_stake_and_unstake_queue() {
     let initial_stake = ONE_TDFY;
     let initial_mint = 1_000 * ONE_TDFY;
 
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, initial_mint)
-      .expect("Unable to mint token");
-
-    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &1u64), initial_mint);
+    Context::default().mint_tdfy(ALICE_ACCOUNT_ID, initial_mint);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
@@ -663,7 +652,7 @@ pub fn should_stake_and_unstake_queue() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
       initial_mint - initial_stake
     );
 
@@ -703,7 +692,7 @@ pub fn should_stake_and_unstake_queue() {
 
     let unstake_fee = TidefiStaking::unstake_fee() * initial_stake;
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
       initial_mint - initial_stake - unstake_fee
     );
     // 1 % of 1_000_000_000_000 = 10_000_000_000
@@ -734,20 +723,10 @@ pub fn should_stake_multiple_and_unstake_queue() {
     let initial_stake_bob = initial_stake / 4;
     let initial_mint = 1_000 * ONE_TDFY;
 
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, initial_mint)
-      .expect("Unable to mint token");
-    Adapter::mint_into(CurrencyId::Tdfy, &BOB_ACCOUNT_ID, initial_mint)
-      .expect("Unable to mint token");
-
-    assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
-      initial_mint
-    );
-    assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
-      initial_mint
-    );
+    Context::default()
+      .mint_tdfy(ALICE_ACCOUNT_ID, initial_mint)
+      .mint_tdfy(BOB_ACCOUNT_ID, initial_mint)
+      .set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
@@ -757,7 +736,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
       initial_mint - initial_stake
     );
 
@@ -842,7 +821,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     let unstake_fee_bob = TidefiStaking::unstake_fee() * initial_stake_bob;
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
       initial_mint - initial_stake - unstake_fee
     );
 
@@ -881,7 +860,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert!(TidefiStaking::unstake_queue().is_empty());
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &1u64),
+      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
       initial_mint - unstake_fee
     );
 
@@ -897,15 +876,11 @@ pub fn should_stake_multiple_and_unstake_queue() {
 #[test]
 pub fn should_calculate_rewards() {
   new_test_ext().execute_with(|| {
-    System::set_block_number(1);
-
-    // mint token to user
-    Adapter::mint_into(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .expect("Unable to mint token");
-    Adapter::mint_into(CurrencyId::Tdfy, &BOB_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .expect("Unable to mint token");
-    Adapter::mint_into(CurrencyId::Tdfy, &CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .expect("Unable to mint token");
+    Context::default()
+      .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+      .mint_tdfy(BOB_ACCOUNT_ID, 1_000 * ONE_TDFY)
+      .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+      .set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
