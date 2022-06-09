@@ -283,8 +283,8 @@ pub mod pallet {
     InsufficientBalance,
     /// Invalid stake request ID
     InvalidStakeId,
-    /// Stake is not ready
-    StakingNotReady,
+    /// Unstake is not ready
+    UnstakingNotReady,
     /// Something went wrong with fees transfer
     TransferFeesFailed,
     /// Something went wrong with funds transfer
@@ -449,7 +449,7 @@ pub mod pallet {
       let staking_is_forced =
         expected_block_expiration > T::Security::get_current_block_count() && force_unstake;
 
-      ensure!(staking_is_ready, Error::<T>::StakingNotReady);
+      ensure!(staking_is_ready, Error::<T>::UnstakingNotReady);
 
       // FIXME: Validate not already queued
 
