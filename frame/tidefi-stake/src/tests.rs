@@ -854,24 +854,32 @@ pub fn should_stake_multiple_and_unstake_queue() {
 #[test]
 pub fn should_calculate_rewards() {
   new_test_ext().execute_with(|| {
+    const ALICE_INITIAL_ONE_THOUSAND_TDFYS: Balance = 1_000 * ONE_TDFY;
+    const BOB_INITIAL_ONE_THOUSAND_TDFYS: Balance = 1_000 * ONE_TDFY;
+    const CHARLIE_INITIAL_ONE_THOUSAND_TDFYS: Balance = 1_000 * ONE_TDFY;
+    const ALICE_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
+    const BOB_STAKE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
+    const CHARLIE_STAKE_FOUR_HUNDRED_TDFYS: Balance = 400 * ONE_TDFY;
+    const SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS: Balance = 100 * ONE_TDFY;
+
     Context::default()
-      .mint_tdfy(ALICE_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .mint_tdfy(BOB_ACCOUNT_ID, 1_000 * ONE_TDFY)
-      .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY);
+      .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
+      .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TDFYS)
+      .mint_tdfy(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_ONE_THOUSAND_TDFYS);
 
     set_current_block(1);
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
       CurrencyId::Tdfy,
-      100 * ONE_TDFY,
+      ALICE_STAKE_ONE_HUNDRED_TDFYS,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated
     assert_eq!(
       TidefiStaking::staking_pool(CurrencyId::Tdfy),
-      Some(100 * ONE_TDFY)
+      Some(ALICE_STAKE_ONE_HUNDRED_TDFYS)
     );
 
     // make sure the staking has been recorded in the storage
@@ -881,55 +889,60 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .initial_balance,
-      100 * ONE_TDFY
+      ALICE_STAKE_ONE_HUNDRED_TDFYS
     );
 
     // 100 for TDFY in fees for session 1
     // 15 days should get 2%, so 2 tides
     assert_ok!(TidefiStaking::on_session_end(
       1,
-      vec![(CurrencyId::Tdfy, 100 * ONE_TDFY)]
+      vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
     ));
 
     run_on_idle_hook(1, 1_000 * ONE_TDFY);
 
-    // started with 100, now should have 102 tides
+    let alice_staked_tdfy_principal_after_session_1 = ALICE_STAKE_ONE_HUNDRED_TDFYS + 2 * ONE_TDFY;
+
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
         .first()
         .unwrap()
         .principal,
-      102 * ONE_TDFY
+      alice_staked_tdfy_principal_after_session_1
     );
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(BOB_ACCOUNT_ID),
       CurrencyId::Tdfy,
-      100 * ONE_TDFY,
+      BOB_STAKE_ONE_HUNDRED_TDFYS,
       FIFTEEN_DAYS
     ));
 
     // make sure the staking pool has been updated
     assert_eq!(
       TidefiStaking::staking_pool(CurrencyId::Tdfy),
-      Some(200 * ONE_TDFY)
+      Some(ALICE_STAKE_ONE_HUNDRED_TDFYS + BOB_STAKE_ONE_HUNDRED_TDFYS)
     );
 
     // 100 for TDFY in fees for session 1
     // 15 days should get 2%, so 2 tides
     assert_ok!(TidefiStaking::on_session_end(
       2,
-      vec![(CurrencyId::Tdfy, 100 * ONE_TDFY)]
+      vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
     ));
 
     run_on_idle_hook(1, 1_000 * ONE_TDFY);
+
+    let alice_staked_tdfy_principal_after_session_2 =
+      alice_staked_tdfy_principal_after_session_1 + ONE_TDFY;
+    let bob_staked_tdfy_principal_after_session_2 = BOB_STAKE_ONE_HUNDRED_TDFYS + ONE_TDFY;
 
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
         .first()
         .unwrap()
         .principal,
-      103 * ONE_TDFY
+      alice_staked_tdfy_principal_after_session_2
     );
 
     assert_eq!(
@@ -937,7 +950,7 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      101 * ONE_TDFY
+      bob_staked_tdfy_principal_after_session_2
     );
 
     // 2 empty sessions
@@ -950,7 +963,7 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      103 * ONE_TDFY
+      alice_staked_tdfy_principal_after_session_2
     );
 
     assert_eq!(
@@ -958,29 +971,38 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      101 * ONE_TDFY
+      bob_staked_tdfy_principal_after_session_2
     );
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(CHARLIE_ACCOUNT_ID),
       CurrencyId::Tdfy,
-      400 * ONE_TDFY,
+      CHARLIE_STAKE_FOUR_HUNDRED_TDFYS,
       FIFTEEN_DAYS
     ));
 
     assert_ok!(TidefiStaking::on_session_end(
       5,
-      vec![(CurrencyId::Tdfy, 100 * ONE_TDFY)]
+      vec![(CurrencyId::Tdfy, SESSION_TRADE_VALUE_ONE_HUNDRED_TDFYS)]
     ));
 
     run_on_idle_hook(1, 1_000 * ONE_TDFY);
+
+    let total_staked_tdfys_after_session_5 = ALICE_STAKE_ONE_HUNDRED_TDFYS
+      .saturating_add(BOB_STAKE_ONE_HUNDRED_TDFYS)
+      .saturating_add(CHARLIE_STAKE_FOUR_HUNDRED_TDFYS);
+    let total_stake_rewards_after_session_5 = 2 * ONE_TDFY;
 
     assert_eq!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
         .first()
         .unwrap()
         .principal,
-      103_333_333_333_333
+      alice_staked_tdfy_principal_after_session_2.saturating_add(
+        ALICE_STAKE_ONE_HUNDRED_TDFYS
+          .saturating_mul(total_stake_rewards_after_session_5)
+          .saturating_div(total_staked_tdfys_after_session_5)
+      )
     );
 
     assert_eq!(
@@ -988,7 +1010,11 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      101_333_333_333_333
+      bob_staked_tdfy_principal_after_session_2.saturating_add(
+        BOB_STAKE_ONE_HUNDRED_TDFYS
+          .saturating_mul(total_stake_rewards_after_session_5)
+          .saturating_div(total_staked_tdfys_after_session_5)
+      )
     );
 
     assert_eq!(
@@ -996,7 +1022,11 @@ pub fn should_calculate_rewards() {
         .first()
         .unwrap()
         .principal,
-      401_333_333_333_333
+      CHARLIE_STAKE_FOUR_HUNDRED_TDFYS.saturating_add(
+        CHARLIE_STAKE_FOUR_HUNDRED_TDFYS
+          .saturating_mul(total_stake_rewards_after_session_5)
+          .saturating_div(total_staked_tdfys_after_session_5)
+      )
     );
   });
 }
