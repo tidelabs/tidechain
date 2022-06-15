@@ -500,8 +500,12 @@ pub mod pallet {
     NoAccount,
     /// The signing account has no permission to do the operation.
     NoPermission,
-    /// The given asset ID is unknown.
-    Unknown,
+    /// The given asset ID is not found in Assets
+    AssetIdNotFoundInAssets,
+    /// The given asset ID is not found in Metadata
+    AssetIdNotFoundInMetadata,
+    /// The given asset ID is not found in Approvals
+    AssetIdNotFoundInApprovals,
     /// The origin asset is frozen.
     AssetFrozen,
     /// The origin account is frozen.
@@ -821,7 +825,7 @@ pub mod pallet {
     ) -> DispatchResult {
       let origin = ensure_signed(origin)?;
 
-      let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+      let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
       ensure!(&origin == &d.freezer, Error::<T, I>::NoPermission);
       let who = T::Lookup::lookup(who)?;
 
@@ -855,7 +859,7 @@ pub mod pallet {
     ) -> DispatchResult {
       let origin = ensure_signed(origin)?;
 
-      let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+      let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
       ensure!(&origin == &details.admin, Error::<T, I>::NoPermission);
       let who = T::Lookup::lookup(who)?;
 
@@ -885,7 +889,9 @@ pub mod pallet {
       let origin = ensure_signed(origin)?;
 
       Asset::<T, I>::try_mutate(id, |maybe_details| {
-        let d = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+        let d = maybe_details
+          .as_mut()
+          .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
         ensure!(&origin == &d.freezer, Error::<T, I>::NoPermission);
 
         d.is_frozen = true;
@@ -909,7 +915,9 @@ pub mod pallet {
       let origin = ensure_signed(origin)?;
 
       Asset::<T, I>::try_mutate(id, |maybe_details| {
-        let d = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+        let d = maybe_details
+          .as_mut()
+          .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
         ensure!(&origin == &d.admin, Error::<T, I>::NoPermission);
 
         d.is_frozen = false;
@@ -939,7 +947,9 @@ pub mod pallet {
       let owner = T::Lookup::lookup(owner)?;
 
       Asset::<T, I>::try_mutate(id, |maybe_details| {
-        let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+        let details = maybe_details
+          .as_mut()
+          .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
         ensure!(&origin == &details.owner, Error::<T, I>::NoPermission);
         if details.owner == owner {
           return Ok(());
@@ -987,7 +997,9 @@ pub mod pallet {
       let freezer = T::Lookup::lookup(freezer)?;
 
       Asset::<T, I>::try_mutate(id, |maybe_details| {
-        let details = maybe_details.as_mut().ok_or(Error::<T, I>::Unknown)?;
+        let details = maybe_details
+          .as_mut()
+          .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
         ensure!(&origin == &details.owner, Error::<T, I>::NoPermission);
 
         details.issuer = issuer.clone();
@@ -1050,11 +1062,14 @@ pub mod pallet {
     ) -> DispatchResult {
       let origin = ensure_signed(origin)?;
 
-      let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+      let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
       ensure!(&origin == &d.owner, Error::<T, I>::NoPermission);
 
       Metadata::<T, I>::try_mutate_exists(id, |metadata| {
-        let deposit = metadata.take().ok_or(Error::<T, I>::Unknown)?.deposit;
+        let deposit = metadata
+          .take()
+          .ok_or(Error::<T, I>::AssetIdNotFoundInMetadata)?
+          .deposit;
         T::Currency::unreserve(&d.owner, deposit);
         Self::deposit_event(Event::MetadataCleared { asset_id: id });
         Ok(())
@@ -1096,7 +1111,10 @@ pub mod pallet {
         .try_into()
         .map_err(|_| Error::<T, I>::BadMetadata)?;
 
-      ensure!(Asset::<T, I>::contains_key(id), Error::<T, I>::Unknown);
+      ensure!(
+        Asset::<T, I>::contains_key(id),
+        Error::<T, I>::AssetIdNotFoundInAssets
+      );
       Metadata::<T, I>::try_mutate_exists(id, |metadata| {
         let deposit = metadata.take().map_or(Zero::zero(), |m| m.deposit);
         *metadata = Some(AssetMetadata {
@@ -1136,9 +1154,12 @@ pub mod pallet {
     ) -> DispatchResult {
       T::ForceOrigin::ensure_origin(origin)?;
 
-      let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+      let d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
       Metadata::<T, I>::try_mutate_exists(id, |metadata| {
-        let deposit = metadata.take().ok_or(Error::<T, I>::Unknown)?.deposit;
+        let deposit = metadata
+          .take()
+          .ok_or(Error::<T, I>::AssetIdNotFoundInMetadata)?
+          .deposit;
         T::Currency::unreserve(&d.owner, deposit);
         Self::deposit_event(Event::MetadataCleared { asset_id: id });
         Ok(())
@@ -1182,7 +1203,9 @@ pub mod pallet {
       T::ForceOrigin::ensure_origin(origin)?;
 
       Asset::<T, I>::try_mutate(id, |maybe_asset| {
-        let mut asset = maybe_asset.take().ok_or(Error::<T, I>::Unknown)?;
+        let mut asset = maybe_asset
+          .take()
+          .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
         asset.owner = T::Lookup::lookup(owner)?;
         asset.issuer = T::Lookup::lookup(issuer)?;
         asset.admin = T::Lookup::lookup(admin)?;
@@ -1250,9 +1273,9 @@ pub mod pallet {
     ) -> DispatchResult {
       let owner = ensure_signed(origin)?;
       let delegate = T::Lookup::lookup(delegate)?;
-      let mut d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-      let approval =
-        Approvals::<T, I>::take((id, &owner, &delegate)).ok_or(Error::<T, I>::Unknown)?;
+      let mut d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
+      let approval = Approvals::<T, I>::take((id, &owner, &delegate))
+        .ok_or(Error::<T, I>::AssetIdNotFoundInApprovals)?;
       T::Currency::unreserve(&owner, approval.deposit);
 
       d.approvals.saturating_dec();
@@ -1286,7 +1309,7 @@ pub mod pallet {
       owner: <T::Lookup as StaticLookup>::Source,
       delegate: <T::Lookup as StaticLookup>::Source,
     ) -> DispatchResult {
-      let mut d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+      let mut d = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
       T::ForceOrigin::try_origin(origin)
         .map(|_| ())
         .or_else(|origin| -> DispatchResult {
@@ -1298,8 +1321,8 @@ pub mod pallet {
       let owner = T::Lookup::lookup(owner)?;
       let delegate = T::Lookup::lookup(delegate)?;
 
-      let approval =
-        Approvals::<T, I>::take((id, &owner, &delegate)).ok_or(Error::<T, I>::Unknown)?;
+      let approval = Approvals::<T, I>::take((id, &owner, &delegate))
+        .ok_or(Error::<T, I>::AssetIdNotFoundInApprovals)?;
       T::Currency::unreserve(&owner, approval.deposit);
       d.approvals.saturating_dec();
       Asset::<T, I>::insert(id, d);
