@@ -323,6 +323,8 @@ pub mod pallet {
     InvalidAsset,
     /// There is no active Era
     NoActiveEra,
+    /// There is no active Era start block
+    NoActiveEraStartBlock,
     /// Era is not ready to be claimed yet, try again later
     EraNotReady,
     /// Account fees overflow
@@ -463,7 +465,9 @@ pub mod pallet {
 
       // 2. Make sure the era Index provided is ready to be claimed
       let current_era = Self::active_era().ok_or(Error::<T>::NoActiveEra)?;
-      let starting_block = current_era.start_block.ok_or(Error::<T>::NoActiveEra)?;
+      let starting_block = current_era
+        .start_block
+        .ok_or(Error::<T>::NoActiveEraStartBlock)?;
       let current_block = T::Security::get_current_block_count();
 
       // Unable to claim current Era
