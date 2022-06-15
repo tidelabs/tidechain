@@ -36,8 +36,9 @@ use sp_runtime::{
   DispatchError, DispatchResult, Permill,
 };
 use std::marker::PhantomData;
+use strum::IntoEnumIterator;
 use system::EnsureRoot;
-use tidefi_primitives::{BlockNumber, CurrencyId, SessionIndex};
+use tidefi_primitives::{assets, BlockNumber, CurrencyId, SessionIndex};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -397,22 +398,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   .unwrap();
 
   pallet_asset_registry::GenesisConfig::<Test> {
-    assets: vec![
-      (
-        CurrencyId::Wrapped(2),
-        "Test".into(),
-        "TEST".into(),
-        8,
-        vec![],
-      ),
-      (
-        CurrencyId::Wrapped(3),
-        "Test".into(),
-        "TEST".into(),
-        16,
-        vec![],
-      ),
-    ],
+    assets: assets::Asset::iter()
+      .filter(|asset| asset.id() != assets::TDFY)
+      .map(|asset| {
+        (
+          asset.currency_id(),
+          asset.name().into(),
+          asset.symbol().into(),
+          asset.exponent(),
+          vec![],
+        )
+      })
+      .collect(),
     account: 0,
   }
   .assimilate_storage(&mut storage)
