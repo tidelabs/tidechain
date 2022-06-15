@@ -212,7 +212,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     who: &T::AccountId,
     keep_alive: bool,
   ) -> Result<T::Balance, DispatchError> {
-
     let details = Asset::<T, I>::get(id).ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
     ensure!(!details.is_frozen, Error::<T, I>::AssetFrozen);
 
