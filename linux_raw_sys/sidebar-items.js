@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["ctypes","Platform-specific types, as defined by C."],["errno",""],["general",""],["ioctl",""]]});
+initSidebarItems({"mod":[["ctypes","Compatibility module for C platform-specific types. Use [`core::ffi`] instead."],["errno",""],["general",""],["ioctl",""]]});
