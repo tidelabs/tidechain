@@ -23,7 +23,7 @@ use frame_support::{
   traits::fungibles::{Inspect, Mutate},
 };
 use pallet_balances::Error as BalancesError;
-use sp_runtime::{traits::BadOrigin, ArithmeticError, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::BadOrigin, FixedPointNumber, FixedU128};
 use tidefi_primitives::{pallet::FeesExt, ActiveEraInfo, CurrencyId, EraIndex, SwapType};
 
 type Balance = u128;

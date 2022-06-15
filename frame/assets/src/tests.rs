@@ -162,7 +162,7 @@ fn approval_lifecycle_works() {
     // can't approve non-existent token
     assert_noop!(
       Assets::approve_transfer(Origin::signed(1), 0, 2, 50),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
     // so we create it :)
     assert_ok!(Assets::force_create(Origin::root(), 0, 1, true, 1));
@@ -187,7 +187,7 @@ fn transfer_approved_all_funds() {
     // can't approve non-existent token
     assert_noop!(
       Assets::approve_transfer(Origin::signed(1), 0, 2, 50),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
     // so we create it :)
     assert_ok!(Assets::force_create(Origin::root(), 0, 1, true, 1));
@@ -264,22 +264,22 @@ fn cancel_approval_works() {
     assert_eq!(Asset::<Test>::get(0).unwrap().approvals, 1);
     assert_noop!(
       Assets::cancel_approval(Origin::signed(1), 1, 2),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
     assert_noop!(
       Assets::cancel_approval(Origin::signed(2), 0, 2),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInApprovals
     );
     assert_noop!(
       Assets::cancel_approval(Origin::signed(1), 0, 3),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInApprovals
     );
     assert_eq!(Asset::<Test>::get(0).unwrap().approvals, 1);
     assert_ok!(Assets::cancel_approval(Origin::signed(1), 0, 2));
     assert_eq!(Asset::<Test>::get(0).unwrap().approvals, 0);
     assert_noop!(
       Assets::cancel_approval(Origin::signed(1), 0, 2),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInApprovals
     );
   });
 }
@@ -296,22 +296,22 @@ fn force_cancel_approval_works() {
     assert_noop!(Assets::force_cancel_approval(Origin::signed(2), 0, 1, 2), e);
     assert_noop!(
       Assets::force_cancel_approval(Origin::signed(1), 1, 1, 2),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
     assert_noop!(
       Assets::force_cancel_approval(Origin::signed(1), 0, 2, 2),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInApprovals
     );
     assert_noop!(
       Assets::force_cancel_approval(Origin::signed(1), 0, 1, 3),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInApprovals
     );
     assert_eq!(Asset::<Test>::get(0).unwrap().approvals, 1);
     assert_ok!(Assets::force_cancel_approval(Origin::signed(1), 0, 1, 2));
     assert_eq!(Asset::<Test>::get(0).unwrap().approvals, 0);
     assert_noop!(
       Assets::force_cancel_approval(Origin::signed(1), 0, 1, 2),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInApprovals
     );
   });
 }
@@ -440,7 +440,7 @@ fn transferring_frozen_user_should_not_work() {
     assert_ok!(Assets::freeze(Origin::signed(1), 0, 1));
     assert_noop!(
       Assets::transfer(Origin::signed(1), 0, 2, 50),
-      Error::<Test>::Frozen
+      Error::<Test>::AccountFrozen
     );
     assert_ok!(Assets::thaw(Origin::signed(1), 0, 1));
     assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
@@ -456,7 +456,7 @@ fn transferring_frozen_asset_should_not_work() {
     assert_ok!(Assets::freeze_asset(Origin::signed(1), 0));
     assert_noop!(
       Assets::transfer(Origin::signed(1), 0, 2, 50),
-      Error::<Test>::Frozen
+      Error::<Test>::AssetFrozen
     );
     assert_ok!(Assets::thaw_asset(Origin::signed(1), 0));
     assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
@@ -473,7 +473,7 @@ fn approve_transfer_frozen_asset_should_not_work() {
     assert_ok!(Assets::freeze_asset(Origin::signed(1), 0));
     assert_noop!(
       Assets::approve_transfer(Origin::signed(1), 0, 2, 50),
-      Error::<Test>::Frozen
+      Error::<Test>::AssetFrozen
     );
     assert_ok!(Assets::thaw_asset(Origin::signed(1), 0));
     assert_ok!(Assets::approve_transfer(Origin::signed(1), 0, 2, 50));
@@ -655,7 +655,7 @@ fn set_metadata_should_work() {
     // Cannot add metadata to unknown asset
     assert_noop!(
       Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 10], 12),
-      Error::<Test>::Unknown,
+      Error::<Test>::AssetIdNotFoundInAssets,
     );
     assert_ok!(Assets::force_create(Origin::root(), 0, 1, true, 1));
     // Cannot add metadata to unowned asset
@@ -717,7 +717,7 @@ fn set_metadata_should_work() {
     );
     assert_noop!(
       Assets::clear_metadata(Origin::signed(1), 1),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
     assert_ok!(Assets::clear_metadata(Origin::signed(1), 0));
     assert!(!Metadata::<Test>::contains_key(0));
@@ -818,7 +818,7 @@ fn force_metadata_should_work() {
     // attempt to set metadata for non-existent asset class
     assert_noop!(
       Assets::force_set_metadata(Origin::root(), 1, vec![0u8; 10], vec![0u8; 10], 8, false),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
 
     // string length limit check
@@ -854,7 +854,7 @@ fn force_metadata_should_work() {
     // Error handles clearing non-existent asset class
     assert_noop!(
       Assets::force_clear_metadata(Origin::root(), 1),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
   });
 }
@@ -899,7 +899,7 @@ fn force_asset_status_should_work() {
     // force asset status will not execute for non-existent class
     assert_noop!(
       Assets::force_asset_status(Origin::root(), 1, 1, 1, 1, 1, 90, true, false),
-      Error::<Test>::Unknown
+      Error::<Test>::AssetIdNotFoundInAssets
     );
 
     // account drains to completion when funds dip below min_balance
