@@ -429,15 +429,6 @@ pub fn run() -> Result<(), Error> {
         _ => Err(Error::CommandNotImplemented),
       }
     }
-    #[cfg(not(feature = "try-runtime"))]
-    Some(Subcommand::TryRuntime) => Err(
-      Error::Other(
-        "TryRuntime wasn't enabled when building the node. \
-				You can enable it with `--features try-runtime`."
-          .into(),
-      )
-      .into(),
-    ),
     #[cfg(feature = "try-runtime")]
     Some(Subcommand::TryRuntime(cmd)) => {
       use sc_service::TaskManager;
