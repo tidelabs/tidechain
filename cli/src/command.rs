@@ -19,9 +19,21 @@ use crate::cli::{Cli, Subcommand};
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::future::TryFutureExt;
 use log::info;
+#[cfg(feature = "pyroscope")]
+use pyroscope_pprofrs::{pprof_backend, PprofConfig};
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
+#[cfg(feature = "pyroscope")]
+use std::net::ToSocketAddrs;
 use std::{fs::File, io::Write, path::PathBuf, sync::Arc};
 use tidechain_service::{chain_spec, IdentifyVariant};
+
+impl From<String> for Error {
+  fn from(s: String) -> Self {
+    Self::Other(s)
+  }
+}
+
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -34,14 +46,25 @@ pub enum Error {
   #[error(transparent)]
   SubstrateService(#[from] sc_service::Error),
 
-  #[error(transparent)]
-  Io(#[from] std::io::Error),
-
   #[error("Wasm binary is not available")]
   UnavailableWasmBinary,
 
   #[error("Command is not implemented")]
   CommandNotImplemented,
+
+  #[cfg(not(feature = "pyroscope"))]
+  #[error("Binary was not compiled with `--feature=pyroscope`")]
+  PyroscopeNotCompiledIn,
+
+  #[cfg(feature = "pyroscope")]
+  #[error("Failed to connect to pyroscope agent")]
+  PyroscopeError(#[from] pyro::error::PyroscopeError),
+
+  #[error("Failed to resolve provided URL")]
+  AddressResolutionFailure(#[from] std::io::Error),
+
+  #[error("URL did not resolve to anything")]
+  AddressResolutionMissing,
 
   #[error("Other: {0}")]
   Other(String),
@@ -79,7 +102,7 @@ impl SubstrateCli for Cli {
     2021
   }
 
-  fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+  fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
     let id = if id.is_empty() {
       let n = get_exec_name().unwrap_or_default();
       ["tidechain", "lagoon"]
@@ -191,8 +214,35 @@ fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
 }
 
 /// Parses Tidechain specific CLI arguments and run the service.
-pub fn run() -> Result<(), Error> {
+pub fn run() -> Result<()> {
   let cli = Cli::from_args();
+
+  #[cfg(feature = "pyroscope")]
+  let mut pyroscope_agent_maybe = if let Some(ref agent_addr) = cli.run.pyroscope_server {
+    let address = agent_addr
+      .to_socket_addrs()
+      .map_err(Error::AddressResolutionFailure)?
+      .next()
+      .ok_or_else(|| Error::AddressResolutionMissing)?;
+
+    println!("address {}", address.to_string());
+
+    let agent = pyro::PyroscopeAgent::builder("http://localhost:4040", "tidechain")
+      .backend(pprof_backend(PprofConfig::new()))
+      .build()?;
+    println!("agent created");
+
+    let agent_running = agent.start()?;
+    println!("agent running");
+    Some(agent_running)
+  } else {
+    None
+  };
+
+  #[cfg(not(feature = "pyroscope"))]
+  if cli.run.pyroscope_server.is_some() {
+    return Err(Error::PyroscopeNotCompiledIn);
+  }
 
   match &cli.subcommand {
     None => {
@@ -463,5 +513,11 @@ pub fn run() -> Result<(), Error> {
       })
     }
   }?;
+
+  #[cfg(feature = "pyroscope")]
+  if let Some(pyroscope_agent) = pyroscope_agent_maybe.take() {
+    let agent_ready = pyroscope_agent.stop()?;
+    agent_ready.shutdown();
+  }
   Ok(())
 }
