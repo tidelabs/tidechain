@@ -28,7 +28,6 @@ use crate::{
   ElectionProviderMultiPhase, Event, Historical, ImOnline, Offences, Runtime, Session, SessionKeys,
   Staking, Timestamp, TransactionPayment, Treasury,
 };
-use codec::Decode;
 use frame_support::{
   parameter_types,
   traits::{ConstU32, EitherOfDiverse, KeyOwnerProofSystem, U128CurrencyToVote},
@@ -36,10 +35,8 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use sp_runtime::{
-  curve::PiecewiseLinear,
-  traits::{OpaqueKeys, TrailingZeroInput},
-  transaction_validity::TransactionPriority,
-  KeyTypeId, Perbill,
+  curve::PiecewiseLinear, traits::OpaqueKeys, transaction_validity::TransactionPriority, KeyTypeId,
+  Perbill,
 };
 
 use sp_std::prelude::*;
