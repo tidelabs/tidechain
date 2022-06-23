@@ -36,7 +36,7 @@ fn _assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 fn pre_set_auth<T: Config>() -> T::AccountId {
   let user: T::AccountId = account("admin", ADMIN_ID, SEED);
-  Members::<T>::remove_all();
+  let _ = Members::<T>::clear(u32::MAX, None);
   Members::<T>::insert(&user, true);
   let public_key: BoundedVec<u8, <T as pallet::Config>::StringLimit> =
     "pubkey".as_bytes().to_vec().try_into().unwrap();
