@@ -52,9 +52,9 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
 
   fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
     Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
-      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
       RawOrigin::Signed(caller) => {
-        let asset_registry_account: u64 = AssetRegistryPalletId::get().into_account();
+        let asset_registry_account: u64 = AssetRegistryPalletId::get().into_account_truncating();
         // Allow call from asset registry pallet ID account
         if caller == asset_registry_account
         // Allow call from asset registry owner

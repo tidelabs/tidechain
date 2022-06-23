@@ -19,7 +19,7 @@ use crate::{
 };
 use frame_support::{
   parameter_types,
-  traits::{Currency, EnsureOneOf},
+  traits::{Currency, EitherOfDiverse},
   weights::{constants::WEIGHT_PER_SECOND, DispatchClass, Weight},
 };
 use frame_system::EnsureRoot;
@@ -88,7 +88,7 @@ parameter_types! {
    pub const SS58Prefix: u8 = 42;
 }
 
-pub type EnsureRootOrHalfCouncil = EnsureOneOf<
+pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
   EnsureRoot<AccountId>,
   pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollectiveInstance, 1, 2>,
 >;

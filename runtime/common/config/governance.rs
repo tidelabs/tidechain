@@ -25,7 +25,7 @@ use crate::{
 };
 use frame_support::{
   parameter_types,
-  traits::{EnsureOneOf, LockIdentifier, U128CurrencyToVote},
+  traits::{EitherOfDiverse, LockIdentifier, U128CurrencyToVote},
 };
 use frame_system::EnsureRoot;
 use sp_runtime::Permill;
@@ -134,7 +134,7 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
   type PalletId = TreasuryPalletId;
   type Currency = Balances;
-  type ApproveOrigin = EnsureOneOf<
+  type ApproveOrigin = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 4, 5>,
   >;
@@ -150,6 +150,7 @@ impl pallet_treasury::Config for Runtime {
   type SpendFunds = Bounties;
   type MaxApprovals = MaxApprovals;
   type WeightInfo = crate::weights::pallet_treasury::WeightInfo<Runtime>;
+  type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }
 
 impl pallet_bounties::Config for Runtime {

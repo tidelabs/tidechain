@@ -24,7 +24,7 @@ use crate::{
 
 use frame_support::{
   parameter_types,
-  traits::{ConstU128, EnsureOneOf, EnsureOrigin},
+  traits::{ConstU128, EitherOfDiverse, EnsureOrigin},
 };
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_runtime::{traits::AccountIdConversion, Permill};
@@ -86,10 +86,10 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
 
   fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
     Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
-      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
       RawOrigin::Signed(caller) => {
         // Allow call from asset registry pallet ID account
-        if caller == AssetRegistryPalletId::get().into_account()
+        if caller == AssetRegistryPalletId::get().into_account_truncating()
          // Allow call from asset registry owner
          || Some(caller.clone()) == AssetRegistry::account_id()
         {
@@ -105,7 +105,7 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
   #[cfg(feature = "runtime-benchmarks")]
   fn successful_origin() -> Origin {
     Origin::from(RawOrigin::Signed(
-      AssetRegistryPalletId::get().into_account(),
+      AssetRegistryPalletId::get().into_account_truncating(),
     ))
   }
 }
@@ -216,7 +216,7 @@ impl pallet_fees::Config for Runtime {
   type Security = Security;
   type BlocksSunriseClaims = BlocksSunriseClaims;
   type WeightInfo = crate::weights::pallet_fees::WeightInfo<Runtime>;
-  type ForceOrigin = EnsureOneOf<
+  type ForceOrigin = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;

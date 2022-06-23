@@ -504,7 +504,7 @@ pub mod pallet {
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
-      <T as pallet::Config>::StakePalletId::get().into_account()
+      <T as pallet::Config>::StakePalletId::get().into_account_truncating()
     }
 
     pub fn add_account_stake(
@@ -704,7 +704,7 @@ pub mod pallet {
       }
 
       // FIXME: we should have a better draining
-      PendingStoredSessions::<T>::remove_all();
+      let _ = PendingStoredSessions::<T>::clear(u32::MAX, None);
 
       // FIXME: implement maximum iteration / should_continue = true
       Ok((current_iterations * weight_per_iteration, false))
@@ -798,7 +798,7 @@ pub mod pallet {
   // implement the `StakingExt` functions
   impl<T: Config> StakingExt<T::AccountId> for Pallet<T> {
     fn account_id() -> T::AccountId {
-      T::StakePalletId::get().into_account()
+      T::StakePalletId::get().into_account_truncating()
     }
 
     fn on_session_end(

@@ -35,8 +35,8 @@ pub fn migrate_to_v1<T: Config, P: GetStorageVersion + PalletInfoAccess>(
   );
 
   if on_chain_storage_version < 1 {
-    StakingPool::<T>::remove_all(None);
-    AccountStakes::<T>::remove_all();
+    let _ = StakingPool::<T>::clear(u32::MAX, None);
+    let _ = AccountStakes::<T>::clear(u32::MAX, None);
 
     // set default staking periods
     let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = vec![

@@ -35,9 +35,10 @@ pub fn migrate_to_v1<T: Config, P: GetStorageVersion + PalletInfoAccess>(
     // set default staking periods
     CurrentSession::<T>::put(1);
     // reset everything, we don't really bother with previous stake / rewards as everything changed
-    EraTotalFees::<T>::remove_all(None);
-    SessionTotalFees::<T>::remove_all(None);
-    AccountFees::<T>::remove_all(None);
+    let _ = EraTotalFees::<T>::clear(u32::MAX, None);
+    let _ = SessionTotalFees::<T>::clear(u32::MAX, None);
+    let _ = AccountFees::<T>::clear(u32::MAX, None);
+
     // reset era
     ActiveEra::<T>::put(ActiveEraInfo::<T::BlockNumber> {
       index: 1,

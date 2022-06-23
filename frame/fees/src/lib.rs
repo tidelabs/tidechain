@@ -526,7 +526,7 @@ pub mod pallet {
       for (session, _) in StoredSessions::<T>::iter() {
         if session < current_session.saturating_sub(T::SessionsArchive::get()) {
           // delete the session
-          SessionTotalFees::<T>::remove_prefix(session, None);
+          let _ = SessionTotalFees::<T>::clear_prefix(session, u32::MAX, None);
           StoredSessions::<T>::remove(session);
         }
       }
@@ -723,7 +723,7 @@ pub mod pallet {
 
   impl<T: Config> FeesExt<T::AccountId> for Pallet<T> {
     fn account_id() -> T::AccountId {
-      T::FeesPalletId::get().into_account()
+      T::FeesPalletId::get().into_account_truncating()
     }
 
     // FIXME: Would probably worth moving this into his own pallet?

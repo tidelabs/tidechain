@@ -148,7 +148,7 @@ pub mod pallet {
         enabled: true,
         // We use pallet account ID by default,
         // but should always be set in the genesis config.
-        account: T::OraclePalletId::get().into_account(),
+        account: T::OraclePalletId::get().into_account_truncating(),
         market_makers: Vec::new(),
       }
     }
