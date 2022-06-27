@@ -201,15 +201,15 @@
 <span class="kw">use</span> <span class="ident">jsonrpsee::RpcModule</span>;
 <span class="kw">use</span> <span class="ident">sc_client_api::AuxStore</span>;
 <span class="kw">use</span> <span class="ident">sc_consensus_babe</span>::{<span class="ident">Config</span>, <span class="ident">Epoch</span>};
-<span class="kw">use</span> <span class="ident">sc_consensus_babe_rpc</span>::{<span class="ident">BabeApiServer</span>, <span class="ident">BabeRpc</span>};
+<span class="kw">use</span> <span class="ident">sc_consensus_babe_rpc</span>::{<span class="ident">Babe</span>, <span class="ident">BabeApiServer</span>};
 <span class="kw">use</span> <span class="ident">sc_consensus_epochs::SharedEpochChanges</span>;
 <span class="kw">use</span> <span class="ident">sc_finality_grandpa</span>::{
   <span class="ident">FinalityProofProvider</span>, <span class="ident">GrandpaJustificationStream</span>, <span class="ident">SharedAuthoritySet</span>, <span class="ident">SharedVoterState</span>,
 };
-<span class="kw">use</span> <span class="ident">sc_finality_grandpa_rpc</span>::{<span class="ident">GrandpaApiServer</span>, <span class="ident">GrandpaRpc</span>};
+<span class="kw">use</span> <span class="ident">sc_finality_grandpa_rpc</span>::{<span class="ident">Grandpa</span>, <span class="ident">GrandpaApiServer</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">sc_rpc::SubscriptionTaskExecutor</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">sc_rpc_api::DenyUnsafe</span>;
-<span class="kw">use</span> <span class="ident">sc_sync_state_rpc</span>::{<span class="ident">SyncStateRpc</span>, <span class="ident">SyncStateRpcApiServer</span>};
+<span class="kw">use</span> <span class="ident">sc_sync_state_rpc</span>::{<span class="ident">SyncState</span>, <span class="ident">SyncStateApiServer</span>};
 <span class="kw">use</span> <span class="ident">sc_transaction_pool_api::TransactionPool</span>;
 <span class="kw">use</span> <span class="ident">sp_api::ProvideRuntimeApi</span>;
 <span class="kw">use</span> <span class="ident">sp_block_builder::BlockBuilder</span>;
@@ -291,8 +291,8 @@
   <span class="ident">B::State</span>: <span class="ident">sc_client_api::backend::StateBackend</span><span class="op">&lt;</span><span class="ident">sp_runtime::traits::HashFor</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 {
   <span class="kw">use</span> <span class="ident">pallet_tidefi_rpc</span>::{<span class="ident">TidefiApiServer</span>, <span class="ident">TidefiRpc</span>};
-  <span class="kw">use</span> <span class="ident">pallet_transaction_payment_rpc</span>::{<span class="ident">TransactionPaymentApiServer</span>, <span class="ident">TransactionPaymentRpc</span>};
-  <span class="kw">use</span> <span class="ident">substrate_frame_rpc_system</span>::{<span class="ident">SystemApiServer</span>, <span class="ident">SystemRpc</span>};
+  <span class="kw">use</span> <span class="ident">pallet_transaction_payment_rpc</span>::{<span class="ident">TransactionPayment</span>, <span class="ident">TransactionPaymentApiServer</span>};
+  <span class="kw">use</span> <span class="ident">substrate_frame_rpc_system</span>::{<span class="ident">System</span>, <span class="ident">SystemApiServer</span>};
 
   <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">io</span> <span class="op">=</span> <span class="ident">RpcModule::new</span>(());
   <span class="kw">let</span> <span class="ident">FullDeps</span> {
@@ -318,13 +318,13 @@
   } <span class="op">=</span> <span class="ident">grandpa</span>;
 
   <span class="ident">io</span>.<span class="ident">merge</span>(
-    <span class="ident">substrate_state_trie_migration_rpc::MigrationRpc::new</span>(<span class="ident">client</span>.<span class="ident">clone</span>(), <span class="ident">backend</span>, <span class="ident">deny_unsafe</span>)
+    <span class="ident">substrate_state_trie_migration_rpc::StateMigration::new</span>(<span class="ident">client</span>.<span class="ident">clone</span>(), <span class="ident">backend</span>, <span class="ident">deny_unsafe</span>)
       .<span class="ident">into_rpc</span>(),
   )<span class="question-mark">?</span>;
-  <span class="ident">io</span>.<span class="ident">merge</span>(<span class="ident">SystemRpc::new</span>(<span class="ident">client</span>.<span class="ident">clone</span>(), <span class="ident">pool</span>.<span class="ident">clone</span>(), <span class="ident">deny_unsafe</span>).<span class="ident">into_rpc</span>())<span class="question-mark">?</span>;
-  <span class="ident">io</span>.<span class="ident">merge</span>(<span class="ident">TransactionPaymentRpc::new</span>(<span class="ident">client</span>.<span class="ident">clone</span>()).<span class="ident">into_rpc</span>())<span class="question-mark">?</span>;
+  <span class="ident">io</span>.<span class="ident">merge</span>(<span class="ident">System::new</span>(<span class="ident">client</span>.<span class="ident">clone</span>(), <span class="ident">pool</span>.<span class="ident">clone</span>(), <span class="ident">deny_unsafe</span>).<span class="ident">into_rpc</span>())<span class="question-mark">?</span>;
+  <span class="ident">io</span>.<span class="ident">merge</span>(<span class="ident">TransactionPayment::new</span>(<span class="ident">client</span>.<span class="ident">clone</span>()).<span class="ident">into_rpc</span>())<span class="question-mark">?</span>;
   <span class="ident">io</span>.<span class="ident">merge</span>(
-    <span class="ident">BabeRpc::new</span>(
+    <span class="ident">Babe::new</span>(
       <span class="ident">client</span>.<span class="ident">clone</span>(),
       <span class="ident">shared_epoch_changes</span>.<span class="ident">clone</span>(),
       <span class="ident">keystore</span>,
@@ -336,7 +336,7 @@
   )<span class="question-mark">?</span>;
 
   <span class="ident">io</span>.<span class="ident">merge</span>(
-    <span class="ident">GrandpaRpc::new</span>(
+    <span class="ident">Grandpa::new</span>(
       <span class="ident">subscription_executor</span>,
       <span class="ident">shared_authority_set</span>.<span class="ident">clone</span>(),
       <span class="ident">shared_voter_state</span>,
@@ -347,7 +347,7 @@
   )<span class="question-mark">?</span>;
 
   <span class="ident">io</span>.<span class="ident">merge</span>(
-    <span class="ident">SyncStateRpc::new</span>(
+    <span class="ident">SyncState::new</span>(
       <span class="ident">chain_spec</span>,
       <span class="ident">client</span>.<span class="ident">clone</span>(),
       <span class="ident">shared_authority_set</span>,

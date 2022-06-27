@@ -6,7 +6,7 @@
                     <img src="https://libp2p.io/img/logo_small.png" alt="logo"></div>
         </a><h2 class="location"><a href="#">Module hole_punching</a></h2><div class="sidebar-elems"><div id="sidebar-vars" data-name="hole_punching" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../libp2p/index.html">
                         <img src="https://libp2p.io/img/logo_small.png" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Module <a href="../../index.html">libp2p</a>::<wbr><a href="../index.html">tutorials</a>::<wbr><a class="mod" href="#">hole_punching</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../../src/libp2p/tutorials/hole_punching.rs.html#21-150">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="hole-punching-tutorial"><a href="#hole-punching-tutorial">Hole Punching Tutorial</a></h2>
+    <h1 class="fqn"><span class="in-band">Module <a href="../../index.html">libp2p</a>::<wbr><a href="../index.html">tutorials</a>::<wbr><a class="mod" href="#">hole_punching</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../../src/libp2p/tutorials/hole_punching.rs.html#21-183">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="hole-punching-tutorial"><a href="#hole-punching-tutorial">Hole Punching Tutorial</a></h2>
 <p>This tutorial shows hands-on how to overcome firewalls and NATs with libp2p’s hole punching
 mechanism. Before we get started, please read the <a href="https://blog.ipfs.io/2022-01-20-libp2p-hole-punching/">blog
 post</a> to familiarize yourself with libp2p’s hole
@@ -50,7 +50,10 @@ it to your server.</p>
 <p>On your server, start the relay server binary:</p>
 <div class="example-wrap"><pre class="language-bash"><code>./relay_v2 --port 4001 --secret-key-seed 0</code></pre></div>
 <p>Now let’s make sure that the server is public, in other words let’s make sure one can reach it
-through the Internet. From the dialing client:</p>
+through the Internet. First, either manually replace <code>$RELAY_SERVER_IP</code> in the following
+commands or <code>export RELAY_SERVER_IP=ipaddr</code> with the appropriate relay server <code>ipaddr</code> in
+the dailing client and listening client.</p>
+<p>Now, from the dialing client:</p>
 <ol>
 <li>
 <p>Test that you can connect on Layer 3 (IP).</p>
@@ -61,11 +64,27 @@ through the Internet. From the dialing client:</p>
 <li>
 <p>Test that you can connect via libp2p using <a href="https://github.com/mxinden/libp2p-lookup"><code>libp2p-lookup</code></a>.</p>
 <div class="example-wrap"><pre class="language-bash"><code># For IPv4
-libp2p-lookup direct --address /ip4/$RELAY_SERVER_IP
+libp2p-lookup direct --address /ip4/$RELAY_SERVER_IP/tcp/4001
 # For IPv6
-libp2p-lookup direct --address /ip6/$RELAY_SERVER_IP</code></pre></div></li>
+libp2p-lookup direct --address /ip6/$RELAY_SERVER_IP/tcp/4001</code></pre></div></li>
 </ol>
-<h3 id="setting-up-the-listening-client"><a href="#setting-up-the-listening-client">Setting up the listening client</a></h3>
+<p>The libp2p-lookup output should look something like:</p>
+<div class="example-wrap"><pre class="language-bash"><code>$ libp2p-lookup direct --address /ip4/111.11.111.111/tcp/4001
+Lookup for peer with id PeerId(&quot;12D3KooWDpJ7As7BWAwRMfu1VU2WCqNjvq387JEYKDBj4kx6nXTN&quot;) succeeded.
+
+Protocol version: &quot;/TODO/0.0.1&quot;
+Agent version: &quot;rust-libp2p/0.36.0&quot;
+Observed address: &quot;/ip4/22.222.222.222/tcp/39212&quot;
+Listen addresses:
+        - &quot;/ip4/127.0.0.1/tcp/4001&quot;
+        - &quot;/ip4/111.11.111.111/tcp/4001&quot;
+        - &quot;/ip4/10.48.0.5/tcp/4001&quot;
+        - &quot;/ip4/10.124.0.2/tcp/4001&quot;
+Protocols:
+        - &quot;/libp2p/circuit/relay/0.2.0/hop&quot;
+        - &quot;/ipfs/ping/1.0.0&quot;
+        - &quot;/ipfs/id/1.0.0&quot;
+        - &quot;/ipfs/id/push/1.0.0&quot;</code></pre></div><h3 id="setting-up-the-listening-client"><a href="#setting-up-the-listening-client">Setting up the listening client</a></h3>
 <p>Either on the listening client machine directly, or on your local machine, compile the example
 DCUtR client:</p>
 <div class="example-wrap"><pre class="language-bash"><code># Inside the rust-libp2p repository.
@@ -73,11 +92,19 @@ cargo build --example client -p libp2p-dcutr</code></pre></div>
 <p>You can find the binary at <code>target/debug/examples/client</code>. In case you built it locally, copy
 it to your listening client machine.</p>
 <p>On the listening client machine:</p>
-<div class="example-wrap"><pre class="language-bash"><code>RUST_LOG=info ./client --secret-key-seed 1 --mode listen --relay-address /ip4/$RELAY_SERVER_IP/tcp/4001/p2p/12D3KooWDpJ7As7BWAwRMfu1VU2WCqNjvq387JEYKDBj4kx6nXTN</code></pre></div>
+<div class="example-wrap"><pre class="language-bash"><code>RUST_LOG=info ./client --secret-key-seed 1 --mode listen --relay-address /ip4/$RELAY_SERVER_IP/tcp/4001/p2p/12D3KooWDpJ7As7BWAwRMfu1VU2WCqNjvq387JEYKDBj4kx6nXTN
+
+[2022-05-11T10:38:52Z INFO  client] Local peer id: PeerId(&quot;XXX&quot;)
+[2022-05-11T10:38:52Z INFO  client] Listening on &quot;/ip4/127.0.0.1/tcp/44703&quot;
+[2022-05-11T10:38:52Z INFO  client] Listening on &quot;/ip4/XXX/tcp/44703&quot;
+[2022-05-11T10:38:54Z INFO  client] Relay told us our public address: &quot;/ip4/XXX/tcp/53160&quot;
+[2022-05-11T10:38:54Z INFO  client] Told relay its public address.
+[2022-05-11T10:38:54Z INFO  client] Relay accepted our reservation request.
+[2022-05-11T10:38:54Z INFO  client] Listening on &quot;/ip4/$RELAY_SERVER_IP/tcp/4001/p2p/12D3KooWDpJ7As7BWAwRMfu1VU2WCqNjvq387JEYKDBj4kx6nXTN/p2p-circuit/p2p/XXX&quot;</code></pre></div>
 <p>Now let’s make sure that the listening client is not public, in other words let’s make sure one
 can not reach it directly through the Internet. From the dialing client test that you can not
 connect on Layer 4 (TCP):</p>
-<div class="example-wrap"><pre class="language-bash"><code>telnet $RELAY_SERVER_IP 4001</code></pre></div><h3 id="connecting-to-the-listening-client-from-the-dialing-client"><a href="#connecting-to-the-listening-client-from-the-dialing-client">Connecting to the listening client from the dialing client</a></h3><div class="example-wrap"><pre class="language-bash"><code>RUST_LOG=info ./client --secret-key-seed 2 --mode dial --relay-address /ip4/$RELAY_SERVER_IP/tcp/4001/p2p/12D3KooWDpJ7As7BWAwRMfu1VU2WCqNjvq387JEYKDBj4kx6nXTN --remote-peer-id 12D3KooWPjceQrSwdWXPyLLeABRXmuqt69Rg3sBYbU1Nft9HyQ6X</code></pre></div>
+<div class="example-wrap"><pre class="language-bash"><code>telnet $LISTENING_CLIENT_IP_OBSERVED_BY_RELAY 53160</code></pre></div><h3 id="connecting-to-the-listening-client-from-the-dialing-client"><a href="#connecting-to-the-listening-client-from-the-dialing-client">Connecting to the listening client from the dialing client</a></h3><div class="example-wrap"><pre class="language-bash"><code>RUST_LOG=info ./client --secret-key-seed 2 --mode dial --relay-address /ip4/$RELAY_SERVER_IP/tcp/4001/p2p/12D3KooWDpJ7As7BWAwRMfu1VU2WCqNjvq387JEYKDBj4kx6nXTN --remote-peer-id 12D3KooWPjceQrSwdWXPyLLeABRXmuqt69Rg3sBYbU1Nft9HyQ6X</code></pre></div>
 <p>You should see the following logs appear:</p>
 <ol>
 <li>

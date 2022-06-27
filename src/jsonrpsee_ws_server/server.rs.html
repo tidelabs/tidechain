@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/jsonrpsee-ws-server-0.13.1/src/server.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>server.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/jsonrpsee-ws-server-0.14.0/src/server.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>server.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../jsonrpsee_ws_server/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -933,6 +933,11 @@
 <span id="928">928</span>
 <span id="929">929</span>
 <span id="930">930</span>
+<span id="931">931</span>
+<span id="932">932</span>
+<span id="933">933</span>
+<span id="934">934</span>
+<span id="935">935</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2019-2021 Parity Technologies (UK) Ltd.</span>
 <span class="comment">//</span>
 <span class="comment">// Permission is hereby granted, free of charge, to any</span>
@@ -964,26 +969,31 @@
 <span class="kw">use</span> <span class="ident">std::pin::Pin</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">std::task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>};
+<span class="kw">use</span> <span class="ident">std::time::Duration</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::future</span>::{<span class="ident">FutureDriver</span>, <span class="ident">ServerHandle</span>, <span class="ident">StopMonitor</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::error</span>::{<span class="ident">ErrorCode</span>, <span class="ident">ErrorObject</span>, <span class="ident">BATCHES_NOT_SUPPORTED_CODE</span>, <span class="ident">BATCHES_NOT_SUPPORTED_MSG</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types</span>::{<span class="ident">Id</span>, <span class="ident">Request</span>};
 <span class="kw">use</span> <span class="ident">futures_channel::mpsc</span>;
-<span class="kw">use</span> <span class="ident">futures_util::future</span>::{<span class="ident">join_all</span>, <span class="ident">FutureExt</span>};
+<span class="kw">use</span> <span class="ident">futures_util::future</span>::{<span class="ident">join_all</span>, <span class="ident">Either</span>, <span class="ident">FutureExt</span>};
 <span class="kw">use</span> <span class="ident">futures_util::io</span>::{<span class="ident">BufReader</span>, <span class="ident">BufWriter</span>};
 <span class="kw">use</span> <span class="ident">futures_util::stream::StreamExt</span>;
 <span class="kw">use</span> <span class="ident">jsonrpsee_core::id_providers::RandomIntegerIdProvider</span>;
 <span class="kw">use</span> <span class="ident">jsonrpsee_core::middleware::Middleware</span>;
+<span class="kw">use</span> <span class="ident">jsonrpsee_core::server::access_control::AccessControl</span>;
 <span class="kw">use</span> <span class="ident">jsonrpsee_core::server::helpers</span>::{<span class="ident">collect_batch_response</span>, <span class="ident">prepare_error</span>, <span class="ident">BoundedSubscriptions</span>, <span class="ident">MethodSink</span>};
 <span class="kw">use</span> <span class="ident">jsonrpsee_core::server::resource_limiting::Resources</span>;
 <span class="kw">use</span> <span class="ident">jsonrpsee_core::server::rpc_module</span>::{<span class="ident">ConnState</span>, <span class="ident">ConnectionId</span>, <span class="ident">MethodKind</span>, <span class="ident">Methods</span>};
 <span class="kw">use</span> <span class="ident">jsonrpsee_core::traits::IdProvider</span>;
 <span class="kw">use</span> <span class="ident">jsonrpsee_core</span>::{<span class="ident">Error</span>, <span class="ident">TEN_MB_SIZE_BYTES</span>};
+<span class="kw">use</span> <span class="ident">jsonrpsee_types::error</span>::{<span class="ident">reject_too_big_request</span>, <span class="ident">reject_too_many_subscriptions</span>};
 <span class="kw">use</span> <span class="ident">jsonrpsee_types::Params</span>;
 <span class="kw">use</span> <span class="ident">soketto::connection::Error</span> <span class="kw">as</span> <span class="ident">SokettoError</span>;
+<span class="kw">use</span> <span class="ident">soketto::data::ByteSlice125</span>;
 <span class="kw">use</span> <span class="ident">soketto::handshake</span>::{<span class="ident">server::Response</span>, <span class="ident">Server</span> <span class="kw">as</span> <span class="ident">SokettoServer</span>};
 <span class="kw">use</span> <span class="ident">soketto::Sender</span>;
 <span class="kw">use</span> <span class="ident">tokio::net</span>::{<span class="ident">TcpListener</span>, <span class="ident">TcpStream</span>, <span class="ident">ToSocketAddrs</span>};
+<span class="kw">use</span> <span class="ident">tokio_stream::wrappers::IntervalStream</span>;
 <span class="kw">use</span> <span class="ident">tokio_util::compat</span>::{<span class="ident">Compat</span>, <span class="ident">TokioAsyncReadCompatExt</span>};
 
 <span class="doccomment">/// Default maximum connections allowed.</span>
@@ -1179,8 +1189,19 @@
 			<span class="macro">tracing::debug!</span>(<span class="string">&quot;Accepting new connection: {}&quot;</span>, <span class="ident">conn_id</span>);
 			<span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> {
 				<span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">receive_request</span>().<span class="kw">await</span><span class="question-mark">?</span>;
-				<span class="kw">let</span> <span class="ident">host_check</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">allowed_hosts</span>.<span class="ident">verify</span>(<span class="string">&quot;Host&quot;</span>, <span class="prelude-val">Some</span>(<span class="ident">req</span>.<span class="ident">headers</span>().<span class="ident">host</span>));
-				<span class="kw">let</span> <span class="ident">origin_check</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">allowed_origins</span>.<span class="ident">verify</span>(<span class="string">&quot;Origin&quot;</span>, <span class="ident">req</span>.<span class="ident">headers</span>().<span class="ident">origin</span>);
+
+				<span class="kw">let</span> <span class="ident">host</span> <span class="op">=</span> <span class="ident">std::str::from_utf8</span>(<span class="ident">req</span>.<span class="ident">headers</span>().<span class="ident">host</span>)
+					.<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">_e</span><span class="op">|</span> <span class="ident">Error::HttpHeaderRejected</span>(<span class="string">&quot;Host&quot;</span>, <span class="string">&quot;Invalid UTF-8&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
+				<span class="kw">let</span> <span class="ident">origin</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">headers</span>().<span class="ident">origin</span>.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> {
+					<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">std::str::from_utf8</span>(<span class="ident">h</span>).<span class="ident">ok</span>();
+					<span class="kw">if</span> <span class="ident">res</span>.<span class="ident">is_none</span>() {
+						<span class="macro">tracing::warn!</span>(<span class="string">&quot;Origin header invalid UTF-8; treated as no Origin header&quot;</span>);
+					}
+					<span class="ident">res</span>
+				});
+
+				<span class="kw">let</span> <span class="ident">host_check</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">access_control</span>.<span class="ident">verify_host</span>(<span class="ident">host</span>);
+				<span class="kw">let</span> <span class="ident">origin_check</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">access_control</span>.<span class="ident">verify_origin</span>(<span class="ident">origin</span>, <span class="ident">host</span>);
 
 				<span class="ident">host_check</span>.<span class="ident">and</span>(<span class="ident">origin_check</span>).<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">req</span>.<span class="ident">key</span>())
 			};
@@ -1190,11 +1211,12 @@
 					<span class="kw">let</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">Response::Accept</span> { <span class="ident">key</span>, <span class="ident">protocol</span>: <span class="prelude-val">None</span> };
 					<span class="ident">server</span>.<span class="ident">send_response</span>(<span class="kw-2">&amp;</span><span class="ident">accept</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 				}
-				<span class="prelude-val">Err</span>(<span class="ident">error</span>) =&gt; {
+				<span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
+					<span class="macro">tracing::warn!</span>(<span class="string">&quot;Rejected connection: {:?}&quot;</span>, <span class="ident">err</span>);
 					<span class="kw">let</span> <span class="ident">reject</span> <span class="op">=</span> <span class="ident">Response::Reject</span> { <span class="ident">status_code</span>: <span class="number">403</span> };
 					<span class="ident">server</span>.<span class="ident">send_response</span>(<span class="kw-2">&amp;</span><span class="ident">reject</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
-					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>);
+					<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>);
 				}
 			}
 
@@ -1210,6 +1232,7 @@
 				<span class="ident">stop_monitor</span>.<span class="ident">clone</span>(),
 				<span class="ident">middleware</span>,
 				<span class="ident">id_provider</span>,
+				<span class="ident">cfg</span>.<span class="ident">ping_interval</span>,
 			))
 			.<span class="kw">await</span>;
 
@@ -1233,6 +1256,7 @@
 	<span class="ident">stop_server</span>: <span class="ident">StopMonitor</span>,
 	<span class="ident">middleware</span>: <span class="kw">impl</span> <span class="ident">Middleware</span>,
 	<span class="ident">id_provider</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">IdProvider</span><span class="op">&gt;</span>,
+	<span class="ident">ping_interval</span>: <span class="ident">Duration</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
 	<span class="comment">// And we can finally transition to a websocket background_task.</span>
 	<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">into_builder</span>();
@@ -1248,15 +1272,39 @@
 
 	<span class="comment">// Send results back to the client.</span>
 	<span class="ident">tokio::spawn</span>(<span class="kw">async</span> <span class="kw">move</span> {
+		<span class="comment">// Received messages from the WebSocket.</span>
+		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rx_item</span> <span class="op">=</span> <span class="ident">rx</span>.<span class="ident">next</span>();
+
+		<span class="comment">// Interval to send out continuously `pings`.</span>
+		<span class="kw">let</span> <span class="ident">ping_interval</span> <span class="op">=</span> <span class="ident">IntervalStream::new</span>(<span class="ident">tokio::time::interval</span>(<span class="ident">ping_interval</span>));
+		<span class="macro">tokio::pin!</span>(<span class="ident">ping_interval</span>);
+		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">next_ping</span> <span class="op">=</span> <span class="ident">ping_interval</span>.<span class="ident">next</span>();
+
 		<span class="kw">while</span> <span class="op">!</span><span class="ident">stop_server2</span>.<span class="ident">shutdown_requested</span>() {
-			<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">response</span>) <span class="op">=</span> <span class="ident">rx</span>.<span class="ident">next</span>().<span class="kw">await</span> {
-				<span class="comment">// If websocket message send fail then terminate the connection.</span>
-				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="ident">send_ws_message</span>(<span class="kw-2">&amp;mut</span> <span class="ident">sender</span>, <span class="ident">response</span>).<span class="kw">await</span> {
-					<span class="macro">tracing::warn!</span>(<span class="string">&quot;WS send error: {}; terminate connection&quot;</span>, <span class="ident">err</span>);
-					<span class="kw">break</span>;
+			<span class="comment">// Ensure select is cancel-safe by fetching and storing the `rx_item` that did not finish yet.</span>
+			<span class="comment">// Note: Although, this is cancel-safe already, avoid using `select!` macro for future proofing.</span>
+			<span class="kw">match</span> <span class="ident">futures_util::future::select</span>(<span class="ident">rx_item</span>, <span class="ident">next_ping</span>).<span class="kw">await</span> {
+				<span class="ident">Either::Left</span>((<span class="prelude-val">Some</span>(<span class="ident">response</span>), <span class="ident">ping</span>)) =&gt; {
+					<span class="comment">// If websocket message send fail then terminate the connection.</span>
+					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="ident">send_ws_message</span>(<span class="kw-2">&amp;mut</span> <span class="ident">sender</span>, <span class="ident">response</span>).<span class="kw">await</span> {
+						<span class="macro">tracing::warn!</span>(<span class="string">&quot;WS send error: {}; terminate connection&quot;</span>, <span class="ident">err</span>);
+						<span class="kw">break</span>;
+					}
+					<span class="ident">rx_item</span> <span class="op">=</span> <span class="ident">rx</span>.<span class="ident">next</span>();
+					<span class="ident">next_ping</span> <span class="op">=</span> <span class="ident">ping</span>;
 				}
-			} <span class="kw">else</span> {
-				<span class="kw">break</span>;
+				<span class="comment">// Nothing else to receive.</span>
+				<span class="ident">Either::Left</span>((<span class="prelude-val">None</span>, <span class="kw">_</span>)) =&gt; <span class="kw">break</span>,
+
+				<span class="comment">// Handle timer intervals.</span>
+				<span class="ident">Either::Right</span>((<span class="kw">_</span>, <span class="ident">next_rx</span>)) =&gt; {
+					<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="ident">send_ws_ping</span>(<span class="kw-2">&amp;mut</span> <span class="ident">sender</span>).<span class="kw">await</span> {
+						<span class="macro">tracing::warn!</span>(<span class="string">&quot;WS send ping error: {}; terminate connection&quot;</span>, <span class="ident">err</span>);
+						<span class="kw">break</span>;
+					}
+					<span class="ident">rx_item</span> <span class="op">=</span> <span class="ident">next_rx</span>;
+					<span class="ident">next_ping</span> <span class="op">=</span> <span class="ident">ping_interval</span>.<span class="ident">next</span>();
+				}
 			}
 		}
 
@@ -1277,7 +1325,16 @@
 
 		{
 			<span class="comment">// Need the extra scope to drop this pinned future and reclaim access to `data`</span>
-			<span class="kw">let</span> <span class="ident">receive</span> <span class="op">=</span> <span class="ident">receiver</span>.<span class="ident">receive_data</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>);
+			<span class="kw">let</span> <span class="ident">receive</span> <span class="op">=</span> <span class="kw">async</span> {
+				<span class="comment">// Identical loop to `soketto::receive_data` with debug logs for `Pong` frames.</span>
+				<span class="kw">loop</span> {
+					<span class="kw">match</span> <span class="ident">receiver</span>.<span class="ident">receive</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>).<span class="kw">await</span><span class="question-mark">?</span> {
+						<span class="ident">soketto::Incoming::Data</span>(<span class="ident">d</span>) =&gt; <span class="kw">break</span> <span class="prelude-val">Ok</span>(<span class="ident">d</span>),
+						<span class="ident">soketto::Incoming::Pong</span>(<span class="kw">_</span>) =&gt; <span class="macro">tracing::debug!</span>(<span class="string">&quot;recv pong&quot;</span>),
+						<span class="kw">_</span> =&gt; <span class="kw">continue</span>,
+					}
+				}
+			};
 
 			<span class="macro">tokio::pin!</span>(<span class="ident">receive</span>);
 
@@ -1294,7 +1351,7 @@
 							<span class="ident">current</span>,
 							<span class="ident">maximum</span>
 						);
-						<span class="ident">sink</span>.<span class="ident">send_error</span>(<span class="ident">Id::Null</span>, <span class="ident">ErrorCode::OversizedRequest</span>.<span class="ident">into</span>());
+						<span class="ident">sink</span>.<span class="ident">send_error</span>(<span class="ident">Id::Null</span>, <span class="ident">reject_too_big_request</span>(<span class="ident">max_request_body_size</span>));
 						<span class="kw">continue</span>;
 					}
 					<span class="comment">// These errors can not be gracefully handled, so just log them and terminate the connection.</span>
@@ -1312,7 +1369,9 @@
 
 		<span class="kw">let</span> <span class="ident">request_start</span> <span class="op">=</span> <span class="ident">middleware</span>.<span class="ident">on_request</span>();
 
-		<span class="kw">match</span> <span class="ident">data</span>.<span class="ident">get</span>(<span class="number">0</span>) {
+		<span class="kw">let</span> <span class="ident">first_non_whitespace</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">iter</span>().<span class="ident">find</span>(<span class="op">|</span><span class="ident">byte</span><span class="op">|</span> <span class="op">!</span><span class="ident">byte</span>.<span class="ident">is_ascii_whitespace</span>());
+
+		<span class="kw">match</span> <span class="ident">first_non_whitespace</span> {
 			<span class="prelude-val">Some</span>(<span class="string">b&#39;{&#39;</span>) =&gt; {
 				<span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">req</span>) <span class="op">=</span> <span class="ident">serde_json::from_slice</span>::<span class="op">&lt;</span><span class="ident">Request</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>) {
 					<span class="macro">tracing::debug!</span>(<span class="string">&quot;recv method call={}&quot;</span>, <span class="ident">req</span>.<span class="ident">method</span>);
@@ -1376,9 +1435,12 @@
 									<span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cn</span>) <span class="op">=</span> <span class="ident">bounded_subscriptions</span>.<span class="ident">acquire</span>() {
 										<span class="kw">let</span> <span class="ident">conn_state</span> <span class="op">=</span>
 											<span class="ident">ConnState</span> { <span class="ident">conn_id</span>, <span class="ident">close_notify</span>: <span class="ident">cn</span>, <span class="ident">id_provider</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">id_provider</span> };
-										<span class="ident">callback</span>(<span class="ident">id</span>, <span class="ident">params</span>, <span class="kw-2">&amp;</span><span class="ident">sink</span>, <span class="ident">conn_state</span>)
+										<span class="ident">callback</span>(<span class="ident">id</span>, <span class="ident">params</span>, <span class="ident">sink</span>.<span class="ident">clone</span>(), <span class="ident">conn_state</span>)
 									} <span class="kw">else</span> {
-										<span class="ident">sink</span>.<span class="ident">send_error</span>(<span class="ident">req</span>.<span class="ident">id</span>, <span class="ident">ErrorCode::ServerIsBusy</span>.<span class="ident">into</span>());
+										<span class="ident">sink</span>.<span class="ident">send_error</span>(
+											<span class="ident">req</span>.<span class="ident">id</span>,
+											<span class="ident">reject_too_many_subscriptions</span>(<span class="ident">bounded_subscriptions</span>.<span class="ident">max</span>()),
+										);
 										<span class="bool-val">false</span>
 									};
 									<span class="ident">middleware</span>.<span class="ident">on_result</span>(<span class="ident">name</span>, <span class="ident">result</span>, <span class="ident">request_start</span>);
@@ -1495,9 +1557,12 @@
 															<span class="ident">close_notify</span>: <span class="ident">cn</span>,
 															<span class="ident">id_provider</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">id_provider</span>,
 														};
-														<span class="ident">callback</span>(<span class="ident">id</span>, <span class="ident">params</span>, <span class="kw-2">&amp;</span><span class="ident">sink_batch</span>, <span class="ident">conn_state</span>)
+														<span class="ident">callback</span>(<span class="ident">id</span>, <span class="ident">params</span>, <span class="ident">sink_batch</span>.<span class="ident">clone</span>(), <span class="ident">conn_state</span>)
 													} <span class="kw">else</span> {
-														<span class="ident">sink_batch</span>.<span class="ident">send_error</span>(<span class="ident">req</span>.<span class="ident">id</span>, <span class="ident">ErrorCode::ServerIsBusy</span>.<span class="ident">into</span>());
+														<span class="ident">sink_batch</span>.<span class="ident">send_error</span>(
+															<span class="ident">req</span>.<span class="ident">id</span>,
+															<span class="ident">reject_too_many_subscriptions</span>(<span class="ident">bounded_subscriptions2</span>.<span class="ident">max</span>()),
+														);
 														<span class="bool-val">false</span>
 													};
 													<span class="ident">middleware</span>.<span class="ident">on_result</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">method</span>, <span class="ident">result</span>, <span class="ident">request_start</span>);
@@ -1564,26 +1629,6 @@
 	<span class="ident">result</span>
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">enum</span> <span class="ident">AllowedValue</span> {
-	<span class="ident">Any</span>,
-	<span class="ident">OneOf</span>(<span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">String</span>]<span class="op">&gt;</span>),
-}
-
-<span class="kw">impl</span> <span class="ident">AllowedValue</span> {
-	<span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">header</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">value</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-		<span class="kw">if</span> <span class="kw">let</span> (<span class="ident">AllowedValue::OneOf</span>(<span class="ident">list</span>), <span class="prelude-val">Some</span>(<span class="ident">value</span>)) <span class="op">=</span> (<span class="self">self</span>, <span class="ident">value</span>) {
-			<span class="kw">if</span> <span class="op">!</span><span class="ident">list</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">o</span><span class="op">|</span> <span class="ident">o</span>.<span class="ident">as_bytes</span>() <span class="op">==</span> <span class="ident">value</span>) {
-				<span class="kw">let</span> <span class="ident">error</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{} denied: {}&quot;</span>, <span class="ident">header</span>, <span class="ident">String::from_utf8_lossy</span>(<span class="ident">value</span>));
-				<span class="macro">tracing::warn!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">error</span>);
-				<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Custom</span>(<span class="ident">error</span>));
-			}
-		}
-
-		<span class="prelude-val">Ok</span>(())
-	}
-}
-
 <span class="doccomment">/// JSON-RPC Websocket server settings.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">struct</span> <span class="ident">Settings</span> {
@@ -1595,14 +1640,14 @@
 	<span class="ident">max_connections</span>: <span class="ident">u64</span>,
 	<span class="doccomment">/// Maximum number of subscriptions per connection.</span>
 	<span class="ident">max_subscriptions_per_connection</span>: <span class="ident">u32</span>,
-	<span class="doccomment">/// Policy by which to accept or deny incoming requests based on the `Origin` header.</span>
-	<span class="ident">allowed_origins</span>: <span class="ident">AllowedValue</span>,
-	<span class="doccomment">/// Policy by which to accept or deny incoming requests based on the `Host` header.</span>
-	<span class="ident">allowed_hosts</span>: <span class="ident">AllowedValue</span>,
+	<span class="doccomment">/// Access control based on HTTP headers</span>
+	<span class="ident">access_control</span>: <span class="ident">AccessControl</span>,
 	<span class="doccomment">/// Whether batch requests are supported by this server or not.</span>
 	<span class="ident">batch_requests_supported</span>: <span class="ident">bool</span>,
 	<span class="doccomment">/// Custom tokio runtime to run the server on.</span>
 	<span class="ident">tokio_runtime</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">tokio::runtime::Handle</span><span class="op">&gt;</span>,
+	<span class="doccomment">/// The interval at which `Ping` frames are submitted.</span>
+	<span class="ident">ping_interval</span>: <span class="ident">Duration</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Settings</span> {
@@ -1613,9 +1658,9 @@
 			<span class="ident">max_subscriptions_per_connection</span>: <span class="number">1024</span>,
 			<span class="ident">max_connections</span>: <span class="ident">MAX_CONNECTIONS</span>,
 			<span class="ident">batch_requests_supported</span>: <span class="bool-val">true</span>,
-			<span class="ident">allowed_origins</span>: <span class="ident">AllowedValue::Any</span>,
-			<span class="ident">allowed_hosts</span>: <span class="ident">AllowedValue::Any</span>,
+			<span class="ident">access_control</span>: <span class="ident">AccessControl::default</span>(),
 			<span class="ident">tokio_runtime</span>: <span class="prelude-val">None</span>,
+			<span class="ident">ping_interval</span>: <span class="ident">Duration::from_secs</span>(<span class="number">60</span>),
 		}
 	}
 }
@@ -1689,35 +1734,6 @@
 		<span class="prelude-val">Ok</span>(<span class="self">self</span>)
 	}
 
-	<span class="doccomment">/// Set a list of allowed origins. During the handshake, the `Origin` header will be</span>
-	<span class="doccomment">/// checked against the list, connections without a matching origin will be denied.</span>
-	<span class="doccomment">/// Values should be hostnames with protocol.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// ```rust</span>
-	<span class="doccomment">/// # let mut builder = jsonrpsee_ws_server::WsServerBuilder::default();</span>
-	<span class="doccomment">/// builder.set_allowed_origins([&quot;https://example.com&quot;]);</span>
-	<span class="doccomment">/// ```</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// By default allows any `Origin`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Will return an error if `list` is empty. Use [`allow_all_origins`](Builder::allow_all_origins) to restore the</span>
-	<span class="doccomment">/// default.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_allowed_origins</span><span class="op">&lt;</span><span class="ident">Origin</span>, <span class="ident">List</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">list</span>: <span class="ident">List</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">List</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Origin</span><span class="op">&gt;</span>,
-		<span class="ident">Origin</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-	{
-		<span class="kw">let</span> <span class="ident">list</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">list</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">collect</span>();
-
-		<span class="kw">if</span> <span class="ident">list</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::EmptyAllowList</span>(<span class="string">&quot;Origin&quot;</span>));
-		}
-
-		<span class="self">self</span>.<span class="ident">settings</span>.<span class="ident">allowed_origins</span> <span class="op">=</span> <span class="ident">AllowedValue::OneOf</span>(<span class="ident">list</span>);
-
-		<span class="prelude-val">Ok</span>(<span class="self">self</span>)
-	}
-
 	<span class="doccomment">/// Add a middleware to the builder [`Middleware`](../jsonrpsee_core/middleware/trait.Middleware.html).</span>
 	<span class="doccomment">///</span>
 	<span class="doccomment">/// ```</span>
@@ -1747,54 +1763,32 @@
 		<span class="ident">Builder</span> { <span class="ident">settings</span>: <span class="self">self</span>.<span class="ident">settings</span>, <span class="ident">resources</span>: <span class="self">self</span>.<span class="ident">resources</span>, <span class="ident">middleware</span>, <span class="ident">id_provider</span>: <span class="self">self</span>.<span class="ident">id_provider</span> }
 	}
 
-	<span class="doccomment">/// Restores the default behavior of allowing connections with `Origin` header</span>
-	<span class="doccomment">/// containing any value. This will undo any list set by [`set_allowed_origins`](Builder::set_allowed_origins).</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allow_all_origins</span>(<span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">settings</span>.<span class="ident">allowed_origins</span> <span class="op">=</span> <span class="ident">AllowedValue::Any</span>;
-		<span class="self">self</span>
-	}
-
-	<span class="doccomment">/// Set a list of allowed hosts. During the handshake, the `Host` header will be</span>
-	<span class="doccomment">/// checked against the list. Connections without a matching host will be denied.</span>
-	<span class="doccomment">/// Values should be hostnames without protocol.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// ```rust</span>
-	<span class="doccomment">/// # let mut builder = jsonrpsee_ws_server::WsServerBuilder::default();</span>
-	<span class="doccomment">/// builder.set_allowed_hosts([&quot;example.com&quot;]);</span>
-	<span class="doccomment">/// ```</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// By default allows any `Host`.</span>
-	<span class="doccomment">///</span>
-	<span class="doccomment">/// Will return an error if `list` is empty. Use [`allow_all_hosts`](Builder::allow_all_hosts) to restore the</span>
-	<span class="doccomment">/// default.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_allowed_hosts</span><span class="op">&lt;</span><span class="ident">Host</span>, <span class="ident">List</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">list</span>: <span class="ident">List</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-	<span class="kw">where</span>
-		<span class="ident">List</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Host</span><span class="op">&gt;</span>,
-		<span class="ident">Host</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-	{
-		<span class="kw">let</span> <span class="ident">list</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">list</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">collect</span>();
-
-		<span class="kw">if</span> <span class="ident">list</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> {
-			<span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::EmptyAllowList</span>(<span class="string">&quot;Host&quot;</span>));
-		}
-
-		<span class="self">self</span>.<span class="ident">settings</span>.<span class="ident">allowed_hosts</span> <span class="op">=</span> <span class="ident">AllowedValue::OneOf</span>(<span class="ident">list</span>);
-
-		<span class="prelude-val">Ok</span>(<span class="self">self</span>)
-	}
-
-	<span class="doccomment">/// Restores the default behavior of allowing connections with `Host` header</span>
-	<span class="doccomment">/// containing any value. This will undo any list set by [`set_allowed_hosts`](Builder::set_allowed_hosts).</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allow_all_hosts</span>(<span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="self">Self</span> {
-		<span class="self">self</span>.<span class="ident">settings</span>.<span class="ident">allowed_hosts</span> <span class="op">=</span> <span class="ident">AllowedValue::Any</span>;
-		<span class="self">self</span>
-	}
-
 	<span class="doccomment">/// Configure a custom [`tokio::runtime::Handle`] to run the server on.</span>
 	<span class="doccomment">///</span>
 	<span class="doccomment">/// Default: [`tokio::spawn`]</span>
 	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">custom_tokio_runtime</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">rt</span>: <span class="ident">tokio::runtime::Handle</span>) -&gt; <span class="self">Self</span> {
 		<span class="self">self</span>.<span class="ident">settings</span>.<span class="ident">tokio_runtime</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">rt</span>);
+		<span class="self">self</span>
+	}
+
+	<span class="doccomment">/// Configure the interval at which pings are submitted.</span>
+	<span class="doccomment">///</span>
+	<span class="doccomment">/// This option is used to keep the connection alive, and is just submitting `Ping` frames,</span>
+	<span class="doccomment">/// without making any assumptions about when a `Pong` frame should be received.</span>
+	<span class="doccomment">///</span>
+	<span class="doccomment">/// Default: 60 seconds.</span>
+	<span class="doccomment">///</span>
+	<span class="doccomment">/// # Examples</span>
+	<span class="doccomment">///</span>
+	<span class="doccomment">/// ```rust</span>
+	<span class="doccomment">/// use std::time::Duration;</span>
+	<span class="doccomment">/// use jsonrpsee_ws_server::WsServerBuilder;</span>
+	<span class="doccomment">///</span>
+	<span class="doccomment">/// // Set the ping interval to 10 seconds.</span>
+	<span class="doccomment">/// let builder = WsServerBuilder::default().ping_interval(Duration::from_secs(10));</span>
+	<span class="doccomment">/// ```</span>
+	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ping_interval</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">interval</span>: <span class="ident">Duration</span>) -&gt; <span class="self">Self</span> {
+		<span class="self">self</span>.<span class="ident">settings</span>.<span class="ident">ping_interval</span> <span class="op">=</span> <span class="ident">interval</span>;
 		<span class="self">self</span>
 	}
 
@@ -1820,6 +1814,12 @@
 	<span class="doccomment">///</span>
 	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_id_provider</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">IdProvider</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">id_provider</span>: <span class="ident">I</span>) -&gt; <span class="self">Self</span> {
 		<span class="self">self</span>.<span class="ident">id_provider</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">id_provider</span>);
+		<span class="self">self</span>
+	}
+
+	<span class="doccomment">/// Sets access control settings.</span>
+	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_access_control</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">acl</span>: <span class="ident">AccessControl</span>) -&gt; <span class="self">Self</span> {
+		<span class="self">self</span>.<span class="ident">settings</span>.<span class="ident">access_control</span> <span class="op">=</span> <span class="ident">acl</span>;
 		<span class="self">self</span>
 	}
 
@@ -1861,6 +1861,16 @@
 	<span class="macro">tracing::debug!</span>(<span class="string">&quot;send {} bytes&quot;</span>, <span class="ident">response</span>.<span class="ident">len</span>());
 	<span class="macro">tracing::trace!</span>(<span class="string">&quot;send: {}&quot;</span>, <span class="ident">response</span>);
 	<span class="ident">sender</span>.<span class="ident">send_text_owned</span>(<span class="ident">response</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+	<span class="ident">sender</span>.<span class="ident">flush</span>().<span class="kw">await</span>.<span class="ident">map_err</span>(<span class="ident">Into::into</span>)
+}
+
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">send_ws_ping</span>(<span class="ident">sender</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Sender</span><span class="op">&lt;</span><span class="ident">BufReader</span><span class="op">&lt;</span><span class="ident">BufWriter</span><span class="op">&lt;</span><span class="ident">Compat</span><span class="op">&lt;</span><span class="ident">TcpStream</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+	<span class="macro">tracing::debug!</span>(<span class="string">&quot;send ping&quot;</span>);
+	<span class="comment">// Submit empty slice as &quot;optional&quot; parameter.</span>
+	<span class="kw">let</span> <span class="ident">slice</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[];
+	<span class="comment">// Byte slice fails if the provided slice is larger than 125 bytes.</span>
+	<span class="kw">let</span> <span class="ident">byte_slice</span> <span class="op">=</span> <span class="ident">ByteSlice125::try_from</span>(<span class="ident">slice</span>).<span class="ident">expect</span>(<span class="string">&quot;Empty slice should fit into ByteSlice125&quot;</span>);
+	<span class="ident">sender</span>.<span class="ident">send_ping</span>(<span class="ident">byte_slice</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 	<span class="ident">sender</span>.<span class="ident">flush</span>().<span class="kw">await</span>.<span class="ident">map_err</span>(<span class="ident">Into::into</span>)
 }
 </code></pre></div>

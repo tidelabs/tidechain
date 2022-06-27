@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-core-0.32.1/src/transport/memory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>memory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-core-0.33.0/src/transport/memory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>memory.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../libp2p_core/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -577,6 +577,15 @@
 <span id="572">572</span>
 <span id="573">573</span>
 <span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2018 Parity Technologies (UK) Ltd.</span>
 <span class="comment">//</span>
 <span class="comment">// Permission is hereby granted, free of charge, to any person obtaining a</span>
@@ -729,9 +738,12 @@
             .<span class="ident">take</span>()
             .<span class="ident">expect</span>(<span class="string">&quot;Future should not be polled again once complete&quot;</span>);
         <span class="kw">let</span> <span class="ident">dial_port</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dial_port</span>;
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">start_send</span>((<span class="ident">channel_to_send</span>, <span class="ident">dial_port</span>)) {
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">MemoryTransportError::Unreachable</span>)),
-            <span class="prelude-val">Ok</span>(()) =&gt; {}
+        <span class="kw">if</span> <span class="self">self</span>
+            .<span class="ident">sender</span>
+            .<span class="ident">start_send</span>((<span class="ident">channel_to_send</span>, <span class="ident">dial_port</span>))
+            .<span class="ident">is_err</span>()
+        {
+            <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">MemoryTransportError::Unreachable</span>));
         }
 
         <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="self">self</span>
@@ -748,7 +760,10 @@
     <span class="kw">type</span> <span class="ident">ListenerUpgrade</span> <span class="op">=</span> <span class="ident">Ready</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span>;
     <span class="kw">type</span> <span class="ident">Dial</span> <span class="op">=</span> <span class="ident">DialFuture</span>;
 
-    <span class="kw">fn</span> <span class="ident">listen_on</span>(<span class="self">self</span>, <span class="ident">addr</span>: <span class="ident">Multiaddr</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Listener</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">listen_on</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">addr</span>: <span class="ident">Multiaddr</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Listener</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">port</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">port</span>) <span class="op">=</span> <span class="ident">parse_memory_addr</span>(<span class="kw-2">&amp;</span><span class="ident">addr</span>) {
             <span class="ident">port</span>
         } <span class="kw">else</span> {
@@ -770,7 +785,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">listener</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">dial</span>(<span class="self">self</span>, <span class="ident">addr</span>: <span class="ident">Multiaddr</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DialFuture</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">dial</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">addr</span>: <span class="ident">Multiaddr</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DialFuture</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">port</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">port</span>) <span class="op">=</span> <span class="ident">parse_memory_addr</span>(<span class="kw-2">&amp;</span><span class="ident">addr</span>) {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">port</span>) <span class="op">=</span> <span class="ident">NonZeroU64::new</span>(<span class="ident">port</span>) {
                 <span class="ident">port</span>
@@ -784,7 +799,10 @@
         <span class="ident">DialFuture::new</span>(<span class="ident">port</span>).<span class="ident">ok_or</span>(<span class="ident">TransportError::Other</span>(<span class="ident">MemoryTransportError::Unreachable</span>))
     }
 
-    <span class="kw">fn</span> <span class="ident">dial_as_listener</span>(<span class="self">self</span>, <span class="ident">addr</span>: <span class="ident">Multiaddr</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DialFuture</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">dial_as_listener</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">addr</span>: <span class="ident">Multiaddr</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DialFuture</span>, <span class="ident">TransportError</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dial</span>(<span class="ident">addr</span>)
     }
 
@@ -931,9 +949,9 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">RwStreamSink</span><span class="op">&lt;</span><span class="ident">Chan</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Chan</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) -&gt; <span class="ident">RwStreamSink</span><span class="op">&lt;</span><span class="ident">Chan</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">RwStreamSink::new</span>(<span class="self">self</span>)
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Chan</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">RwStreamSink</span><span class="op">&lt;</span><span class="ident">Chan</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">channel</span>: <span class="ident">Chan</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="ident">RwStreamSink</span><span class="op">&lt;</span><span class="ident">Chan</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="ident">RwStreamSink::new</span>(<span class="ident">channel</span>)
     }
 }
 
@@ -987,7 +1005,7 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">listening_twice</span>() {
-        <span class="kw">let</span> <span class="ident">transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
         <span class="macro">assert!</span>(<span class="ident">transport</span>
             .<span class="ident">listen_on</span>(<span class="string">&quot;/memory/1639174018481&quot;</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>())
             .<span class="ident">is_ok</span>());
@@ -1014,7 +1032,7 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">port_not_in_use</span>() {
-        <span class="kw">let</span> <span class="ident">transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
         <span class="macro">assert!</span>(<span class="ident">transport</span>
             .<span class="ident">dial</span>(<span class="string">&quot;/memory/810172461024613&quot;</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>())
             .<span class="ident">is_err</span>());
@@ -1036,7 +1054,7 @@
         <span class="kw">let</span> <span class="ident">t1_addr</span>: <span class="ident">Multiaddr</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;/memory/{}&quot;</span>, <span class="ident">rand_port</span>).<span class="ident">parse</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">cloned_t1_addr</span> <span class="op">=</span> <span class="ident">t1_addr</span>.<span class="ident">clone</span>();
 
-        <span class="kw">let</span> <span class="ident">t1</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">t1</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
 
         <span class="kw">let</span> <span class="ident">listener</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {
             <span class="kw">let</span> <span class="ident">listener</span> <span class="op">=</span> <span class="ident">t1</span>.<span class="ident">listen_on</span>(<span class="ident">t1_addr</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>();
@@ -1057,7 +1075,7 @@
 
         <span class="comment">// Setup dialer.</span>
 
-        <span class="kw">let</span> <span class="ident">t2</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">t2</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
         <span class="kw">let</span> <span class="ident">dialer</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">socket</span> <span class="op">=</span> <span class="ident">t2</span>.<span class="ident">dial</span>(<span class="ident">cloned_t1_addr</span>).<span class="ident">unwrap</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
             <span class="ident">socket</span>.<span class="ident">write_all</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
@@ -1074,7 +1092,7 @@
             <span class="ident">Protocol::Memory</span>(<span class="ident">rand::random</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>().<span class="ident">saturating_add</span>(<span class="number">1</span>)).<span class="ident">into</span>();
         <span class="kw">let</span> <span class="ident">listener_addr_cloned</span> <span class="op">=</span> <span class="ident">listener_addr</span>.<span class="ident">clone</span>();
 
-        <span class="kw">let</span> <span class="ident">listener_transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener_transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
 
         <span class="kw">let</span> <span class="ident">listener</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="ident">listener_transport</span>.<span class="ident">listen_on</span>(<span class="ident">listener_addr</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>();
@@ -1109,7 +1127,7 @@
             <span class="ident">Protocol::Memory</span>(<span class="ident">rand::random</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>().<span class="ident">saturating_add</span>(<span class="number">1</span>)).<span class="ident">into</span>();
         <span class="kw">let</span> <span class="ident">listener_addr_cloned</span> <span class="op">=</span> <span class="ident">listener_addr</span>.<span class="ident">clone</span>();
 
-        <span class="kw">let</span> <span class="ident">listener_transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener_transport</span> <span class="op">=</span> <span class="ident">MemoryTransport::default</span>();
 
         <span class="kw">let</span> <span class="ident">listener</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="ident">listener_transport</span>.<span class="ident">listen_on</span>(<span class="ident">listener_addr</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>();

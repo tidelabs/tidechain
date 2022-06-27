@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/5d3e7c4/primitives/tasks/src/async_externalities.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_externalities.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/tasks/src/async_externalities.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_externalities.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_tasks/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -204,6 +204,17 @@
 <span id="199">199</span>
 <span id="200">200</span>
 <span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
 </pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
 
 <span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
@@ -228,7 +239,7 @@
 	<span class="ident">storage</span>::{<span class="ident">ChildInfo</span>, <span class="ident">StateVersion</span>, <span class="ident">TrackedStorageKey</span>},
 	<span class="ident">traits</span>::{<span class="ident">Externalities</span>, <span class="ident">RuntimeSpawn</span>, <span class="ident">RuntimeSpawnExt</span>, <span class="ident">SpawnNamed</span>, <span class="ident">TaskExecutorExt</span>},
 };
-<span class="kw">use</span> <span class="ident">sp_externalities</span>::{<span class="ident">Extensions</span>, <span class="ident">ExternalitiesExt</span> <span class="kw">as</span> <span class="kw">_</span>};
+<span class="kw">use</span> <span class="ident">sp_externalities</span>::{<span class="ident">Extensions</span>, <span class="ident">ExternalitiesExt</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">MultiRemovalResults</span>};
 <span class="kw">use</span> <span class="ident">std::any</span>::{<span class="ident">Any</span>, <span class="ident">TypeId</span>};
 
 <span class="doccomment">/// Simple state-less externalities for use in async context.</span>
@@ -311,11 +322,21 @@
 		<span class="macro">panic!</span>(<span class="string">&quot;`place_child_storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">kill_child_storage</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>, <span class="ident">_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) -&gt; (<span class="ident">bool</span>, <span class="ident">u32</span>) {
+	<span class="kw">fn</span> <span class="ident">kill_child_storage</span>(
+		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+		<span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
+		<span class="ident">_maybe_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+		<span class="ident">_maybe_cursor</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+	) -&gt; <span class="ident">MultiRemovalResults</span> {
 		<span class="macro">panic!</span>(<span class="string">&quot;`kill_child_storage`: should not be used in async externalities!&quot;</span>)
 	}
 
-	<span class="kw">fn</span> <span class="ident">clear_prefix</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) -&gt; (<span class="ident">bool</span>, <span class="ident">u32</span>) {
+	<span class="kw">fn</span> <span class="ident">clear_prefix</span>(
+		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+		<span class="ident">_prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
+		<span class="ident">_maybe_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+		<span class="ident">_maybe_cursor</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+	) -&gt; <span class="ident">MultiRemovalResults</span> {
 		<span class="macro">panic!</span>(<span class="string">&quot;`clear_prefix`: should not be used in async externalities!&quot;</span>)
 	}
 
@@ -323,8 +344,9 @@
 		<span class="kw-2">&amp;mut</span> <span class="self">self</span>,
 		<span class="ident">_child_info</span>: <span class="kw-2">&amp;</span><span class="ident">ChildInfo</span>,
 		<span class="ident">_prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-		<span class="ident">_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-	) -&gt; (<span class="ident">bool</span>, <span class="ident">u32</span>) {
+		<span class="ident">_maybe_limit</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+		<span class="ident">_maybe_cursor</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+	) -&gt; <span class="ident">MultiRemovalResults</span> {
 		<span class="macro">panic!</span>(<span class="string">&quot;`clear_child_prefix`: should not be used in async externalities!&quot;</span>)
 	}
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/5d3e7c4/client/cli/src/commands/generate_node_key.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>generate_node_key.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/client/cli/src/commands/generate_node_key.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>generate_node_key.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../sc_cli/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -78,6 +78,21 @@
 <span id="73">73</span>
 <span id="74">74</span>
 <span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
 </pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
 
 <span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
@@ -100,14 +115,18 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Error</span>;
 <span class="kw">use</span> <span class="ident">clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">libp2p::identity</span>::{<span class="ident">ed25519</span> <span class="kw">as</span> <span class="ident">libp2p_ed25519</span>, <span class="ident">PublicKey</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fs</span>, <span class="ident">path::PathBuf</span>};
+<span class="kw">use</span> <span class="ident">std</span>::{
+	<span class="ident">fs</span>,
+	<span class="ident">io</span>::{<span class="self">self</span>, <span class="ident">Write</span>},
+	<span class="ident">path::PathBuf</span>,
+};
 
 <span class="doccomment">/// The `generate-node-key` command</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="attribute">#[<span class="ident">clap</span>(
 	<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;generate-node-key&quot;</span>,
-	<span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Generate a random node libp2p key, save it to \
-			 file or print it to stdout and print its peer ID to stderr&quot;</span>
+	<span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Generate a random node key, write it to a file or stdout \
+		 	and write the corresponding peer-id to stderr&quot;</span>
 )]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GenerateNodeKeyCmd</span> {
 	<span class="doccomment">/// Name of file to save secret key to.</span>
@@ -115,22 +134,33 @@
 	<span class="doccomment">/// If not given, the secret key is printed to stdout.</span>
 	<span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>)]</span>
 	<span class="ident">file</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+
+	<span class="doccomment">/// The output is in raw binary format.</span>
+	<span class="doccomment">///</span>
+	<span class="doccomment">/// If not given, the output is written as an hex encoded string.</span>
+	<span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>)]</span>
+	<span class="ident">bin</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">GenerateNodeKeyCmd</span> {
 	<span class="doccomment">/// Run the command</span>
 	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
 		<span class="kw">let</span> <span class="ident">keypair</span> <span class="op">=</span> <span class="ident">libp2p_ed25519::Keypair::generate</span>();
+
 		<span class="kw">let</span> <span class="ident">secret</span> <span class="op">=</span> <span class="ident">keypair</span>.<span class="ident">secret</span>();
-		<span class="kw">let</span> <span class="ident">peer_id</span> <span class="op">=</span> <span class="ident">PublicKey::Ed25519</span>(<span class="ident">keypair</span>.<span class="ident">public</span>()).<span class="ident">to_peer_id</span>();
-		<span class="kw">let</span> <span class="ident">secret_hex</span> <span class="op">=</span> <span class="ident">hex::encode</span>(<span class="ident">secret</span>.<span class="ident">as_ref</span>());
+
+		<span class="kw">let</span> <span class="ident">file_data</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">bin</span> {
+			<span class="ident">secret</span>.<span class="ident">as_ref</span>().<span class="ident">to_owned</span>()
+		} <span class="kw">else</span> {
+			<span class="ident">hex::encode</span>(<span class="ident">secret</span>.<span class="ident">as_ref</span>()).<span class="ident">into_bytes</span>()
+		};
 
 		<span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">file</span> {
-			<span class="prelude-val">Some</span>(<span class="ident">file</span>) =&gt; <span class="ident">fs::write</span>(<span class="ident">file</span>, <span class="ident">secret_hex</span>)<span class="question-mark">?</span>,
-			<span class="prelude-val">None</span> =&gt; <span class="macro">print!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">secret_hex</span>),
+			<span class="prelude-val">Some</span>(<span class="ident">file</span>) =&gt; <span class="ident">fs::write</span>(<span class="ident">file</span>, <span class="ident">file_data</span>)<span class="question-mark">?</span>,
+			<span class="prelude-val">None</span> =&gt; <span class="ident">io::stdout</span>().<span class="ident">lock</span>().<span class="ident">write_all</span>(<span class="kw-2">&amp;</span><span class="ident">file_data</span>)<span class="question-mark">?</span>,
 		}
 
-		<span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">peer_id</span>);
+		<span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">PublicKey::Ed25519</span>(<span class="ident">keypair</span>.<span class="ident">public</span>()).<span class="ident">to_peer_id</span>());
 
 		<span class="prelude-val">Ok</span>(())
 	}

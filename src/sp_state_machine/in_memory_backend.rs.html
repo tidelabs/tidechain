@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/5d3e7c4/primitives/state-machine/src/in_memory_backend.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>in_memory_backend.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/state-machine/src/in_memory_backend.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>in_memory_backend.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_state_machine/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -226,6 +226,28 @@
 <span id="221">221</span>
 <span id="222">222</span>
 <span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
 </pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
 
 <span class="comment">// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.</span>
@@ -251,22 +273,36 @@
 <span class="kw">use</span> <span class="ident">codec::Codec</span>;
 <span class="kw">use</span> <span class="ident">hash_db::Hasher</span>;
 <span class="kw">use</span> <span class="ident">sp_core::storage</span>::{<span class="ident">ChildInfo</span>, <span class="ident">StateVersion</span>, <span class="ident">Storage</span>};
-<span class="kw">use</span> <span class="ident">sp_trie</span>::{<span class="ident">empty_trie_root</span>, <span class="ident">LayoutV1</span>, <span class="ident">MemoryDB</span>};
+<span class="kw">use</span> <span class="ident">sp_trie</span>::{<span class="ident">empty_trie_root</span>, <span class="ident">GenericMemoryDB</span>, <span class="ident">HashKey</span>, <span class="ident">KeyFunction</span>, <span class="ident">LayoutV1</span>, <span class="ident">MemoryDB</span>};
 <span class="kw">use</span> <span class="ident">std::collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>};
 
 <span class="doccomment">/// Create a new empty instance of in-memory backend.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_in_mem</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>() -&gt; <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// It will use [`HashKey`] to store the keys internally.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_in_mem_hash_key</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>() -&gt; <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
+	<span class="ident">H</span>: <span class="ident">Hasher</span>,
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
 {
-	<span class="kw">let</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">MemoryDB::default</span>();
+	<span class="ident">new_in_mem</span>::<span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">HashKey</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+}
+
+<span class="doccomment">/// Create a new empty instance of in-memory backend.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_in_mem</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>() -&gt; <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+	<span class="ident">H</span>: <span class="ident">Hasher</span>,
+	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+{
+	<span class="kw">let</span> <span class="ident">db</span> <span class="op">=</span> <span class="ident">GenericMemoryDB::default</span>();
 	<span class="comment">// V1 is same as V0 for an empty trie.</span>
 	<span class="ident">TrieBackend::new</span>(<span class="ident">db</span>, <span class="ident">empty_trie_root</span>::<span class="op">&lt;</span><span class="ident">LayoutV1</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>())
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span>, <span class="ident">KF</span><span class="op">&gt;</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
 {
 	<span class="doccomment">/// Copy the state, with applied updates</span>
 	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">StorageCollection</span>)<span class="op">&gt;</span><span class="op">&gt;</span>(
@@ -298,14 +334,14 @@
 	}
 
 	<span class="doccomment">/// Merge trie nodes into this backend.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update_backend</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">root</span>: <span class="ident">H::Out</span>, <span class="ident">changes</span>: <span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update_backend</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">root</span>: <span class="ident">H::Out</span>, <span class="ident">changes</span>: <span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
 		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clone</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">backend_storage</span>().<span class="ident">clone</span>();
 		<span class="ident">clone</span>.<span class="ident">consolidate</span>(<span class="ident">changes</span>);
 		<span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">clone</span>, <span class="ident">root</span>)
 	}
 
 	<span class="doccomment">/// Apply the given transaction to this backend and set the root to the given value.</span>
-	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">apply_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">root</span>: <span class="ident">H::Out</span>, <span class="ident">transaction</span>: <span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) {
+	<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">apply_transaction</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">root</span>: <span class="ident">H::Out</span>, <span class="ident">transaction</span>: <span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>) {
 		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">sp_std::mem::take</span>(<span class="self">self</span>).<span class="ident">into_storage</span>();
 		<span class="ident">storage</span>.<span class="ident">consolidate</span>(<span class="ident">transaction</span>);
 		<span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="ident">TrieBackend::new</span>(<span class="ident">storage</span>, <span class="ident">root</span>);
@@ -317,28 +353,33 @@
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span>, <span class="ident">KF</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
 {
 	<span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
 		<span class="ident">TrieBackend::new</span>(<span class="self">self</span>.<span class="ident">backend_storage</span>().<span class="ident">clone</span>(), <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">root</span>())
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
+	<span class="ident">H</span>: <span class="ident">Hasher</span>,
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
 {
 	<span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
 		<span class="ident">new_in_mem</span>()
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">HashMap</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">StorageKey</span>, <span class="ident">StorageValue</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span>
-	<span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span>, <span class="ident">KF</span><span class="op">&gt;</span>
+	<span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">HashMap</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">StorageKey</span>, <span class="ident">StorageValue</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span>
+	<span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
 {
 	<span class="kw">fn</span> <span class="ident">from</span>(
 		(<span class="ident">inner</span>, <span class="ident">state_version</span>): (
@@ -357,9 +398,10 @@
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">Storage</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span>, <span class="ident">KF</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">Storage</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
 {
 	<span class="kw">fn</span> <span class="ident">from</span>((<span class="ident">inners</span>, <span class="ident">state_version</span>): (<span class="ident">Storage</span>, <span class="ident">StateVersion</span>)) -&gt; <span class="self">Self</span> {
 		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inner</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">StorageKey</span>, <span class="ident">StorageValue</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">inners</span>
@@ -372,10 +414,11 @@
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">StorageKey</span>, <span class="ident">StorageValue</span><span class="op">&gt;</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span>
-	<span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span>, <span class="ident">KF</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">StorageKey</span>, <span class="ident">StorageValue</span><span class="op">&gt;</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span>
+	<span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
 {
 	<span class="kw">fn</span> <span class="ident">from</span>((<span class="ident">inner</span>, <span class="ident">state_version</span>): (<span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">StorageKey</span>, <span class="ident">StorageValue</span><span class="op">&gt;</span>, <span class="ident">StateVersion</span>)) -&gt; <span class="self">Self</span> {
 		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expanded</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
@@ -384,10 +427,11 @@
 	}
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">StorageCollection</span>)<span class="op">&gt;</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span>
-	<span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">MemoryDB</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span>, <span class="ident">KF</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">StorageCollection</span>)<span class="op">&gt;</span>, <span class="ident">StateVersion</span>)<span class="op">&gt;</span>
+	<span class="kw">for</span> <span class="ident">TrieBackend</span><span class="op">&lt;</span><span class="ident">GenericMemoryDB</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">KF</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
 	<span class="ident">H::Out</span>: <span class="ident">Codec</span> <span class="op">+</span> <span class="ident">Ord</span>,
+	<span class="ident">KF</span>: <span class="ident">KeyFunction</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
 {
 	<span class="kw">fn</span> <span class="ident">from</span>(
 		(<span class="ident">inner</span>, <span class="ident">state_version</span>): (<span class="ident">Vec</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChildInfo</span><span class="op">&gt;</span>, <span class="ident">StorageCollection</span>)<span class="op">&gt;</span>, <span class="ident">StateVersion</span>),
@@ -417,7 +461,7 @@
 	<span class="attribute">#[<span class="ident">test</span>]</span>
 	<span class="kw">fn</span> <span class="ident">in_memory_with_child_trie_only</span>() {
 		<span class="kw">let</span> <span class="ident">state_version</span> <span class="op">=</span> <span class="ident">StateVersion::default</span>();
-		<span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">new_in_mem</span>::<span class="op">&lt;</span><span class="ident">BlakeTwo256</span><span class="op">&gt;</span>();
+		<span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">new_in_mem_hash_key</span>::<span class="op">&lt;</span><span class="ident">BlakeTwo256</span><span class="op">&gt;</span>();
 		<span class="kw">let</span> <span class="ident">child_info</span> <span class="op">=</span> <span class="ident">ChildInfo::new_default</span>(<span class="string">b&quot;1&quot;</span>);
 		<span class="kw">let</span> <span class="ident">child_info</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">child_info</span>;
 		<span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">storage</span>.<span class="ident">update</span>(
@@ -433,7 +477,7 @@
 	<span class="attribute">#[<span class="ident">test</span>]</span>
 	<span class="kw">fn</span> <span class="ident">insert_multiple_times_child_data_works</span>() {
 		<span class="kw">let</span> <span class="ident">state_version</span> <span class="op">=</span> <span class="ident">StateVersion::default</span>();
-		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">new_in_mem</span>::<span class="op">&lt;</span><span class="ident">BlakeTwo256</span><span class="op">&gt;</span>();
+		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">new_in_mem_hash_key</span>::<span class="op">&lt;</span><span class="ident">BlakeTwo256</span><span class="op">&gt;</span>();
 		<span class="kw">let</span> <span class="ident">child_info</span> <span class="op">=</span> <span class="ident">ChildInfo::new_default</span>(<span class="string">b&quot;1&quot;</span>);
 
 		<span class="ident">storage</span>.<span class="ident">insert</span>(

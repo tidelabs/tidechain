@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["CheckCounterPrefix","A struct that does not migration, but only checks that the counter prefix exists and is correct."]]});
+initSidebarItems({"struct":[["AddScore","A struct that migrates all bags lists to contain a score value."],["CheckCounterPrefix","A struct that does not migration, but only checks that the counter prefix exists and is correct."]]});

@@ -4,7 +4,7 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../frame_support/index.html"><div class="logo-container"><img class="rust-logo" src="../rust-logo.svg" alt="logo"></div>
         </a><div class="sidebar-elems"><h2 class="location"><a href="index.html">In frame_support</a></h2><div id="sidebar-vars" data-name="pallet" data-ty="attr" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../frame_support/index.html"><img class="rust-logo" src="../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Attribute Macro <a href="index.html">frame_support</a>::<wbr><a class="attr" href="#">pallet</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../src/frame_support_procedural/lib.rs.html#406">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><div class="docblock item-decl"><pre class="rust attr"><code>#[pallet]</code></pre></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>pallet</code> attribute macro allows to define a pallet to be used in <code>construct_runtime!</code>.</p>
+    <h1 class="fqn"><span class="in-band">Attribute Macro <a href="index.html">frame_support</a>::<wbr><a class="attr" href="#">pallet</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../src/frame_support_procedural/lib.rs.html#407">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><div class="docblock item-decl"><pre class="rust attr"><code>#[pallet]</code></pre></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>pallet</code> attribute macro allows to define a pallet to be used in <code>construct_runtime!</code>.</p>
 <p>It is define by a module item:</p>
 
 <div class='information'><div class='tooltip ignore'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered ignore"><code><span class="attribute">#[<span class="ident">pallet</span>]</span>
@@ -166,6 +166,13 @@ optional where clause.</p>
 the first argument must be <code>origin: OriginFor&lt;T&gt;</code>, compact encoding for argument can be
 used using <code>#[pallet::compact]</code>, function must return <code>DispatchResultWithPostInfo</code> or
 <code>DispatchResult</code>.</p>
+<p>Each dispatchable may also be annotated with the <code>#[pallet::call_index($idx)]</code> attribute,
+which defines and sets the codec index for the dispatchable function in the <code>Call</code> enum.</p>
+<p>All call indexes start from 0, until it encounters a dispatchable function with a defined
+call index. The dispatchable function that lexically follows the function with a defined
+call index will have that call index, but incremented by 1, e.g. if there are 3
+dispatchable functions <code>fn foo</code>, <code>fn bar</code> and <code>fn qux</code> in that order, and only <code>fn bar</code> has
+a call index of 10, then <code>fn qux</code> will have an index of 11, instead of 1.</p>
 <p>All arguments must implement <code>Debug</code>, <code>PartialEq</code>, <code>Eq</code>, <code>Decode</code>, <code>Encode</code>, <code>Clone</code>. For
 ease of use, bound the trait <code>Member</code> available in frame_support::pallet_prelude.</p>
 <p>If no <code>#[pallet::call]</code> exists, then a default implementation corresponding to the
@@ -176,13 +183,15 @@ following code is automatically generated:</p>
 <p><strong>WARNING</strong>: modifying dispatchables, changing their order, removing some must be done with
 care. Indeed this will change the outer runtime call type (which is an enum with one
 variant per pallet), this outer runtime call can be stored on-chain (e.g. in
-pallet-scheduler). Thus migration might be needed.</p>
+pallet-scheduler). Thus migration might be needed. To mitigate against some of this, the
+<code>#[pallet::call_index($idx)]</code> attribute can be used to fix the order of the dispatchable so
+that the <code>Call</code> enum encoding does not change after modification.</p>
 <h4 id="macro-expansion-3"><a href="#macro-expansion-3">Macro expansion</a></h4>
-<p>The macro create an enum <code>Call</code> with one variant per dispatchable. This enum implements:
+<p>The macro creates an enum <code>Call</code> with one variant per dispatchable. This enum implements:
 <code>Clone</code>, <code>Eq</code>, <code>PartialEq</code>, <code>Debug</code> (with stripped implementation in <code>not(&quot;std&quot;)</code>),
 <code>Encode</code>, <code>Decode</code>, <code>GetDispatchInfo</code>, <code>GetCallName</code>, <code>UnfilteredDispatchable</code>.</p>
-<p>The macro implement on <code>Pallet</code>, the <code>Callable</code> trait and a function <code>call_functions</code> which
-returns the dispatchable metadatas.</p>
+<p>The macro implement the <code>Callable</code> trait on <code>Pallet</code> and a function <code>call_functions</code> which
+returns the dispatchable metadata.</p>
 <h2 id="extra-constants-palletextra_constants-optional"><a href="#extra-constants-palletextra_constants-optional">Extra constants: <code>#[pallet::extra_constants]</code> optional</a></h2>
 <p>Allow to define some extra constants to put into constant metadata.</p>
 <p>Item must be defined as:</p>

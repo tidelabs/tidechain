@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-identify-0.35.0/src/handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>handler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-identify-0.36.1/src/handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>handler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../libp2p_identify/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -204,6 +204,32 @@
 <span id="199">199</span>
 <span id="200">200</span>
 <span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2018 Parity Technologies (UK) Ltd.</span>
 <span class="comment">//</span>
 <span class="comment">// Permission is hereby granted, free of charge, to any person obtaining a</span>
@@ -225,18 +251,19 @@
 <span class="comment">// DEALINGS IN THE SOFTWARE.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::protocol</span>::{
-    <span class="ident">IdentifyInfo</span>, <span class="ident">IdentifyProtocol</span>, <span class="ident">IdentifyPushProtocol</span>, <span class="ident">InboundPush</span>, <span class="ident">OutboundPush</span>, <span class="ident">ReplySubstream</span>,
+    <span class="ident">IdentifyInfo</span>, <span class="ident">IdentifyProtocol</span>, <span class="ident">IdentifyPushProtocol</span>, <span class="ident">InboundPush</span>, <span class="ident">OutboundPush</span>,
+    <span class="ident">ReplySubstream</span>, <span class="ident">UpgradeError</span>,
 };
+<span class="kw">use</span> <span class="ident">futures::future::BoxFuture</span>;
 <span class="kw">use</span> <span class="ident">futures::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">futures_timer::Delay</span>;
 <span class="kw">use</span> <span class="ident">libp2p_core::either</span>::{<span class="ident">EitherError</span>, <span class="ident">EitherOutput</span>};
-<span class="kw">use</span> <span class="ident">libp2p_core::upgrade</span>::{
-    <span class="ident">EitherUpgrade</span>, <span class="ident">InboundUpgrade</span>, <span class="ident">OutboundUpgrade</span>, <span class="ident">SelectUpgrade</span>, <span class="ident">UpgradeError</span>,
-};
+<span class="kw">use</span> <span class="ident">libp2p_core::upgrade</span>::{<span class="ident">EitherUpgrade</span>, <span class="ident">InboundUpgrade</span>, <span class="ident">OutboundUpgrade</span>, <span class="ident">SelectUpgrade</span>};
 <span class="kw">use</span> <span class="ident">libp2p_swarm</span>::{
     <span class="ident">ConnectionHandler</span>, <span class="ident">ConnectionHandlerEvent</span>, <span class="ident">ConnectionHandlerUpgrErr</span>, <span class="ident">KeepAlive</span>,
     <span class="ident">NegotiatedSubstream</span>, <span class="ident">SubstreamProtocol</span>,
 };
+<span class="kw">use</span> <span class="ident">log::warn</span>;
 <span class="kw">use</span> <span class="ident">smallvec::SmallVec</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">io</span>, <span class="ident">pin::Pin</span>, <span class="ident">task::Context</span>, <span class="ident">task::Poll</span>, <span class="ident">time::Duration</span>};
 
@@ -246,6 +273,7 @@
 <span class="doccomment">/// at least one identification request to be answered by the remote before</span>
 <span class="doccomment">/// permitting the underlying connection to be closed.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IdentifyHandler</span> {
+    <span class="ident">inbound_identify_push</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">IdentifyInfo</span>, <span class="ident">UpgradeError</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Pending events to yield.</span>
     <span class="ident">events</span>: <span class="ident">SmallVec</span><span class="op">&lt;</span>
         [<span class="ident">ConnectionHandlerEvent</span><span class="op">&lt;</span>
@@ -257,12 +285,12 @@
     <span class="op">&gt;</span>,
 
     <span class="doccomment">/// Future that fires when we need to identify the node again.</span>
-    <span class="ident">next_id</span>: <span class="ident">Delay</span>,
+    <span class="ident">trigger_next_identify</span>: <span class="ident">Delay</span>,
 
     <span class="doccomment">/// Whether the handler should keep the connection alive.</span>
     <span class="ident">keep_alive</span>: <span class="ident">KeepAlive</span>,
 
-    <span class="doccomment">/// The interval of `next_id`, i.e. the recurrent delay.</span>
+    <span class="doccomment">/// The interval of `trigger_next_identify`, i.e. the recurrent delay.</span>
     <span class="ident">interval</span>: <span class="ident">Duration</span>,
 }
 
@@ -276,7 +304,7 @@
     <span class="doccomment">/// We received a request for identification.</span>
     <span class="ident">Identify</span>(<span class="ident">ReplySubstream</span><span class="op">&lt;</span><span class="ident">NegotiatedSubstream</span><span class="op">&gt;</span>),
     <span class="doccomment">/// Failed to identify the remote.</span>
-    <span class="ident">IdentificationError</span>(<span class="ident">ConnectionHandlerUpgrErr</span><span class="op">&lt;</span><span class="ident">io::Error</span><span class="op">&gt;</span>),
+    <span class="ident">IdentificationError</span>(<span class="ident">ConnectionHandlerUpgrErr</span><span class="op">&lt;</span><span class="ident">UpgradeError</span><span class="op">&gt;</span>),
 }
 
 <span class="doccomment">/// Identifying information of the local node that is pushed to a remote.</span>
@@ -287,8 +315,9 @@
     <span class="doccomment">/// Creates a new `IdentifyHandler`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">initial_delay</span>: <span class="ident">Duration</span>, <span class="ident">interval</span>: <span class="ident">Duration</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">IdentifyHandler</span> {
+            <span class="ident">inbound_identify_push</span>: <span class="ident">Default::default</span>(),
             <span class="ident">events</span>: <span class="ident">SmallVec::new</span>(),
-            <span class="ident">next_id</span>: <span class="ident">Delay::new</span>(<span class="ident">initial_delay</span>),
+            <span class="ident">trigger_next_identify</span>: <span class="ident">Delay::new</span>(<span class="ident">initial_delay</span>),
             <span class="ident">keep_alive</span>: <span class="ident">KeepAlive::Yes</span>,
             <span class="ident">interval</span>,
         }
@@ -320,9 +349,14 @@
             <span class="ident">EitherOutput::First</span>(<span class="ident">substream</span>) =&gt; <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">push</span>(<span class="ident">ConnectionHandlerEvent::Custom</span>(
                 <span class="ident">IdentifyHandlerEvent::Identify</span>(<span class="ident">substream</span>),
             )),
-            <span class="ident">EitherOutput::Second</span>(<span class="ident">info</span>) =&gt; <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">push</span>(<span class="ident">ConnectionHandlerEvent::Custom</span>(
-                <span class="ident">IdentifyHandlerEvent::Identified</span>(<span class="ident">info</span>),
-            )),
+            <span class="ident">EitherOutput::Second</span>(<span class="ident">fut</span>) =&gt; {
+                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inbound_identify_push</span>.<span class="ident">replace</span>(<span class="ident">fut</span>).<span class="ident">is_some</span>() {
+                    <span class="macro">warn!</span>(
+                        <span class="string">&quot;New inbound identify push stream while still upgrading previous one. \
+                        Replacing previous with new.&quot;</span>,
+                    );
+                }
+            }
         }
     }
 
@@ -361,6 +395,8 @@
             <span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::OutboundProtocol</span> <span class="kw">as</span> <span class="ident">OutboundUpgrade</span><span class="op">&lt;</span><span class="ident">NegotiatedSubstream</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Error</span>,
         <span class="op">&gt;</span>,
     ) {
+        <span class="kw">use</span> <span class="ident">libp2p_core::upgrade::UpgradeError</span>;
+
         <span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">err</span>.<span class="ident">map_upgrade_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">e</span> {
             <span class="ident">UpgradeError::Select</span>(<span class="ident">e</span>) =&gt; <span class="ident">UpgradeError::Select</span>(<span class="ident">e</span>),
             <span class="ident">UpgradeError::Apply</span>(<span class="ident">EitherError::A</span>(<span class="ident">ioe</span>)) =&gt; <span class="ident">UpgradeError::Apply</span>(<span class="ident">ioe</span>),
@@ -370,7 +406,7 @@
             <span class="ident">IdentifyHandlerEvent::IdentificationError</span>(<span class="ident">err</span>),
         ));
         <span class="self">self</span>.<span class="ident">keep_alive</span> <span class="op">=</span> <span class="ident">KeepAlive::No</span>;
-        <span class="self">self</span>.<span class="ident">next_id</span>.<span class="ident">reset</span>(<span class="self">self</span>.<span class="ident">interval</span>);
+        <span class="self">self</span>.<span class="ident">trigger_next_identify</span>.<span class="ident">reset</span>(<span class="self">self</span>.<span class="ident">interval</span>);
     }
 
     <span class="kw">fn</span> <span class="ident">connection_keep_alive</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">KeepAlive</span> {
@@ -393,16 +429,32 @@
         }
 
         <span class="comment">// Poll the future that fires when we need to identify the node again.</span>
-        <span class="kw">match</span> <span class="ident">Future::poll</span>(<span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">next_id</span>), <span class="ident">cx</span>) {
-            <span class="ident">Poll::Pending</span> =&gt; <span class="ident">Poll::Pending</span>,
+        <span class="kw">match</span> <span class="ident">Future::poll</span>(<span class="ident">Pin::new</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">trigger_next_identify</span>), <span class="ident">cx</span>) {
+            <span class="ident">Poll::Pending</span> =&gt; {}
             <span class="ident">Poll::Ready</span>(()) =&gt; {
-                <span class="self">self</span>.<span class="ident">next_id</span>.<span class="ident">reset</span>(<span class="self">self</span>.<span class="ident">interval</span>);
+                <span class="self">self</span>.<span class="ident">trigger_next_identify</span>.<span class="ident">reset</span>(<span class="self">self</span>.<span class="ident">interval</span>);
                 <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="ident">ConnectionHandlerEvent::OutboundSubstreamRequest</span> {
                     <span class="ident">protocol</span>: <span class="ident">SubstreamProtocol::new</span>(<span class="ident">EitherUpgrade::A</span>(<span class="ident">IdentifyProtocol</span>), ()),
                 };
-                <span class="ident">Poll::Ready</span>(<span class="ident">ev</span>)
+                <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="ident">ev</span>);
             }
         }
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">Poll::Ready</span>(<span class="ident">res</span>)) <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">inbound_identify_push</span>
+            .<span class="ident">as_mut</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">poll_unpin</span>(<span class="ident">cx</span>))
+        {
+            <span class="self">self</span>.<span class="ident">inbound_identify_push</span>.<span class="ident">take</span>();
+
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">info</span>) <span class="op">=</span> <span class="ident">res</span> {
+                <span class="kw">return</span> <span class="ident">Poll::Ready</span>(<span class="ident">ConnectionHandlerEvent::Custom</span>(
+                    <span class="ident">IdentifyHandlerEvent::Identified</span>(<span class="ident">info</span>),
+                ));
+            }
+        }
+
+        <span class="ident">Poll::Pending</span>
     }
 }
 </code></pre></div>

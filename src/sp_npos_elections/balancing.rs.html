@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/5d3e7c4/primitives/npos-elections/src/balancing.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>balancing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/git/checkouts/substrate-773f176d546a32fa/12b0503/primitives/npos-elections/src/balancing.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>balancing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../sp_npos_elections/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -200,6 +200,8 @@
 <span id="195">195</span>
 <span id="196">196</span>
 <span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
 </pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.</span>
 
 <span class="comment">// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.</span>
@@ -228,14 +230,15 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! See [`balance`] for more information.</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Edge</span>, <span class="ident">ExtendedBalance</span>, <span class="ident">IdentifierT</span>, <span class="ident">Voter</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">BalancingConfig</span>, <span class="ident">Edge</span>, <span class="ident">ExtendedBalance</span>, <span class="ident">IdentifierT</span>, <span class="ident">Voter</span>};
 <span class="kw">use</span> <span class="ident">sp_arithmetic::traits::Zero</span>;
 <span class="kw">use</span> <span class="ident">sp_std::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// Balance the weight distribution of a given `voters` at most `iterations` times, or up until the</span>
 <span class="doccomment">/// point where the biggest difference created per iteration of all stakes is `tolerance`. If this</span>
 <span class="doccomment">/// is called with `tolerance = 0`, then exactly `iterations` rounds will be executed, except if no</span>
-<span class="doccomment">/// change has been made (`difference = 0`).</span>
+<span class="doccomment">/// change has been made (`difference = 0`). `tolerance` and `iterations` are part of the</span>
+<span class="doccomment">/// [`BalancingConfig`] struct.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// In almost all cases, a balanced solution will have a better score than an unbalanced solution,</span>
 <span class="doccomment">/// yet this is not 100% guaranteed because the first element of a [`crate::ElectionScore`] does not</span>
@@ -254,12 +257,13 @@
 <span class="doccomment">/// - [A new approach to the maximum flow problem](https://dl.acm.org/doi/10.1145/48014.61051).</span>
 <span class="doccomment">/// - [Validator election in nominated proof-of-stake](https://arxiv.org/abs/2004.12990) (Appendix</span>
 <span class="doccomment">///   A.)</span>
+<span class="doccomment">/// - [Computing a balanced solution](https://research.web3.foundation/en/latest/polkadot/NPoS/3.%20Balancing.html),</span>
+<span class="doccomment">///   which contains the details of the algorithm implementation.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">balance</span><span class="op">&lt;</span><span class="ident">AccountId</span>: <span class="ident">IdentifierT</span><span class="op">&gt;</span>(
 	<span class="ident">voters</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Voter</span><span class="op">&lt;</span><span class="ident">AccountId</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-	<span class="ident">iterations</span>: <span class="ident">usize</span>,
-	<span class="ident">tolerance</span>: <span class="ident">ExtendedBalance</span>,
+	<span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">BalancingConfig</span>,
 ) -&gt; <span class="ident">usize</span> {
-	<span class="kw">if</span> <span class="ident">iterations</span> <span class="op">==</span> <span class="number">0</span> {
+	<span class="kw">if</span> <span class="ident">config</span>.<span class="ident">iterations</span> <span class="op">==</span> <span class="number">0</span> {
 		<span class="kw">return</span> <span class="number">0</span>
 	}
 
@@ -267,14 +271,14 @@
 	<span class="kw">loop</span> {
 		<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">max_diff</span> <span class="op">=</span> <span class="number">0</span>;
 		<span class="kw">for</span> <span class="ident">voter</span> <span class="kw">in</span> <span class="ident">voters</span>.<span class="ident">iter_mut</span>() {
-			<span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">balance_voter</span>(<span class="ident">voter</span>, <span class="ident">tolerance</span>);
+			<span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">balance_voter</span>(<span class="ident">voter</span>, <span class="ident">config</span>.<span class="ident">tolerance</span>);
 			<span class="kw">if</span> <span class="ident">diff</span> <span class="op">&gt;</span> <span class="ident">max_diff</span> {
 				<span class="ident">max_diff</span> <span class="op">=</span> <span class="ident">diff</span>;
 			}
 		}
 
 		<span class="ident">iter</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-		<span class="kw">if</span> <span class="ident">max_diff</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">tolerance</span> <span class="op">|</span><span class="op">|</span> <span class="ident">iter</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">iterations</span> {
+		<span class="kw">if</span> <span class="ident">max_diff</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">config</span>.<span class="ident">tolerance</span> <span class="op">|</span><span class="op">|</span> <span class="ident">iter</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">config</span>.<span class="ident">iterations</span> {
 			<span class="kw">break</span> <span class="ident">iter</span>
 		}
 	}
@@ -360,7 +364,7 @@
 		.<span class="ident">get</span>(<span class="ident">last_index</span>)
 		.<span class="ident">expect</span>(
 			<span class="string">&quot;length of elected_edges is greater than or equal 2; last_index index is at the \
-			 minimum elected_edges.len() - 1; index is within range; qed&quot;</span>,
+ 			 minimum elected_edges.len() - 1; index is within range; qed&quot;</span>,
 		)
 		.<span class="ident">candidate</span>
 		.<span class="ident">borrow</span>()

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-relay-0.8.0/src/v2/protocol/outbound_stop.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>outbound_stop.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/libp2p-relay-0.9.1/src/v2/protocol/outbound_stop.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>outbound_stop.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../libp2p_relay/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -170,17 +170,6 @@
 <span id="165">165</span>
 <span id="166">166</span>
 <span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
-<span id="176">176</span>
-<span id="177">177</span>
-<span id="178">178</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021 Protocol Labs.</span>
 <span class="comment">//</span>
 <span class="comment">// Permission is hereby granted, free of charge, to any person obtaining a</span>
@@ -208,13 +197,10 @@
 <span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">future::BoxFuture</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>};
 <span class="kw">use</span> <span class="ident">libp2p_core</span>::{<span class="ident">upgrade</span>, <span class="ident">PeerId</span>};
 <span class="kw">use</span> <span class="ident">libp2p_swarm::NegotiatedSubstream</span>;
-<span class="kw">use</span> <span class="ident">prost::Message</span>;
 <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
-<span class="kw">use</span> <span class="ident">std::io::Cursor</span>;
 <span class="kw">use</span> <span class="ident">std::iter</span>;
 <span class="kw">use</span> <span class="ident">std::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
-<span class="kw">use</span> <span class="ident">unsigned_varint::codec::UviBytes</span>;
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Upgrade</span> {
     <span class="kw">pub</span> <span class="ident">relay_peer_id</span>: <span class="ident">PeerId</span>,
@@ -255,32 +241,26 @@
             <span class="ident">status</span>: <span class="prelude-val">None</span>,
         };
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">encoded_msg</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">msg</span>.<span class="ident">encoded_len</span>());
-        <span class="ident">msg</span>.<span class="ident">encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">encoded_msg</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;Vec to have sufficient capacity.&quot;</span>);
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">codec</span> <span class="op">=</span> <span class="ident">UviBytes::default</span>();
-        <span class="ident">codec</span>.<span class="ident">set_max_len</span>(<span class="ident">MAX_MESSAGE_SIZE</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">substream</span> <span class="op">=</span> <span class="ident">Framed::new</span>(<span class="ident">substream</span>, <span class="ident">codec</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">substream</span> <span class="op">=</span> <span class="ident">Framed::new</span>(<span class="ident">substream</span>, <span class="ident">prost_codec::Codec::new</span>(<span class="ident">MAX_MESSAGE_SIZE</span>));
 
         <span class="kw">async</span> <span class="kw">move</span> {
-            <span class="ident">substream</span>.<span class="ident">send</span>(<span class="ident">std::io::Cursor::new</span>(<span class="ident">encoded_msg</span>)).<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">msg</span>: <span class="ident">bytes::BytesMut</span> <span class="op">=</span> <span class="ident">substream</span>
-                .<span class="ident">next</span>()
-                .<span class="kw">await</span>
-                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">std::io::Error::new</span>(<span class="ident">std::io::ErrorKind::UnexpectedEof</span>, <span class="string">&quot;&quot;</span>))<span class="question-mark">?</span><span class="question-mark">?</span>;
-
+            <span class="ident">substream</span>.<span class="ident">send</span>(<span class="ident">msg</span>).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="kw">let</span> <span class="ident">StopMessage</span> {
                 <span class="ident">r#type</span>,
                 <span class="ident">peer</span>: <span class="kw">_</span>,
                 <span class="ident">limit</span>: <span class="kw">_</span>,
                 <span class="ident">status</span>,
-            } <span class="op">=</span> <span class="ident">StopMessage::decode</span>(<span class="ident">Cursor::new</span>(<span class="ident">msg</span>))<span class="question-mark">?</span>;
+            } <span class="op">=</span> <span class="ident">substream</span>
+                .<span class="ident">next</span>()
+                .<span class="kw">await</span>
+                .<span class="ident">ok_or</span>(<span class="ident">FatalUpgradeError::StreamClosed</span>)<span class="question-mark">?</span><span class="question-mark">?</span>;
 
             <span class="kw">let</span> <span class="ident">r#type</span> <span class="op">=</span>
                 <span class="ident">stop_message::Type::from_i32</span>(<span class="ident">r#type</span>).<span class="ident">ok_or</span>(<span class="ident">FatalUpgradeError::ParseTypeField</span>)<span class="question-mark">?</span>;
             <span class="kw">match</span> <span class="ident">r#type</span> {
-                <span class="ident">stop_message::Type::Connect</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">FatalUpgradeError::UnexpectedTypeConnect</span>)<span class="question-mark">?</span>,
+                <span class="ident">stop_message::Type::Connect</span> =&gt; {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">FatalUpgradeError::UnexpectedTypeConnect</span>.<span class="ident">into</span>())
+                }
                 <span class="ident">stop_message::Type::Status</span> =&gt; {}
             }
 
@@ -288,9 +268,13 @@
                 .<span class="ident">ok_or</span>(<span class="ident">FatalUpgradeError::ParseStatusField</span>)<span class="question-mark">?</span>;
             <span class="kw">match</span> <span class="ident">status</span> {
                 <span class="ident">Status::Ok</span> =&gt; {}
-                <span class="ident">Status::ResourceLimitExceeded</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CircuitFailedReason::ResourceLimitExceeded</span>)<span class="question-mark">?</span>,
-                <span class="ident">Status::PermissionDenied</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CircuitFailedReason::PermissionDenied</span>)<span class="question-mark">?</span>,
-                <span class="ident">s</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">FatalUpgradeError::UnexpectedStatus</span>(<span class="ident">s</span>))<span class="question-mark">?</span>,
+                <span class="ident">Status::ResourceLimitExceeded</span> =&gt; {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CircuitFailedReason::ResourceLimitExceeded</span>.<span class="ident">into</span>())
+                }
+                <span class="ident">Status::PermissionDenied</span> =&gt; {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CircuitFailedReason::PermissionDenied</span>.<span class="ident">into</span>())
+                }
+                <span class="ident">s</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">FatalUpgradeError::UnexpectedStatus</span>(<span class="ident">s</span>).<span class="ident">into</span>()),
             }
 
             <span class="kw">let</span> <span class="ident">FramedParts</span> {
@@ -318,14 +302,8 @@
     <span class="ident">Fatal</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">FatalUpgradeError</span>),
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">std::io::Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">UpgradeError</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">error</span>: <span class="ident">std::io::Error</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::Fatal</span>(<span class="ident">error</span>.<span class="ident">into</span>())
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">prost::DecodeError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">UpgradeError</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">error</span>: <span class="ident">prost::DecodeError</span>) -&gt; <span class="self">Self</span> {
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">prost_codec::Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">UpgradeError</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">error</span>: <span class="ident">prost_codec::Error</span>) -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::Fatal</span>(<span class="ident">error</span>.<span class="ident">into</span>())
     }
 }
@@ -340,14 +318,14 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Error</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FatalUpgradeError</span> {
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to decode message: {0}.&quot;</span>)]</span>
-    <span class="ident">Decode</span>(
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to encode or decode&quot;</span>)]</span>
+    <span class="ident">Codec</span>(
         <span class="attribute">#[<span class="ident">from</span>]</span>
         <span class="attribute">#[<span class="ident">source</span>]</span>
-        <span class="ident">prost::DecodeError</span>,
+        <span class="ident">prost_codec::Error</span>,
     ),
-    <span class="attribute">#[<span class="ident">error</span>(<span class="ident">transparent</span>)]</span>
-    <span class="ident">Io</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">std::io::Error</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Stream closed&quot;</span>)]</span>
+    <span class="ident">StreamClosed</span>,
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Expected &#39;status&#39; field to be set.&quot;</span>)]</span>
     <span class="ident">MissingStatusField</span>,
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Failed to parse response type field.&quot;</span>)]</span>
