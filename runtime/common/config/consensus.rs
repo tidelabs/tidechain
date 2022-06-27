@@ -28,25 +28,18 @@ use crate::{
   ElectionProviderMultiPhase, Event, Historical, ImOnline, Offences, Runtime, Session, SessionKeys,
   Staking, Timestamp, TransactionPayment, Treasury,
 };
-use codec::Decode;
 use frame_support::{
   parameter_types,
-  traits::{ConstU32, EnsureOneOf, KeyOwnerProofSystem, U128CurrencyToVote},
+  traits::{ConstU32, EitherOfDiverse, KeyOwnerProofSystem, U128CurrencyToVote},
   weights::{DispatchClass, Weight},
 };
 use frame_system::EnsureRoot;
 use sp_runtime::{
-  curve::PiecewiseLinear,
-  traits::{OpaqueKeys, TrailingZeroInput},
-  transaction_validity::TransactionPriority,
-  KeyTypeId, Perbill,
+  curve::PiecewiseLinear, traits::OpaqueKeys, transaction_validity::TransactionPriority, KeyTypeId,
+  Perbill,
 };
 
 use sp_std::prelude::*;
-
-/// Maximum number of iterations for balancing that will be executed in the embedded miner of
-/// pallet-election-provider-multi-phase.
-pub const MINER_MAX_ITERATIONS: u32 = 10;
 
 pub struct OnChainSeqPhragmen;
 impl frame_election_provider_support::onchain::Config for OnChainSeqPhragmen {
@@ -205,28 +198,6 @@ frame_election_provider_support::generate_solution_type!(
   >(16)
 );
 
-/// A source of random balance for the NPoS Solver, which is meant to be run by the off-chain worker
-/// election miner.
-pub struct OffchainRandomBalancing;
-impl frame_support::pallet_prelude::Get<Option<(usize, sp_npos_elections::ExtendedBalance)>>
-  for OffchainRandomBalancing
-{
-  fn get() -> Option<(usize, sp_npos_elections::ExtendedBalance)> {
-    let iters = match MINER_MAX_ITERATIONS {
-      0 => 0,
-      max => {
-        let seed = sp_io::offchain::random_seed();
-        let random = <u32>::decode(&mut TrailingZeroInput::new(&seed))
-          .expect("input is padded with zeroes; qed")
-          % max.saturating_add(1);
-        random as usize
-      }
-    };
-
-    Some((iters, 0))
-  }
-}
-
 impl pallet_election_provider_multi_phase::MinerConfig for Runtime {
   type AccountId = AccountId;
   type MaxLength = OffchainSolutionLengthLimit;
@@ -291,10 +262,10 @@ impl pallet_election_provider_multi_phase::Config for Runtime {
   type Solver = frame_election_provider_support::SequentialPhragmen<
     AccountId,
     pallet_election_provider_multi_phase::SolutionAccuracyOf<Self>,
-    OffchainRandomBalancing,
+    (),
   >;
   type BenchmarkingConfig = BenchmarkConfigMultiPhase;
-  type ForceOrigin = EnsureOneOf<
+  type ForceOrigin = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
@@ -367,7 +338,7 @@ impl pallet_staking::Config for Runtime {
     frame_election_provider_support::onchain::UnboundedExecution<OnChainSeqPhragmen>;
   type SlashDeferDuration = SlashDeferDuration;
   /// A super-majority of the council can cancel the slash.
-  type SlashCancelOrigin = EnsureOneOf<
+  type SlashCancelOrigin = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 3, 4>,
   >;

@@ -130,9 +130,10 @@ fn lagoon_testnet_genesis(
   const STASH: u128 = 10_000 * 1_000_000_000_000;
   const SUNRISE_POOL: u128 = 192_000_000 * 1_000_000_000_000;
   // Treasury Account Id
-  let treasury_account: AccountId = lagoon_runtime::TreasuryPalletId::get().into_account();
+  let treasury_account: AccountId =
+    lagoon_runtime::TreasuryPalletId::get().into_account_truncating();
   // Fees Account Id
-  let fees_account: AccountId = lagoon_runtime::FeesPalletId::get().into_account();
+  let fees_account: AccountId = lagoon_runtime::FeesPalletId::get().into_account_truncating();
   // Get all TDFY from our stakeholders
   let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
 
@@ -328,11 +329,13 @@ fn tidechain_testnet_genesis(
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
 
   // Treasury Account Id
-  let treasury_account: AccountId = tidechain_runtime::TreasuryPalletId::get().into_account();
+  let treasury_account: AccountId =
+    tidechain_runtime::TreasuryPalletId::get().into_account_truncating();
   // Fees Account Id
-  let fees_account: AccountId = tidechain_runtime::FeesPalletId::get().into_account();
+  let fees_account: AccountId = tidechain_runtime::FeesPalletId::get().into_account_truncating();
   // Asset registry Account Id
-  let asset_registry: AccountId = tidechain_runtime::AssetRegistryPalletId::get().into_account();
+  let asset_registry: AccountId =
+    tidechain_runtime::AssetRegistryPalletId::get().into_account_truncating();
   // Get all TDFY from our stakeholders
   let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
 

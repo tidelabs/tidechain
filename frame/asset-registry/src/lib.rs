@@ -105,7 +105,7 @@ pub mod pallet {
         assets: Vec::new(),
         // We use pallet account ID by default,
         // but should always be set in the genesis config.
-        account: T::AssetRegistryPalletId::get().into_account(),
+        account: T::AssetRegistryPalletId::get().into_account_truncating(),
       }
     }
   }
@@ -232,14 +232,14 @@ pub mod pallet {
           true => {
             // unfreeze asset
             pallet_assets::Pallet::<T>::thaw_asset(
-              RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account()).into(),
+              RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account_truncating()).into(),
               asset_id,
             )?;
           }
           false => {
             // freeze asset
             pallet_assets::Pallet::<T>::freeze_asset(
-              RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account()).into(),
+              RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account_truncating()).into(),
               asset_id,
             )?;
           }
@@ -266,14 +266,14 @@ pub mod pallet {
         RawOrigin::Root.into(),
         asset_id,
         // make the pallet account id the owner, so only this pallet can handle the funds.
-        T::Lookup::unlookup(T::AssetRegistryPalletId::get().into_account()),
+        T::Lookup::unlookup(T::AssetRegistryPalletId::get().into_account_truncating()),
         true,
         existential_deposit,
       )?;
 
       // 2. Set metadata
       pallet_assets::Pallet::<T>::force_set_metadata(
-        RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account()).into(),
+        RawOrigin::Signed(T::AssetRegistryPalletId::get().into_account_truncating()).into(),
         asset_id,
         name,
         symbol,

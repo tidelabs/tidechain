@@ -100,7 +100,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 4040,
+  spec_version: 5000,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -159,7 +159,7 @@ construct_runtime!(
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
         Indices: pallet_indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 3,
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
-        TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 5,
+        TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 
         // Consensus support
         Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 6,

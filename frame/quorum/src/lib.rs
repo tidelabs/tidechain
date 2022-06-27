@@ -902,12 +902,12 @@ pub mod pallet {
     // Process configuration update
     fn process_update_configuration(members: &Vec<T::AccountId>, threshold: u16) {
       // 1. Remove all members existing
-      Members::<T>::remove_all();
+      let _ = Members::<T>::clear(u32::MAX, None);
 
       // 2. Remove all public keys
       //
       // FIXME: We need to validate if we want to have quorum to resubmit keys?
-      PublicKeys::<T>::remove_all(None);
+      let _ = PublicKeys::<T>::clear(u32::MAX, None);
 
       // 3. Add new set
       for account in members {
