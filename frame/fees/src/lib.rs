@@ -651,7 +651,7 @@ pub mod pallet {
         .iter()
         // make sure there is enough transaction remaining in the pool
         .filter(|pool| pool.transactions_remaining > 0)
-        // make sure there is enough tifi remaining to fullfill this
+        // make sure there is enough TDFY remaining to fullfill this
         .filter(|pool| {
           pool.balance > 0
             && pool.balance

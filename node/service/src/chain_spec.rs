@@ -43,7 +43,7 @@ const TIDECHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/
 const LAGOON_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
 #[cfg(any(feature = "lagoon-native", feature = "tidechain-native"))]
-const DEFAULT_PROTOCOL_ID: &str = "tifi";
+const DEFAULT_PROTOCOL_ID: &str = "TDFY";
 
 /// Node `ChainSpec` extensions.
 ///
@@ -124,7 +124,7 @@ fn lagoon_testnet_genesis(
   root: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> lagoon_runtime::GenesisConfig {
-  // 10_500 TIFIs / validators (10_000 stashed)
+  // 10_500 TDFYs / validators (10_000 stashed)
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
@@ -152,7 +152,7 @@ fn lagoon_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
-  // 10 tifi endowed to root
+  // 10 TDFY endowed to root
   + 10_000_000_000_000
   // Sunrise pool
   + SUNRISE_POOL;
@@ -171,7 +171,7 @@ fn lagoon_testnet_genesis(
     (treasury_account, treasury_funds),
     // Sunrise pool
     (fees_account, SUNRISE_POOL),
-    // 10 tifi to root so he can pay fees
+    // 10 TDFY to root so he can pay fees
     (root.clone(), 10_000_000_000_000),
   ];
 
@@ -319,7 +319,7 @@ fn tidechain_testnet_genesis(
   oracle: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> tidechain_runtime::GenesisConfig {
-  // 10_500 TIFIs / validators (10_000 stashed)
+  // 10_500 TDFYs / validators (10_000 stashed)
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
@@ -2041,35 +2041,35 @@ mod helpers {
         CurrencyId::Tdfy,
         //5DUTRtdo3T6CtLx5rxJQxAVhT9RmZUWGw4FJWZSPWbLFhNf2
         hex!["3e598e8ee9577c609c70823e394ab1a2e0301f73f074a773a3a1b20bfba9050e"].into(),
-        // 1_000 TIFIS
+        // 1_000 TDFY
         assets::Asset::Tdfy.saturating_mul(1_000),
       ),
       (
         CurrencyId::Tdfy,
         //5GHab6U9Ke5XjbHHEB5WSUreyp293BryKjJrGWgQ1nCvEDzM
         hex!["bac2a7f4be9d7e0f8eee75e0af5e33240698e8ac0b02904627bd9c4d37b3dd5e"].into(),
-        // 1_000 TIFIS
+        // 1_000 TDFY
         assets::Asset::Tdfy.saturating_mul(1_000),
       ),
       (
         CurrencyId::Tdfy,
         //5CLmiDfMLGbuuvuuc87ZF1fr9itkyVzTE5hjWb725JemcGka
         hex!["0c40e6b8b6686685828658080a17af04562fa69818c848146795c8c586691a68"].into(),
-        // 1_000 TIFIS
+        // 1_000 TDFY
         assets::Asset::Tdfy.saturating_mul(1_000),
       ),
       (
         CurrencyId::Tdfy,
         //5CJMQZA3LgdZ7EXN1eTXjxqQvmxgZEuXy9iWA1Yvd67zK9Da
         hex!["0a689812fb1b2763c3ff90ad8f12c652848904d7f4cb3ea5d5328a30c4d3c978"].into(),
-        // 1_000 TIFIS
+        // 1_000 TDFY
         assets::Asset::Tdfy.saturating_mul(1_000),
       ),
       (
         CurrencyId::Tdfy,
         //5DWorbmbirDwHNNrLFu15aRjD63fiEAbi5K9Eo96mxwirVdM
         hex!["4024cecb82ca165b7960b22a19ac3fafa5240582691eaf22ffee7a6f06cb1526"].into(),
-        // 1_000 TIFIS
+        // 1_000 TDFY
         assets::Asset::Tdfy.saturating_mul(1_000),
       ),
       // devs

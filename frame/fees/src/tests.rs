@@ -314,7 +314,7 @@ pub fn calculate_trading_fees() {
       FixedU128::saturating_from_rational(1, 1),
     );
 
-    // 100 tifi @ 2% should cost 2 TIFIs
+    // 100 TDFY @ 2% should cost 2 TDFY
     let calculated_fee = Fees::calculate_swap_fees(
       CurrencyId::Tdfy,
       100_000_000_000_000,
@@ -346,7 +346,7 @@ pub fn register_swap_fees() {
     let new_current_era = Fees::active_era().unwrap().index;
     assert_eq!(current_era + 1, new_current_era);
 
-    // 100 tifi @ 2% should cost 2 TIFIs
+    // 100 TDFY @ 2% should cost 2 TDFY
     let calculated_fee = Fees::register_swap_fees(
       3u64.into(),
       CurrencyId::Tdfy,

@@ -103,7 +103,7 @@ You can see your node on [telemetry] (set a custom name with `--name "my custom 
 
 [telemetry]: https://telemetry.tidefi.io/#list/Lagoon
 
-### Obtaining TIFIs
+### Obtaining TDFYs
 
 For Lagoon's TDFY tokens, see the faucet [instructions](#) on the Wiki.
 
