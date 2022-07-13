@@ -116,7 +116,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 5000,
+  spec_version: 5010,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -217,7 +217,7 @@ construct_runtime!(
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 27,
 
         // Provides a semi-sorted list of nominators for staking
-        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
+        VoterList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
 
         // Preimage registrar
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 29,
