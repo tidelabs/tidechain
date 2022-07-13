@@ -206,7 +206,7 @@ construct_runtime!(
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 27,
 
         // Provides a semi-sorted list of nominators for staking
-        VoterList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
+        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
 
         // Preimage registrar
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 29,
@@ -244,12 +244,10 @@ pub type Executive = frame_executive::Executive<
   frame_system::ChainContext<Runtime>,
   Runtime,
   AllPalletsWithSystem,
-  (
-    RenameBagsListToVoterList,
-    pallet_bags_list::migrations::AddScore<Runtime>,
-  ),
+  (pallet_bags_list::migrations::AddScore<Runtime>,),
 >;
 
+/*
 /// A migration which renames the pallet `BagsList` to `VoterList`
 pub struct RenameBagsListToVoterList;
 impl frame_support::traits::OnRuntimeUpgrade for RenameBagsListToVoterList {
@@ -264,3 +262,4 @@ impl frame_support::traits::OnRuntimeUpgrade for RenameBagsListToVoterList {
     frame_support::weights::Weight::MAX
   }
 }
+*/

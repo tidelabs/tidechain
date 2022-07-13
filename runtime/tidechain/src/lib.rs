@@ -217,7 +217,7 @@ construct_runtime!(
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 27,
 
         // Provides a semi-sorted list of nominators for staking
-        VoterList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
+        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
 
         // Preimage registrar
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 29,
