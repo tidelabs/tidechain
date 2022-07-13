@@ -100,7 +100,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 5000,
+  spec_version: 5010,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -206,7 +206,7 @@ construct_runtime!(
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 27,
 
         // Provides a semi-sorted list of nominators for staking
-        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
+        VoterList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
 
         // Preimage registrar
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 29,
@@ -244,5 +244,23 @@ pub type Executive = frame_executive::Executive<
   frame_system::ChainContext<Runtime>,
   Runtime,
   AllPalletsWithSystem,
-  (),
+  (
+    RenameBagsListToVoterList,
+    pallet_bags_list::migrations::AddScore<Runtime>,
+  ),
 >;
+
+/// A migration which renames the pallet `BagsList` to `VoterList`
+pub struct RenameBagsListToVoterList;
+impl frame_support::traits::OnRuntimeUpgrade for RenameBagsListToVoterList {
+  #[cfg(feature = "try-runtime")]
+  fn pre_upgrade() -> Result<(), &'static str> {
+    // For other pre-upgrade checks, we need the storage to already be migrated.
+    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
+    Ok(())
+  }
+  fn on_runtime_upgrade() -> frame_support::weights::Weight {
+    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
+    frame_support::weights::Weight::MAX
+  }
+}

@@ -24,9 +24,9 @@ use crate::{
     AccountId, Balance, BlockExecutionWeight, EpochDuration, GrandpaId, ImOnlineId, Moment,
     RuntimeBlockLength, RuntimeBlockWeights,
   },
-  Babe, BagsList, Balances, BlockNumber, Call, CouncilCollectiveInstance,
-  ElectionProviderMultiPhase, Event, Historical, ImOnline, Offences, Runtime, Session, SessionKeys,
-  Staking, Timestamp, TransactionPayment, Treasury,
+  Babe, Balances, BlockNumber, Call, CouncilCollectiveInstance, ElectionProviderMultiPhase, Event,
+  Historical, ImOnline, Offences, Runtime, Session, SessionKeys, Staking, Timestamp,
+  TransactionPayment, Treasury, VoterList,
 };
 use frame_support::{
   parameter_types,
@@ -348,7 +348,7 @@ impl pallet_staking::Config for Runtime {
   type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
   type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
   // Use the nominators map to iter voters, but also keep bags-list up-to-date.
-  type VoterList = BagsList;
+  type VoterList = VoterList;
   type MaxUnlockingChunks = frame_support::traits::ConstU32<32>;
   type BenchmarkingConfig = StakingBenchmarkingConfig;
   type OnStakerSlash = ();
