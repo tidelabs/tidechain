@@ -251,6 +251,24 @@
 <span id="246">246</span>
 <span id="247">247</span>
 <span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -353,7 +371,7 @@
   <span class="comment">// 1.10-1 -&gt; 1101</span>
   <span class="comment">// 2.4 -&gt; 2040</span>
   <span class="comment">// 2.14 -&gt; 2140</span>
-  <span class="ident">spec_version</span>: <span class="number">5000</span>,
+  <span class="ident">spec_version</span>: <span class="number">5010</span>,
   <span class="ident">impl_version</span>: <span class="number">0</span>,
   <span class="ident">apis</span>: <span class="ident"><span class="kw">crate</span>::api::PRUNTIME_API_VERSIONS</span>,
   <span class="ident">transaction_version</span>: <span class="number">1</span>,
@@ -459,7 +477,7 @@
         <span class="ident">Assets</span>: <span class="ident">pallet_assets</span>::{<span class="ident">Pallet</span>, <span class="ident">Call</span>, <span class="ident">Storage</span>, <span class="ident">Event</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>} <span class="op">=</span> <span class="number">27</span>,
 
         <span class="comment">// Provides a semi-sorted list of nominators for staking</span>
-        <span class="ident">BagsList</span>: <span class="ident">pallet_bags_list</span>::{<span class="ident">Pallet</span>, <span class="ident">Call</span>, <span class="ident">Storage</span>, <span class="ident">Event</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>} <span class="op">=</span> <span class="number">28</span>,
+        <span class="ident">VoterList</span>: <span class="ident">pallet_bags_list</span>::{<span class="ident">Pallet</span>, <span class="ident">Call</span>, <span class="ident">Storage</span>, <span class="ident">Event</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>} <span class="op">=</span> <span class="number">28</span>,
 
         <span class="comment">// Preimage registrar</span>
         <span class="ident">Preimage</span>: <span class="ident">pallet_preimage</span>::{<span class="ident">Pallet</span>, <span class="ident">Call</span>, <span class="ident">Storage</span>, <span class="ident">Event</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>} <span class="op">=</span> <span class="number">29</span>,
@@ -497,8 +515,26 @@
   <span class="ident">frame_system::ChainContext</span><span class="op">&lt;</span><span class="ident">Runtime</span><span class="op">&gt;</span>,
   <span class="ident">Runtime</span>,
   <span class="ident">AllPalletsWithSystem</span>,
-  (),
+  (
+    <span class="ident">RenameBagsListToVoterList</span>,
+    <span class="ident">pallet_bags_list::migrations::AddScore</span><span class="op">&lt;</span><span class="ident">Runtime</span><span class="op">&gt;</span>,
+  ),
 <span class="op">&gt;</span>;
+
+<span class="doccomment">/// A migration which renames the pallet `BagsList` to `VoterList`</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RenameBagsListToVoterList</span>;
+<span class="kw">impl</span> <span class="ident">frame_support::traits::OnRuntimeUpgrade</span> <span class="kw">for</span> <span class="ident">RenameBagsListToVoterList</span> {
+  <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try-runtime&quot;</span>)]</span>
+  <span class="kw">fn</span> <span class="ident">pre_upgrade</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="comment">// For other pre-upgrade checks, we need the storage to already be migrated.</span>
+    <span class="ident">frame_support::storage::migration::move_pallet</span>(<span class="string">b&quot;BagsList&quot;</span>, <span class="string">b&quot;VoterList&quot;</span>);
+    <span class="prelude-val">Ok</span>(())
+  }
+  <span class="kw">fn</span> <span class="ident">on_runtime_upgrade</span>() -&gt; <span class="ident">frame_support::weights::Weight</span> {
+    <span class="ident">frame_support::storage::migration::move_pallet</span>(<span class="string">b&quot;BagsList&quot;</span>, <span class="string">b&quot;VoterList&quot;</span>);
+    <span class="ident">frame_support::weights::Weight::MAX</span>
+  }
+}
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="lagoon_runtime" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
 </body></html>
