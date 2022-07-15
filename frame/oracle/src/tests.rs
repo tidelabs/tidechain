@@ -1384,11 +1384,6 @@ pub fn test_imalive() {
     assert_ok!(Oracle::im_alive(
       context.alice.clone(),
       OracleImAlive {
-        // How many X for 1 USDT
-        usdt_value: vec![
-          // 10 Tdfy / USDT
-          (CurrencyId::Tdfy, 10_000_000_000_000),
-        ],
         // How many X for 1 TDFY
         tdfy_value: vec![
           // 0.10 USDT (6 decimals) / Tdfy

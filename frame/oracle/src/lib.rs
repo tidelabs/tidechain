@@ -49,7 +49,7 @@ pub mod pallet {
   };
   use sp_std::vec;
   use tidefi_primitives::{
-    assets::{Asset, USDT},
+    assets::Asset,
     pallet::{FeesExt, OracleExt, SecurityExt},
     AssetId, Balance, CurrencyId, Hash, OracleImAlive, Swap, SwapConfirmation, SwapStatus,
     SwapType,
@@ -782,10 +782,6 @@ pub mod pallet {
 
       // 2. Build final price vector
       let mut all_prices = Vec::new();
-
-      for (currency_id, price) in im_alive.usdt_value {
-        all_prices.push((currency_id, CurrencyId::Wrapped(USDT), price))
-      }
 
       for (asset_id, price) in im_alive.tdfy_value {
         all_prices.push((CurrencyId::Wrapped(asset_id), CurrencyId::Tdfy, price))
