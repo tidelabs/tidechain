@@ -78,6 +78,8 @@ parameter_types! {
   // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
   // current_era.start_block + BlocksSunriseClaims < current_block to be able to claim last era sunrise reward
   pub const BlocksSunriseClaims: BlockNumber = 10;
+  // Maximum sunrise rewards before rewards allocation (in TDFY's)
+  pub const SunriseMaximumAllocation: Balance = 100_000_000_000_000_000;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -212,6 +214,8 @@ impl pallet_fees::Config for Runtime {
   type FeeAmount = FeeAmount;
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
+  // Sunrise
+  type SunriseMaximumAllocation = SunriseMaximumAllocation;
   // Security utils
   type Security = Security;
   type BlocksSunriseClaims = BlocksSunriseClaims;

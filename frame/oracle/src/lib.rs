@@ -49,10 +49,9 @@ pub mod pallet {
   };
   use sp_std::vec;
   use tidefi_primitives::{
-    assets::{Asset, USDT},
+    assets::Asset,
     pallet::{FeesExt, OracleExt, SecurityExt},
-    AssetId, Balance, CurrencyId, Hash, OracleImAlive, Swap, SwapConfirmation, SwapStatus,
-    SwapType,
+    AssetId, Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
   };
 
   /// Oracle configuration

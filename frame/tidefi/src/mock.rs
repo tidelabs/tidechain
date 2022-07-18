@@ -259,7 +259,7 @@ impl pallet_fees::Config for Test {
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
   type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;
-  type SunriseMaximumAllocation = SunriseMaximumAllocation;    
+  type SunriseMaximumAllocation = SunriseMaximumAllocation;
 }
 
 impl pallet_tidefi_stake::Config for Test {
