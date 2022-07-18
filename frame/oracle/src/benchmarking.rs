@@ -21,7 +21,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, wh
 use frame_support::traits::fungibles::Mutate;
 use frame_system::{self, RawOrigin};
 use sp_runtime::{traits::StaticLookup, Permill};
-use tidefi_primitives::{pallet::OracleExt, CurrencyId, OracleImAlive, SwapConfirmation, SwapType};
+use tidefi_primitives::{pallet::OracleExt, CurrencyId, SwapConfirmation, SwapType};
 
 const SEED: u32 = 0;
 const ADMIN_ID: u32 = 1;

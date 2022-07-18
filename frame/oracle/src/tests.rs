@@ -33,7 +33,7 @@ use sp_runtime::{
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt},
-  Balance, CurrencyId, Hash, OracleImAlive, SwapConfirmation, SwapStatus, SwapType,
+  Balance, CurrencyId, Hash, SwapConfirmation, SwapStatus, SwapType,
 };
 
 const CURRENT_BLOCK_NUMBER: BlockNumber = 0;

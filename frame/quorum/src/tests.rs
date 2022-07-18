@@ -94,6 +94,7 @@ impl Default for Context {
       account_id: ALICE_ACCOUNT_ID.into(),
       currency_id: CurrencyId::Tdfy,
       mint_amount: ONE_TDFY,
+      gas_amount: None,
       transaction_id: Vec::new(),
       compliance_level: ComplianceLevel::Green,
     };
@@ -328,6 +329,7 @@ fn insert_mint_proposal(
     account_id: ALICE_ACCOUNT_ID.into(),
     currency_id: CurrencyId::Tdfy,
     mint_amount: ONE_TDFY,
+    gas_amount: None,
     transaction_id: transaction_id,
     compliance_level: compliance_level,
   });
@@ -357,6 +359,7 @@ fn assert_mint_proposal_exists_in_storage(context: &Context, compliance_level: C
         account_id: context.valid_mint.account_id,
         currency_id: context.valid_mint.currency_id,
         mint_amount: context.valid_mint.mint_amount,
+        gas_amount: None,
         transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone()).unwrap(),
         compliance_level: compliance_level,
       })
@@ -534,6 +537,7 @@ pub fn should_remove_expired() {
       account_id: ALICE_ACCOUNT_ID.into(),
       currency_id: CurrencyId::Tdfy,
       mint_amount: ONE_TDFY,
+      gas_amount: None,
       transaction_id: Default::default(),
       compliance_level: ComplianceLevel::Green,
     });
@@ -658,6 +662,7 @@ mod submit_proposal {
           account_id: context.valid_mint.account_id,
           currency_id: context.valid_mint.currency_id,
           mint_amount: context.valid_mint.mint_amount,
+          gas_amount: None,
           transaction_id: vec![0; u32::MAX.try_into().unwrap()],
           compliance_level: context.valid_mint.compliance_level,
         });
@@ -1225,6 +1230,7 @@ mod voting_for_proposals {
             account_id: ALICE_ACCOUNT_ID.into(),
             currency_id: CurrencyId::Tdfy,
             mint_amount: ONE_TDFY,
+            gas_amount: None,
             transaction_id: Default::default(),
             compliance_level: ComplianceLevel::Green,
           });
@@ -1274,6 +1280,7 @@ mod voting_for_proposals {
             account_id: ALICE_ACCOUNT_ID.into(),
             currency_id: CurrencyId::Tdfy,
             mint_amount: ONE_TDFY,
+            gas_amount: None,
             transaction_id: Default::default(),
             compliance_level: ComplianceLevel::Green,
           });
@@ -1367,6 +1374,7 @@ mod voting_for_proposals {
               account_id: ALICE_ACCOUNT_ID.into(),
               currency_id: disabled_asset_id,
               mint_amount: ONE_TEMP,
+              gas_amount: None,
               transaction_id: BoundedVec::try_from(Vec::new()).unwrap(),
               compliance_level: ComplianceLevel::Green,
             });
@@ -1393,6 +1401,7 @@ mod voting_for_proposals {
                   account_id: context.valid_mint.account_id,
                   currency_id: disabled_asset_id,
                   mint_amount: ONE_TEMP,
+                  gas_amount: None,
                   transaction_id: BoundedVec::try_from(context.valid_mint.transaction_id.clone())
                     .unwrap(),
                   compliance_level: ComplianceLevel::Green,

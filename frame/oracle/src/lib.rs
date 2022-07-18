@@ -804,16 +804,14 @@ pub mod pallet {
       let sender = ensure_signed(origin)?;
       ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
-      // 2. Build final price vector
-      let mut all_prices = Vec::new();
-
-      for (asset_id, price) in value {
-        all_prices.push((CurrencyId::Wrapped(asset_id), CurrencyId::Tdfy, price))
-      }
-
-      if !all_prices.is_empty() {
-        // Update only if we provided at least one price
-        T::Fees::register_order_book_price(all_prices)?;
+      if !value.is_empty() {
+        // 2. Update only if we provided at least one price
+        T::Fees::register_order_book_price(
+          value
+            .iter()
+            .map(|price| (CurrencyId::Wrapped(price.0), CurrencyId::Tdfy, price.1))
+            .collect(),
+        )?;
       }
 
       // 3. Update last seen
