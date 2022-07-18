@@ -410,7 +410,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     sunrise_swap_pools: vec![
       SunriseSwapPool {
         id: 1,
-        minimum_usdt_value: 0,
+        minimum_tdfy_value: 0,
         transactions_remaining: 1,
         balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
         // 125%
@@ -418,7 +418,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
       },
       SunriseSwapPool {
         id: 2,
-        minimum_usdt_value: 1_000_000_000_000_000,
+        minimum_tdfy_value: 1_000_000_000_000_000,
         transactions_remaining: 1,
         balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
         // 200%

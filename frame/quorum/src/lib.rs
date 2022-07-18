@@ -405,6 +405,7 @@ pub mod pallet {
           account_id: mint.account_id,
           currency_id: mint.currency_id,
           mint_amount: mint.mint_amount,
+          gas_amount: mint.gas_amount,
           transaction_id: mint
             .transaction_id
             .try_into()
@@ -885,6 +886,9 @@ pub mod pallet {
       {
         T::CurrencyTidefi::mint_into(item.currency_id, &item.account_id, item.mint_amount)
           .map_err(|_| Error::<T>::MintFailed)?;
+
+        // FIXME: Implement refund of gas fee if needed
+        // item.gas_amount
 
         Self::deposit_event(Event::<T>::Minted {
           proposal_id,

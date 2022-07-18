@@ -385,7 +385,7 @@ pub fn register_swap_fees() {
     assert_eq!(registered_fee.first().unwrap().1.amount, 100_000_000);
     assert_eq!(registered_fee.first().unwrap().1.fee, 2_000_000);
     assert_eq!(
-      registered_fee.first().unwrap().1.fee_usdt,
+      registered_fee.first().unwrap().1.fee_tdfy,
       2_000_000_000_000
     );
     assert_eq!(

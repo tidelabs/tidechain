@@ -326,8 +326,6 @@ pub mod pallet {
     AccountFeeOverflow,
     /// Balance overflow
     BalanceOverflow,
-    /// Invalid USDT value in the order book
-    InvalidUsdtValue,
     /// Invalid TDFY value in the order book
     InvalidTdfyValue,
   }
@@ -569,15 +567,14 @@ pub mod pallet {
             && pool.balance
               >= Self::calculate_rebates_on_fees_paid(pool.rebates, fee).unwrap_or_default()
         })
-        // FIXME replace `minimum_usdt_value` with `minimum_tdfy_value`
-        .filter(|pool| pool.minimum_usdt_value <= current_tdfy_trade_value)
+        .filter(|pool| pool.minimum_tdfy_value <= current_tdfy_trade_value)
         .map(|sunrise_pool| sunrise_pool.to_owned())
         .collect::<Vec<SunriseSwapPool>>();
 
-      // sort descending by minimum usdt value
+      // sort descending by minimum TDFy's value
       all_pools.sort_by(|a, b| {
-        b.minimum_usdt_value
-          .partial_cmp(&a.minimum_usdt_value)
+        b.minimum_tdfy_value
+          .partial_cmp(&a.minimum_tdfy_value)
           .unwrap_or(sp_std::cmp::Ordering::Equal)
       });
 
@@ -614,10 +611,10 @@ pub mod pallet {
     ) -> Result<Balance, DispatchError> {
       let maximum_tdfy_value = T::SunriseMaximumAllocation::get();
 
-      let real_fee_with_rebates_in_tdfy = FixedU128::from(if fee.fee_usdt > maximum_tdfy_value {
+      let real_fee_with_rebates_in_tdfy = FixedU128::from(if fee.fee_tdfy > maximum_tdfy_value {
         maximum_tdfy_value
       } else {
-        fee.fee_usdt
+        fee.fee_tdfy
       })
       .checked_mul(&rebates)
       .ok_or(Error::<T>::InvalidTdfyValue)?
@@ -681,7 +678,7 @@ pub mod pallet {
       Fee {
         amount: total_amount_before_fees,
         fee,
-        fee_usdt: Self::try_get_tdfy_value(currency_id, fee).unwrap_or_default(),
+        fee_tdfy: Self::try_get_tdfy_value(currency_id, fee).unwrap_or_default(),
       }
     }
 
@@ -750,7 +747,7 @@ pub mod pallet {
                   .map(|current_fee| Fee {
                     amount: current_fee.amount.saturating_add(new_fee.amount),
                     fee: current_fee.fee.saturating_add(new_fee.fee),
-                    fee_usdt: current_fee.fee_usdt.saturating_add(new_fee.fee_usdt),
+                    fee_tdfy: current_fee.fee_tdfy.saturating_add(new_fee.fee_tdfy),
                   })
                   .unwrap_or_else(|| new_fee.clone()),
               );
@@ -768,7 +765,7 @@ pub mod pallet {
                   .map(|current_fee| Fee {
                     amount: current_fee.amount.saturating_add(new_fee.amount),
                     fee: current_fee.fee.saturating_add(new_fee.fee),
-                    fee_usdt: current_fee.fee_usdt.saturating_add(new_fee.fee_usdt),
+                    fee_tdfy: current_fee.fee_tdfy.saturating_add(new_fee.fee_tdfy),
                   })
                   .unwrap_or_else(|| new_fee.clone()),
               );
@@ -788,7 +785,7 @@ pub mod pallet {
                   Some((_, current_fee)) => {
                     current_fee.amount = current_fee.amount.saturating_add(new_fee.amount);
                     current_fee.fee = current_fee.fee.saturating_add(new_fee.fee);
-                    current_fee.fee_usdt = current_fee.fee_usdt.saturating_add(new_fee.fee_usdt);
+                    current_fee.fee_tdfy = current_fee.fee_tdfy.saturating_add(new_fee.fee_tdfy);
                   }
                   None => {
                     account_fee
@@ -814,7 +811,7 @@ pub mod pallet {
         None => Fee {
           amount: total_amount_before_fees,
           fee: 0,
-          fee_usdt: 0,
+          fee_tdfy: 0,
         },
       };
 

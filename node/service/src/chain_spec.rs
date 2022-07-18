@@ -978,7 +978,7 @@ mod helpers {
         sunrise_swap_pools: vec![
           SunriseSwapPool {
             id: 1,
-            minimum_usdt_value: 0,
+            minimum_tdfy_value: 0,
             transactions_remaining: 1_000,
             balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
             // 100%
@@ -986,8 +986,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 2,
-            // 100 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(100),
+            // 100 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(100),
             transactions_remaining: 1_000,
             balance: assets::Asset::Tdfy.saturating_mul(57_600_000),
             // 125%
@@ -995,8 +995,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 3,
-            // 10_000 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(10_000),
+            // 10_000 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(10_000),
             transactions_remaining: 100,
             balance: assets::Asset::Tdfy.saturating_mul(38_400_000),
             // 150%
@@ -1004,8 +1004,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 4,
-            // 50_000 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(50_000),
+            // 50_000 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(50_000),
             transactions_remaining: 100,
             balance: assets::Asset::Tdfy.saturating_mul(19_200_000),
             // 200%
@@ -1013,8 +1013,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 5,
-            // 100_000 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(100_000),
+            // 100_000 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(100_000),
             transactions_remaining: 100,
             balance: assets::Asset::Tdfy.saturating_mul(9_600_000),
             // 300%
