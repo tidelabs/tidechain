@@ -198,6 +198,8 @@ parameter_types! {
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
   pub const BlocksSunriseClaims: BlockNumber = 10;
+  // max 10k rewards
+  pub const SunriseMaximumAllocation: Balance = 10_000_000_000_000_000;
 }
 
 impl pallet_fees::Config for Test {
@@ -216,6 +218,7 @@ impl pallet_fees::Config for Test {
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
   type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;
+  type SunriseMaximumAllocation = SunriseMaximumAllocation;
 }
 
 impl pallet_tidefi_stake::Config for Test {
@@ -404,14 +407,24 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
   pallet_fees::GenesisConfig::<Test> {
     phantom: Default::default(),
-    sunrise_swap_pools: vec![SunriseSwapPool {
-      id: 1,
-      minimum_usdt_value: 0,
-      transactions_remaining: 1_000,
-      balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
-      // 200%
-      rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
-    }],
+    sunrise_swap_pools: vec![
+      SunriseSwapPool {
+        id: 1,
+        minimum_usdt_value: 0,
+        transactions_remaining: 1,
+        balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
+        // 125%
+        rebates: FixedU128::saturating_from_rational(125_u32, 100_u32),
+      },
+      SunriseSwapPool {
+        id: 2,
+        minimum_usdt_value: 1_000_000_000_000_000,
+        transactions_remaining: 1,
+        balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
+        // 200%
+        rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
+      },
+    ],
   }
   .assimilate_storage(&mut t)
   .unwrap();

@@ -54,9 +54,9 @@ benchmarks! {
       let user = pre_set_auth::<T>();
       let caller: T::AccountId = whitelisted_caller();
    }: _(RawOrigin::Signed(user), caller)
-   im_alive {
+   update_assets_value {
       let user = pre_set_auth::<T>();
-   }: _(RawOrigin::Signed(user), OracleImAlive { ..Default::default()  })
+   }: _(RawOrigin::Signed(user), Default::default())
    remove_market_maker {
       let user = pre_set_auth::<T>();
       let caller: T::AccountId = whitelisted_caller();

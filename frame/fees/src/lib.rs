@@ -62,14 +62,15 @@ pub mod pallet {
   use frame_system::pallet_prelude::*;
   use sp_arithmetic::traits::Zero;
   use sp_runtime::{
-    traits::{AccountIdConversion, CheckedDiv, CheckedMul, Saturating},
+    traits::{AccountIdConversion, CheckedMul, Saturating},
     FixedPointNumber, FixedU128, Percent, Permill, SaturatedConversion,
   };
   use sp_std::{borrow::ToOwned, vec};
   use tidefi_primitives::{
-    assets::{Asset, USDT},
+    assets::Asset,
     pallet::{FeesExt, SecurityExt, StakingExt},
-    ActiveEraInfo, Balance, CurrencyId, EraIndex, Fee, SessionIndex, SunriseSwapPool, SwapType,
+    ActiveEraInfo, AssetId, Balance, CurrencyId, EraIndex, Fee, SessionIndex, SunriseSwapPool,
+    SwapType,
   };
 
   /// The current storage version.
@@ -121,6 +122,12 @@ pub mod pallet {
     /// Market maker limit order fee
     #[pallet::constant]
     type MarketMakerLimitFeeAmount: Get<Permill>;
+
+    /// Maximum rewards for sunrise pool before the applied rewards.
+    /// Example, 10_000_000_000_000_000 with a 125% rewards,
+    /// the maximum applied will be `12_500_000_000_000_000` TDFY
+    #[pallet::constant]
+    type SunriseMaximumAllocation: Get<Balance>;
 
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
@@ -174,25 +181,13 @@ pub mod pallet {
   #[pallet::getter(fn stored_sessions)]
   pub type StoredSessions<T: Config> = StorageMap<_, Blake2_128Concat, SessionIndex, ()>;
 
-  /// Tdfy price of the orderbook reported by oracle every X minutes at the current market price.
-  /// We keep in sync order book of USDT values for our sunrise pool.
+  /// TDFY price of each wrapped asset, reported by Oracle every X blocks.
   ///
-  /// CurrencyId → USDT
-  /// USDT → TDFY
-  ///
-  /// To get current TDFY USDT value;
-  ///
+  /// Exchange rate for 1 `AssetId` vs 1 TDFY
   #[pallet::storage]
-  #[pallet::getter(fn order_book_price)]
-  pub type OrderBookPrice<T: Config> = StorageDoubleMap<
-    _,
-    Blake2_128Concat,
-    CurrencyId,
-    Blake2_128Concat,
-    CurrencyId,
-    FixedU128,
-    ValueQuery,
-  >;
+  #[pallet::getter(fn wrapped_asset_value)]
+  pub type AssetExchangeRate<T: Config> =
+    StorageMap<_, Blake2_128Concat, AssetId, FixedU128, ValueQuery>;
 
   /// The total fees for the session.
   /// If total hasn't been set or has been removed then 0 stake is returned.
@@ -532,111 +527,28 @@ pub mod pallet {
       }
     }
 
-    // Based on the price provided by Oracle, try to convert the usdt amount to the asset balance
-    pub(crate) fn try_get_value_from_usdt(
-      currency_id: CurrencyId,
-      usdt_amount: FixedU128,
-    ) -> Result<Balance, DispatchError> {
-      let asset_from: Asset = currency_id
-        .try_into()
-        .map_err(|_| Error::<T>::InvalidAsset)?;
-
-      // get order book price
-      let order_book_price = if currency_id == CurrencyId::Wrapped(USDT) {
-        FixedU128::from(1)
-      } else {
-        Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT))
-      };
-
-      if order_book_price.is_zero() || usdt_amount.is_zero() {
-        return Ok(0);
-      }
-
-      let currency_wanted = (usdt_amount * order_book_price)
-        .checked_div(&FixedU128::from(
-          10_u128.pow(Asset::Tether.exponent() as u32),
-        ))
-        .ok_or(Error::<T>::BalanceOverflow)?;
-
-      Ok(
-        currency_wanted
-          .checked_mul(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
-          .ok_or(Error::<T>::InvalidUsdtValue)?
-          .into_inner()
-          .checked_div(FixedU128::DIV)
-          .ok_or(Error::<T>::BalanceOverflow)?,
-      )
-    }
-
-    // Based on the value provided by Oracle, try to convert the asset balance to USDT balance
-    pub(crate) fn try_get_usdt_value(
-      currency_id: CurrencyId,
-      amount: FixedU128,
-    ) -> Result<Balance, DispatchError> {
-      let asset_from: Asset = currency_id
-        .try_into()
-        .map_err(|_| Error::<T>::InvalidAsset)?;
-
-      let order_book_price = if currency_id == CurrencyId::Wrapped(USDT) {
-        FixedU128::from(1)
-      } else {
-        Self::order_book_price(currency_id, CurrencyId::Wrapped(USDT))
-      };
-
-      if order_book_price.is_zero() {
-        return Ok(0);
-      }
-
-      let currency_wanted = amount
-        .checked_div(&order_book_price)
-        .ok_or(Error::<T>::InvalidUsdtValue)?
-        .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
-        .ok_or(Error::<T>::BalanceOverflow)?;
-
-      Ok(
-        currency_wanted
-          .saturating_mul(FixedU128::from(
-            10_u128.pow(Asset::Tether.exponent() as u32),
-          ))
-          .into_inner()
-          .checked_div(FixedU128::DIV)
-          .ok_or(Error::<T>::InvalidUsdtValue)?,
-      )
-    }
-
     // Based on the value provided by Oracle, try to convert the asset balance to TDFY balance
-    pub(crate) fn try_get_tide_value(
+    pub(crate) fn try_get_tdfy_value(
       currency_id: CurrencyId,
-      amount: FixedU128,
+      amount: Balance,
     ) -> Result<Balance, DispatchError> {
       let asset_from: Asset = currency_id
         .try_into()
         .map_err(|_| Error::<T>::InvalidAsset)?;
 
-      let order_book_price = if currency_id == CurrencyId::Tdfy {
-        FixedU128::from(1)
-      } else {
-        Self::order_book_price(currency_id, CurrencyId::Tdfy)
+      let order_book_price = match currency_id {
+        CurrencyId::Tdfy => FixedU128::from(1),
+        CurrencyId::Wrapped(asset_id) => Self::wrapped_asset_value(asset_id),
       };
 
       if order_book_price.is_zero() {
         return Ok(0);
       }
 
-      let currency_wanted = amount
-        .checked_div(&order_book_price)
-        .ok_or(Error::<T>::InvalidTdfyValue)?
-        .checked_div(&FixedU128::from(10_u128.pow(asset_from.exponent() as u32)))
-        .ok_or(Error::<T>::BalanceOverflow)?;
+      let amount = FixedU128::saturating_from_rational(amount, asset_from.saturating_mul(1))
+        .saturating_mul(order_book_price);
 
-      Ok(
-        currency_wanted
-          .checked_mul(&FixedU128::from(10_u128.pow(Asset::Tdfy.exponent() as u32)))
-          .ok_or(Error::<T>::InvalidTdfyValue)?
-          .into_inner()
-          .checked_div(FixedU128::DIV)
-          .ok_or(Error::<T>::BalanceOverflow)?,
-      )
+      Self::convert_fixed_balance_to_tdfy_balance(amount)
     }
 
     // Based on the fee, try to select the highest matching sunrise pool
@@ -645,7 +557,7 @@ pub mod pallet {
       currency_id: CurrencyId,
     ) -> Result<Option<SunriseSwapPool>, DispatchError> {
       // get all pools
-      let current_usdt_trade_value = Self::try_get_usdt_value(currency_id, fee.amount.into())?;
+      let current_tdfy_trade_value = Self::try_get_tdfy_value(currency_id, fee.amount)?;
 
       let mut all_pools = SunrisePools::<T>::get()
         .iter()
@@ -655,11 +567,10 @@ pub mod pallet {
         .filter(|pool| {
           pool.balance > 0
             && pool.balance
-              >= Self::calculate_tide_reward_for_pool(pool.rebates, fee, currency_id)
-                .unwrap_or_default()
+              >= Self::calculate_rebates_on_fees_paid(pool.rebates, fee).unwrap_or_default()
         })
-        // make sure the transaction amount value in USDT is higher
-        .filter(|pool| pool.minimum_usdt_value >= current_usdt_trade_value)
+        // FIXME replace `minimum_usdt_value` with `minimum_tdfy_value`
+        .filter(|pool| pool.minimum_usdt_value <= current_tdfy_trade_value)
         .map(|sunrise_pool| sunrise_pool.to_owned())
         .collect::<Vec<SunriseSwapPool>>();
 
@@ -696,20 +607,17 @@ pub mod pallet {
       });
     }
 
-    // Calculate the Sunrise rewards (TDFY balance) from the currency and the fee
-    pub fn calculate_tide_reward_for_pool(
+    // Calculate the rebates based on the fees paid
+    pub fn calculate_rebates_on_fees_paid(
       rebates: FixedU128,
       fee: &Fee,
-      currency_id: CurrencyId,
     ) -> Result<Balance, DispatchError> {
-      let maximum_usdt_value = Asset::Tether.saturating_mul(10_000);
-      let real_fee_with_rebates = (if fee.fee_usdt > maximum_usdt_value {
-        FixedU128::from(Self::try_get_value_from_usdt(
-          currency_id,
-          maximum_usdt_value.into(),
-        )?)
+      let maximum_tdfy_value = T::SunriseMaximumAllocation::get();
+
+      let real_fee_with_rebates_in_tdfy = FixedU128::from(if fee.fee_usdt > maximum_tdfy_value {
+        maximum_tdfy_value
       } else {
-        FixedU128::from(fee.fee)
+        fee.fee_usdt
       })
       .checked_mul(&rebates)
       .ok_or(Error::<T>::InvalidTdfyValue)?
@@ -717,7 +625,20 @@ pub mod pallet {
       .checked_div(FixedU128::DIV)
       .ok_or(Error::<T>::BalanceOverflow)?;
 
-      Self::try_get_tide_value(currency_id, real_fee_with_rebates.into())
+      Ok(real_fee_with_rebates_in_tdfy)
+    }
+
+    // convert a FixedU128 to TDFY
+    pub fn convert_fixed_balance_to_tdfy_balance(
+      fixed_balance: FixedU128,
+    ) -> Result<Balance, DispatchError> {
+      fixed_balance
+        .checked_mul(&10_u128.pow(Asset::Tdfy.exponent() as u32).into())
+        .ok_or(Error::<T>::InvalidTdfyValue)?
+        .into_inner()
+        .checked_div(FixedU128::DIV)
+        .ok_or(Error::<T>::BalanceOverflow)
+        .map_err(Into::into)
     }
   }
 
@@ -726,16 +647,17 @@ pub mod pallet {
       T::FeesPalletId::get().into_account_truncating()
     }
 
-    // FIXME: Would probably worth moving this into his own pallet?
     fn register_order_book_price(
       prices: Vec<(CurrencyId, CurrencyId, Balance)>,
     ) -> Result<(), DispatchError> {
-      for (from, to, price) in prices {
+      for (from, _, price_in_tdfy_for_one_asset) in prices {
         let asset_from: Asset = from.try_into().map_err(|_| Error::<T>::InvalidAsset)?;
-        OrderBookPrice::<T>::insert(
-          from,
-          to,
-          FixedU128::saturating_from_rational(price, asset_from.saturating_mul(1)),
+        AssetExchangeRate::<T>::insert(
+          asset_from.id(),
+          FixedU128::saturating_from_rational(
+            price_in_tdfy_for_one_asset,
+            Asset::Tdfy.saturating_mul(1),
+          ),
         );
       }
       Ok(())
@@ -759,7 +681,7 @@ pub mod pallet {
       Fee {
         amount: total_amount_before_fees,
         fee,
-        fee_usdt: Self::try_get_usdt_value(currency_id, fee.into()).unwrap_or_default(),
+        fee_usdt: Self::try_get_tdfy_value(currency_id, fee).unwrap_or_default(),
       }
     }
 
@@ -783,11 +705,8 @@ pub mod pallet {
           if let Some(sunrise_pool_available) =
             Self::try_select_first_eligible_sunrise_pool(&new_fee, currency_id)?
           {
-            let real_fees_in_tide_with_rebates = Self::calculate_tide_reward_for_pool(
-              sunrise_pool_available.rebates,
-              &new_fee,
-              currency_id,
-            )?;
+            let real_fees_in_tide_with_rebates =
+              Self::calculate_rebates_on_fees_paid(sunrise_pool_available.rebates, &new_fee)?;
             // Update sunrise pool
             SunrisePools::<T>::try_mutate::<(), DispatchError, _>(|pools| {
               let sunrise_pool = pools

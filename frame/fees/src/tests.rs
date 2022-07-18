@@ -16,15 +16,20 @@
 
 use crate::{
   mock::{new_test_ext, AccountId, Adapter, ExistentialDeposit, Fees, Origin, Test},
-  ActiveEra, Error, OrderBookPrice, SunriseRewards,
+  ActiveEra, AssetExchangeRate, Error, SunrisePools, SunriseRewards,
 };
 use frame_support::{
   assert_noop, assert_ok,
   traits::fungibles::{Inspect, Mutate},
 };
 use pallet_balances::Error as BalancesError;
-use sp_runtime::{traits::BadOrigin, FixedPointNumber, FixedU128};
-use tidefi_primitives::{pallet::FeesExt, ActiveEraInfo, CurrencyId, EraIndex, SwapType};
+use sp_runtime::{
+  traits::{BadOrigin, CheckedDiv},
+  FixedPointNumber, FixedU128,
+};
+use tidefi_primitives::{
+  assets::Asset, pallet::FeesExt, ActiveEraInfo, CurrencyId, EraIndex, SwapType,
+};
 
 type Balance = u128;
 type BlockNumber = u64;
@@ -308,11 +313,7 @@ pub fn check_genesis_config() {
 pub fn calculate_trading_fees() {
   new_test_ext().execute_with(|| {
     // 1 USDT = 1 TDFY
-    OrderBookPrice::<Test>::insert(
-      CurrencyId::Tdfy,
-      CurrencyId::Wrapped(4),
-      FixedU128::saturating_from_rational(1, 1),
-    );
+    AssetExchangeRate::<Test>::insert(4, FixedU128::saturating_from_rational(1, 1));
 
     // 100 tifi @ 2% should cost 2 TIFIs
     let calculated_fee = Fees::calculate_swap_fees(
@@ -334,12 +335,20 @@ pub fn calculate_trading_fees() {
 #[test]
 pub fn register_swap_fees() {
   new_test_ext().execute_with(|| {
-    // 1 USDT = 1 TDFY
-    OrderBookPrice::<Test>::insert(
-      CurrencyId::Tdfy,
-      CurrencyId::Wrapped(4),
-      FixedU128::saturating_from_rational(1, 1),
+    assert_eq!(
+      SunrisePools::<Test>::get()
+        .first()
+        .unwrap()
+        .transactions_remaining,
+      1
     );
+    assert_eq!(
+      SunrisePools::<Test>::get().first().unwrap().balance,
+      67_200_000_000_000_000_000_u128
+    );
+
+    // 1 USDT = 1 TDFY
+    AssetExchangeRate::<Test>::insert(4, FixedU128::saturating_from_rational(1, 1));
 
     let current_era = Fees::active_era().unwrap().index;
     Fees::start_era();
@@ -349,38 +358,47 @@ pub fn register_swap_fees() {
     // 100 tifi @ 2% should cost 2 TIFIs
     let calculated_fee = Fees::register_swap_fees(
       3u64.into(),
-      CurrencyId::Tdfy,
-      100_000_000_000_000,
+      CurrencyId::Wrapped(4),
+      100_000_000,
       SwapType::Limit,
       false,
     )
     .unwrap();
-    assert_eq!(calculated_fee.amount, 100_000_000_000_000);
-    assert_eq!(calculated_fee.fee, 2_000_000_000_000);
-
+    assert_eq!(calculated_fee.amount, 100_000_000);
+    assert_eq!(calculated_fee.fee, 2_000_000);
     // make sure everything was registered
     let registered_fee = Fees::account_fees(new_current_era, AccountId(3u64));
-    assert_eq!(registered_fee.first().unwrap().1.fee, 2_000_000_000_000);
+    assert_eq!(registered_fee.first().unwrap().1.fee, 2_000_000);
 
-    assert_eq!(
-      registered_fee.first().unwrap().1.amount,
-      100_000_000_000_000
-    );
+    assert_eq!(registered_fee.first().unwrap().1.amount, 100_000_000);
 
     // make sure it increment the value
     assert_ok!(Fees::register_swap_fees(
       3u64.into(),
       CurrencyId::Tdfy,
-      100_000_000_000_000,
+      100_000_000,
       SwapType::Limit,
-      false
+      false,
     ));
+
     let registered_fee = Fees::account_fees(new_current_era, AccountId(3u64));
+    assert_eq!(registered_fee.first().unwrap().1.amount, 100_000_000);
+    assert_eq!(registered_fee.first().unwrap().1.fee, 2_000_000);
     assert_eq!(
-      registered_fee.first().unwrap().1.amount,
-      200_000_000_000_000
+      registered_fee.first().unwrap().1.fee_usdt,
+      2_000_000_000_000
     );
-    assert_eq!(registered_fee.first().unwrap().1.fee, 4_000_000_000_000);
+    assert_eq!(
+      SunrisePools::<Test>::get()
+        .first()
+        .unwrap()
+        .transactions_remaining,
+      0
+    );
+    assert_eq!(
+      SunrisePools::<Test>::get().first().unwrap().balance,
+      67_199_997_500_000_000_000
+    );
   });
 }
 
@@ -388,26 +406,21 @@ pub fn register_swap_fees() {
 pub fn test_calc_reward() {
   new_test_ext().execute_with(|| {
     // 0.7 USDT = 1 TDFY
-    OrderBookPrice::<Test>::insert(
-      CurrencyId::Wrapped(4),
-      CurrencyId::Tdfy,
-      FixedU128::saturating_from_rational(700_000, 1_000_000),
-    );
+    AssetExchangeRate::<Test>::insert(4, FixedU128::saturating_from_rational(700_000, 1_000_000));
 
     let fee =
       Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 100_000_000, SwapType::Limit, false);
     assert_eq!(
-      Fees::calculate_tide_reward_for_pool(
+      Fees::calculate_rebates_on_fees_paid(
         // 125%
         FixedU128::saturating_from_rational(125, 100),
         // 2$ USDT in fee
         // Should have total 2.5$ USDT in reward
         // 2.5 / 0.7 = 3.57142857143 TDFY final
         &fee,
-        CurrencyId::Wrapped(4)
       )
       .unwrap(),
-      3_571_428_571_428
+      1_750_000_000_000
     );
   });
 }
@@ -415,25 +428,24 @@ pub fn test_calc_reward() {
 #[test]
 pub fn test_calc_reward_small_numbers() {
   new_test_ext().execute_with(|| {
-    // 0.5 USDT = 1 TDFY
-    OrderBookPrice::<Test>::insert(
-      CurrencyId::Wrapped(4),
-      CurrencyId::Tdfy,
-      FixedU128::saturating_from_rational(500_000, 1_000_000),
-    );
+    // 2 TDFY / USDT
+    let oracle_value = 2_000_000_000_000_u128;
+    let how_many_tdfy_for_one_usdt =
+      FixedU128::saturating_from_rational(oracle_value, Asset::Tdfy.saturating_mul(1));
+    assert_eq!(how_many_tdfy_for_one_usdt.to_float(), 2.0);
+    AssetExchangeRate::<Test>::insert(4, how_many_tdfy_for_one_usdt);
 
     let fee = Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 1_000_000, SwapType::Limit, false);
 
     // We should receive 0.15625 TDFY in reward
     assert_eq!(
-      Fees::calculate_tide_reward_for_pool(
+      Fees::calculate_rebates_on_fees_paid(
         // 125%
         FixedU128::saturating_from_rational(125, 100),
         // 0.2 in fee
         // Should have total 0.25$ USDT in reward
         // 0.25 / 0.5 = 0.5 TDFY final
         &fee,
-        CurrencyId::Wrapped(4)
       )
       .unwrap(),
       50_000_000_000
@@ -444,49 +456,29 @@ pub fn test_calc_reward_small_numbers() {
 #[test]
 pub fn test_calc_reward_other_assets() {
   new_test_ext().execute_with(|| {
-    // 10_000 USDT = 1 BTC
-    OrderBookPrice::<Test>::insert(
-      CurrencyId::Wrapped(2),
-      CurrencyId::Wrapped(4),
-      FixedU128::saturating_from_rational(1, 10_000),
-    );
-
-    // 100_000 TDFY = 1 BTC
-    OrderBookPrice::<Test>::insert(
-      CurrencyId::Wrapped(2),
-      CurrencyId::Tdfy,
-      FixedU128::saturating_from_rational(1, 100_000),
-    );
+    // 100k TDFY / 1 BTC
+    let oracle_value = 100_000_000_000_000_000_u128;
+    let how_many_tdfy_for_one_bitcoin =
+      FixedU128::saturating_from_rational(oracle_value, Asset::Tdfy.saturating_mul(1));
+    assert_eq!(how_many_tdfy_for_one_bitcoin.to_float(), 99999.99999999999);
+    AssetExchangeRate::<Test>::insert(2, how_many_tdfy_for_one_bitcoin);
 
     let fee =
       Fees::calculate_swap_fees(CurrencyId::Wrapped(2), 100_000_000, SwapType::Limit, false);
+
     // We should receive 2500 TDFY in reward
     assert_eq!(
-      Fees::calculate_tide_reward_for_pool(
+      Fees::calculate_rebates_on_fees_paid(
         // 125%
-        FixedU128::saturating_from_rational(125, 100),
+        FixedU128::saturating_from_rational(125_u128, 100_u128),
         // 0.02 BTC in fee
         // Should have total 0.025BTC in reward
         // 0.025 * 100_000 = 2500 TDFY
         &fee,
-        CurrencyId::Wrapped(2)
       )
       .unwrap(),
       2_500_000_000_000_000
     );
-
-    // 1 BTC max at 10k USDT each
-    let max_amount_in_btc =
-      Fees::try_get_value_from_usdt(CurrencyId::Wrapped(2), 10_000_000_000_u128.into()).unwrap();
-
-    assert_eq!(max_amount_in_btc, 100_000_000);
-
-    // TDFY amount
-    let max_amount_in_tide =
-      Fees::try_get_tide_value(CurrencyId::Wrapped(2), max_amount_in_btc.into()).unwrap();
-
-    // 100k TDFY maximum fees allocation
-    assert_eq!(max_amount_in_tide, 100_000_000_000_000_000);
 
     // 1_000 BTC transaction
     // worth 10_000_000 USDT
@@ -499,15 +491,167 @@ pub fn test_calc_reward_other_assets() {
 
     // We should receive 125_000 TDFY in reward
     assert_eq!(
-      Fees::calculate_tide_reward_for_pool(
-        // 125% of 10k USDT = 12_500
-        FixedU128::saturating_from_rational(125, 100),
+      Fees::calculate_rebates_on_fees_paid(
+        // 225%
+        FixedU128::saturating_from_rational(225_u128, 100_u128),
         // 1.25 BTC in reward
         &fee,
-        CurrencyId::Wrapped(2)
       )
       .unwrap(),
-      125_000_000_000_000_000
+      22_500_000_000_000_000
     );
   });
+}
+
+#[test]
+pub fn test_maximum_fee_values() {
+  new_test_ext().execute_with(|| {
+    // 0.001815 BTC for 1 TDFY
+    let oracle_value = 550_964_187_327_800_u128;
+    let how_many_tdfy_for_one_bitcoin =
+      FixedU128::saturating_from_rational(oracle_value, Asset::Tdfy.saturating_mul(1));
+    assert_eq!(how_many_tdfy_for_one_bitcoin.to_float(), 550.9641873278);
+
+    AssetExchangeRate::<Test>::insert(2, how_many_tdfy_for_one_bitcoin);
+
+    // 1 BTC should equal value set
+    assert_eq!(
+      Fees::try_get_tdfy_value(CurrencyId::Wrapped(2), Asset::Bitcoin.saturating_mul(1)).unwrap(),
+      oracle_value.into()
+    );
+
+    let fee = Fees::calculate_swap_fees(
+      CurrencyId::Wrapped(2),
+      // 200_000 BTC
+      Asset::Bitcoin.saturating_mul(200_000),
+      SwapType::Limit,
+      false,
+    );
+
+    let reward = Fees::calculate_rebates_on_fees_paid(
+      // 125%
+      FixedU128::saturating_from_rational(125, 100),
+      &fee,
+    )
+    .unwrap();
+
+    assert_eq!(reward, 12_500_000_000_000_000);
+  });
+}
+
+#[test]
+pub fn test_wrapped_asset_values() {
+  new_test_ext().execute_with(|| {
+    // 100k TDFY = 1 BTC
+    let oracle_value = 100_000_000_000_000_000_u128;
+    let btc_price =
+      FixedU128::saturating_from_rational(oracle_value, Asset::Tdfy.saturating_mul(1));
+    AssetExchangeRate::<Test>::insert(2, btc_price);
+
+    assert_eq!(
+      Fees::try_get_tdfy_value(CurrencyId::Wrapped(2), 100_000_000).unwrap(),
+      oracle_value.into()
+    );
+
+    assert_eq!(
+      Fees::try_get_tdfy_value(CurrencyId::Wrapped(2), 10_000_000).unwrap(),
+      10_000_000_000_000_000_u128.into()
+    );
+
+    assert_eq!(
+      Fees::try_get_tdfy_value(CurrencyId::Wrapped(2), 625_000).unwrap(),
+      625_000_000_000_000_u128.into()
+    );
+  });
+}
+
+#[test]
+pub fn test_saturation_and_conversion() {
+  // 0.03133 ETH for 1 TDFY
+  let eth_exchange_rate = FixedU128::saturating_from_rational(
+    31_330_000_000_000_000_u128,
+    Asset::Ethereum.saturating_mul(1_u128),
+  );
+  assert_eq!(eth_exchange_rate.to_float(), 0.03133);
+  let total_tdfy_for_one_eth = FixedU128::from(1_u128)
+    .checked_div(&eth_exchange_rate)
+    .unwrap();
+  assert_eq!(total_tdfy_for_one_eth.to_float(), 31.91828917969997);
+
+  assert_eq!(
+    Fees::convert_fixed_balance_to_tdfy_balance(total_tdfy_for_one_eth).unwrap(),
+    31_918_289_179_699
+  );
+
+  // 33.650000 USDT for 1 TDFY
+  let ustd_exchange_rate =
+    FixedU128::saturating_from_rational(33_650_000_u128, Asset::Tether.saturating_mul(1_u128));
+  assert_eq!(ustd_exchange_rate.to_float(), 33.65);
+
+  let total_tdfy_for_one_usdt = FixedU128::from(1_u128)
+    .checked_div(&ustd_exchange_rate)
+    .unwrap();
+  assert_eq!(total_tdfy_for_one_usdt.to_float(), 0.029717682020802376);
+
+  assert_eq!(
+    Fees::convert_fixed_balance_to_tdfy_balance(total_tdfy_for_one_usdt).unwrap(),
+    29_717_682_020
+  );
+}
+
+#[test]
+pub fn test_select_first_eligible_sunrise_pool() {
+  new_test_ext().execute_with(|| {
+    assert_eq!(SunrisePools::<Test>::get().len(), 2);
+
+    // 0.001815 BTC for 1 TDFY
+    let oracle_value = 550_964_187_327_800_u128;
+    let how_many_tdfy_for_one_bitcoin =
+      FixedU128::saturating_from_rational(oracle_value, Asset::Tdfy.saturating_mul(1));
+    assert_eq!(how_many_tdfy_for_one_bitcoin.to_float(), 550.9641873278);
+
+    AssetExchangeRate::<Test>::insert(2, how_many_tdfy_for_one_bitcoin);
+
+    // 1 BTC should equal value set
+    assert_eq!(
+      Fees::try_get_tdfy_value(CurrencyId::Wrapped(2), Asset::Bitcoin.saturating_mul(1)).unwrap(),
+      oracle_value.into()
+    );
+
+    // should have selected second pool
+    assert_eq!(
+      Fees::try_select_first_eligible_sunrise_pool(
+        &Fees::calculate_swap_fees(
+          CurrencyId::Wrapped(2),
+          // 10 BTC
+          Asset::Bitcoin.saturating_mul(10),
+          SwapType::Limit,
+          false,
+        ),
+        CurrencyId::Wrapped(2)
+      )
+      .unwrap()
+      .unwrap()
+      .id,
+      2
+    );
+
+    // should have selected first pool
+    assert_eq!(
+      Fees::try_select_first_eligible_sunrise_pool(
+        &Fees::calculate_swap_fees(
+          CurrencyId::Wrapped(2),
+          // 1 BTC
+          Asset::Bitcoin.saturating_mul(1),
+          SwapType::Limit,
+          false,
+        ),
+        CurrencyId::Wrapped(2)
+      )
+      .unwrap()
+      .unwrap()
+      .id,
+      1
+    );
+  })
 }

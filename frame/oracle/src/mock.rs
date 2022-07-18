@@ -162,6 +162,9 @@ parameter_types! {
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
   pub const BlocksSunriseClaims: BlockNumber = 10;
+  // max 10k rewards
+  pub const SunriseMaximumAllocation: Balance = 10_000_000_000_000_000;
+
 }
 
 impl pallet_oracle::Config for Test {
@@ -214,6 +217,7 @@ impl pallet_fees::Config for Test {
   type BlocksPerSession = BlocksPerSession;
   type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;
+  type SunriseMaximumAllocation = SunriseMaximumAllocation;
 }
 
 impl pallet_timestamp::Config for Test {

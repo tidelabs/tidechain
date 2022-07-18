@@ -1381,33 +1381,26 @@ pub fn test_imalive() {
       .create_temp_asset_and_metadata()
       .create_zemp_asset_and_metadata();
 
-    assert_ok!(Oracle::im_alive(
+    assert_ok!(Oracle::update_assets_value(
       context.alice.clone(),
-      OracleImAlive {
-        // How many X for 1 USDT
-        usdt_value: vec![
-          // 10 Tdfy / USDT
-          (CurrencyId::Tdfy, 10_000_000_000_000),
-        ],
-        // How many X for 1 TDFY
-        tdfy_value: vec![
-          // 0.10 USDT (6 decimals) / Tdfy
-          (4, 100_000),
-        ]
-      }
+      vec![
+        // 10 Tdfy / USDT
+        (4, 10_000_000_000_000_u128),
+        // 100k Tdfy / BTC
+        (2, 100_000_000_000_000_000_u128),
+      ]
     ));
 
     let fee =
       Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 100_000_000, SwapType::Limit, false);
     assert_eq!(
-      Fees::calculate_tide_reward_for_pool(
+      Fees::calculate_rebates_on_fees_paid(
         // 125%
         FixedU128::saturating_from_rational(125, 100),
         // 2$ USDT in fee
         // Should have total 2.5$ USDT in reward
         // 2.5 / 0.1 = 25 TDFY final
         &fee,
-        CurrencyId::Wrapped(4)
       )
       .unwrap(),
       25_000_000_000_000
