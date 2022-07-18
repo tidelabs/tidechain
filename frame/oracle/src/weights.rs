@@ -28,7 +28,7 @@ pub trait WeightInfo {
    fn confirm_swap() -> Weight;
    fn add_market_maker() -> Weight;
    fn remove_market_maker() -> Weight;
-   fn im_alive() -> Weight;
+   fn update_assets_value() -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.

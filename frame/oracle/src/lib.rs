@@ -795,7 +795,7 @@ pub mod pallet {
     ///
     /// Weight: `O(1)`
     ///
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::im_alive())]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::update_assets_value())]
     pub fn update_assets_value(
       origin: OriginFor<T>,
       value: Vec<(AssetId, Balance)>,
