@@ -44,10 +44,10 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_io::hashing::blake2_256;
-  use sp_runtime::Permill;
+  use sp_runtime::{traits::Saturating, Permill};
   use tidefi_primitives::{
-    pallet::{AssetRegistryExt, OracleExt, QuorumExt},
-    Balance, CurrencyId, Hash, SwapType,
+    pallet::{AssetRegistryExt, FeesExt, OracleExt, QuorumExt, SecurityExt, SunriseExt},
+    Balance, CurrencyId, EraIndex, Hash, SwapType,
   };
 
   /// Tidefi configuration
@@ -67,6 +67,15 @@ pub mod pallet {
 
     /// Asset registry traits
     type AssetRegistry: AssetRegistryExt;
+
+    /// Fees traits
+    type Fees: FeesExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Tidefi sunrise traits
+    type Sunrise: SunriseExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Security traits
+    type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
 
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
@@ -139,6 +148,12 @@ pub mod pallet {
     QuorumPaused,
     /// Oracle is paused. Trading is not allowed
     OraclePaused,
+    /// No active era
+    NoActiveEra,
+    /// Era is not ready to be claimed yet, try again later
+    EraNotReady,
+    /// Invalid era
+    InvalidEra,
   }
 
   #[pallet::call]
@@ -370,6 +385,45 @@ pub mod pallet {
       Self::deposit_event(Event::<T>::SwapCancelled { request_id });
 
       Ok(().into())
+    }
+
+    /// Claim available sunrise rewards
+    ///
+    /// - `era_index`: Era to claim rewards
+    ///
+    /// Emits `RewardsClaimed` event when successful.
+    ///
+    /// Weight: `O(1)`
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::claim_sunrise_rewards())]
+    pub fn claim_sunrise_rewards(
+      origin: OriginFor<T>,
+      era_index: EraIndex,
+    ) -> DispatchResultWithPostInfo {
+      // 1. Make sure the transaction is signed
+      let account_id = ensure_signed(origin)?;
+
+      // 2. Make sure the era Index provided is ready to be claimed
+      let current_era = T::Fees::current_era().ok_or(Error::<T>::NoActiveEra)?;
+      let starting_block = current_era.start_block.ok_or(Error::<T>::NoActiveEra)?;
+      let current_block = T::Security::get_current_block_count();
+
+      // Unable to claim current Era
+      if era_index >= current_era.index {
+        return Err(Error::<T>::InvalidEra.into());
+      }
+
+      // Unable to claim previous era if the `T::Cooldown` cooldown isnt completed
+      if era_index == current_era.index.saturating_sub(1)
+        && starting_block.saturating_add(T::Sunrise::cooldown_blocks_count()) > current_block
+      {
+        return Err(Error::<T>::EraNotReady.into());
+      }
+
+      // 3. Claim rewards
+      T::Sunrise::try_claim_sunrise_rewards(&account_id, era_index)?;
+
+      // Don't take tx fees on success
+      Ok(Pays::No.into())
     }
   }
 }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::pallet as pallet_fees;
+use crate::pallet as pallet_sunrise;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
   parameter_types,
@@ -29,7 +29,6 @@ use frame_support::{
   },
   PalletId,
 };
-
 use frame_system as system;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -88,7 +87,6 @@ frame_support::construct_runtime!(
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Fees: pallet_fees::{Pallet, Config<T>, Storage, Event<T>},
     Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
     TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
@@ -213,26 +211,8 @@ impl pallet_sunrise::Config for Test {
   type MaximumRewardPerSwap = MaximumRewardPerSwap;
 }
 
-impl pallet_fees::Config for Test {
-  type Event = Event;
-  type Security = Security;
-  type FeesPalletId = TidefiPalletId;
-  type CurrencyTidefi = Adapter<AccountId>;
-  type ForceOrigin = EnsureRoot<Self::AccountId>;
-  type UnixTime = Timestamp;
-  type SessionsPerEra = SessionsPerEra;
-  type SessionsArchive = SessionsArchive;
-  type BlocksPerSession = BlocksPerSession;
-  type FeeAmount = FeeAmount;
-  type MarketMakerFeeAmount = MarketMakerFeeAmount;
-  type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
-  type Staking = TidefiStaking;
-  type Sunrise = Sunrise;
-}
-
 impl pallet_tidefi_stake::Config for Test {
   type Event = Event;
-  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Test>;
   type StakePalletId = StakePalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type StakeAccountCap = StakeAccountCap;
@@ -241,6 +221,7 @@ impl pallet_tidefi_stake::Config for Test {
   type AssetRegistry = AssetRegistry;
   type StakingRewardCap = StakingRewardCap;
   type Security = Security;
+  type WeightInfo = pallet_tidefi_stake::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_asset_registry::Config for Test {
@@ -414,12 +395,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
-  pallet_fees::GenesisConfig::<Test>::default()
-    .assimilate_storage(&mut t)
-    .unwrap();
-  pallet_balances::GenesisConfig::<Test>::default()
-    .assimilate_storage(&mut t)
-    .unwrap();
   pallet_sunrise::GenesisConfig::<Test> {
     phantom: Default::default(),
     swap_pools: vec![
@@ -443,6 +418,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   }
   .assimilate_storage(&mut t)
   .unwrap();
+  pallet_balances::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut t)
+    .unwrap();
 
   t.into()
 }

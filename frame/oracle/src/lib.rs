@@ -50,7 +50,7 @@ pub mod pallet {
   use sp_std::vec;
   use tidefi_primitives::{
     assets::Asset,
-    pallet::{FeesExt, OracleExt, SecurityExt},
+    pallet::{FeesExt, OracleExt, SecurityExt, SunriseExt},
     AssetId, Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
   };
 
@@ -77,7 +77,10 @@ pub mod pallet {
     type SwapLimitByAccount: Get<u32>;
 
     /// Fees traits
-    type Fees: FeesExt<Self::AccountId>;
+    type Fees: FeesExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Tidefi sunrise traits
+    type Sunrise: SunriseExt<Self::AccountId, Self::BlockNumber>;
 
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
@@ -806,12 +809,7 @@ pub mod pallet {
 
       if !value.is_empty() {
         // 2. Update only if we provided at least one price
-        T::Fees::register_order_book_price(
-          value
-            .iter()
-            .map(|price| (CurrencyId::Wrapped(price.0), CurrencyId::Tdfy, price.1))
-            .collect(),
-        )?;
+        T::Sunrise::register_exchange_rate(value)?;
       }
 
       // 3. Update last seen

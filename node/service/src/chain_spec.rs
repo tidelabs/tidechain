@@ -298,8 +298,9 @@ fn lagoon_testnet_genesis(
       account: root,
     },
     security: Default::default(),
+    fees: Default::default(),
+    sunrise: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
     tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
-    fees: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
   }
 }
 
@@ -465,8 +466,9 @@ fn tidechain_testnet_genesis(
       account: asset_registry,
     },
     security: Default::default(),
+    fees: Default::default(),
+    sunrise: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
     tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
-    fees: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
   }
 }
 
@@ -973,9 +975,9 @@ mod helpers {
   macro_rules! tidefi_sunrise_pool_genesis {
     ($runtime:tt) => {
       // FIXME: Maybe add some validation to make sure it equals `192_000_000`
-      $runtime::FeesConfig {
+      $runtime::SunriseConfig {
         phantom: Default::default(),
-        sunrise_swap_pools: vec![
+        swap_pools: vec![
           SunriseSwapPool {
             id: 1,
             minimum_tdfy_value: 0,

@@ -79,4 +79,13 @@ impl<T: frame_system::Config> pallet_tidefi::WeightInfo for WeightInfo<T> {
 	fn transfer() -> Weight {
 		(16_782_000 as Weight)
 	}
+	// Storage: Fees ActiveEra (r:1 w:0)
+	// Storage: Security CurrentBlockCount (r:1 w:0)
+	// Storage: Fees Rewards (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn claim_sunrise_rewards() -> Weight {
+		(63_330_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 }

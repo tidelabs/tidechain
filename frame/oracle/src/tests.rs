@@ -17,7 +17,7 @@
 use crate::{
   mock::{
     new_test_ext, AccountId, Adapter, Assets, Event as MockEvent, FeeAmount, Fees,
-    MarketMakerFeeAmount, Oracle, Origin, System, Test,
+    MarketMakerFeeAmount, Oracle, Origin, Sunrise, System, Test,
   },
   pallet::*,
 };
@@ -999,8 +999,8 @@ pub fn confirm_swap_with_fees() {
       .mint_temp(DAVE_ACCOUNT_ID, DAVE_INITIAL_10000_TEMPS);
 
     Fees::start_era();
-    assert!(!Fees::active_era().is_none());
-    let current_era = Fees::active_era().unwrap().index;
+    assert!(!Fees::current_era().is_none());
+    let current_era = Fees::current_era().unwrap().index;
 
     const BOB_SELLS_10_TDFYS: Balance = 10 * ONE_TDFY;
     const BOB_BUYS_200_TEMPS: Balance = 200 * ONE_TEMP;
@@ -1394,7 +1394,7 @@ pub fn test_imalive() {
     let fee =
       Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 100_000_000, SwapType::Limit, false);
     assert_eq!(
-      Fees::calculate_rebates_on_fees_paid(
+      Sunrise::calculate_rebates_on_fees_paid(
         // 125%
         FixedU128::saturating_from_rational(125, 100),
         // 2$ USDT in fee

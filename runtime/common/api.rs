@@ -368,7 +368,6 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_oracle, crate::Oracle);
            add_benchmark!(params, batches, pallet_asset_registry, crate::AssetRegistry);
            add_benchmark!(params, batches, pallet_preimage, crate::Preimage);
-           add_benchmark!(params, batches, pallet_fees, crate::Fees);
            add_benchmark!(params, batches, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
            if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

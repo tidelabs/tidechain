@@ -18,8 +18,8 @@ use crate::{
   constants::currency::{deposit, Adapter, TDFY},
   types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
   AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
-  FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security,
-  TidefiStaking, TidefiStakingPalletId, Timestamp,
+  FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security, Sunrise,
+  SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
 };
 
 use frame_support::{
@@ -76,10 +76,10 @@ parameter_types! {
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 10_000;
   // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
-  // current_era.start_block + BlocksSunriseClaims < current_block to be able to claim last era sunrise reward
-  pub const BlocksSunriseClaims: BlockNumber = 10;
+  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
+  pub const Cooldown: BlockNumber = 10;
   // Maximum sunrise rewards before rewards allocation (in TDFY's)
-  pub const SunriseMaximumAllocation: Balance = 100_000_000_000_000_000;
+  pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -135,6 +135,9 @@ impl pallet_tidefi::Config for Runtime {
   type Event = Event;
   type Quorum = Quorum;
   type Oracle = Oracle;
+  type Fees = Fees;
+  type Sunrise = Sunrise;
+  type Security = Security;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   // Asset registry
@@ -185,6 +188,8 @@ impl pallet_oracle::Config for Runtime {
   type Fees = Fees;
   // Security utils
   type Security = Security;
+  // Sunrise interface
+  type Sunrise = Sunrise;
   type SwapLimitByAccount = SwapLimitByAccount;
   type WeightInfo = crate::weights::pallet_oracle::WeightInfo<Runtime>;
 }
@@ -214,14 +219,21 @@ impl pallet_fees::Config for Runtime {
   type FeeAmount = FeeAmount;
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
-  // Sunrise
-  type SunriseMaximumAllocation = SunriseMaximumAllocation;
   // Security utils
   type Security = Security;
-  type BlocksSunriseClaims = BlocksSunriseClaims;
-  type WeightInfo = crate::weights::pallet_fees::WeightInfo<Runtime>;
+  // Sunrise interface
+  type Sunrise = Sunrise;
   type ForceOrigin = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
+}
+
+impl pallet_sunrise::Config for Runtime {
+  type Event = Event;
+  type Security = Security;
+  type SunrisePalletId = SunrisePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Cooldown = Cooldown;
+  type MaximumRewardPerSwap = MaximumRewardPerSwap;
 }

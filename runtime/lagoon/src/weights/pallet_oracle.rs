@@ -95,7 +95,7 @@ impl<T: frame_system::Config> pallet_oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle Swaps (r:2 w:2)
 	// Storage: Assets Account (r:6 w:6)
 	// Storage: Assets Asset (r:2 w:2)
-	// Storage: Fees AssetExchangeRate (r:2 w:0)
+	// Storage: Fees ExchangeRateInTdfy (r:2 w:0)
 	// Storage: System Account (r:3 w:3)
 	// Storage: Fees ActiveEra (r:1 w:0)
 	// Storage: Fees CurrentSession (r:1 w:0)
