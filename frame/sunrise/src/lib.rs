@@ -476,7 +476,7 @@ pub mod pallet {
 
             log!(
               debug,
-              "Sunrise reward claimed for {} successfully.",
+              "Sunrise reward claimed for {:?} successfully.",
               account_id
             );
             Ok(())
