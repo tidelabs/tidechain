@@ -471,9 +471,14 @@ pub mod pallet {
               account_id: account_id.clone(),
               reward: *reward,
             });
-
             // delete storage
             *found_reward = None;
+
+            log!(
+              debug,
+              "Sunrise reward claimed for {} successfully.",
+              account_id
+            );
             Ok(())
           }
           None => Err(Error::<T>::NoRewardsAvailable.into()),

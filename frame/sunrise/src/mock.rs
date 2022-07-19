@@ -40,7 +40,9 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::{assets, BlockNumber, CurrencyId, SessionIndex, SunriseSwapPool, OnboardingRebates};
+use tidefi_primitives::{
+  assets, BlockNumber, CurrencyId, OnboardingRebates, SessionIndex, SunriseSwapPool,
+};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
