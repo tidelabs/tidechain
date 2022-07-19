@@ -405,22 +405,24 @@ pub fn register_swap_fees() {
 #[test]
 pub fn test_calc_reward() {
   new_test_ext().execute_with(|| {
-    // 0.7 USDT = 1 TDFY
-    AssetExchangeRate::<Test>::insert(4, FixedU128::saturating_from_rational(700_000, 1_000_000));
+    // 1 TDFY = 0.7 USDT
+    let oracle_value = 1_428_571_428_600_u128;
+    let how_many_tdfy_for_one_usdt =
+      FixedU128::saturating_from_rational(oracle_value, Asset::Tdfy.saturating_mul(1));
+    assert_eq!(how_many_tdfy_for_one_usdt.to_float(), 1.4285714286);
+    AssetExchangeRate::<Test>::insert(4, how_many_tdfy_for_one_usdt);
 
     let fee =
       Fees::calculate_swap_fees(CurrencyId::Wrapped(4), 100_000_000, SwapType::Limit, false);
+
     assert_eq!(
       Fees::calculate_rebates_on_fees_paid(
         // 125%
         FixedU128::saturating_from_rational(125, 100),
-        // 2$ USDT in fee
-        // Should have total 2.5$ USDT in reward
-        // 2.5 / 0.7 = 3.57142857143 TDFY final
         &fee,
       )
       .unwrap(),
-      1_750_000_000_000
+      3_571_428_571_500
     );
   });
 }
