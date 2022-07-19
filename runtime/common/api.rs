@@ -292,7 +292,6 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_tidefi_stake, crate::TidefiStaking);
        list_benchmark!(list, extra, pallet_quorum, crate::Quorum);
        list_benchmark!(list, extra, pallet_oracle, crate::Oracle);
-       list_benchmark!(list, extra, pallet_fees, crate::Fees);
        list_benchmark!(list, extra, pallet_asset_registry, crate::AssetRegistry);
        list_benchmark!(list, extra, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
