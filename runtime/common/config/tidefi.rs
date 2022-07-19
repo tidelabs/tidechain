@@ -167,6 +167,7 @@ impl pallet_quorum::Config for Runtime {
   type CurrencyTidefi = Adapter<AccountId>;
   // Security utils
   type Security = Security;
+  type Sunrise = Sunrise;
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;

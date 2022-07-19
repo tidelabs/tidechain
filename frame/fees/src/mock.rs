@@ -422,6 +422,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
   pallet_sunrise::GenesisConfig::<Test> {
     phantom: Default::default(),
+    onboarding_rebates: Default::default(),
     swap_pools: vec![
       SunriseSwapPool {
         id: 1,

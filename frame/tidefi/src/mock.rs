@@ -206,6 +206,7 @@ impl pallet_quorum::Config for Test {
   type QuorumPalletId = QuorumPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
+  type Sunrise = Sunrise;
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
   type BurnedCap = BurnedCap;
