@@ -17,7 +17,7 @@ The Oracle module provides to confirm swap request and match market maker orders
 - `cancel_swap` - Oracle cancel a swap request and release remaining funds
 - `set_account_id` - Update oracle account ID
 - `set_status` - Update oracle status
-- `im_alive` - Oracle is alive and submit latest price in USDT and TDFY for all currency.
+- `update_assets_value` - Oracle submit latest TDFY price for all assets.
 - `add_market_maker` - Whitelist an account as a market maker
 - `remove_market_maker` - Remove an account from the whitelist
 

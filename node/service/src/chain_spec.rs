@@ -32,8 +32,8 @@ use sp_runtime::{
 use strum::IntoEnumIterator;
 // Tidechain primitives
 use tidefi_primitives::{
-  assets, AccountId, AssetId, Balance, Block, CurrencyId, Signature, StakeCurrencyMeta,
-  SunriseSwapPool,
+  assets, AccountId, AssetId, Balance, Block, CurrencyId, OnboardingRebates, Signature,
+  StakeCurrencyMeta, SunriseSwapPool,
 };
 
 #[cfg(feature = "tidechain-native")]
@@ -128,12 +128,12 @@ fn lagoon_testnet_genesis(
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
   // Treasury Account Id
   let treasury_account: AccountId =
     lagoon_runtime::TreasuryPalletId::get().into_account_truncating();
-  // Fees Account Id
-  let fees_account: AccountId = lagoon_runtime::FeesPalletId::get().into_account_truncating();
+  // Sunrise Account Id
+  let sunrise_account: AccountId = lagoon_runtime::SunrisePalletId::get().into_account_truncating();
   // Get all TDFY from our stakeholders
   let mut claims = helpers::get_tide_from_stakeholders(stakeholders.clone());
 
@@ -170,7 +170,7 @@ fn lagoon_testnet_genesis(
     // Treasury funds
     (treasury_account, treasury_funds),
     // Sunrise pool
-    (fees_account, SUNRISE_POOL),
+    (sunrise_account, SUNRISE_POOL),
     // 10 tifi to root so he can pay fees
     (root.clone(), 10_000_000_000_000),
   ];
@@ -298,8 +298,9 @@ fn lagoon_testnet_genesis(
       account: root,
     },
     security: Default::default(),
+    fees: Default::default(),
+    sunrise: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
     tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
-    fees: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
   }
 }
 
@@ -323,7 +324,7 @@ fn tidechain_testnet_genesis(
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
@@ -332,7 +333,8 @@ fn tidechain_testnet_genesis(
   let treasury_account: AccountId =
     tidechain_runtime::TreasuryPalletId::get().into_account_truncating();
   // Fees Account Id
-  let fees_account: AccountId = tidechain_runtime::FeesPalletId::get().into_account_truncating();
+  let sunrise_account: AccountId =
+    tidechain_runtime::SunrisePalletId::get().into_account_truncating();
   // Asset registry Account Id
   let asset_registry: AccountId =
     tidechain_runtime::AssetRegistryPalletId::get().into_account_truncating();
@@ -367,7 +369,7 @@ fn tidechain_testnet_genesis(
     // Treasury funds
     (treasury_account, treasury_funds),
     // Sunrise pool
-    (fees_account, SUNRISE_POOL),
+    (sunrise_account, SUNRISE_POOL),
   ];
 
   // Add all stake holders account
@@ -465,8 +467,9 @@ fn tidechain_testnet_genesis(
       account: asset_registry,
     },
     security: Default::default(),
+    fees: Default::default(),
+    sunrise: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
     tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
-    fees: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
   }
 }
 
@@ -968,17 +971,21 @@ mod helpers {
   }
 
   // syntactic sugar for sunrise pool genesis config.
-  // 67200000 + 57600000 + 38400000 + 19200000 + 9600000 = 192_000_000
   #[macro_export]
   macro_rules! tidefi_sunrise_pool_genesis {
     ($runtime:tt) => {
-      // FIXME: Maybe add some validation to make sure it equals `192_000_000`
-      $runtime::FeesConfig {
+      $runtime::SunriseConfig {
         phantom: Default::default(),
-        sunrise_swap_pools: vec![
+        onboarding_rebates: Some(OnboardingRebates {
+          initial_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
+          available_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
+        }),
+        // FIXME: Maybe add some validation to make sure it equals `192_000_000`
+        // 67200000 + 57600000 + 38400000 + 19200000 + 9600000 = 192_000_000
+        swap_pools: vec![
           SunriseSwapPool {
             id: 1,
-            minimum_usdt_value: 0,
+            minimum_tdfy_value: 0,
             transactions_remaining: 1_000,
             balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
             // 100%
@@ -986,8 +993,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 2,
-            // 100 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(100),
+            // 100 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(100),
             transactions_remaining: 1_000,
             balance: assets::Asset::Tdfy.saturating_mul(57_600_000),
             // 125%
@@ -995,8 +1002,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 3,
-            // 10_000 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(10_000),
+            // 10_000 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(10_000),
             transactions_remaining: 100,
             balance: assets::Asset::Tdfy.saturating_mul(38_400_000),
             // 150%
@@ -1004,8 +1011,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 4,
-            // 50_000 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(50_000),
+            // 50_000 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(50_000),
             transactions_remaining: 100,
             balance: assets::Asset::Tdfy.saturating_mul(19_200_000),
             // 200%
@@ -1013,8 +1020,8 @@ mod helpers {
           },
           SunriseSwapPool {
             id: 5,
-            // 100_000 USDT minimum value
-            minimum_usdt_value: assets::Asset::Tether.saturating_mul(100_000),
+            // 100_000 TDFY's minimum value
+            minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(100_000),
             transactions_remaining: 100,
             balance: assets::Asset::Tdfy.saturating_mul(9_600_000),
             // 300%
