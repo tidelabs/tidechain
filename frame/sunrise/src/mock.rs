@@ -40,7 +40,7 @@ use sp_runtime::{
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::{assets, BlockNumber, CurrencyId, SessionIndex, SunriseSwapPool};
+use tidefi_primitives::{assets, BlockNumber, CurrencyId, SessionIndex, SunriseSwapPool, OnboardingRebates};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -397,6 +397,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
   pallet_sunrise::GenesisConfig::<Test> {
     phantom: Default::default(),
+    onboarding_rebates: Some(OnboardingRebates {
+      initial_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
+      available_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
+    }),
     swap_pools: vec![
       SunriseSwapPool {
         id: 1,

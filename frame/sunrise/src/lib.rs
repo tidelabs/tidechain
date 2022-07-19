@@ -25,7 +25,7 @@ mod tests;
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
-pub(crate) const LOG_TARGET: &str = "tidefi::fees";
+pub(crate) const LOG_TARGET: &str = "tidefi::sunrise";
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -60,7 +60,7 @@ pub mod pallet {
   use tidefi_primitives::{
     assets::Asset,
     pallet::{SecurityExt, SunriseExt},
-    AssetId, Balance, CurrencyId, EraIndex, Fee, SunriseSwapPool,
+    AssetId, Balance, CurrencyId, EraIndex, Fee, OnboardingRebates, SunriseSwapPool,
   };
 
   /// The current storage version.
@@ -107,6 +107,11 @@ pub mod pallet {
   #[pallet::getter(fn sunrise_pools)]
   pub type Pools<T: Config> = StorageValue<_, BoundedPools, ValueQuery>;
 
+  /// The active onboarding rebates (gas refunds on-deposit)
+  #[pallet::storage]
+  #[pallet::getter(fn onboarding)]
+  pub type Onboarding<T: Config> = StorageValue<_, OnboardingRebates, ValueQuery>;
+
   /// TDFY price of each wrapped asset, reported by Oracle every X blocks.
   ///
   /// Exchange rate for 1 `AssetId` vs 1 TDFY
@@ -132,6 +137,7 @@ pub mod pallet {
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
     pub swap_pools: Vec<SunriseSwapPool>,
+    pub onboarding_rebates: Option<OnboardingRebates>,
     pub phantom: PhantomData<T>,
   }
 
@@ -141,6 +147,7 @@ pub mod pallet {
       Self {
         phantom: PhantomData,
         swap_pools: Vec::new(),
+        onboarding_rebates: None,
       }
     }
   }
@@ -150,6 +157,11 @@ pub mod pallet {
     fn build(&self) {
       let bounded_sunrise_pool: BoundedPools = self.swap_pools.clone().try_into().unwrap();
       Pools::<T>::put(bounded_sunrise_pool);
+
+      if let Some(onboarding_rebates) = &self.onboarding_rebates {
+        Onboarding::<T>::put(onboarding_rebates);
+      }
+
       // Create Fee account
       let account_id = <Pallet<T>>::account_id();
       let min = T::CurrencyTidefi::minimum_balance(CurrencyId::Tdfy);
@@ -179,6 +191,12 @@ pub mod pallet {
       account_id: T::AccountId,
       reward: Balance,
     },
+    OnboardingRebatesApplied {
+      account_id: T::AccountId,
+      currency_id: CurrencyId,
+      initial_amount: Balance,
+      rebate: Balance,
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -194,6 +212,8 @@ pub mod pallet {
     InvalidTdfyValue,
     /// There is no rewards available for this account on this era
     NoRewardsAvailable,
+    /// There is no rebates available to process the gas refund
+    NoRebatesAvailable,
   }
 
   impl<T: Config> Pallet<T> {
@@ -264,6 +284,42 @@ pub mod pallet {
         .checked_div(FixedU128::DIV)
         .ok_or(Error::<T>::BalanceOverflow)
         .map_err(Into::into)
+    }
+
+    pub fn get_next_onboarding_rebates(
+      amount_in_tdfy: Balance,
+      onboarding_rebate: &OnboardingRebates,
+    ) -> Result<Balance, DispatchError> {
+      ensure!(
+        onboarding_rebate.available_amount >= amount_in_tdfy,
+        Error::<T>::NoRebatesAvailable
+      );
+
+      let amount_already_assigned = onboarding_rebate
+        .initial_amount
+        .saturating_sub(onboarding_rebate.available_amount);
+
+      // The first 18 million TDFY of onboarding rebates will be paid out to fully rebate at 100%.
+      if amount_already_assigned <= Asset::Tdfy.saturating_mul(18_000_000) {
+        return Ok(amount_in_tdfy);
+      }
+
+      // The remaining rebates will follow a degressive schedule where each incoming transaction is rebated
+      // to the same percentage amount as the remaining funds in the onboarding pool.
+
+      // This degressive schedule ensures that those who use and support the project early will be exponentially
+      // rewarded while there is still enough for everyone over a long period of time.
+
+      let reward_ratio = FixedU128::saturating_from_rational(
+        onboarding_rebate.available_amount,
+        onboarding_rebate.initial_amount,
+      );
+
+      let amount =
+        FixedU128::saturating_from_rational(amount_in_tdfy, Asset::Tdfy.saturating_mul(1))
+          .saturating_mul(reward_ratio);
+
+      Self::convert_fixed_balance_to_tdfy_balance(amount)
     }
   }
 
@@ -353,13 +409,40 @@ pub mod pallet {
       }
     }
 
-    // FIXME: Hook to process refund for gas deposit
     fn try_refund_gas_for_deposit(
-      _account_id: &T::AccountId,
-      _currency_id: CurrencyId,
-      _amount: Balance,
+      account_id: &T::AccountId,
+      currency_id: CurrencyId,
+      amount: Balance,
     ) -> Result<Option<Balance>, DispatchError> {
-      Ok(None)
+      let amount_in_tdfy = Self::try_get_tdfy_value(currency_id, amount)?;
+      Onboarding::<T>::try_mutate(|onboarging_rebates| {
+        // get the onboarding rebates
+        let rebate = Self::get_next_onboarding_rebates(amount_in_tdfy, onboarging_rebates)?;
+        if rebate.is_zero() {
+          return Ok(None);
+        }
+
+        // transfer funds
+        T::CurrencyTidefi::transfer(
+          CurrencyId::Tdfy,
+          &Self::account_id(),
+          account_id,
+          rebate,
+          true,
+        )?;
+
+        Self::deposit_event(Event::<T>::OnboardingRebatesApplied {
+          account_id: account_id.clone(),
+          currency_id,
+          initial_amount: amount,
+          rebate,
+        });
+
+        onboarging_rebates.available_amount =
+          onboarging_rebates.available_amount.saturating_sub(rebate);
+
+        Ok(Some(rebate))
+      })
     }
 
     fn try_claim_sunrise_rewards(
@@ -369,7 +452,7 @@ pub mod pallet {
       Rewards::<T>::try_mutate_exists(account_id, era_index, |found_reward| {
         match found_reward {
           Some(reward) => {
-            if *reward == 0 {
+            if reward.is_zero() {
               return Err(Error::<T>::NoRewardsAvailable.into());
             }
 
