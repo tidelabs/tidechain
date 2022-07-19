@@ -1102,6 +1102,22 @@
 <span id="1097">1097</span>
 <span id="1098">1098</span>
 <span id="1099">1099</span>
+<span id="1100">1100</span>
+<span id="1101">1101</span>
+<span id="1102">1102</span>
+<span id="1103">1103</span>
+<span id="1104">1104</span>
+<span id="1105">1105</span>
+<span id="1106">1106</span>
+<span id="1107">1107</span>
+<span id="1108">1108</span>
+<span id="1109">1109</span>
+<span id="1110">1110</span>
+<span id="1111">1111</span>
+<span id="1112">1112</span>
+<span id="1113">1113</span>
+<span id="1114">1114</span>
+<span id="1115">1115</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -1153,10 +1169,9 @@
   };
   <span class="kw">use</span> <span class="ident">sp_std::vec</span>;
   <span class="kw">use</span> <span class="ident">tidefi_primitives</span>::{
-    <span class="ident">assets</span>::{<span class="ident">Asset</span>, <span class="ident">USDT</span>},
-    <span class="ident">pallet</span>::{<span class="ident">FeesExt</span>, <span class="ident">OracleExt</span>, <span class="ident">SecurityExt</span>},
-    <span class="ident">AssetId</span>, <span class="ident">Balance</span>, <span class="ident">CurrencyId</span>, <span class="ident">Hash</span>, <span class="ident">OracleImAlive</span>, <span class="ident">Swap</span>, <span class="ident">SwapConfirmation</span>, <span class="ident">SwapStatus</span>,
-    <span class="ident">SwapType</span>,
+    <span class="ident">assets::Asset</span>,
+    <span class="ident">pallet</span>::{<span class="ident">FeesExt</span>, <span class="ident">OracleExt</span>, <span class="ident">SecurityExt</span>, <span class="ident">SunriseExt</span>},
+    <span class="ident">AssetId</span>, <span class="ident">Balance</span>, <span class="ident">CurrencyId</span>, <span class="ident">Hash</span>, <span class="ident">Swap</span>, <span class="ident">SwapConfirmation</span>, <span class="ident">SwapStatus</span>, <span class="ident">SwapType</span>,
   };
 
   <span class="doccomment">/// Oracle configuration</span>
@@ -1182,7 +1197,10 @@
     <span class="kw">type</span> <span class="ident">SwapLimitByAccount</span>: <span class="ident">Get</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Fees traits</span>
-    <span class="kw">type</span> <span class="ident">Fees</span>: <span class="ident">FeesExt</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::AccountId</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="ident">Fees</span>: <span class="ident">FeesExt</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::AccountId</span>, <span class="ident"><span class="self">Self</span>::BlockNumber</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Tidefi sunrise traits</span>
+    <span class="kw">type</span> <span class="ident">Sunrise</span>: <span class="ident">SunriseExt</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::AccountId</span>, <span class="ident"><span class="self">Self</span>::BlockNumber</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Tidechain currency wrapper</span>
     <span class="kw">type</span> <span class="ident">CurrencyTidefi</span>: <span class="ident">Inspect</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::AccountId</span>, <span class="ident">AssetId</span> <span class="op">=</span> <span class="ident">CurrencyId</span>, <span class="ident">Balance</span> <span class="op">=</span> <span class="ident">Balance</span><span class="op">&gt;</span>
@@ -1871,33 +1889,47 @@
       <span class="prelude-val">Ok</span>(<span class="ident">Pays::No</span>.<span class="ident">into</span>())
     }
 
-    <span class="doccomment">/// Change Oracle status.</span>
+    <span class="doccomment">/// Update assets values.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// - `is_enabled`: Is the oracle enabled?</span>
+    <span class="doccomment">/// - `value`: How many TDFY required for 1 Asset.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Emits `StatusChanged` event when successful.</span>
+    <span class="doccomment">/// The value should be formatted with TDFY decimals (12)</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Example:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If the Bitcoin price is 0.001815 BTC (for 1 TDFY)</span>
+    <span class="doccomment">/// You get 550.9641873278 TDFY for 1 BTC</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The value should be: `vec![(2, 550_964_187_327_800)]`</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ***</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If the ETH price is 0.03133 ETH (for 1 TDFY)</span>
+    <span class="doccomment">/// You get 31.9182891796999 TDFY for 1 ETH</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The value sent should be: `vec![(4, 31_918_289_179_699)]`</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ***</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If the USDT price is 33.650000 USDT (for 1 TDFY)</span>
+    <span class="doccomment">/// You get 0.029717682000 TDFY for 1 USDT</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The value sent should be: `vec![(4, 29_717_682_020)]`</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Weight: `O(1)`</span>
-    <span class="attribute">#[<span class="ident">pallet::weight</span>(<span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">pallet::Config</span><span class="op">&gt;</span><span class="ident">::WeightInfo::im_alive</span>())]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">im_alive</span>(<span class="ident">origin</span>: <span class="ident">OriginFor</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">im_alive</span>: <span class="ident">OracleImAlive</span>) -&gt; <span class="ident">DispatchResultWithPostInfo</span> {
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">pallet::weight</span>(<span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">pallet::Config</span><span class="op">&gt;</span><span class="ident">::WeightInfo::update_assets_value</span>())]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update_assets_value</span>(
+      <span class="ident">origin</span>: <span class="ident">OriginFor</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+      <span class="ident">value</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">AssetId</span>, <span class="ident">Balance</span>)<span class="op">&gt;</span>,
+    ) -&gt; <span class="ident">DispatchResultWithPostInfo</span> {
       <span class="comment">// 1. Make sure this is signed by `account_id`</span>
       <span class="kw">let</span> <span class="ident">sender</span> <span class="op">=</span> <span class="ident">ensure_signed</span>(<span class="ident">origin</span>)<span class="question-mark">?</span>;
       <span class="macro">ensure!</span>(<span class="prelude-val">Some</span>(<span class="ident">sender</span>) <span class="op">==</span> <span class="ident"><span class="self">Self</span>::account_id</span>(), <span class="ident">Error</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::AccessDenied</span>);
 
-      <span class="comment">// 2. Build final price vector</span>
-      <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">all_prices</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-
-      <span class="kw">for</span> (<span class="ident">currency_id</span>, <span class="ident">price</span>) <span class="kw">in</span> <span class="ident">im_alive</span>.<span class="ident">usdt_value</span> {
-        <span class="ident">all_prices</span>.<span class="ident">push</span>((<span class="ident">currency_id</span>, <span class="ident">CurrencyId::Wrapped</span>(<span class="ident">USDT</span>), <span class="ident">price</span>))
-      }
-
-      <span class="kw">for</span> (<span class="ident">asset_id</span>, <span class="ident">price</span>) <span class="kw">in</span> <span class="ident">im_alive</span>.<span class="ident">tdfy_value</span> {
-        <span class="ident">all_prices</span>.<span class="ident">push</span>((<span class="ident">CurrencyId::Wrapped</span>(<span class="ident">asset_id</span>), <span class="ident">CurrencyId::Tdfy</span>, <span class="ident">price</span>))
-      }
-
-      <span class="kw">if</span> <span class="op">!</span><span class="ident">all_prices</span>.<span class="ident">is_empty</span>() {
-        <span class="comment">// Update only if we provided at least one price</span>
-        <span class="ident">T::Fees::register_order_book_price</span>(<span class="ident">all_prices</span>)<span class="question-mark">?</span>;
+      <span class="kw">if</span> <span class="op">!</span><span class="ident">value</span>.<span class="ident">is_empty</span>() {
+        <span class="comment">// 2. Update only if we provided at least one price</span>
+        <span class="ident">T::Sunrise::register_exchange_rate</span>(<span class="ident">value</span>)<span class="question-mark">?</span>;
       }
 
       <span class="comment">// 3. Update last seen</span>
