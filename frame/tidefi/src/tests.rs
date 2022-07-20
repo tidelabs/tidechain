@@ -220,6 +220,7 @@ impl Context {
     rewards_amount: Balance,
   ) -> Self {
     pallet_sunrise::Rewards::<Test>::insert(account, era_index, rewards_amount);
+    assert_eq!(Sunrise::sunrise_rewards(account, era_index), rewards_amount);
     self
   }
 }
@@ -1260,16 +1261,42 @@ mod claim_sunrise_rewards {
   #[test]
   fn succeeds() {
     new_test_ext().execute_with(|| {
+      const REWARDS_AMOUNT: u128 = ONE_TDFY;
+      const REWARDS_ERA_INDEX: u32 = 1;
+      const REWARDS_CLAIMER: AccountId = CHARLIE_ACCOUNT_ID;
+
       let context = Context::default()
         .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
-        .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+        .mint_tdfy(REWARDS_CLAIMER, 1_000 * ONE_TDFY)
         .set_active_era(3, 1)
-        .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+        .set_sunrise_rewards(REWARDS_CLAIMER, REWARDS_ERA_INDEX, REWARDS_AMOUNT);
+
+      let rewards_claimer_balance_before = Adapter::balance(CurrencyId::Tdfy, &REWARDS_CLAIMER);
 
       assert_ok!(Pallet::<Test>::claim_sunrise_rewards(
         context.rewards_claimer,
         context.era_index,
       ));
+
+      // Rewards are received
+      let rewards_claimer_balance_after = Adapter::balance(CurrencyId::Tdfy, &REWARDS_CLAIMER);
+      assert_eq!(
+        rewards_claimer_balance_before.saturating_add(REWARDS_AMOUNT),
+        rewards_claimer_balance_after
+      );
+
+      // SunriseClaimed event is emitted
+      System::assert_has_event(MockEvent::Sunrise(pallet_sunrise::Event::SunriseClaimed {
+        era_index: REWARDS_ERA_INDEX,
+        account_id: REWARDS_CLAIMER,
+        reward: REWARDS_AMOUNT,
+      }));
+
+      // Rewards book keeping is updated in storage
+      assert_eq!(
+        Sunrise::sunrise_rewards(REWARDS_CLAIMER, REWARDS_ERA_INDEX),
+        0
+      );
     });
   }
 
