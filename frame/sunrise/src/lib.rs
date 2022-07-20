@@ -88,6 +88,10 @@ pub mod pallet {
     #[pallet::constant]
     type MaximumRewardPerSwap: Get<Balance>;
 
+    /// For each tier, leftover funds will be allocated to to this tier
+    #[pallet::constant]
+    type LeftoverSwapRebates: Get<FixedU128>;
+
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
 
@@ -106,6 +110,11 @@ pub mod pallet {
   #[pallet::storage]
   #[pallet::getter(fn sunrise_pools)]
   pub type Pools<T: Config> = StorageValue<_, BoundedPools, ValueQuery>;
+
+  /// The balance available as left-over from the pools.
+  #[pallet::storage]
+  #[pallet::getter(fn pools_left_over)]
+  pub type PoolsLeftOverBalance<T: Config> = StorageValue<_, Balance, ValueQuery>;
 
   /// The active onboarding rebates (gas refunds on-deposit)
   #[pallet::storage]
@@ -182,7 +191,7 @@ pub mod pallet {
   pub enum Event<T: Config> {
     SunriseRewarded {
       era_index: EraIndex,
-      pool_id: u8,
+      pool_id: Option<u8>,
       account_id: T::AccountId,
       reward: Balance,
     },
@@ -229,7 +238,7 @@ pub mod pallet {
         .iter()
         // make sure there is enough transaction remaining in the pool
         .filter(|pool| pool.transactions_remaining > 0)
-        // make sure there is enough tifi remaining to fullfill this
+        // make sure there is enough tdfy's remaining to fullfill this
         .filter(|pool| {
           pool.balance > 0
             && pool.balance
@@ -387,6 +396,14 @@ pub mod pallet {
           // Reduce number of transactions remaining for this pool
           sunrise_pool.transactions_remaining -= 1;
 
+          // we've reached the end of the pool, move the balance to the left-over pool
+          if sunrise_pool.transactions_remaining == 0 && sunrise_pool.balance > 0 {
+            PoolsLeftOverBalance::<T>::mutate(|left_over| {
+              *left_over = left_over.saturating_add(sunrise_pool.balance);
+            });
+            sunrise_pool.balance = 0;
+          }
+
           Ok(())
         })?;
 
@@ -398,14 +415,41 @@ pub mod pallet {
         // Emit event
         Self::deposit_event(Event::<T>::SunriseRewarded {
           era_index,
-          pool_id: sunrise_pool_available.id,
+          pool_id: Some(sunrise_pool_available.id),
           account_id: account_id.clone(),
           reward: real_fees_in_tide_with_rebates,
         });
 
         Ok(Some(real_fees_in_tide_with_rebates))
       } else {
-        Ok(None)
+        // check if we have some leftover that can be used
+        let available_left_over = Self::pools_left_over();
+        let real_fees_in_tide_with_rebates =
+          Self::calculate_rebates_on_fees_paid(T::LeftoverSwapRebates::get(), &fee)?;
+
+        if available_left_over >= real_fees_in_tide_with_rebates {
+          // Increment reward for the account
+          Rewards::<T>::mutate(account_id.clone(), era_index, |rewards| {
+            *rewards = rewards.saturating_add(real_fees_in_tide_with_rebates);
+          });
+
+          // Reduce leftover
+          PoolsLeftOverBalance::<T>::mutate(|left_over| {
+            *left_over = left_over.saturating_sub(real_fees_in_tide_with_rebates);
+          });
+
+          // Emit event
+          Self::deposit_event(Event::<T>::SunriseRewarded {
+            era_index,
+            pool_id: None,
+            account_id: account_id.clone(),
+            reward: real_fees_in_tide_with_rebates,
+          });
+
+          Ok(Some(real_fees_in_tide_with_rebates))
+        } else {
+          Ok(None)
+        }
       }
     }
 

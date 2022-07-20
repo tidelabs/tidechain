@@ -213,6 +213,67 @@ pub fn test_try_refund_gas_for_deposit() {
 }
 
 #[test]
+pub fn test_try_refund_gas_for_deposit_eth() {
+  new_test_ext().execute_with(|| {
+    let onboarding_rebate_before = Sunrise::onboarding();
+
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tdfy,
+      &Sunrise::account_id(),
+      200_000_000_000_000_000,
+    ));
+
+    // make sure alice have 1 tdfy available for the ExistentialDeposit
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tdfy,
+      &ALICE_ACCOUNT_ID,
+      1_000_000_000_000,
+    ));
+
+    // 13,888 TDFY's x ETH
+    let oracle_value = 13_888_888_888_888_900_u128;
+    assert_ok!(Sunrise::register_exchange_rate(vec![(3, oracle_value)]));
+
+    assert_eq!(
+      Sunrise::try_refund_gas_for_deposit(
+        &ALICE_ACCOUNT_ID,
+        CurrencyId::Wrapped(3),
+        // 0.001 ETH
+        1_000_000_000_000_000
+      ),
+      // 13.888 TDFYs
+      Ok(Some(13_888_888_888_888_u128))
+    );
+
+    let onboarding_rebate_after = Sunrise::onboarding();
+    assert_eq!(
+      onboarding_rebate_before
+        .available_amount
+        .saturating_sub(onboarding_rebate_after.available_amount),
+      13_888_888_888_888_u128
+    );
+  });
+}
+
+#[test]
+pub fn test_try_refund_gas_no_existential_deposit_available() {
+  new_test_ext().execute_with(|| {
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tdfy,
+      &Sunrise::account_id(),
+      200_000_000_000_000_000,
+    ));
+    let oracle_value = 13_888_888_888_888_900_u128;
+    assert_ok!(Sunrise::register_exchange_rate(vec![(3, oracle_value)]));
+
+    assert_noop!(
+      Sunrise::try_refund_gas_for_deposit(&ALICE_ACCOUNT_ID, CurrencyId::Wrapped(3), 100_000_000),
+      BalancesError::<Test>::ExistentialDeposit
+    );
+  });
+}
+
+#[test]
 pub fn test_try_refund_gas_for_deposit_should_fails() {
   new_test_ext().execute_with(|| {
     // 100k TDFY = 1 BTC
@@ -223,6 +284,109 @@ pub fn test_try_refund_gas_for_deposit_should_fails() {
     assert_noop!(
       Sunrise::try_refund_gas_for_deposit(&ALICE_ACCOUNT_ID, CurrencyId::Wrapped(2), 200_000_000),
       BalancesError::<Test>::InsufficientBalance
+    );
+  });
+}
+
+#[test]
+pub fn test_try_allocate_rewards_for_swap() {
+  new_test_ext().execute_with(|| {
+    let initial_first_pool_balance = Sunrise::sunrise_pools()
+      .iter()
+      .find(|pool| pool.id == 2)
+      .unwrap()
+      .balance;
+
+    let initial_second_pool_balance = Sunrise::sunrise_pools()
+      .iter()
+      .find(|pool| pool.id == 1)
+      .unwrap()
+      .balance;
+
+    // 0.002 BTC / TDFY
+    let oracle_value = 500_000_000_000_000_u128;
+    assert_ok!(Sunrise::register_exchange_rate(vec![(2, oracle_value)]));
+    assert_eq!(Sunrise::pools_left_over(), 0);
+
+    // Note: we're paying 1 BTC in fee for a 1_000 BTC swap (0.1%)
+    let fee = Fee {
+      amount: 100_000_000_000,
+      fee: 100_000_000,
+      fee_tdfy: Sunrise::try_get_tdfy_value(CurrencyId::Wrapped(2), 100_000_000).unwrap(),
+    };
+
+    // 1 BTC = 500 TDFY
+    // 1 BTC @ 200% (pool id 2) = 2 BTC = 1_000 TDFY
+    let expected_reward_first_pool = 1_000_000_000_000_000_u128;
+
+    // 1 BTC = 500 TDFY
+    // 1 BTC @ 125% (pool id 1) = 1.25 BTC = 625 TDFY
+    let expected_reward_second_pool = 625_000_000_000_000;
+
+    // 1 BTC = 500 TDFY
+    // 1 BTC @ 50% (leftover) = 0.5 BTC = 250 TDFY
+    let expected_reward_leftover = 250_000_000_000_000;
+
+    // should have selected second pool
+    assert_eq!(
+      Sunrise::try_allocate_rewards_for_swap(&ALICE_ACCOUNT_ID, 1, &fee, CurrencyId::Wrapped(2))
+        .unwrap()
+        .unwrap(),
+      expected_reward_first_pool
+    );
+
+    // confirm the pool has been updated
+    assert_eq!(
+      Sunrise::sunrise_pools()
+        .iter()
+        .find(|pool| pool.id == 2)
+        .unwrap()
+        .transactions_remaining,
+      0
+    );
+
+    // reached transaction limit, the left over should be available
+    assert_eq!(
+      Sunrise::pools_left_over(),
+      initial_first_pool_balance.saturating_sub(expected_reward_first_pool)
+    );
+
+    // should have selected second pool
+    assert_eq!(
+      Sunrise::try_allocate_rewards_for_swap(&ALICE_ACCOUNT_ID, 1, &fee, CurrencyId::Wrapped(2))
+        .unwrap()
+        .unwrap(),
+      expected_reward_second_pool
+    );
+
+    // confirm the pool has been updated
+    assert_eq!(
+      Sunrise::sunrise_pools()
+        .iter()
+        .find(|pool| pool.id == 1)
+        .unwrap()
+        .transactions_remaining,
+      0
+    );
+
+    // reached transaction limit, the left over should be available
+    let expected_leftover_balance = initial_first_pool_balance
+      .saturating_sub(expected_reward_first_pool)
+      .saturating_add(initial_second_pool_balance.saturating_sub(expected_reward_second_pool));
+
+    assert_eq!(Sunrise::pools_left_over(), expected_leftover_balance);
+
+    // should have hitted the left-over
+    assert_eq!(
+      Sunrise::try_allocate_rewards_for_swap(&ALICE_ACCOUNT_ID, 1, &fee, CurrencyId::Wrapped(2))
+        .unwrap()
+        .unwrap(),
+      expected_reward_leftover
+    );
+
+    assert_eq!(
+      Sunrise::pools_left_over(),
+      expected_leftover_balance.saturating_sub(expected_reward_leftover)
     );
   });
 }

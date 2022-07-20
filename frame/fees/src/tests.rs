@@ -122,10 +122,8 @@ pub fn register_swap_fees() {
         .transactions_remaining,
       0
     );
-    assert_eq!(
-      Sunrise::sunrise_pools().first().unwrap().balance,
-      67_199_997_500_000_000_000
-    );
+    assert_eq!(Sunrise::sunrise_pools().first().unwrap().balance, 0);
+    assert_eq!(Sunrise::pools_left_over(), 67_199_997_499_999_000_000);
   });
 }
 

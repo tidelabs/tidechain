@@ -33,7 +33,7 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, Permill,
+  DispatchError, DispatchResult, FixedU128, Permill,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
@@ -185,7 +185,8 @@ parameter_types! {
   pub const Cooldown: BlockNumber = 10;
   // max 10k rewards
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
-
+  // 50%
+  pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
 }
 
 impl pallet_tidefi::Config for Test {
@@ -275,6 +276,7 @@ impl pallet_sunrise::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type Cooldown = Cooldown;
   type MaximumRewardPerSwap = MaximumRewardPerSwap;
+  type LeftoverSwapRebates = LeftoverSwapRebates;
 }
 
 impl pallet_tidefi_stake::Config for Test {
