@@ -234,6 +234,7 @@ fn lagoon_testnet_genesis(
       ..Default::default()
     },
     elections: Default::default(),
+    democracy: Default::default(),
     council: lagoon_runtime::CouncilConfig {
       members: vec![],
       phantom: Default::default(),
@@ -431,6 +432,7 @@ fn tidechain_testnet_genesis(
       ..Default::default()
     },
     elections: Default::default(),
+    democracy: Default::default(),
     council: tidechain_runtime::CouncilConfig {
       members: vec![],
       phantom: Default::default(),

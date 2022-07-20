@@ -268,6 +268,7 @@ impl_runtime_apis! {
        //list_benchmark!(list, extra, pallet_bags_list, crate::BagsList);
        list_benchmark!(list, extra, pallet_balances, crate::Balances);
        list_benchmark!(list, extra, pallet_bounties, crate::Bounties);
+       list_benchmark!(list, extra, pallet_democracy, crate::Democracy);
        list_benchmark!(list, extra, pallet_collective, crate::Council);
        list_benchmark!(list, extra, pallet_election_provider_multi_phase, crate::ElectionProviderMultiPhase);
        list_benchmark!(list, extra, pallet_elections_phragmen, crate::Elections);
@@ -342,6 +343,7 @@ impl_runtime_apis! {
            //add_benchmark!(params, batches, pallet_bags_list, crate::BagsList);
            add_benchmark!(params, batches, pallet_balances, crate::Balances);
            add_benchmark!(params, batches, pallet_bounties, crate::Bounties);
+           add_benchmark!(params, batches, pallet_democracy, crate::Democracy);
            add_benchmark!(params, batches, pallet_collective, crate::Council);
            add_benchmark!(params, batches, pallet_election_provider_multi_phase, crate::ElectionProviderMultiPhase);
            add_benchmark!(params, batches, pallet_elections_phragmen, crate::Elections);
