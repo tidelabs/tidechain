@@ -213,6 +213,67 @@ pub fn test_try_refund_gas_for_deposit() {
 }
 
 #[test]
+pub fn test_try_refund_gas_for_deposit_eth() {
+  new_test_ext().execute_with(|| {
+    let onboarding_rebate_before = Sunrise::onboarding();
+
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tdfy,
+      &Sunrise::account_id(),
+      200_000_000_000_000_000,
+    ));
+
+    // make sure alice have 1 tdfy available for the ExistentialDeposit
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tdfy,
+      &ALICE_ACCOUNT_ID,
+      1_000_000_000_000,
+    ));
+
+    // 13,888 TDFY's x ETH
+    let oracle_value = 13_888_888_888_888_900_u128;
+    assert_ok!(Sunrise::register_exchange_rate(vec![(3, oracle_value)]));
+
+    assert_eq!(
+      Sunrise::try_refund_gas_for_deposit(
+        &ALICE_ACCOUNT_ID,
+        CurrencyId::Wrapped(3),
+        // 0.001 ETH
+        1_000_000_000_000_000
+      ),
+      // 13.888 TDFYs
+      Ok(Some(13_888_888_888_888_u128))
+    );
+
+    let onboarding_rebate_after = Sunrise::onboarding();
+    assert_eq!(
+      onboarding_rebate_before
+        .available_amount
+        .saturating_sub(onboarding_rebate_after.available_amount),
+      13_888_888_888_888_u128
+    );
+  });
+}
+
+#[test]
+pub fn test_try_refund_gas_no_existential_deposit_available() {
+  new_test_ext().execute_with(|| {
+    assert_ok!(Adapter::mint_into(
+      CurrencyId::Tdfy,
+      &Sunrise::account_id(),
+      200_000_000_000_000_000,
+    ));
+    let oracle_value = 13_888_888_888_888_900_u128;
+    assert_ok!(Sunrise::register_exchange_rate(vec![(3, oracle_value)]));
+
+    assert_noop!(
+      Sunrise::try_refund_gas_for_deposit(&ALICE_ACCOUNT_ID, CurrencyId::Wrapped(3), 100_000_000),
+      BalancesError::<Test>::ExistentialDeposit
+    );
+  });
+}
+
+#[test]
 pub fn test_try_refund_gas_for_deposit_should_fails() {
   new_test_ext().execute_with(|| {
     // 100k TDFY = 1 BTC
