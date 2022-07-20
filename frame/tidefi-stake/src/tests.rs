@@ -196,7 +196,8 @@ mod stake {
         let context =
           Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS);
 
-        let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
+        let staker_balance_before =
+          Adapter::reducible_balance(CurrencyId::Tdfy, &context.staker, false);
 
         assert_ok!(TidefiStaking::stake(
           Origin::signed(context.staker),
@@ -207,7 +208,7 @@ mod stake {
 
         assert_eq!(
           staker_balance_before - context.tdfy_amount,
-          Adapter::balance(CurrencyId::Tdfy, &context.staker)
+          Adapter::reducible_balance(CurrencyId::Tdfy, &context.staker, false)
         );
 
         // make sure the staking pool has been updated
@@ -406,7 +407,8 @@ mod unstake {
 
           set_current_block(FIFTEEN_DAYS + 1);
 
-          let staker_balance_before = Adapter::balance(CurrencyId::Tdfy, &context.staker);
+          let staker_balance_before =
+            Adapter::reducible_balance(CurrencyId::Tdfy, &context.staker, false);
 
           assert_ok!(TidefiStaking::unstake(
             Origin::signed(context.staker),
@@ -416,7 +418,7 @@ mod unstake {
 
           assert_eq!(
             staker_balance_before + context.tdfy_amount,
-            Adapter::balance(CurrencyId::Tdfy, &context.staker)
+            Adapter::reducible_balance(CurrencyId::Tdfy, &context.staker, false)
           );
         });
       }
@@ -561,10 +563,15 @@ mod unstake {
     #[test]
     fn wrapped_asset_has_insufficient_balance() {
       new_test_ext().execute_with(|| {
-        let context = Context::default()
-          .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
-          .mint_test_token(ALICE_ACCOUNT_ID, ONE_TEST_TOKEN)
-          .stake_test_tokens();
+        let context = Context::default().mint_test_token(ALICE_ACCOUNT_ID, 1);
+
+        // unstake fee should be `2`
+        assert_ok!(TidefiStaking::stake(
+          Origin::signed(context.staker),
+          TEST_TOKEN_CURRENCY_ID,
+          ONE_TEST_TOKEN * 2,
+          context.duration
+        ));
 
         assert_noop!(
           TidefiStaking::unstake(Origin::signed(context.staker), context.stake_id, true),
@@ -595,6 +602,11 @@ pub fn should_stake_and_unstake() {
   new_test_ext().execute_with(|| {
     Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS);
 
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, false),
+      ALICE_INITIAL_ONE_THOUSAND_TDFYS
+    );
+
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
       CurrencyId::Tdfy,
@@ -603,7 +615,7 @@ pub fn should_stake_and_unstake() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, false),
       ALICE_INITIAL_ONE_THOUSAND_TDFYS - ALICE_STAKE_ONE_TDFY
     );
 
@@ -639,27 +651,45 @@ pub fn should_stake_and_unstake() {
     assert!(TidefiStaking::account_stakes(ALICE_ACCOUNT_ID).len() == 0);
     // balance is returned
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, false),
       ALICE_INITIAL_ONE_THOUSAND_TDFYS
     );
+
+    // make sure the staking pool has been updated
+    assert_eq!(TidefiStaking::staking_pool(CurrencyId::Tdfy), Some(0));
   });
 }
 
 #[test]
 pub fn should_stake_and_unstake_queue() {
   new_test_ext().execute_with(|| {
-    Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS);
+    let alice_origin = Origin::signed(ALICE_ACCOUNT_ID);
+    let initial_stake = 250_000_000;
+    let initial_mint = 500_000_000;
+
+    // mint token to user
+    Adapter::mint_into(
+      CurrencyId::Wrapped(TEST_TOKEN),
+      &ALICE_ACCOUNT_ID,
+      initial_mint,
+    )
+    .expect("Unable to mint token");
+
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Wrapped(TEST_TOKEN), &1u64, false),
+      initial_mint
+    );
 
     assert_ok!(TidefiStaking::stake(
-      Origin::signed(ALICE_ACCOUNT_ID),
-      CurrencyId::Tdfy,
-      ALICE_STAKE_ONE_TDFY,
+      alice_origin.clone(),
+      CurrencyId::Wrapped(TEST_TOKEN),
+      initial_stake,
       FIFTEEN_DAYS
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
-      ALICE_INITIAL_ONE_THOUSAND_TDFYS - ALICE_STAKE_ONE_TDFY
+      Adapter::reducible_balance(CurrencyId::Wrapped(TEST_TOKEN), &1u64, false),
+      initial_mint - initial_stake
     );
 
     let stake_id = TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
@@ -669,18 +699,24 @@ pub fn should_stake_and_unstake_queue() {
 
     // make sure the staking pool has been updated
     assert_eq!(
-      TidefiStaking::staking_pool(CurrencyId::Tdfy),
-      Some(ALICE_STAKE_ONE_TDFY)
+      TidefiStaking::staking_pool(CurrencyId::Wrapped(TEST_TOKEN)),
+      Some(initial_stake)
     );
 
     // make sure the staking has been recorded in the storage
     assert!(TidefiStaking::account_stakes(ALICE_ACCOUNT_ID).len() == 1);
+
+    println!(
+      "TidefiStaking::account_stakes(ALICE_ACCOUNT_ID) {:?}",
+      TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
+    );
+
     assert!(
       TidefiStaking::account_stakes(ALICE_ACCOUNT_ID)
         .first()
         .unwrap()
         .initial_balance
-        == ALICE_STAKE_ONE_TDFY
+        == initial_stake
     );
 
     set_current_block(FIFTEEN_DAYS - 1_000);
@@ -693,13 +729,13 @@ pub fn should_stake_and_unstake_queue() {
     ));
 
     assert!(TidefiStaking::account_stakes(ALICE_ACCOUNT_ID).len() == 1);
-    let unstake_fee = TidefiStaking::unstake_fee() * ALICE_STAKE_ONE_TDFY;
+    let unstake_fee = TidefiStaking::unstake_fee() * initial_stake;
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
-      ALICE_INITIAL_ONE_THOUSAND_TDFYS - ALICE_STAKE_ONE_TDFY - unstake_fee
+      Adapter::reducible_balance(CurrencyId::Wrapped(TEST_TOKEN), &1u64, false),
+      initial_mint
+        .saturating_sub(initial_stake)
+        .saturating_sub(unstake_fee)
     );
-    // 1 % of 1_000_000_000_000 = 10_000_000_000
-    assert_eq!(unstake_fee, 10_000_000_000);
 
     // BlocksForceUnstake is set to 10, so let skip at least 10 blocks
     set_current_block(FIFTEEN_DAYS - 1_000 + BLOCKS_FORCE_UNLOCK + 1);
@@ -723,7 +759,14 @@ pub fn should_stake_multiple_and_unstake_queue() {
       .mint_tdfy(ALICE_ACCOUNT_ID, ALICE_INITIAL_ONE_THOUSAND_TDFYS)
       .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_ONE_THOUSAND_TDFYS);
 
-    set_current_block(1);
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID, false),
+      ALICE_INITIAL_ONE_THOUSAND_TDFYS
+    );
+    assert_eq!(
+      Adapter::reducible_balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID, false),
+      BOB_INITIAL_ONE_THOUSAND_TDFYS
+    );
 
     assert_ok!(TidefiStaking::stake(
       Origin::signed(ALICE_ACCOUNT_ID),
@@ -733,7 +776,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     ));
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       ALICE_INITIAL_ONE_THOUSAND_TDFYS - ALICE_STAKE_ONE_TDFY
     );
 
@@ -810,7 +853,7 @@ pub fn should_stake_multiple_and_unstake_queue() {
     let unstake_fee_bob = TidefiStaking::unstake_fee() * BOB_STAKE_QUARTER_TDFY;
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       ALICE_INITIAL_ONE_THOUSAND_TDFYS - ALICE_STAKE_ONE_TDFY - unstake_fee
     );
 
@@ -841,13 +884,13 @@ pub fn should_stake_multiple_and_unstake_queue() {
     assert!(TidefiStaking::unstake_queue().is_empty());
 
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &ALICE_ACCOUNT_ID),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &1u64, false),
       ALICE_INITIAL_ONE_THOUSAND_TDFYS - unstake_fee
     );
 
     assert!(TidefiStaking::account_stakes(BOB_ACCOUNT_ID).len() == 1);
     assert_eq!(
-      Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
+      Adapter::reducible_balance(CurrencyId::Tdfy, &2u64, false),
       // we still have a stake active
       BOB_INITIAL_ONE_THOUSAND_TDFYS - unstake_fee_bob - BOB_STAKE_QUARTER_TDFY
     );
