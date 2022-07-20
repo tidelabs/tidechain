@@ -100,7 +100,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 4040,
+  spec_version: 5020,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -136,6 +136,7 @@ parameter_types! {
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
   pub const TidefiStakingPalletId: PalletId = PalletId(*b"py/stake");
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
+  pub const SunrisePalletId: PalletId = PalletId(*b"py/sunrp");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 }
 
@@ -159,7 +160,7 @@ construct_runtime!(
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
         Indices: pallet_indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 3,
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
-        TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 5,
+        TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 
         // Consensus support
         Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 6,
@@ -230,10 +231,13 @@ construct_runtime!(
         Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>} = 54,
 
         // Fees module
-        Fees: pallet_fees::{Pallet, Call, Config<T>, Storage, Event<T>} = 55,
+        Fees: pallet_fees::{Pallet, Config<T>, Storage, Event<T>} = 55,
 
         // Asset registry module
         AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 56,
+
+        // Sunrise module
+        Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>} = 57,
     }
 );
 
@@ -244,5 +248,22 @@ pub type Executive = frame_executive::Executive<
   frame_system::ChainContext<Runtime>,
   Runtime,
   AllPalletsWithSystem,
-  (),
+  (pallet_bags_list::migrations::AddScore<Runtime>,),
 >;
+
+/*
+/// A migration which renames the pallet `BagsList` to `VoterList`
+pub struct RenameBagsListToVoterList;
+impl frame_support::traits::OnRuntimeUpgrade for RenameBagsListToVoterList {
+  #[cfg(feature = "try-runtime")]
+  fn pre_upgrade() -> Result<(), &'static str> {
+    // For other pre-upgrade checks, we need the storage to already be migrated.
+    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
+    Ok(())
+  }
+  fn on_runtime_upgrade() -> frame_support::weights::Weight {
+    frame_support::storage::migration::move_pallet(b"BagsList", b"VoterList");
+    frame_support::weights::Weight::MAX
+  }
+}
+*/

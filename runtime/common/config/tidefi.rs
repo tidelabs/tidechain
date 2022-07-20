@@ -18,13 +18,13 @@ use crate::{
   constants::currency::{deposit, Adapter, TDFY},
   types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
   AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
-  FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security,
-  TidefiStaking, TidefiStakingPalletId, Timestamp,
+  FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security, Sunrise,
+  SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
 };
 
 use frame_support::{
   parameter_types,
-  traits::{ConstU128, EnsureOneOf, EnsureOrigin},
+  traits::{ConstU128, EitherOfDiverse, EnsureOrigin},
 };
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_runtime::{traits::AccountIdConversion, Permill};
@@ -76,8 +76,10 @@ parameter_types! {
   // The number of swap each account can have in queue
   pub const SwapLimitByAccount: u32 = 10_000;
   // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
-  // current_era.start_block + BlocksSunriseClaims < current_block to be able to claim last era sunrise reward
-  pub const BlocksSunriseClaims: BlockNumber = 10;
+  // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
+  pub const Cooldown: BlockNumber = 10;
+  // Maximum sunrise rewards before rewards allocation (in TDFY's)
+  pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -86,10 +88,10 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
 
   fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
     Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
-      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account()),
+      RawOrigin::Root => Ok(AssetRegistryPalletId::get().into_account_truncating()),
       RawOrigin::Signed(caller) => {
         // Allow call from asset registry pallet ID account
-        if caller == AssetRegistryPalletId::get().into_account()
+        if caller == AssetRegistryPalletId::get().into_account_truncating()
          // Allow call from asset registry owner
          || Some(caller.clone()) == AssetRegistry::account_id()
         {
@@ -105,7 +107,7 @@ impl EnsureOrigin<Origin> for EnsureRootOrAssetRegistry {
   #[cfg(feature = "runtime-benchmarks")]
   fn successful_origin() -> Origin {
     Origin::from(RawOrigin::Signed(
-      AssetRegistryPalletId::get().into_account(),
+      AssetRegistryPalletId::get().into_account_truncating(),
     ))
   }
 }
@@ -133,6 +135,9 @@ impl pallet_tidefi::Config for Runtime {
   type Event = Event;
   type Quorum = Quorum;
   type Oracle = Oracle;
+  type Fees = Fees;
+  type Sunrise = Sunrise;
+  type Security = Security;
   // Wrapped currency
   type CurrencyTidefi = Adapter<AccountId>;
   // Asset registry
@@ -162,6 +167,7 @@ impl pallet_quorum::Config for Runtime {
   type CurrencyTidefi = Adapter<AccountId>;
   // Security utils
   type Security = Security;
+  type Sunrise = Sunrise;
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
@@ -183,6 +189,8 @@ impl pallet_oracle::Config for Runtime {
   type Fees = Fees;
   // Security utils
   type Security = Security;
+  // Sunrise interface
+  type Sunrise = Sunrise;
   type SwapLimitByAccount = SwapLimitByAccount;
   type WeightInfo = crate::weights::pallet_oracle::WeightInfo<Runtime>;
 }
@@ -214,10 +222,19 @@ impl pallet_fees::Config for Runtime {
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
   // Security utils
   type Security = Security;
-  type BlocksSunriseClaims = BlocksSunriseClaims;
-  type WeightInfo = crate::weights::pallet_fees::WeightInfo<Runtime>;
-  type ForceOrigin = EnsureOneOf<
+  // Sunrise interface
+  type Sunrise = Sunrise;
+  type ForceOrigin = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
   >;
+}
+
+impl pallet_sunrise::Config for Runtime {
+  type Event = Event;
+  type Security = Security;
+  type SunrisePalletId = SunrisePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Cooldown = Cooldown;
+  type MaximumRewardPerSwap = MaximumRewardPerSwap;
 }

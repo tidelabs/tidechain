@@ -73,12 +73,12 @@ printf "\n\n"
 printf "// quorums\nvec![\n"
 printf "$QUORUMS]"
 
-# INVESTORS (ONLY TIFIs)
+# INVESTORS (ONLY TDFYs)
 for i in $(seq 1 $I_NUM); do
-	INVESTORS+="(CurrencyId::Tdfy,\n$(generate_address_and_account_id investors$i stash)\n// 1_000 TIFIS\nassets::Asset::Tdfy.saturating_mul(1_000)),\n"
+	INVESTORS+="(CurrencyId::Tdfy,\n$(generate_address_and_account_id investors$i stash)\n// 1_000 TDFY\nassets::Asset::Tdfy.saturating_mul(1_000)),\n"
 done
 
-# DEVS (TIFIs & CURRENCIES)
+# DEVS (TDFY & CURRENCIES)
 for i in $(seq 1 $D_NUM); do
 	DEVS+="(CurrencyId::Tdfy,\n$(generate_address_and_account_id dev$i stash)\n// 1_000 TDFY\nassets::Asset::Tdfy.saturating_mul(1_000)),\n"
 done

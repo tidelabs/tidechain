@@ -142,11 +142,11 @@ impl SubstrateCli for Cli {
   }
 }
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", feature = "try-runtime"))]
 const DEV_ONLY_ERROR_PATTERN: &'static str =
   "can only use subcommand with --chain [tidechain-dev, lagoon-dev], got ";
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", feature = "try-runtime"))]
 fn ensure_dev(spec: &Box<dyn tidechain_service::ChainSpec>) -> std::result::Result<(), String> {
   if spec.is_dev() {
     Ok(())
@@ -398,7 +398,7 @@ pub fn run() -> Result<(), Error> {
                 .run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(
                   config,
                 )
-                .map_err(|e| Error::SubstrateCli(e))
+                .map_err(Error::SubstrateCli)
             })?);
           }
 
@@ -410,7 +410,7 @@ pub fn run() -> Result<(), Error> {
                 .run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(
                   config,
                 )
-                .map_err(|e| Error::SubstrateCli(e))
+                .map_err(Error::SubstrateCli)
             })?);
           }
 
@@ -431,37 +431,52 @@ pub fn run() -> Result<(), Error> {
     }
     #[cfg(feature = "try-runtime")]
     Some(Subcommand::TryRuntime(cmd)) => {
+      use sc_service::TaskManager;
+
       let runner = cli.create_runner(cmd)?;
+      let chain_spec = &runner.config().chain_spec;
+      let registry = &runner
+        .config()
+        .prometheus_config
+        .as_ref()
+        .map(|cfg| &cfg.registry);
 
-      runner.async_run(|config| {
-        let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-        let task_manager =
-          sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-          .map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+      let task_manager = TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+        .map_err(|e| Error::SubstrateService(sc_service::Error::Prometheus(e)))?;
 
-          #[cfg(feature = "lagoon-native")]
-          if chain_spec.is_lagoon() {
-            return Ok((
-              cmd.run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(config)
-              .map_err(Error::SubstrateCli),
+      ensure_dev(chain_spec).map_err(Error::Other)?;
+
+      #[cfg(feature = "lagoon-native")]
+      if chain_spec.is_lagoon() {
+        return runner.async_run(|config| {
+          Ok((
+            cmd.run::<tidechain_service::lagoon_runtime::Block, tidechain_service::LagoonExecutorDispatch>(
+              config,
+            )
+            .map_err(Error::SubstrateCli),
               task_manager,
-            ))
-          }
+          ))
+        });
+      }
 
-          // else we assume it is tidechain
-          #[cfg(feature = "tidechain-native")]
-          if chain_spec.is_tidechain() {
-            return Ok((
-              cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(config)
-              .map_err(Error::SubstrateCli),
+      // else we assume it is tidechain
+      #[cfg(feature = "tidechain-native")]
+      if chain_spec.is_tidechain() {
+        return runner.async_run(|config| {
+          Ok((
+            cmd.run::<tidechain_service::tidechain_runtime::Block, tidechain_service::TidechainExecutorDispatch>(
+              config,
+            )
+            .map_err(Error::SubstrateCli),
               task_manager,
-            ))
-          }
+          ))
+        });
+      }
 
-          #[allow(unreachable_code)]
-          Err(tidechain_service::Error::NoRuntime.into())
-      })
+      #[allow(unreachable_code)]
+      Err(tidechain_service::Error::NoRuntime.into())
     }
   }?;
+
   Ok(())
 }

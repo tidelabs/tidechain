@@ -17,15 +17,15 @@
 use jsonrpsee::RpcModule;
 use sc_client_api::AuxStore;
 use sc_consensus_babe::{Config, Epoch};
-use sc_consensus_babe_rpc::{BabeApiServer, BabeRpc};
+use sc_consensus_babe_rpc::{Babe, BabeApiServer};
 use sc_consensus_epochs::SharedEpochChanges;
 use sc_finality_grandpa::{
   FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
 };
-use sc_finality_grandpa_rpc::{GrandpaApiServer, GrandpaRpc};
+use sc_finality_grandpa_rpc::{Grandpa, GrandpaApiServer};
 pub use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
-use sc_sync_state_rpc::{SyncStateRpc, SyncStateRpcApiServer};
+use sc_sync_state_rpc::{SyncState, SyncStateApiServer};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -107,8 +107,8 @@ where
   B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
   use pallet_tidefi_rpc::{TidefiApiServer, TidefiRpc};
-  use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
-  use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
+  use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+  use substrate_frame_rpc_system::{System, SystemApiServer};
 
   let mut io = RpcModule::new(());
   let FullDeps {
@@ -134,13 +134,13 @@ where
   } = grandpa;
 
   io.merge(
-    substrate_state_trie_migration_rpc::MigrationRpc::new(client.clone(), backend, deny_unsafe)
+    substrate_state_trie_migration_rpc::StateMigration::new(client.clone(), backend, deny_unsafe)
       .into_rpc(),
   )?;
-  io.merge(SystemRpc::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
-  io.merge(TransactionPaymentRpc::new(client.clone()).into_rpc())?;
+  io.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
+  io.merge(TransactionPayment::new(client.clone()).into_rpc())?;
   io.merge(
-    BabeRpc::new(
+    Babe::new(
       client.clone(),
       shared_epoch_changes.clone(),
       keystore,
@@ -152,7 +152,7 @@ where
   )?;
 
   io.merge(
-    GrandpaRpc::new(
+    Grandpa::new(
       subscription_executor,
       shared_authority_set.clone(),
       shared_voter_state,
@@ -163,7 +163,7 @@ where
   )?;
 
   io.merge(
-    SyncStateRpc::new(
+    SyncState::new(
       chain_spec,
       client.clone(),
       shared_authority_set,

@@ -60,7 +60,10 @@ pub mod pallet {
     BoundedVec, PalletId,
   };
   use frame_system::pallet_prelude::*;
-  use sp_runtime::{traits::AccountIdConversion, ArithmeticError, Percent, Perquintill};
+  use sp_runtime::{
+    traits::{AccountIdConversion, Saturating},
+    ArithmeticError, Percent, Perquintill,
+  };
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
     Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta,
@@ -298,8 +301,8 @@ pub mod pallet {
     InsufficientBalance,
     /// Invalid stake request ID
     InvalidStakeId,
-    /// Stake is not ready
-    StakingNotReady,
+    /// Unstake is not ready
+    UnstakingNotReady,
     /// Something went wrong with fees transfer
     TransferFeesFailed,
     /// Something went wrong with funds transfer
@@ -460,19 +463,27 @@ pub mod pallet {
         Self::get_account_stake(&account_id, stake_id).ok_or(Error::<T>::InvalidStakeId)?;
 
       // 3. Check the expiration and if we are forcing it (queue)
-      let expected_block_expiration = stake.initial_block + stake.duration;
-      let staking_is_ready =
-        expected_block_expiration <= T::Security::get_current_block_count() || force_unstake;
-      let staking_is_forced =
-        expected_block_expiration > T::Security::get_current_block_count() && force_unstake;
+      let expected_block_expiration = stake.initial_block.saturating_add(stake.duration);
+      let staking_is_expired = T::Security::get_current_block_count() >= expected_block_expiration;
 
-      ensure!(staking_is_ready, Error::<T>::StakingNotReady);
+      if staking_is_expired {
+        // we can process to unstaking immediately
+        Self::process_unstake(&account_id, stake_id)?;
+        Self::deposit_event(Event::<T>::Unstaked {
+          request_id: stake_id,
+          account_id,
+          currency_id: stake.currency_id,
+          initial_balance: stake.initial_balance,
+          final_balance: stake.principal,
+        });
+      } else {
+        ensure!(force_unstake, Error::<T>::UnstakingNotReady);
 
-      // FIXME: Validate not already queued
+        // FIXME: Validate not already queued
 
-      // we should add to unstaking queue and take immeditately the extra fees
-      // for the queue storage
-      if staking_is_forced {
+        // we should add to unstaking queue and take immeditately the extra fees
+        // for the queue storage
+
         // take the fee
         // FIXME: would be great to convert to TDFY
         let unstaking_fee = Self::unstake_fee() * stake.initial_balance;
@@ -501,16 +512,6 @@ pub mod pallet {
           request_id: stake_id,
           account_id,
         });
-      } else {
-        // we can process to unstaking immediately
-        Self::process_unstake(&account_id, stake_id)?;
-        Self::deposit_event(Event::<T>::Unstaked {
-          request_id: stake_id,
-          account_id,
-          currency_id: stake.currency_id,
-          initial_balance: stake.initial_balance,
-          final_balance: stake.principal,
-        });
       }
 
       Ok(().into())
@@ -520,7 +521,7 @@ pub mod pallet {
   // helper functions (not dispatchable)
   impl<T: Config> Pallet<T> {
     pub fn account_id() -> T::AccountId {
-      <T as pallet::Config>::StakePalletId::get().into_account()
+      <T as pallet::Config>::StakePalletId::get().into_account_truncating()
     }
 
     pub fn add_account_stake(
@@ -730,7 +731,7 @@ pub mod pallet {
       }
 
       // FIXME: we should have a better draining
-      PendingStoredSessions::<T>::remove_all();
+      let _ = PendingStoredSessions::<T>::clear(u32::MAX, None);
 
       // FIXME: implement maximum iteration / should_continue = true
       Ok((current_iterations * weight_per_iteration, false))
@@ -824,7 +825,7 @@ pub mod pallet {
   // implement the `StakingExt` functions
   impl<T: Config> StakingExt<T::AccountId> for Pallet<T> {
     fn account_id() -> T::AccountId {
-      T::StakePalletId::get().into_account()
+      T::StakePalletId::get().into_account_truncating()
     }
 
     fn on_session_end(
