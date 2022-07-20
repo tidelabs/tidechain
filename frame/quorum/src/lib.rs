@@ -60,7 +60,8 @@ pub mod pallet {
   };
   use sp_std::{vec, vec::Vec};
   use tidefi_primitives::{
-    pallet::{AssetRegistryExt, QuorumExt, SecurityExt},
+    assets::Asset,
+    pallet::{AssetRegistryExt, QuorumExt, SecurityExt, SunriseExt},
     AssetId, Balance, ComplianceLevel, CurrencyId, Hash, Mint, ProposalStatus, ProposalType,
     ProposalVotes, WatchList, WatchListAction, Withdrawal,
   };
@@ -94,6 +95,9 @@ pub mod pallet {
 
     /// Security traits
     type Security: SecurityExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Sunrise traits
+    type Sunrise: SunriseExt<Self::AccountId, Self::BlockNumber>;
 
     /// The maximum length of string (public keys etc..)
     #[pallet::constant]
@@ -366,6 +370,8 @@ pub mod pallet {
     PublicKeysOverflow,
     // Unknown error
     UnknownError,
+    /// Invalid asset
+    InvalidAsset,
   }
 
   #[pallet::hooks]
@@ -405,6 +411,7 @@ pub mod pallet {
           account_id: mint.account_id,
           currency_id: mint.currency_id,
           mint_amount: mint.mint_amount,
+          gas_amount: mint.gas_amount,
           transaction_id: mint
             .transaction_id
             .try_into()
@@ -885,6 +892,31 @@ pub mod pallet {
       {
         T::CurrencyTidefi::mint_into(item.currency_id, &item.account_id, item.mint_amount)
           .map_err(|_| Error::<T>::MintFailed)?;
+
+        // 3 a. If Quorum provide `gas_amount` try to process refunds based on sunrise allocation
+        if let Some(gas_amount) = item.gas_amount {
+          // gas for USDT by example, are paid in ETH
+          // we extract the base chain for the asset
+          // and if needed extract the currency id
+
+          // quorum would have sent us the amount in ETH
+          // but the mint would have been for `USDT`
+          let asset_from: Asset = item
+            .currency_id
+            .try_into()
+            .map_err(|_| Error::<T>::InvalidAsset)?;
+
+          let real_currency_id = match asset_from.base_chain() {
+            Some(base_chain) => base_chain.currency_id(),
+            None => item.currency_id,
+          };
+          if let Err(refund_error) =
+            T::Sunrise::try_refund_gas_for_deposit(&item.account_id, real_currency_id, gas_amount)
+          {
+            log!(error, "Unable to process gas refund {:?}", refund_error);
+          }
+        }
+        // item.gas_amount
 
         Self::deposit_event(Event::<T>::Minted {
           proposal_id,

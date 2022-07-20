@@ -28,7 +28,7 @@ pub trait WeightInfo {
    fn confirm_swap() -> Weight;
    fn add_market_maker() -> Weight;
    fn remove_market_maker() -> Weight;
-   fn im_alive() -> Weight;
+   fn update_assets_value() -> Weight;
 }
 
 /// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
@@ -59,7 +59,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))
    }
-   fn im_alive() -> Weight {
+   fn update_assets_value() -> Weight {
       64_000_400_u64
          .saturating_add(T::DbWeight::get().reads(6_u64))
          .saturating_add(T::DbWeight::get().writes(5_u64))

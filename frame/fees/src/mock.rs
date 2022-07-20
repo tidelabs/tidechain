@@ -16,7 +16,6 @@
 
 use crate::pallet as pallet_fees;
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
   parameter_types,
   traits::{
@@ -25,6 +24,7 @@ use frame_support::{
       MutateHold as FungibleMutateHold, Transfer as FungibleTransfer,
     },
     fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
+    tokens::{DepositConsequence, WithdrawConsequence},
     ConstU128, ConstU32, GenesisBuild,
   },
   PalletId,
@@ -88,7 +88,8 @@ frame_support::construct_runtime!(
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
-    Fees: pallet_fees::{Pallet, Call, Config<T>, Storage, Event<T>},
+    Fees: pallet_fees::{Pallet, Config<T>, Storage, Event<T>},
+    Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
     TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
@@ -179,6 +180,7 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
+  pub const SunrisePalletId: PalletId = PalletId(*b"sunr*pal");
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const QuorumPalletId: PalletId = PalletId(*b"qurm*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
@@ -197,13 +199,23 @@ parameter_types! {
   pub const MarketMakerLimitFeeAmount: Permill = Permill::from_perthousand(10);
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
-  pub const BlocksSunriseClaims: BlockNumber = 10;
+  pub const Cooldown: BlockNumber = 10;
+  // max 10k rewards
+  pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
+}
+
+impl pallet_sunrise::Config for Test {
+  type Event = Event;
+  type Security = Security;
+  type SunrisePalletId = SunrisePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Cooldown = Cooldown;
+  type MaximumRewardPerSwap = MaximumRewardPerSwap;
 }
 
 impl pallet_fees::Config for Test {
   type Event = Event;
   type Security = Security;
-  type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type FeesPalletId = TidefiPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
@@ -214,8 +226,8 @@ impl pallet_fees::Config for Test {
   type FeeAmount = FeeAmount;
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
-  type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;
+  type Sunrise = Sunrise;
 }
 
 impl pallet_tidefi_stake::Config for Test {
@@ -402,22 +414,36 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   let mut t = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
-  pallet_fees::GenesisConfig::<Test> {
-    phantom: Default::default(),
-    sunrise_swap_pools: vec![SunriseSwapPool {
-      id: 1,
-      minimum_usdt_value: 0,
-      transactions_remaining: 1_000,
-      balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
-      // 200%
-      rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
-    }],
-  }
-  .assimilate_storage(&mut t)
-  .unwrap();
+  pallet_fees::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut t)
+    .unwrap();
   pallet_balances::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut t)
     .unwrap();
+  pallet_sunrise::GenesisConfig::<Test> {
+    phantom: Default::default(),
+    onboarding_rebates: Default::default(),
+    swap_pools: vec![
+      SunriseSwapPool {
+        id: 1,
+        minimum_tdfy_value: 0,
+        transactions_remaining: 1,
+        balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
+        // 125%
+        rebates: FixedU128::saturating_from_rational(125_u32, 100_u32),
+      },
+      SunriseSwapPool {
+        id: 2,
+        minimum_tdfy_value: 1_000_000_000_000_000,
+        transactions_remaining: 1,
+        balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
+        // 200%
+        rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
+      },
+    ],
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
 
   t.into()
 }

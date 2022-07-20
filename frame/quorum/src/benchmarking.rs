@@ -60,6 +60,7 @@ fn create_proposal<T: Config>() -> Hash {
     account_id,
     currency_id: CurrencyId::Tdfy,
     mint_amount: 1_000_000_000_000,
+    gas_amount: None,
     transaction_id: Default::default(),
     compliance_level: ComplianceLevel::Green,
   });
@@ -106,6 +107,7 @@ benchmarks! {
          account_id,
          currency_id: CurrencyId::Tdfy,
          mint_amount: 1_000_000_000_000,
+         gas_amount: None,
          transaction_id: Vec::new(),
          compliance_level: ComplianceLevel::Green,
       });
