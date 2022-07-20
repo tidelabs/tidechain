@@ -17,11 +17,11 @@
 use crate::{
   constants::{
     currency::{deposit, CENTS, DOLLARS, TDFY},
-    time::DAYS,
+    time::{DAYS, HOURS},
   },
   types::{AccountId, Balance, BlockNumber, EnsureRootOrHalfCouncil},
-  Balances, Bounties, Call, Council, CouncilCollectiveInstance, Event, Origin, Runtime,
-  TechnicalCollectiveInstance, TechnicalCommittee, TreasuryPalletId,
+  Balances, Bounties, Call, Council, CouncilCollectiveInstance, Event, Origin, OriginCaller,
+  Runtime, Scheduler, TechnicalCollectiveInstance, TechnicalCommittee, Treasury, TreasuryPalletId,
 };
 use frame_support::{
   parameter_types,
@@ -168,4 +168,71 @@ impl pallet_bounties::Config for Runtime {
   type Event = Event;
   type MaximumReasonLength = MaximumReasonLength;
   type WeightInfo = crate::weights::pallet_bounties::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+  pub LaunchPeriod: BlockNumber = 7 * DAYS;
+  pub VotingPeriod: BlockNumber = 7 * DAYS;
+  pub FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+  pub const MinimumDeposit: Balance = 100 * CENTS;
+  pub EnactmentPeriod: BlockNumber = 8 * DAYS;
+  pub CooloffPeriod: BlockNumber = 7 * DAYS;
+  pub const InstantAllowed: bool = true;
+  pub const MaxVotes: u32 = 100;
+  pub const MaxProposals: u32 = 100;
+  pub const PreimageByteDeposit: Balance = deposit(0, 1);
+}
+
+impl pallet_democracy::Config for Runtime {
+  type Proposal = Call;
+  type Event = Event;
+  type Currency = Balances;
+  type EnactmentPeriod = EnactmentPeriod;
+  type VoteLockingPeriod = EnactmentPeriod;
+  type LaunchPeriod = LaunchPeriod;
+  type VotingPeriod = VotingPeriod;
+  type MinimumDeposit = MinimumDeposit;
+  /// A straight majority of the council can decide what their next motion is.
+  type ExternalOrigin =
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 1, 2>;
+  /// A majority can have the next scheduled referendum be a straight majority-carries vote.
+  type ExternalMajorityOrigin =
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 1, 2>;
+  /// A unanimous council can have the next scheduled referendum be a straight default-carries
+  /// (NTB) vote.
+  type ExternalDefaultOrigin =
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 1, 1>;
+  /// Two thirds of the technical committee can have an `ExternalMajority/ExternalDefault` vote
+  /// be tabled immediately and with a shorter voting/enactment period.
+  type FastTrackOrigin =
+    pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollectiveInstance, 2, 3>;
+  type InstantOrigin =
+    pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollectiveInstance, 1, 1>;
+  type InstantAllowed = InstantAllowed;
+  type FastTrackVotingPeriod = FastTrackVotingPeriod;
+  // To cancel a proposal which has been passed, 2/3 of the council must agree to it.
+  type CancellationOrigin = EitherOfDiverse<
+    EnsureRoot<AccountId>,
+    pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollectiveInstance, 2, 3>,
+  >;
+  type BlacklistOrigin = EnsureRoot<AccountId>;
+  // To cancel a proposal before it has been passed, the technical committee must be unanimous or
+  // Root must agree.
+  type CancelProposalOrigin = EitherOfDiverse<
+    EnsureRoot<AccountId>,
+    pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollectiveInstance, 1, 1>,
+  >;
+  // Any single technical committee member may veto a coming council proposal, however they can
+  // only do it once and it lasts only for the cooloff period.
+  type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollectiveInstance>;
+  type CooloffPeriod = CooloffPeriod;
+  type PreimageByteDeposit = PreimageByteDeposit;
+  type OperationalPreimageOrigin =
+    pallet_collective::EnsureMember<AccountId, CouncilCollectiveInstance>;
+  type Slash = Treasury;
+  type Scheduler = Scheduler;
+  type PalletsOrigin = OriginCaller;
+  type MaxVotes = MaxVotes;
+  type WeightInfo = crate::weights::pallet_democracy::WeightInfo<Runtime>;
+  type MaxProposals = MaxProposals;
 }
