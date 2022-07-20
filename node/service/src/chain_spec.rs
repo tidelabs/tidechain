@@ -43,7 +43,7 @@ const TIDECHAIN_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/
 const LAGOON_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 
 #[cfg(any(feature = "lagoon-native", feature = "tidechain-native"))]
-const DEFAULT_PROTOCOL_ID: &str = "TDFY";
+const DEFAULT_PROTOCOL_ID: &str = "tidec0";
 
 /// Node `ChainSpec` extensions.
 ///
