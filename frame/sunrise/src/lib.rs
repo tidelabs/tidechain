@@ -414,7 +414,22 @@ pub mod pallet {
       currency_id: CurrencyId,
       amount: Balance,
     ) -> Result<Option<Balance>, DispatchError> {
-      let amount_in_tdfy = Self::try_get_tdfy_value(currency_id, amount)?;
+      // gas for USDT by example, are paid in ETH
+      // we extract the base chain for the asset
+      // and if needed extract the currency id
+
+      // quorum would have sent us the amount in ETH
+      // but the mint would have been for `USDT`
+      let asset_from: Asset = currency_id
+        .try_into()
+        .map_err(|_| Error::<T>::InvalidAsset)?;
+
+      let real_currency_id = match asset_from.base_chain() {
+        Some(base_chain) => base_chain.currency_id(),
+        None => currency_id,
+      };
+
+      let amount_in_tdfy = Self::try_get_tdfy_value(real_currency_id, amount)?;
       Onboarding::<T>::try_mutate(|onboarging_rebates| {
         // get the onboarding rebates
         let rebate = Self::get_next_onboarding_rebates(amount_in_tdfy, onboarging_rebates)?;
@@ -433,7 +448,7 @@ pub mod pallet {
 
         Self::deposit_event(Event::<T>::OnboardingRebatesApplied {
           account_id: account_id.clone(),
-          currency_id,
+          currency_id: real_currency_id,
           initial_amount: amount,
           rebate,
         });
