@@ -27,7 +27,7 @@ use frame_support::{
   traits::{ConstU128, EitherOfDiverse, EnsureOrigin},
 };
 use frame_system::{EnsureRoot, RawOrigin};
-use sp_runtime::{traits::AccountIdConversion, Permill};
+use sp_runtime::{traits::AccountIdConversion, FixedU128, Permill};
 
 parameter_types! {
   pub const ApprovalDeposit: Balance = TDFY;
@@ -80,6 +80,8 @@ parameter_types! {
   pub const Cooldown: BlockNumber = 10;
   // Maximum sunrise rewards before rewards allocation (in TDFY's)
   pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
+  // Rebates applied to left-over pool
+  pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -237,4 +239,5 @@ impl pallet_sunrise::Config for Runtime {
   type CurrencyTidefi = Adapter<AccountId>;
   type Cooldown = Cooldown;
   type MaximumRewardPerSwap = MaximumRewardPerSwap;
+  type LeftoverSwapRebates = LeftoverSwapRebates;
 }

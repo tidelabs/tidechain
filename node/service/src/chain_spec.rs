@@ -986,7 +986,7 @@ mod helpers {
           SunriseSwapPool {
             id: 1,
             minimum_tdfy_value: 0,
-            transactions_remaining: 1_000,
+            transactions_remaining: 100_000,
             balance: assets::Asset::Tdfy.saturating_mul(67_200_000),
             // 100%
             rebates: FixedU128::saturating_from_rational(100_u32, 100_u32),
@@ -995,7 +995,7 @@ mod helpers {
             id: 2,
             // 100 TDFY's minimum value
             minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(100),
-            transactions_remaining: 1_000,
+            transactions_remaining: 100_000,
             balance: assets::Asset::Tdfy.saturating_mul(57_600_000),
             // 125%
             rebates: FixedU128::saturating_from_rational(125_u32, 100_u32),
@@ -1004,7 +1004,7 @@ mod helpers {
             id: 3,
             // 10_000 TDFY's minimum value
             minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(10_000),
-            transactions_remaining: 100,
+            transactions_remaining: 50_000,
             balance: assets::Asset::Tdfy.saturating_mul(38_400_000),
             // 150%
             rebates: FixedU128::saturating_from_rational(150_u32, 100_u32),
@@ -1013,7 +1013,7 @@ mod helpers {
             id: 4,
             // 50_000 TDFY's minimum value
             minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(50_000),
-            transactions_remaining: 100,
+            transactions_remaining: 10_000,
             balance: assets::Asset::Tdfy.saturating_mul(19_200_000),
             // 200%
             rebates: FixedU128::saturating_from_rational(200_u32, 100_u32),
@@ -1022,7 +1022,7 @@ mod helpers {
             id: 5,
             // 100_000 TDFY's minimum value
             minimum_tdfy_value: assets::Asset::Tdfy.saturating_mul(100_000),
-            transactions_remaining: 100,
+            transactions_remaining: 1_000,
             balance: assets::Asset::Tdfy.saturating_mul(9_600_000),
             // 300%
             rebates: FixedU128::saturating_from_rational(300_u32, 100_u32),
