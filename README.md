@@ -2,7 +2,7 @@
 
 This repo contains runtimes for the Tidechain and Lagoon networks.
 The README provides information about installing the `tidechain` binary.
-For more specific guides, like how to be a validator, see the [Tidechain Wiki](#).
+For more specific guides, like how to be a validator, see the [Tidechain Wiki](/docs/run-validator.md).
 
 ## Installation
 
@@ -103,9 +103,9 @@ You can see your node on [telemetry] (set a custom name with `--name "my custom 
 
 [telemetry]: https://telemetry.tidefi.io/#list/Lagoon
 
-### Obtaining TIFIs
+### Obtaining TDFYs
 
-For Lagoon's TDFY tokens, see the faucet [instructions](#) on the Wiki.
+For Lagoon's TDFY tokens, see the faucet [instructions](https://chat.tidefi.com/) in Discord.
 
 ## Hacking on Tidechain
 
