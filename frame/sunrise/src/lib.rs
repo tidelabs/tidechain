@@ -191,7 +191,7 @@ pub mod pallet {
   pub enum Event<T: Config> {
     SunriseRewarded {
       era_index: EraIndex,
-      pool_id: u8,
+      pool_id: Option<u8>,
       account_id: T::AccountId,
       reward: Balance,
     },
@@ -238,7 +238,7 @@ pub mod pallet {
         .iter()
         // make sure there is enough transaction remaining in the pool
         .filter(|pool| pool.transactions_remaining > 0)
-        // make sure there is enough tifi remaining to fullfill this
+        // make sure there is enough tdfy's remaining to fullfill this
         .filter(|pool| {
           pool.balance > 0
             && pool.balance
@@ -415,7 +415,7 @@ pub mod pallet {
         // Emit event
         Self::deposit_event(Event::<T>::SunriseRewarded {
           era_index,
-          pool_id: sunrise_pool_available.id,
+          pool_id: Some(sunrise_pool_available.id),
           account_id: account_id.clone(),
           reward: real_fees_in_tide_with_rebates,
         });
@@ -441,7 +441,7 @@ pub mod pallet {
           // Emit event
           Self::deposit_event(Event::<T>::SunriseRewarded {
             era_index,
-            pool_id: 0,
+            pool_id: None,
             account_id: account_id.clone(),
             reward: real_fees_in_tide_with_rebates,
           });
