@@ -433,7 +433,7 @@ pub mod pallet {
 
         Self::deposit_event(Event::<T>::OnboardingRebatesApplied {
           account_id: account_id.clone(),
-          currency_id: currency_id.clone(),
+          currency_id,
           initial_amount: amount,
           rebate,
         });
