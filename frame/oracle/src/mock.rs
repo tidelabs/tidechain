@@ -33,7 +33,7 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, Permill,
+  DispatchError, DispatchResult, FixedU128, Permill,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
