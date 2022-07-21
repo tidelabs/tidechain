@@ -66,7 +66,7 @@ pub mod pallet {
   };
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, SecurityExt, StakingExt},
-    Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta,
+    Balance, BalanceInfo, CurrencyId, Hash, SessionIndex, Stake, StakeCurrencyMeta, StakeStatus,
   };
 
   /// The current storage version.
@@ -474,14 +474,21 @@ pub mod pallet {
           .into_result()
           .map_err(|_| Error::<T>::InsufficientBalance)?;
 
-        UnstakeQueue::<T>::try_append((
-          account_id.clone(),
-          stake_id,
-          T::Security::get_current_block_count() + T::BlocksForceUnstake::get(),
-        ))
-        .map_err(|_| Error::<T>::UnstakeQueueCapExceeded)?;
+        let expected_block_end =
+          T::Security::get_current_block_count() + T::BlocksForceUnstake::get();
+        UnstakeQueue::<T>::try_append((account_id.clone(), stake_id, expected_block_end))
+          .map_err(|_| Error::<T>::UnstakeQueueCapExceeded)?;
 
-        // FIXME: transfer to DEX wallet
+        // update `AccountStakes` status
+        AccountStakes::<T>::try_mutate(account_id.clone(), |stakes| -> DispatchResult {
+          let stake = stakes
+            .iter_mut()
+            .find(|stake| stake.unique_id == stake_id)
+            .ok_or(Error::<T>::InvalidStakeId)?;
+          stake.status = StakeStatus::PendingUnlock(expected_block_end);
+          Ok(())
+        })?;
+
         T::CurrencyTidefi::transfer(
           stake.currency_id,
           &account_id,
@@ -545,6 +552,7 @@ pub mod pallet {
             initial_balance: amount,
             principal: amount,
             duration,
+            status: StakeStatus::Staked,
           })
           .map_err(|_| DispatchError::Other("Invalid stake; eqd"))
       })?;
@@ -787,6 +795,7 @@ pub mod pallet {
               amount: account_stake.initial_balance,
             },
             duration: account_stake.duration,
+            status: account_stake.status,
           },
         ));
       }
