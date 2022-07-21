@@ -475,7 +475,7 @@ pub mod pallet {
           .map_err(|_| Error::<T>::InsufficientBalance)?;
 
         let expected_block_end =
-          T::Security::get_current_block_count() + T::BlocksForceUnstake::get();
+          T::Security::get_current_block_count().saturating_add(T::BlocksForceUnstake::get());
         UnstakeQueue::<T>::try_append((account_id.clone(), stake_id, expected_block_end))
           .map_err(|_| Error::<T>::UnstakeQueueCapExceeded)?;
 
@@ -605,7 +605,7 @@ pub mod pallet {
       Ok(())
     }
 
-    // FIXME: require more tests to prevent any blocking on-chain
+    // FIXME: move to offchain worker
     #[inline]
     pub fn do_next_compound_interest_operation(
       max_weight: Weight,
@@ -643,7 +643,8 @@ pub mod pallet {
           let currency_id = current_stake.currency_id;
           let staking_pool_for_this_currency = StakingPool::<T>::get(currency_id).unwrap_or(0);
           if current_stake.last_session_index_compound <= last_session {
-            let mut keep_going_in_loop = Some(current_stake.last_session_index_compound + 1);
+            let mut keep_going_in_loop =
+              Some(current_stake.last_session_index_compound.saturating_add(1));
             while let Some(session_to_index) = keep_going_in_loop {
               if all_pending_sessions.contains(&session_to_index) {
                 let session_fee_for_currency =
@@ -655,7 +656,9 @@ pub mod pallet {
                     let mut final_stake = staking_details.clone();
                     for active_stake in final_stake.as_mut().iter_mut() {
                       if T::Security::get_current_block_count()
-                        <= current_stake.initial_block + current_stake.duration
+                        <= current_stake
+                          .initial_block
+                          .saturating_add(current_stake.duration)
                       {
                         // FIXME: we could probably find the closest reward
                         // but in theory this should never happens
@@ -698,7 +701,7 @@ pub mod pallet {
                 )?;
               }
               if session_to_index < last_session {
-                keep_going_in_loop = Some(session_to_index + 1);
+                keep_going_in_loop = Some(session_to_index.saturating_add(1));
               } else {
                 keep_going_in_loop = None;
               }
@@ -748,7 +751,7 @@ pub mod pallet {
         {
           keep_going_in_loop = None;
         } else {
-          keep_going_in_loop = Some(current_iterations + 1);
+          keep_going_in_loop = Some(current_iterations.saturating_add(1));
         }
       }
 
