@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::pallet as pallet_security;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_benchmarking::frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use frame_support::{
@@ -81,6 +82,7 @@ frame_support::construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+    Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
     Balances: pallet_balances::{Pallet, Call, Config<T>, Storage, Event<T>},
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
   }
@@ -159,6 +161,10 @@ impl pallet_balances::Config for Test {
   type MaxReserves = MaxReserves;
   type ReserveIdentifier = [u8; 8];
   type WeightInfo = ();
+}
+
+impl pallet_security::Config for Test {
+  type Event = Event;
 }
 
 parameter_types! {

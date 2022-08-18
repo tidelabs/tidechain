@@ -22,6 +22,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
@@ -128,8 +131,6 @@ pub mod pallet {
     /// - `status_code`: New chain `StatusCode`
     ///
     /// Emits `StatusChanged` event when successful.
-    ///
-    /// Weight: `0`
     #[pallet::weight(0)]
     pub fn set_status(origin: OriginFor<T>, status_code: StatusCode) -> DispatchResultWithPostInfo {
       ensure_root(origin)?;
