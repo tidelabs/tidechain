@@ -187,6 +187,7 @@ parameter_types! {
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+  pub const MaximumCallLength: u8 = 200;
 }
 
 impl pallet_tidefi::Config for Test {
@@ -199,6 +200,8 @@ impl pallet_tidefi::Config for Test {
   type Sunrise = Sunrise;
   type Security = Security;
   type AssetRegistry = AssetRegistry;
+  type Call = Call;
+  type MaximumCallLength = MaximumCallLength;
 }
 
 impl pallet_quorum::Config for Test {
@@ -500,3 +503,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   ext.execute_with(|| System::set_block_number(1));
   ext
 }
+
+/// A simple call, which one doesn't matter.
+pub const CALL: &<Test as pallet_tidefi::Config>::Call =
+  &Call::Tidefi(pallet_tidefi::Call::withdrawal {
+    currency_id: CurrencyId::Wrapped(4),
+    amount: 0u128,
+    external_address: Vec::new(),
+  });

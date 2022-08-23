@@ -28,19 +28,13 @@ mod benchmarking;
 pub mod weights;
 pub use weights::*;
 
+mod extensions;
+pub use extensions::check_call_length::CheckCallLength;
+
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
-
-use codec::{Decode, Encode};
-use frame_support::traits::IsSubType;
-use scale_info::TypeInfo;
-use sp_runtime::{
-  traits::{Bounded, DispatchInfoOf, SignedExtension},
-  transaction_validity::{
-    InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
-  },
-};
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_runtime::traits::Dispatchable;
+use sp_std::{fmt::Debug, prelude::*};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -95,6 +89,13 @@ pub mod pallet {
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + InspectHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + MutateHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+
+    /// The aggregated `Call` type.
+    type Call: Dispatchable + Debug;
+
+    /// Maximum length for each call.
+    #[pallet::constant]
+    type MaximumCallLength: Get<u8>;
   }
 
   #[pallet::pallet]
@@ -436,73 +437,6 @@ pub mod pallet {
 
       // Don't take tx fees on success
       Ok(Pays::No.into())
-    }
-  }
-}
-
-#[derive(Encode, Decode, Clone, Eq, PartialEq, TypeInfo)]
-#[scale_info(skip_type_params(T))]
-pub struct CheckBytesVectors<T: Config + Send + Sync>(PhantomData<T>);
-
-impl<T: Config + Send + Sync> sp_std::fmt::Debug for CheckBytesVectors<T> {
-  fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-    write!(f, "CheckBytesVectors")
-  }
-}
-
-impl<T: Config + Send + Sync> CheckBytesVectors<T> {
-  /// Create new `SignedExtension` to check runtime version.
-  pub fn new() -> Self {
-    Self(sp_std::marker::PhantomData)
-  }
-}
-
-impl<T: Config + Send + Sync> SignedExtension for CheckBytesVectors<T>
-where
-  <T as frame_system::Config>::Call: IsSubType<Call<T>>,
-{
-  const IDENTIFIER: &'static str = "CheckBytesVectors";
-  type AccountId = T::AccountId;
-  type Call = <T as frame_system::Config>::Call;
-  type AdditionalSigned = ();
-  type Pre = ();
-
-  fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
-    Ok(())
-  }
-
-  fn pre_dispatch(
-    self,
-    who: &Self::AccountId,
-    call: &Self::Call,
-    info: &DispatchInfoOf<Self::Call>,
-    len: usize,
-  ) -> Result<Self::Pre, TransactionValidityError> {
-    self.validate(who, call, info, len).map(|_| ())
-  }
-
-  fn validate(
-    &self,
-    _who: &Self::AccountId,
-    call: &Self::Call,
-    _info: &DispatchInfoOf<Self::Call>,
-    len: usize,
-  ) -> TransactionValidity {
-    // check for `withdrawal`
-    match call.is_sub_type() {
-      Some(Call::withdrawal { .. }) => {
-        // if the withdrawal transaction is too big, just drop it.
-        if len > 200 {
-          return InvalidTransaction::ExhaustsResources.into();
-        }
-
-        let valid_tx = ValidTransaction {
-          priority: Bounded::max_value(),
-          ..Default::default()
-        };
-        Ok(valid_tx)
-      }
-      _ => Ok(Default::default()),
     }
   }
 }

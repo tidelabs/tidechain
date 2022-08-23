@@ -30,7 +30,11 @@ use pallet_assets::{Account, Error as AssetsError};
 use pallet_balances::Error as BalancesError;
 use pallet_oracle::{AccountSwaps, Error as OracleError};
 use pallet_sunrise::Error as SunriseError;
-use sp_runtime::{traits::BadOrigin, Permill};
+use sp_runtime::{
+  traits::{BadOrigin, SignedExtension},
+  Permill,
+};
+use sp_std::prelude::*;
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt, SunriseExt},
@@ -534,6 +538,8 @@ mod withdrawal {
 
   mod fails_when {
     use super::*;
+    use crate::{mock::CALL, CheckCallLength};
+    use frame_support::{pallet_prelude::InvalidTransaction, weights::DispatchInfo};
 
     #[test]
     fn not_signed() {
@@ -675,6 +681,27 @@ mod withdrawal {
             context.external_address.clone(),
           ),
           Error::<Test>::ReducedToZero
+        );
+      });
+    }
+
+    #[test]
+    fn call_length_is_larger_than_the_maximum() {
+      new_test_ext().execute_with(|| {
+        let info = DispatchInfo::default();
+
+        let valid_len = 200_usize;
+        assert_ok!(CheckCallLength::<Test>::new().validate(&1, CALL, &info, valid_len));
+        assert_ok!(CheckCallLength::<Test>::new().pre_dispatch(&1, CALL, &info, valid_len));
+
+        let invalid_len = 201_usize;
+        assert_noop!(
+          CheckCallLength::<Test>::new().validate(&1, CALL, &info, invalid_len),
+          InvalidTransaction::ExhaustsResources
+        );
+        assert_noop!(
+          CheckCallLength::<Test>::new().pre_dispatch(&1, CALL, &info, invalid_len),
+          InvalidTransaction::ExhaustsResources
         );
       });
     }
