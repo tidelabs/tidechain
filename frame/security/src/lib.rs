@@ -33,6 +33,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+  use super::*;  
   use frame_support::pallet_prelude::*;
   use frame_system::pallet_prelude::*;
   use sha2::{Digest, Sha256};
