@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-  mock::{new_test_ext, Event as MockEvent, Origin, Security, System},
-  pallet::*,
-};
+use crate::mock::{new_test_ext, Origin, Security};
 use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use tidefi_primitives::StatusCode;
 
