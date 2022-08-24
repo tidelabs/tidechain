@@ -23,12 +23,8 @@ use tidefi_primitives::StatusCode;
 
 benchmarks! {
    set_status {
-      assert_eq!(Pallet::<T>::status(), StatusCode::Running);
       let new_status = StatusCode::Maintenance;
    }: _(RawOrigin::Root, new_status.clone())
-   verify {
-      assert_eq!(Pallet::<T>::status(), new_status);
-   }
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);
