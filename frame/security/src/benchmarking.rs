@@ -16,18 +16,18 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{mock::Test, Call, Config, Pallet};
+use crate::{Call, Config, Pallet};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use tidefi_primitives::StatusCode;
 
 benchmarks! {
    set_status {
-      assert_eq!(Pallet::<Test>::status(), StatusCode::Running);
+      assert_eq!(Pallet::<T>::status(), StatusCode::Running);
       let new_status = StatusCode::Maintenance;
    }: _(RawOrigin::Root, new_status.clone())
    verify {
-      assert_eq!(Pallet::<Test>::status(), new_status);
+      assert_eq!(Pallet::<T>::status(), new_status);
    }
 }
 

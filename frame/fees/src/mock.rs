@@ -255,6 +255,7 @@ impl pallet_asset_registry::Config for Test {
 
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime

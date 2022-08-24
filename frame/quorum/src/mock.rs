@@ -187,6 +187,7 @@ impl pallet_sunrise::Config for Test {
 
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_asset_registry::Config for Test {

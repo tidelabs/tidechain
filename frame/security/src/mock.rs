@@ -165,6 +165,7 @@ impl pallet_balances::Config for Test {
 
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = crate::weights::SubstrateWeight<Test>;
 }
 
 parameter_types! {
