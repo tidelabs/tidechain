@@ -538,7 +538,7 @@ mod withdrawal {
 
   mod fails_when {
     use super::*;
-    use crate::{mock::CALL, CheckCallLength};
+    use crate::{pallet as pallet_tidefi, CheckExternalAddressLength};
     use frame_support::{pallet_prelude::InvalidTransaction, weights::DispatchInfo};
 
     #[test]
@@ -686,21 +686,36 @@ mod withdrawal {
     }
 
     #[test]
-    fn call_length_is_larger_than_the_maximum() {
+    fn external_address_is_larger_than_the_maximum() {
       new_test_ext().execute_with(|| {
         let info = DispatchInfo::default();
+        let len = 100usize;
+        let maximum_eternal_address_length =
+          usize::from(crate::mock::MaximumExternalAddressLength::get());
 
-        let valid_len = 200_usize;
-        assert_ok!(CheckCallLength::<Test>::new().validate(&1, CALL, &info, valid_len));
-        assert_ok!(CheckCallLength::<Test>::new().pre_dispatch(&1, CALL, &info, valid_len));
+        let valid_call: &<Test as pallet_tidefi::Config>::Call =
+          &crate::mock::Call::Tidefi(pallet_tidefi::Call::withdrawal {
+            currency_id: CurrencyId::Wrapped(4),
+            amount: 100u128,
+            external_address: vec![0u8; maximum_eternal_address_length],
+          });
+        assert_ok!(CheckExternalAddressLength::<Test>::new().validate(&1, valid_call, &info, len));
+        assert_ok!(
+          CheckExternalAddressLength::<Test>::new().pre_dispatch(&1, valid_call, &info, len)
+        );
 
-        let invalid_len = 201_usize;
+        let invalid_call: &<Test as pallet_tidefi::Config>::Call =
+          &crate::mock::Call::Tidefi(pallet_tidefi::Call::withdrawal {
+            currency_id: CurrencyId::Wrapped(4),
+            amount: 100u128,
+            external_address: vec![0u8; maximum_eternal_address_length + 1],
+          });
         assert_noop!(
-          CheckCallLength::<Test>::new().validate(&1, CALL, &info, invalid_len),
+          CheckExternalAddressLength::<Test>::new().validate(&1, invalid_call, &info, len),
           InvalidTransaction::ExhaustsResources
         );
         assert_noop!(
-          CheckCallLength::<Test>::new().pre_dispatch(&1, CALL, &info, invalid_len),
+          CheckExternalAddressLength::<Test>::new().pre_dispatch(&1, invalid_call, &info, len),
           InvalidTransaction::ExhaustsResources
         );
       });

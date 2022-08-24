@@ -29,7 +29,7 @@ pub mod weights;
 pub use weights::*;
 
 mod extensions;
-pub use extensions::check_call_length::CheckCallLength;
+pub use extensions::check_external_address_length::CheckExternalAddressLength;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
@@ -93,9 +93,9 @@ pub mod pallet {
     /// The aggregated `Call` type.
     type Call: Dispatchable + Debug;
 
-    /// Maximum length for each call.
+    /// Maximum length for external address.
     #[pallet::constant]
-    type MaximumCallLength: Get<u8>;
+    type MaximumExternalAddressLength: Get<u8>;
   }
 
   #[pallet::pallet]

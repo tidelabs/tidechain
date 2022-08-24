@@ -83,7 +83,7 @@ parameter_types! {
   // Rebates applied to left-over pool
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
   // The maximum length of each tidefi call
-  pub const MaximumCallLength: u8 = 200;
+  pub const MaximumExternalAddressLength: u8 = 100;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -148,7 +148,7 @@ impl pallet_tidefi::Config for Runtime {
   type AssetRegistry = AssetRegistry;
   type WeightInfo = crate::weights::pallet_tidefi::WeightInfo<Runtime>;
   type Call = Call;
-  type MaximumCallLength = MaximumCallLength;
+  type MaximumExternalAddressLength = MaximumExternalAddressLength;
 }
 
 impl pallet_tidefi_stake::Config for Runtime {

@@ -28,26 +28,26 @@ use sp_std::{marker::PhantomData, prelude::*};
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, TypeInfo)]
 #[scale_info(skip_type_params(T))]
-pub struct CheckCallLength<T: Config + Send + Sync>(PhantomData<T>);
+pub struct CheckExternalAddressLength<T: Config + Send + Sync>(PhantomData<T>);
 
-impl<T: Config + Send + Sync> sp_std::fmt::Debug for CheckCallLength<T> {
+impl<T: Config + Send + Sync> sp_std::fmt::Debug for CheckExternalAddressLength<T> {
   fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-    write!(f, "CheckCallLength")
+    write!(f, "CheckExternalAddressLength")
   }
 }
 
-impl<T: Config + Send + Sync> CheckCallLength<T> {
+impl<T: Config + Send + Sync> CheckExternalAddressLength<T> {
   /// Create new `SignedExtension` to check runtime version.
   pub fn new() -> Self {
     Self(sp_std::marker::PhantomData)
   }
 }
 
-impl<T: Config + Send + Sync> SignedExtension for CheckCallLength<T>
+impl<T: Config + Send + Sync> SignedExtension for CheckExternalAddressLength<T>
 where
   <T as Config>::Call: IsSubType<Call<T>>,
 {
-  const IDENTIFIER: &'static str = "CheckCallLength";
+  const IDENTIFIER: &'static str = "CheckExternalAddressLength";
   type AccountId = T::AccountId;
   type Call = <T as Config>::Call;
   type AdditionalSigned = ();
@@ -72,15 +72,19 @@ where
     _who: &Self::AccountId,
     call: &Self::Call,
     _info: &DispatchInfoOf<Self::Call>,
-    len: usize,
+    _len: usize,
   ) -> TransactionValidity {
     // check for `withdrawal`
     match call.is_sub_type() {
-      Some(Call::withdrawal { .. }) => {
-        let maximum_call_length = T::MaximumCallLength::get() as usize;
+      Some(Call::withdrawal {
+        currency_id: _,
+        amount: _,
+        external_address,
+      }) => {
+        let maximum_external_address_length = T::MaximumExternalAddressLength::get() as usize;
 
         // if the withdrawal transaction is too big, just drop it.
-        if len > maximum_call_length {
+        if external_address.len() > maximum_external_address_length {
           return InvalidTransaction::ExhaustsResources.into();
         }
 
