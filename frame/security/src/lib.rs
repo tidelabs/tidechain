@@ -17,7 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
-pub mod mock;
+mod mock;
 
 #[cfg(test)]
 mod tests;
@@ -42,6 +42,8 @@ pub mod pallet {
   pub trait Config: frame_system::Config {
     /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    /// Weights
+    type WeightInfo: WeightInfo;    
   }
 
   #[pallet::pallet]
@@ -131,7 +133,7 @@ pub mod pallet {
     /// - `status_code`: New chain `StatusCode`
     ///
     /// Emits `StatusChanged` event when successful.
-    #[pallet::weight(0)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, status_code: StatusCode) -> DispatchResultWithPostInfo {
       ensure_root(origin)?;
       <ChainStatus<T>>::set(status_code.clone());

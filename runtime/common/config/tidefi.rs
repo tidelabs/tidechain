@@ -199,6 +199,7 @@ impl pallet_oracle::Config for Runtime {
 
 impl pallet_security::Config for Runtime {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::WeightInfo<Runtime>;
 }
 
 impl pallet_asset_registry::Config for Runtime {
