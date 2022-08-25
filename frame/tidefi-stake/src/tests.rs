@@ -19,7 +19,7 @@ use crate::{
     new_test_ext, AccountId, Adapter, Balance, Origin, Security, StakeAccountCap, Test,
     TidefiStaking, UnstakeQueueCap,
   },
-  AccountStakes, Error, StakingPool, UnstakeQueue,
+  pallet as pallet_tidefi_stake, AccountStakes, Error, StakingPool, UnstakeQueue,
 };
 use frame_support::{
   assert_noop, assert_ok,
@@ -29,7 +29,10 @@ use frame_support::{
   },
   BoundedVec,
 };
-use sp_runtime::{traits::BadOrigin, ArithmeticError, DispatchError, Percent};
+use sp_runtime::{
+  traits::{AccountIdConversion, BadOrigin},
+  ArithmeticError, DispatchError, Percent,
+};
 use std::str::FromStr;
 use tidefi_primitives::{pallet::StakingExt, BlockNumber, CurrencyId, Hash, Stake, StakeStatus};
 
@@ -419,6 +422,16 @@ mod unstake {
             staker_balance_before + context.tdfy_amount,
             Adapter::balance(CurrencyId::Tdfy, &context.staker)
           );
+
+          // Staking pallet account becomes empty
+          assert_eq!(
+            0,
+            Adapter::balance(
+              CurrencyId::Tdfy,
+              &<Test as pallet_tidefi_stake::Config>::StakePalletId::get()
+                .into_account_truncating()
+            )
+          );
         });
       }
 
@@ -443,6 +456,16 @@ mod unstake {
           assert_eq!(
             staker_balance_before + context.test_token_amount,
             Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staker)
+          );
+
+          // Staking pallet account becomes empty
+          assert_eq!(
+            0,
+            Adapter::balance(
+              TEST_TOKEN_CURRENCY_ID,
+              &<Test as pallet_tidefi_stake::Config>::StakePalletId::get()
+                .into_account_truncating()
+            )
           );
         });
       }
