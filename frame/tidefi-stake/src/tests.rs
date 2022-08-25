@@ -62,6 +62,7 @@ const BLOCK_NUMBER_ZERO: BlockNumber = 0;
 
 struct Context {
   staker: AccountId,
+  staking_pallet_account: AccountId,
   tdfy_amount: Balance,
   test_token_amount: Balance,
   stake_id: Hash,
@@ -72,6 +73,8 @@ impl Default for Context {
   fn default() -> Self {
     Self {
       staker: ALICE_ACCOUNT_ID,
+      staking_pallet_account: <Test as pallet_tidefi_stake::Config>::StakePalletId::get()
+        .into_account_truncating(),
       tdfy_amount: ONE_TDFY,
       test_token_amount: ONE_TEST_TOKEN,
       stake_id: Hash::from_str(
@@ -103,22 +106,44 @@ impl Context {
   }
 
   fn stake_tdfy(self) -> Self {
+    assert_eq!(
+      0,
+      Adapter::balance(CurrencyId::Tdfy, &self.staking_pallet_account)
+    );
+
     assert_ok!(TidefiStaking::stake(
       Origin::signed(self.staker),
       CurrencyId::Tdfy,
       self.tdfy_amount,
       self.duration
     ));
+
+    assert_eq!(
+      self.tdfy_amount,
+      Adapter::balance(CurrencyId::Tdfy, &self.staking_pallet_account)
+    );
+
     self
   }
 
   fn stake_test_tokens(self) -> Self {
+    assert_eq!(
+      0,
+      Adapter::balance(TEST_TOKEN_CURRENCY_ID, &self.staking_pallet_account)
+    );
+
     assert_ok!(TidefiStaking::stake(
       Origin::signed(self.staker),
       TEST_TOKEN_CURRENCY_ID,
       self.test_token_amount,
       self.duration
     ));
+
+    assert_eq!(
+      self.test_token_amount,
+      Adapter::balance(TEST_TOKEN_CURRENCY_ID, &self.staking_pallet_account)
+    );
+
     self
   }
 
@@ -426,11 +451,7 @@ mod unstake {
           // Staking pallet account becomes empty
           assert_eq!(
             0,
-            Adapter::balance(
-              CurrencyId::Tdfy,
-              &<Test as pallet_tidefi_stake::Config>::StakePalletId::get()
-                .into_account_truncating()
-            )
+            Adapter::balance(CurrencyId::Tdfy, &context.staking_pallet_account)
           );
         });
       }
@@ -461,11 +482,7 @@ mod unstake {
           // Staking pallet account becomes empty
           assert_eq!(
             0,
-            Adapter::balance(
-              TEST_TOKEN_CURRENCY_ID,
-              &<Test as pallet_tidefi_stake::Config>::StakePalletId::get()
-                .into_account_truncating()
-            )
+            Adapter::balance(TEST_TOKEN_CURRENCY_ID, &context.staking_pallet_account)
           );
         });
       }
