@@ -156,6 +156,12 @@ parameter_types! {
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 }
 
+// FIXME: Should be removed once we'll give control to the community (governance)
+impl pallet_sudo::Config for Runtime {
+  type Event = Event;
+  type Call = Call;
+}
+
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -223,6 +229,9 @@ construct_runtime!(
 
         // Preimage registrar
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 30,
+
+        // Sudo module
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
 
         // Tidefi public calls
         Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>} = 50,
