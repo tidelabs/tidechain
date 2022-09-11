@@ -173,11 +173,11 @@ macro_rules! unwrap_client {
 }
 
 #[allow(clippy::borrowed_box)]
-fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
+fn set_default_ss58_version(spec: &Box<dyn sc_service::ChainSpec>) {
   use sp_core::crypto::Ss58AddressFormatRegistry;
 
   let ss58_version = if spec.is_tidechain() {
-    Ss58AddressFormatRegistry::Tidefi
+    Ss58AddressFormatRegistry::TidefiAccount
   } else {
     Ss58AddressFormatRegistry::SubstrateAccount
   }
