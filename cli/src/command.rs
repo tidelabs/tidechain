@@ -176,18 +176,14 @@ macro_rules! unwrap_client {
 fn set_default_ss58_version(_spec: &Box<dyn sc_service::ChainSpec>) {
   use sp_core::crypto::Ss58AddressFormatRegistry;
 
-  /*
   let ss58_version = if spec.is_tidechain() {
-    Ss58AddressFormatRegistry::SubstrateAccount
-  } else if spec.is_lagoon() {
-    Ss58AddressFormatRegistry::SubstrateAccount
+    Ss58AddressFormatRegistry::Tidefi
   } else {
     Ss58AddressFormatRegistry::SubstrateAccount
   }
   .into();
-  */
 
-  sp_core::crypto::set_default_ss58_version(Ss58AddressFormatRegistry::SubstrateAccount.into());
+  sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
 /// Parses Tidechain specific CLI arguments and run the service.

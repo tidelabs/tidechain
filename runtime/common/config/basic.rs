@@ -42,7 +42,7 @@ use sp_version::RuntimeVersion;
 
 parameter_types! {
   pub const Version: RuntimeVersion = VERSION;
-  pub const SS58Prefix: u8 = SS58_PREFIX;
+  pub const SS58Prefix: u16 = SS58_PREFIX;
 }
 
 impl frame_system::Config for Runtime {
