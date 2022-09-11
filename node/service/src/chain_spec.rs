@@ -449,7 +449,7 @@ fn tidechain_testnet_genesis(
     },
 
     // FIXME: Remove sudo once the staging is completed
-    sudo: lagoon_runtime::SudoConfig {
+    sudo: tidechain_runtime::SudoConfig {
       key: Some(root.clone()),
     },
 
@@ -793,6 +793,7 @@ fn tidechain_development_config_genesis(wasm_binary: &[u8]) -> tidechain_runtime
     helpers::get_stakeholder_tokens_tidechain(),
     vec![helpers::get_account_id_from_seed::<sr25519::Public>("Bob")],
     helpers::get_account_id_from_seed::<sr25519::Public>("Charlie"),
+    helpers::get_account_id_from_seed::<sr25519::Public>("Ferdie"),
     helpers::get_all_assets(),
   )
 }
@@ -870,6 +871,8 @@ fn tidechain_staging_testnet_config_genesis(
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
+    //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
+    hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
     helpers::get_all_assets(),
   )
 }
@@ -943,6 +946,8 @@ fn tidechain_local_testnet_config_genesis(wasm_binary: &[u8]) -> tidechain_runti
     initial_authorities,
     helpers::get_stakeholder_tokens_tidechain(),
     quorums,
+    //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
+    hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
     helpers::get_all_assets(),
