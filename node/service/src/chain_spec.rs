@@ -2143,6 +2143,7 @@ mod helpers {
     const SIX_MONTHS: u32 = 2_592_000;
     const ONE_YEAR: u32 = 5_184_000;
     const TWO_YEARS: u32 = 10_368_000;
+    const THREE_YEARS: u32 = 15_552_000;
 
     vec![(
       hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
