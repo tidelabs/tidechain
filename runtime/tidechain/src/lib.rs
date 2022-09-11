@@ -248,6 +248,8 @@ construct_runtime!(
         // Sunrise module
         Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>} = 57,
 
+        // Vesting module
+        Vesting: pallet_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 58,
     }
 );
 

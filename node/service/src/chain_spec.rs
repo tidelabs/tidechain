@@ -194,6 +194,8 @@ fn lagoon_testnet_genesis(
     "Total Supply (endowed_accounts) is not equal to 1 billion"
   );
 
+  let vesting = helpers::get_vesting_terms_lagoon();
+
   lagoon_runtime::GenesisConfig {
     system: lagoon_runtime::SystemConfig {
       code: wasm_binary.to_vec(),
@@ -300,6 +302,7 @@ fn lagoon_testnet_genesis(
     },
     security: Default::default(),
     fees: Default::default(),
+    vesting: lagoon_runtime::VestingConfig { vesting },
     sunrise: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
     tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
   }
@@ -392,6 +395,8 @@ fn tidechain_testnet_genesis(
     "Total Supply (endowed_accounts) is not equal to 1 billion"
   );
 
+  let vesting = helpers::get_vesting_terms_tidechain();
+
   tidechain_runtime::GenesisConfig {
     system: tidechain_runtime::SystemConfig {
       code: wasm_binary.to_vec(),
@@ -470,6 +475,7 @@ fn tidechain_testnet_genesis(
     },
     security: Default::default(),
     fees: Default::default(),
+    vesting: tidechain_runtime::VestingConfig { vesting },
     sunrise: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
     tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
   }
@@ -2118,5 +2124,33 @@ mod helpers {
         assets::Asset::Tdfy.saturating_mul(1_000),
       ),
     ]
+  }
+
+  // Attention: When we add a vesting schedule, the account ID should
+  // have the total of the vesting added as a stakeholder above, the vesting
+  // will lock the vesting below but the funds need to be available
+
+  #[cfg(feature = "lagoon-native")]
+  pub fn get_vesting_terms_lagoon() -> Vec<(AccountId, u32, u32, u32, Balance)> {
+    vec![]
+  }
+  #[cfg(feature = "tidechain-native")]
+  pub fn get_vesting_terms_tidechain() -> Vec<(AccountId, u32, u32, u32, Balance)> {
+    const STARTING_BLOCK: u32 = 144_000;
+
+    // We are approximating a month to 30 days
+    const ONE_MONTH: u32 = 432_000;
+    const SIX_MONTHS: u32 = 2_592_000;
+    const ONE_YEAR: u32 = 5_184_000;
+    const TWO_YEARS: u32 = 10_368_000;
+
+    vec![(
+      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
+      STARTING_BLOCK,
+      ONE_MONTH,
+      // only one schedule
+      1,
+      assets::Asset::Tdfy.saturating_mul(100),
+    )]
   }
 }

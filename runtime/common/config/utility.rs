@@ -15,9 +15,13 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-  constants::currency::deposit, types::Balance, Balances, Call, Event, OriginCaller, Runtime,
+  constants::currency::{deposit, TDFY},
+  types::{AccountId, Balance, BlockNumber},
+  Balances, Call, Event, Origin, OriginCaller, Runtime, System, TreasuryPalletId,
 };
-use frame_support::parameter_types;
+use frame_support::{parameter_types, traits::EnsureOrigin};
+use frame_system::RawOrigin;
+use sp_runtime::traits::{AccountIdConversion, BlockNumberProvider};
 
 impl pallet_utility::Config for Runtime {
   type PalletsOrigin = OriginCaller;
@@ -32,6 +36,10 @@ parameter_types! {
     // Additional storage item size of 32 bytes.
     pub const DepositFactor: Balance = deposit(0, 32);
     pub const MaxSignatories: u16 = 100;
+
+    pub MinVestedTransfer: Balance = TDFY;
+    pub const MaxVestingSchedules: u32 = 300;
+
 }
 
 impl pallet_multisig::Config for Runtime {
@@ -42,4 +50,47 @@ impl pallet_multisig::Config for Runtime {
   type DepositFactor = DepositFactor;
   type MaxSignatories = MaxSignatories;
   type WeightInfo = crate::weights::pallet_multisig::WeightInfo<Runtime>;
+}
+
+pub struct EnsureRootOrTreasury;
+impl EnsureOrigin<Origin> for EnsureRootOrTreasury {
+  type Success = AccountId;
+
+  fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+    Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+      RawOrigin::Root => Ok(TreasuryPalletId::get().into_account_truncating()),
+      RawOrigin::Signed(caller) => {
+        if caller == TreasuryPalletId::get().into_account_truncating() {
+          Ok(caller)
+        } else {
+          Err(Origin::from(Some(caller)))
+        }
+      }
+      r => Err(Origin::from(r)),
+    })
+  }
+
+  #[cfg(feature = "runtime-benchmarks")]
+  fn successful_origin() -> Origin {
+    Origin::from(RawOrigin::Signed(Default::default()))
+  }
+}
+
+pub struct SusbtrateBlockNumberProvider;
+impl BlockNumberProvider for SusbtrateBlockNumberProvider {
+  type BlockNumber = BlockNumber;
+
+  fn current_block_number() -> Self::BlockNumber {
+    System::block_number()
+  }
+}
+
+impl pallet_vesting::Config for Runtime {
+  type Event = Event;
+  type Currency = Balances;
+  type MinVestedTransfer = MinVestedTransfer;
+  type VestedTransferOrigin = EnsureRootOrTreasury;
+  type WeightInfo = ();
+  type MaxVestingSchedules = MaxVestingSchedules;
+  type BlockNumberProvider = SusbtrateBlockNumberProvider;
 }
