@@ -2064,203 +2064,155 @@ mod helpers {
   #[cfg(feature = "tidechain-native")]
   pub fn get_stakeholder_tokens_tidechain() -> Vec<(CurrencyId, AccountId, Balance)> {
     vec![
-      // faucet
-      (
-        CurrencyId::Tdfy,
-        //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
-        hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
-        // 10_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(10_000),
-      ),
-      // investors
-      (
-        CurrencyId::Tdfy,
-        //5DUTRtdo3T6CtLx5rxJQxAVhT9RmZUWGw4FJWZSPWbLFhNf2
-        hex!["3e598e8ee9577c609c70823e394ab1a2e0301f73f074a773a3a1b20bfba9050e"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
-      ),
-      (
-        CurrencyId::Tdfy,
-        //5GHab6U9Ke5XjbHHEB5WSUreyp293BryKjJrGWgQ1nCvEDzM
-        hex!["bac2a7f4be9d7e0f8eee75e0af5e33240698e8ac0b02904627bd9c4d37b3dd5e"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
-      ),
-      (
-        CurrencyId::Tdfy,
-        //5CLmiDfMLGbuuvuuc87ZF1fr9itkyVzTE5hjWb725JemcGka
-        hex!["0c40e6b8b6686685828658080a17af04562fa69818c848146795c8c586691a68"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
-      ),
-      (
-        CurrencyId::Tdfy,
-        //5CJMQZA3LgdZ7EXN1eTXjxqQvmxgZEuXy9iWA1Yvd67zK9Da
-        hex!["0a689812fb1b2763c3ff90ad8f12c652848904d7f4cb3ea5d5328a30c4d3c978"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
-      ),
-      (
-        CurrencyId::Tdfy,
-        //5DWorbmbirDwHNNrLFu15aRjD63fiEAbi5K9Eo96mxwirVdM
-        hex!["4024cecb82ca165b7960b22a19ac3fafa5240582691eaf22ffee7a6f06cb1526"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
-      ),
-      // devs
-      //FIXME: Replace place holders `//A` to `//T` with team account addresses and `0000000000000000000000000000000000000000000000000000000000000000` with team account IDs
+      // team
       (
         CurrencyId::Tdfy,
         //A
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 120_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(120_000),
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
+        // 1_720_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_720_000),
       ),
       (
         CurrencyId::Tdfy,
         //B
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 330_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(330_000),
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
+        // 2_230_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_230_000),
       ),
       (
         CurrencyId::Tdfy,
         //C
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 720_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(720_000),
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
+        // 11_760_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(11_760_000),
       ),
       (
         CurrencyId::Tdfy,
         //D
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 285_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(285_000),
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
+        // 1_885_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_885_000),
       ),
       (
         CurrencyId::Tdfy,
         //E
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 285_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(285_000),
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
+        // 2_066_900 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_066_900),
       ),
       (
         CurrencyId::Tdfy,
         //F
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
         // 105_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(105_000),
+        assets::Asset::Tdfy.saturating_mul(1_653_800),
       ),
       (
         CurrencyId::Tdfy,
         //G
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 315_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(315_000),
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
+        // 3_043_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(3_043_000),
       ),
       (
         CurrencyId::Tdfy,
         //H
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 360_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(360_000),
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
+        // 4_355_200 TDFY
+        assets::Asset::Tdfy.saturating_mul(4_355_200),
       ),
       (
         CurrencyId::Tdfy,
         //I
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 270_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(270_000),
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
+        // 1_994_800 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_994_800),
       ),
       (
         CurrencyId::Tdfy,
         //J
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 285_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(285_000),
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
+        // 2_215_500 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_215_500),
       ),
       (
         CurrencyId::Tdfy,
         //K
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 210_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(210_000),
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
+        // 1_113_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_113_000),
       ),
       (
         CurrencyId::Tdfy,
         //L
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 225_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(225_000),
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
+        // 2_825_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_825_000),
       ),
       (
         CurrencyId::Tdfy,
         //M
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 75_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(75_000),
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
+        // 2_175_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_175_000),
       ),
       (
         CurrencyId::Tdfy,
         //N
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 90_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(90_000),
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
+        // 590_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(590_000),
       ),
       (
         CurrencyId::Tdfy,
         //O
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 75_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(75_000),
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
+        // 2_451_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_451_000),
       ),
       (
         CurrencyId::Tdfy,
         //P
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 75_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(75_000),
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
+        // 1_845_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_845_000),
       ),
       (
         CurrencyId::Tdfy,
         //Q
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 75_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(75_000),
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
+        // 1_515_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_515_000),
       ),
       (
         CurrencyId::Tdfy,
         //R
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 360_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(360_000),
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
+        // 3_360_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(3_360_000),
       ),
       (
         CurrencyId::Tdfy,
         //S
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["043c68b39d9b45788ca53ad830979e221c4034f86398672775c6a9d35424b878"].into(),
         // 240_000 TDFY
         assets::Asset::Tdfy.saturating_mul(240_000),
       ),
       (
         CurrencyId::Tdfy,
         //T
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
-        // 45_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(45_000),
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
+        // 1_865_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_865_000),
       ),
     ]
   }
-
-  // Attention: When we add a vesting schedule, the account ID should
-  // have the total of the vesting added as a stakeholder above, the vesting
-  // will lock the vesting below but the funds need to be available
 
   #[cfg(feature = "lagoon-native")]
   pub fn get_vesting_terms_lagoon() -> Vec<(AccountId, u32, u32, u32, Balance)> {
     vec![]
   }
+
   #[cfg(feature = "tidechain-native")]
   pub fn get_vesting_terms_tidechain() -> Vec<(AccountId, u32, u32, u32, Balance)> {
     const STARTING_BLOCK: u32 = 0;
@@ -2270,25 +2222,24 @@ mod helpers {
     const SIX_MONTHS: u32 = 2_592_000;
     const ONE_YEAR: u32 = 5_184_000;
 
-    //FIXME: Replace place holders `//A` to `//T` with team account addresses and `0000000000000000000000000000000000000000000000000000000000000000` with team account IDs
     vec![
       //A
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(80_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(80_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2296,21 +2247,21 @@ mod helpers {
       ),
       //B
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(95_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(95_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2318,21 +2269,21 @@ mod helpers {
       ),
       //C
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(552_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(552_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2340,21 +2291,21 @@ mod helpers {
       ),
       //D
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(80_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(80_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2362,21 +2313,21 @@ mod helpers {
       ),
       //E
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(89_095),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(89_095),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2384,21 +2335,21 @@ mod helpers {
       ),
       //F
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(77_440),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(77_440),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2406,21 +2357,21 @@ mod helpers {
       ),
       //G
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(136_400),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(136_400),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2428,21 +2379,21 @@ mod helpers {
       ),
       //H
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(199_760),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(199_760),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2450,21 +2401,21 @@ mod helpers {
       ),
       //I
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(86_240),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(86_240),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2472,21 +2423,21 @@ mod helpers {
       ),
       //J
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(96_525),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(96_525),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2494,21 +2445,21 @@ mod helpers {
       ),
       //K
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(45_150),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(45_150),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2516,21 +2467,21 @@ mod helpers {
       ),
       //L
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(130_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(130_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2538,21 +2489,21 @@ mod helpers {
       ),
       //M
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(105_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(105_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2560,21 +2511,21 @@ mod helpers {
       ),
       //N
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(25_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(25_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2582,21 +2533,21 @@ mod helpers {
       ),
       //O
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(118_800),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(118_800),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2604,21 +2555,21 @@ mod helpers {
       ),
       //P
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(88_500),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(88_500),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2626,21 +2577,21 @@ mod helpers {
       ),
       //Q
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(72_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(72_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2648,21 +2599,21 @@ mod helpers {
       ),
       //R
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(150_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(150_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
@@ -2671,21 +2622,21 @@ mod helpers {
       //S has no vesting terms
       //T
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
         STARTING_BLOCK,
         ONE_MONTH,
         1,
         assets::Asset::Tdfy.saturating_mul(91_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
         STARTING_BLOCK,
         SIX_MONTHS,
         1,
         assets::Asset::Tdfy.saturating_mul(91_000),
       ),
       (
-        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
         STARTING_BLOCK,
         ONE_YEAR,
         3,
