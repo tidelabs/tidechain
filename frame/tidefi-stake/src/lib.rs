@@ -292,6 +292,8 @@ pub mod pallet {
     TransferFeesFailed,
     /// Something went wrong with funds transfer
     TransferFailed,
+    /// Staking pool is empty
+    NotEnoughInPoolToUnstake,
     /// The staked amount is below the minimum stake amount for this currency.
     AmountTooSmall,
     /// The staked amount is above the maximum stake amount for this currency.
@@ -582,6 +584,17 @@ pub mod pallet {
           )
           .into_result()
           .map_err(|_| Error::<T>::InsufficientBalance)?;
+
+          StakingPool::<T>::try_mutate(current_stake.currency_id, |balance| -> DispatchResult {
+            if let Some(b) = balance {
+              *balance = Some(
+                b.checked_sub(current_stake.principal)
+                  .ok_or(ArithmeticError::Underflow)?,
+              )
+            }
+            Ok(())
+          })
+          .map_err(|_| Error::<T>::NotEnoughInPoolToUnstake)?;
 
           T::CurrencyTidefi::transfer(
             current_stake.currency_id,
