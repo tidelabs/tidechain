@@ -401,6 +401,11 @@ fn tidechain_testnet_genesis(
 
   let vesting = helpers::get_vesting_terms_tidechain();
 
+  //FIXME: assert vestings
+  //ONE MONTH total: 2_317_910 TDFY
+  //SIX MONTHS total:	2_317_910 TDFY
+  //ONE YEAR per period total: 13_907_460 TDFY
+
   tidechain_runtime::GenesisConfig {
     system: tidechain_runtime::SystemConfig {
       code: wasm_binary.to_vec(),
@@ -2104,40 +2109,146 @@ mod helpers {
         assets::Asset::Tdfy.saturating_mul(1_000),
       ),
       // devs
+      //FIXME: Replace place holders `//A` to `//T` with team account addresses and `0000000000000000000000000000000000000000000000000000000000000000` with team account IDs
       (
         CurrencyId::Tdfy,
-        //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
-        hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        //A
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 120_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(120_000),
       ),
       (
         CurrencyId::Tdfy,
-        //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
-        hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        //B
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 330_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(330_000),
       ),
       (
         CurrencyId::Tdfy,
-        //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
-        hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        //C
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 720_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(720_000),
       ),
       (
         CurrencyId::Tdfy,
-        //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
-        hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        //D
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 285_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(285_000),
       ),
       (
         CurrencyId::Tdfy,
-        //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
-        hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        //E
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 285_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(285_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //F
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 105_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(105_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //G
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 315_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(315_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //H
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 360_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(360_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //I
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 270_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(270_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //J
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 285_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(285_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //K
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 210_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(210_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //L
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 225_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(225_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //M
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 75_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(75_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //N
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 90_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(90_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //O
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 75_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(75_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //P
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 75_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(75_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //Q
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 75_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(75_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //R
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 360_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(360_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //S
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 240_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(240_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //T
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        // 45_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(45_000),
       ),
     ]
   }
@@ -2152,22 +2263,434 @@ mod helpers {
   }
   #[cfg(feature = "tidechain-native")]
   pub fn get_vesting_terms_tidechain() -> Vec<(AccountId, u32, u32, u32, Balance)> {
-    const STARTING_BLOCK: u32 = 144_000;
+    const STARTING_BLOCK: u32 = 0;
 
     // We are approximating a month to 30 days
     const ONE_MONTH: u32 = 432_000;
     const SIX_MONTHS: u32 = 2_592_000;
     const ONE_YEAR: u32 = 5_184_000;
-    const TWO_YEARS: u32 = 10_368_000;
-    const THREE_YEARS: u32 = 15_552_000;
 
-    vec![(
-      hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
-      STARTING_BLOCK,
-      ONE_MONTH,
-      // only one schedule
-      1,
-      assets::Asset::Tdfy.saturating_mul(100),
-    )]
+    //FIXME: Replace place holders `//A` to `//T` with team account addresses and `0000000000000000000000000000000000000000000000000000000000000000` with team account IDs
+    vec![
+      //A
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(480_000),
+      ),
+      //B
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(95_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(95_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(570_000),
+      ),
+      //C
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(552_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(552_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(3_312_000),
+      ),
+      //D
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(480_000),
+      ),
+      //E
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(89_095),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(89_095),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(534_570),
+      ),
+      //F
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(77_440),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(77_440),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(464_640),
+      ),
+      //G
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(136_400),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(136_400),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(818_400),
+      ),
+      //H
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(199_760),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(199_760),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(1_198_560),
+      ),
+      //I
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(86_240),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(86_240),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(517_440),
+      ),
+      //J
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(96_525),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(96_525),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(579_150),
+      ),
+      //K
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(45_150),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(45_150),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(270_900),
+      ),
+      //L
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(130_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(130_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(780_000),
+      ),
+      //M
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(105_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(105_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(630_000),
+      ),
+      //N
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(25_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(25_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(150_000),
+      ),
+      //O
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(118_800),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(118_800),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(712_800),
+      ),
+      //P
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(88_500),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(88_500),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(531_000),
+      ),
+      //Q
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(72_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(72_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(432_000),
+      ),
+      //R
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(150_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(150_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(900_000),
+      ),
+      //S has no vesting terms
+      //T
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(91_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(91_000),
+      ),
+      (
+        hex!["0000000000000000000000000000000000000000000000000000000000000000"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(546_000),
+      ),
+    ]
   }
 }
