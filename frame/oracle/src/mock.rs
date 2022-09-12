@@ -183,6 +183,7 @@ impl pallet_oracle::Config for Test {
 
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_tidefi_stake::Config for Test {

@@ -22,11 +22,18 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
+
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+  use super::*;  
   use frame_support::pallet_prelude::*;
   use frame_system::pallet_prelude::*;
   use sha2::{Digest, Sha256};
@@ -39,6 +46,8 @@ pub mod pallet {
   pub trait Config: frame_system::Config {
     /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    /// Weights
+    type WeightInfo: WeightInfo;    
   }
 
   #[pallet::pallet]
@@ -128,9 +137,7 @@ pub mod pallet {
     /// - `status_code`: New chain `StatusCode`
     ///
     /// Emits `StatusChanged` event when successful.
-    ///
-    /// Weight: `0`
-    #[pallet::weight(0)]
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::set_status())]
     pub fn set_status(origin: OriginFor<T>, status_code: StatusCode) -> DispatchResultWithPostInfo {
       ensure_root(origin)?;
       <ChainStatus<T>>::set(status_code.clone());
