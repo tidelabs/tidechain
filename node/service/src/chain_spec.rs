@@ -244,7 +244,6 @@ fn lagoon_testnet_genesis(
       phantom: Default::default(),
     },
 
-    // FIXME: Remove sudo once the staging is completed
     sudo: lagoon_runtime::SudoConfig {
       key: Some(root.clone()),
     },
@@ -319,6 +318,7 @@ fn tidechain_testnet_genesis(
   stakeholders: Vec<(CurrencyId, AccountId, Balance)>,
   quorums: Vec<AccountId>,
   oracle: AccountId,
+  root: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> tidechain_runtime::GenesisConfig {
   // 10_500 TDFYs / validators (10_000 stashed)
@@ -354,6 +354,8 @@ fn tidechain_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
+  // root
+  + 10_000_000_000_000
   // Sunrise pool
   + SUNRISE_POOL;
 
@@ -371,6 +373,8 @@ fn tidechain_testnet_genesis(
     (treasury_account, treasury_funds),
     // Sunrise pool
     (sunrise_account, SUNRISE_POOL),
+    // 10 TDFY to root so he can pay fees
+    (root.clone(), 10_000_000_000_000),
   ];
 
   // Add all stake holders account
@@ -433,13 +437,20 @@ fn tidechain_testnet_genesis(
     },
     elections: Default::default(),
     democracy: Default::default(),
+
     council: tidechain_runtime::CouncilConfig {
       members: vec![],
       phantom: Default::default(),
     },
+
     technical_committee: tidechain_runtime::TechnicalCommitteeConfig {
       members: vec![],
       phantom: Default::default(),
+    },
+
+    // FIXME: Remove sudo once the staging is completed
+    sudo: tidechain_runtime::SudoConfig {
+      key: Some(root.clone()),
     },
 
     babe: tidechain_runtime::BabeConfig {
@@ -782,6 +793,7 @@ fn tidechain_development_config_genesis(wasm_binary: &[u8]) -> tidechain_runtime
     helpers::get_stakeholder_tokens_tidechain(),
     vec![helpers::get_account_id_from_seed::<sr25519::Public>("Bob")],
     helpers::get_account_id_from_seed::<sr25519::Public>("Charlie"),
+    helpers::get_account_id_from_seed::<sr25519::Public>("Ferdie"),
     helpers::get_all_assets(),
   )
 }
@@ -859,6 +871,8 @@ fn tidechain_staging_testnet_config_genesis(
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
+    //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
+    hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
     helpers::get_all_assets(),
   )
 }
@@ -932,6 +946,8 @@ fn tidechain_local_testnet_config_genesis(wasm_binary: &[u8]) -> tidechain_runti
     initial_authorities,
     helpers::get_stakeholder_tokens_tidechain(),
     quorums,
+    //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
+    hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
     helpers::get_all_assets(),
