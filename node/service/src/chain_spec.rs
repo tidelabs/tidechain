@@ -45,6 +45,13 @@ const LAGOON_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 #[cfg(any(feature = "lagoon-native", feature = "tidechain-native"))]
 const DEFAULT_PROTOCOL_ID: &str = "tidec0";
 
+const STARTING_BLOCK: u32 = 0;
+
+// We are approximating a month to 30 days
+const ONE_MONTH: u32 = 432_000;
+const SIX_MONTHS: u32 = 2_592_000;
+const ONE_YEAR: u32 = 5_184_000;
+
 /// Node `ChainSpec` extensions.
 ///
 /// Additional parameters for some Substrate core modules,
@@ -401,10 +408,43 @@ fn tidechain_testnet_genesis(
 
   let vesting = helpers::get_vesting_terms_tidechain();
 
-  //FIXME: assert vestings
-  //ONE MONTH total: 2_317_910 TDFY
-  //SIX MONTHS total:	2_317_910 TDFY
-  //ONE YEAR per period total: 13_907_460 TDFY
+  let one_month_vesting_total: Balance = vesting
+    .iter()
+    .filter(|(_, starting_block, period, period_count, _)| {
+      *starting_block == STARTING_BLOCK && *period == ONE_MONTH && *period_count == 1
+    })
+    .map(|(_, _, _, _, per_period)| per_period)
+    .sum();
+  let six_months_vesting_total: Balance = vesting
+    .iter()
+    .filter(|(_, starting_block, period, period_count, _)| {
+      *starting_block == STARTING_BLOCK && *period == SIX_MONTHS && *period_count == 1
+    })
+    .map(|(_, _, _, _, per_period)| per_period)
+    .sum();
+  let three_years_vesting_total: Balance = vesting
+    .iter()
+    .filter(|(_, starting_block, period, period_count, _)| {
+      *starting_block == STARTING_BLOCK && *period == ONE_YEAR && *period_count == 3
+    })
+    .map(|(_, _, _, period_count, per_period)| *per_period * Balance::from(*period_count))
+    .sum();
+
+  assert_eq!(
+    one_month_vesting_total,
+    assets::Asset::Tdfy.saturating_mul(2_317_910),
+    "Total vesting at the end of the first month is not correct"
+  );
+  assert_eq!(
+    six_months_vesting_total,
+    assets::Asset::Tdfy.saturating_mul(2_317_910),
+    "Total vesting at the end of the first six months is not correct"
+  );
+  assert_eq!(
+    three_years_vesting_total,
+    assets::Asset::Tdfy.saturating_mul(41_722_380),
+    "Total vesting at the end of the three years is not correct"
+  );
 
   tidechain_runtime::GenesisConfig {
     system: tidechain_runtime::SystemConfig {
@@ -2215,13 +2255,6 @@ mod helpers {
 
   #[cfg(feature = "tidechain-native")]
   pub fn get_vesting_terms_tidechain() -> Vec<(AccountId, u32, u32, u32, Balance)> {
-    const STARTING_BLOCK: u32 = 0;
-
-    // We are approximating a month to 30 days
-    const ONE_MONTH: u32 = 432_000;
-    const SIX_MONTHS: u32 = 2_592_000;
-    const ONE_YEAR: u32 = 5_184_000;
-
     vec![
       //A
       (
