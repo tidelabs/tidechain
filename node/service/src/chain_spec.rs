@@ -135,9 +135,9 @@ fn lagoon_testnet_genesis(
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const QUORUM_ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
-  const TIERED_ON_BOARDING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = QUORUM_ON_BOARDING_REBATES + TIERED_ON_BOARDING_REBATES;
+  const ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
+  const TRADING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = ON_BOARDING_REBATES + TRADING_REBATES;
   // Treasury Account Id
   let treasury_account: AccountId =
     lagoon_runtime::TreasuryPalletId::get().into_account_truncating();
@@ -206,14 +206,14 @@ fn lagoon_testnet_genesis(
   let vesting = helpers::get_vesting_terms_lagoon();
 
   let sunrise = crate::tidefi_sunrise_pool_genesis!(lagoon_runtime);
-  let tiered_rebates_total: Balance = sunrise
+  let trading_rebates_total: Balance = sunrise
     .swap_pools
     .iter()
     .map(|swap_pool| swap_pool.balance)
     .sum();
   assert_eq!(
-    tiered_rebates_total, TIERED_ON_BOARDING_REBATES,
-    "Sunrise pool total tiered on boarding rebates is not correct"
+    trading_rebates_total, TRADING_REBATES,
+    "Sunrise pool trading rebates total is not correct"
   );
 
   lagoon_runtime::GenesisConfig {
@@ -348,9 +348,9 @@ fn tidechain_testnet_genesis(
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const QUORUM_ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
-  const TIERED_ON_BOARDING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = QUORUM_ON_BOARDING_REBATES + TIERED_ON_BOARDING_REBATES;
+  const ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
+  const TRADING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = ON_BOARDING_REBATES + TRADING_REBATES;
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
@@ -462,14 +462,14 @@ fn tidechain_testnet_genesis(
   );
 
   let sunrise = crate::tidefi_sunrise_pool_genesis!(tidechain_runtime);
-  let tiered_rebates_total: Balance = sunrise
+  let trading_rebates_total: Balance = sunrise
     .swap_pools
     .iter()
     .map(|swap_pool| swap_pool.balance)
     .sum();
   assert_eq!(
-    tiered_rebates_total, TIERED_ON_BOARDING_REBATES,
-    "Sunrise pool total tiered on boarding rebates is not correct"
+    trading_rebates_total, TRADING_REBATES,
+    "Sunrise pool trading rebates total is not correct"
   );
 
   tidechain_runtime::GenesisConfig {
