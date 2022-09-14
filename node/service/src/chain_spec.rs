@@ -52,6 +52,8 @@ const ONE_MONTH: u32 = 432_000;
 const SIX_MONTHS: u32 = 2_592_000;
 const ONE_YEAR: u32 = 5_184_000;
 
+const TOTAL_INITIAL_ACCOUNT_ALLOCATION: u128 = 52_248_200 * 1_000_000_000_000;
+
 /// Node `ChainSpec` extensions.
 ///
 /// Additional parameters for some Substrate core modules,
@@ -337,6 +339,10 @@ fn tidechain_testnet_genesis(
   const STASH: u128 = 10_000 * 1_000_000_000_000;
   const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
 
+  const VESTING_TOTAL_FOR_ONE_MONTH: u128 = 2_382_910 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_SIX_MONTHS: u128 = 2_382_910 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_THREE_YEARS: u128 = 42_892_380 * 1_000_000_000_000;
+
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
 
@@ -431,18 +437,15 @@ fn tidechain_testnet_genesis(
     .sum();
 
   assert_eq!(
-    one_month_vesting_total,
-    assets::Asset::Tdfy.saturating_mul(2_317_910),
+    one_month_vesting_total, VESTING_TOTAL_FOR_ONE_MONTH,
     "Total vesting at the end of the first month is not correct"
   );
   assert_eq!(
-    six_months_vesting_total,
-    assets::Asset::Tdfy.saturating_mul(2_317_910),
+    six_months_vesting_total, VESTING_TOTAL_FOR_SIX_MONTHS,
     "Total vesting at the end of the first six months is not correct"
   );
   assert_eq!(
-    three_years_vesting_total,
-    assets::Asset::Tdfy.saturating_mul(41_722_380),
+    three_years_vesting_total, VESTING_TOTAL_FOR_THREE_YEARS,
     "Total vesting at the end of the three years is not correct"
   );
 
@@ -2103,7 +2106,7 @@ mod helpers {
   // SECRET="key" ./scripts/prepare-dev-tidechain.sh
   #[cfg(feature = "tidechain-native")]
   pub fn get_stakeholder_tokens_tidechain() -> Vec<(CurrencyId, AccountId, Balance)> {
-    vec![
+    let stakeholder_tokens_tidechain = vec![
       // team
       (
         CurrencyId::Tdfy,
@@ -2245,7 +2248,27 @@ mod helpers {
         // 1_865_000 TDFY
         assets::Asset::Tdfy.saturating_mul(1_865_000),
       ),
-    ]
+      (
+        CurrencyId::Tdfy,
+        //U
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        // 1_345_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_345_000),
+      ),
+    ];
+
+    let total_initial_account_allocation: Balance = stakeholder_tokens_tidechain
+      .iter()
+      .filter(|(currency_id, _, _)| *currency_id == CurrencyId::Tdfy)
+      .map(|(_, _, balance)| *balance)
+      .sum();
+
+    assert_eq!(
+      total_initial_account_allocation, TOTAL_INITIAL_ACCOUNT_ALLOCATION,
+      "Initial account allocation total is not correct"
+    );
+
+    stakeholder_tokens_tidechain
   }
 
   #[cfg(feature = "lagoon-native")]
@@ -2674,6 +2697,28 @@ mod helpers {
         ONE_YEAR,
         3,
         assets::Asset::Tdfy.saturating_mul(546_000),
+      ),
+      //U
+      (
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(65_000),
+      ),
+      (
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(65_000),
+      ),
+      (
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(390_000),
       ),
     ]
   }
