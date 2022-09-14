@@ -339,9 +339,9 @@ fn tidechain_testnet_genesis(
   const STASH: u128 = 10_000 * 1_000_000_000_000;
   const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
 
-  const VESTING_TOTAL_FOR_ONE_MONTH: u128 = 2_382_910 * 1_000_000_000_000;
-  const VESTING_TOTAL_FOR_SIX_MONTHS: u128 = 2_382_910 * 1_000_000_000_000;
-  const VESTING_TOTAL_FOR_THREE_YEARS: u128 = 42_892_380 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_ONE_MONTH_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_SIX_MONTHS_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_THREE_YEARS_PERIOD: u128 = 42_892_380 * 1_000_000_000_000;
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
@@ -437,15 +437,15 @@ fn tidechain_testnet_genesis(
     .sum();
 
   assert_eq!(
-    one_month_vesting_total, VESTING_TOTAL_FOR_ONE_MONTH,
+    one_month_vesting_total, VESTING_TOTAL_FOR_ONE_MONTH_PERIOD,
     "Total vesting at the end of the first month is not correct"
   );
   assert_eq!(
-    six_months_vesting_total, VESTING_TOTAL_FOR_SIX_MONTHS,
+    six_months_vesting_total, VESTING_TOTAL_FOR_SIX_MONTHS_PERIOD,
     "Total vesting at the end of the first six months is not correct"
   );
   assert_eq!(
-    three_years_vesting_total, VESTING_TOTAL_FOR_THREE_YEARS,
+    three_years_vesting_total, VESTING_TOTAL_FOR_THREE_YEARS_PERIOD,
     "Total vesting at the end of the three years is not correct"
   );
 
