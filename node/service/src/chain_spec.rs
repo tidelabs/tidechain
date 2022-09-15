@@ -52,7 +52,7 @@ const ONE_MONTH: u32 = 432_000;
 const SIX_MONTHS: u32 = 2_592_000;
 const ONE_YEAR: u32 = 5_184_000;
 
-const TOTAL_INITIAL_ACCOUNT_ALLOCATION: u128 = 52_248_200 * 1_000_000_000_000;
+const TOTAL_INITIAL_ACCOUNT_ALLOCATION: u128 = 147_248_200 * 1_000_000_000_000;
 
 /// Node `ChainSpec` extensions.
 ///
@@ -356,7 +356,7 @@ fn tidechain_testnet_genesis(
 
   const VESTING_TOTAL_FOR_ONE_MONTH_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
   const VESTING_TOTAL_FOR_SIX_MONTHS_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
-  const VESTING_TOTAL_FOR_THREE_YEARS_PERIOD: u128 = 42_892_380 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_THREE_YEARS_PERIOD: u128 = 102_892_380 * 1_000_000_000_000;
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
@@ -951,8 +951,8 @@ fn tidechain_staging_testnet_config_genesis(
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
-    //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
-    hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
+    //fhAwZQ4RZm2rWe6mWyAGwWRASr8t5a4rMVuctVPprubZC6TM6
+    hex!["36cac8f87497cbe1eb00b78c923515ae03aabe8e50c1fa1086a884589b25f23f"].into(),
     helpers::get_all_assets(),
   )
 }
@@ -1028,8 +1028,8 @@ fn tidechain_local_testnet_config_genesis(wasm_binary: &[u8]) -> tidechain_runti
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
-    //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
-    hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
+    //fhAwZQ4RZm2rWe6mWyAGwWRASr8t5a4rMVuctVPprubZC6TM6
+    hex!["36cac8f87497cbe1eb00b78c923515ae03aabe8e50c1fa1086a884589b25f23f"].into(),
     helpers::get_all_assets(),
   )
 }
@@ -2129,6 +2129,27 @@ mod helpers {
   #[cfg(feature = "tidechain-native")]
   pub fn get_stakeholder_tokens_tidechain() -> Vec<(CurrencyId, AccountId, Balance)> {
     let stakeholder_tokens_tidechain = vec![
+      (
+        CurrencyId::Tdfy,
+        //Lending for Validators
+        hex!["49a114a2e284aead1fac808e7678969feaa203ab13573bdf531aac7593e79fa2"].into(),
+        // 5_000_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(5_000_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //Market Maker
+        hex!["c4a1869429a17efc98db6c2c664d5230e8d74e842ef40235507d119ef705e532"].into(),
+        // 10_000_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(10_000_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //Tidefi development pool
+        hex!["8e14d1ac896ea00e18d855588ee13103449cc6e41d4b0173d917cabea84bdb08"].into(),
+        // 80_000_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(80_000_000),
+      ),
       // team
       (
         CurrencyId::Tdfy,
@@ -2301,6 +2322,14 @@ mod helpers {
   #[cfg(feature = "tidechain-native")]
   pub fn get_vesting_terms_tidechain() -> Vec<(AccountId, u32, u32, u32, Balance)> {
     vec![
+      //Tidefi development pool
+      (
+        hex!["8e14d1ac896ea00e18d855588ee13103449cc6e41d4b0173d917cabea84bdb08"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(20_000_000),
+      ),
       //A
       (
         hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
