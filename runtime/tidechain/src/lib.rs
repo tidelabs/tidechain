@@ -115,7 +115,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 5020,
+  spec_version: 6000,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -256,6 +256,8 @@ construct_runtime!(
         // Sunrise module
         Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>} = 57,
 
+        // Vesting module
+        Vesting: pallet_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 58,
     }
 );
 

@@ -33,7 +33,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-  use super::*;  
+  use super::*;
   use frame_support::pallet_prelude::*;
   use frame_system::pallet_prelude::*;
   use sha2::{Digest, Sha256};
@@ -47,7 +47,7 @@ pub mod pallet {
     /// Events
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     /// Weights
-    type WeightInfo: WeightInfo;    
+    type WeightInfo: WeightInfo;
   }
 
   #[pallet::pallet]
