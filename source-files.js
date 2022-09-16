@@ -330,6 +330,7 @@ sourcesIndex["pallet_transaction_payment_rpc"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["pallet_transaction_payment_rpc_runtime_api"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["pallet_treasury"] = {"name":"","files":["lib.rs","weights.rs"]};
 sourcesIndex["pallet_utility"] = {"name":"","files":["lib.rs","weights.rs"]};
+sourcesIndex["pallet_vesting"] = {"name":"","files":["lib.rs","weights.rs"]};
 sourcesIndex["parity_db"] = {"name":"","dirs":[{"name":"btree","files":["btree.rs","iter.rs","mod.rs","node.rs"]}],"files":["column.rs","compress.rs","db.rs","display.rs","error.rs","file.rs","index.rs","lib.rs","log.rs","migration.rs","options.rs","stats.rs","table.rs"]};
 sourcesIndex["parity_scale_codec"] = {"name":"","files":["codec.rs","compact.rs","decode_all.rs","depth_limit.rs","encode_append.rs","encode_like.rs","error.rs","joiner.rs","keyedvec.rs","lib.rs","max_encoded_len.rs"]};
 sourcesIndex["parity_scale_codec_derive"] = {"name":"","files":["decode.rs","encode.rs","lib.rs","max_encoded_len.rs","trait_bounds.rs","utils.rs"]};
