@@ -33,7 +33,7 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, Permill,
+  DispatchError, DispatchResult, FixedU128, Permill,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
@@ -61,6 +61,7 @@ frame_support::construct_runtime!(
     Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>},
     TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Storage, Event<T>},
     Fees: pallet_fees::{Pallet, Storage, Event<T>},
+    Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
@@ -99,6 +100,7 @@ impl system::Config for Test {
   type OnSetCode = ();
   type MaxConsumers = ConstU32<16>;
 }
+
 pub const TDFY: Balance = 1_000_000_000_000;
 parameter_types! {
   pub const ExistentialDeposit: Balance = TDFY;
@@ -148,6 +150,7 @@ parameter_types! {
   pub const OraclePalletId: PalletId = PalletId(*b"orcl*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
   pub const FeesPalletId: PalletId = PalletId(*b"fees*pal");
+  pub const SunrisePalletId: PalletId = PalletId(*b"sunr*pal");
   pub const StakePalletId: PalletId = PalletId(*b"stak*pal");
   pub const SessionsPerEra: SessionIndex = 10;
   pub const SessionsArchive: SessionIndex = 2;
@@ -179,7 +182,11 @@ parameter_types! {
   pub const SwapLimitByAccount: u32 = 100;
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
-  pub const BlocksSunriseClaims: BlockNumber = 10;
+  pub const Cooldown: BlockNumber = 10;
+  // max 10k rewards
+  pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
+  // 50%
+  pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
 }
 
 impl pallet_tidefi::Config for Test {
@@ -188,6 +195,9 @@ impl pallet_tidefi::Config for Test {
   type Quorum = Quorum;
   type CurrencyTidefi = Adapter<AccountId>;
   type Oracle = Oracle;
+  type Fees = Fees;
+  type Sunrise = Sunrise;
+  type Security = Security;
   type AssetRegistry = AssetRegistry;
 }
 
@@ -197,6 +207,7 @@ impl pallet_quorum::Config for Test {
   type QuorumPalletId = QuorumPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
+  type Sunrise = Sunrise;
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
   type BurnedCap = BurnedCap;
@@ -222,10 +233,12 @@ impl pallet_oracle::Config for Test {
   type Security = Security;
   type SwapLimitByAccount = SwapLimitByAccount;
   type Fees = Fees;
+  type Sunrise = Sunrise;
 }
 
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_asset_registry::Config for Test {
@@ -243,19 +256,28 @@ impl pallet_sudo::Config for Test {
 impl pallet_fees::Config for Test {
   type Event = Event;
   type Security = Security;
-  type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
   type FeesPalletId = FeesPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
   type UnixTime = Timestamp;
   type SessionsPerEra = SessionsPerEra;
   type SessionsArchive = SessionsArchive;
-  type BlocksPerSession = BlocksPerSession;
   type FeeAmount = FeeAmount;
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
-  type BlocksSunriseClaims = BlocksSunriseClaims;
+  type BlocksPerSession = BlocksPerSession;
   type Staking = TidefiStaking;
+  type Sunrise = Sunrise;
+}
+
+impl pallet_sunrise::Config for Test {
+  type Event = Event;
+  type Security = Security;
+  type SunrisePalletId = SunrisePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Cooldown = Cooldown;
+  type MaximumRewardPerSwap = MaximumRewardPerSwap;
+  type LeftoverSwapRebates = LeftoverSwapRebates;
 }
 
 impl pallet_tidefi_stake::Config for Test {
@@ -431,6 +453,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
 
   pallet_balances::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut storage)
+    .unwrap();
+
+  pallet_fees::GenesisConfig::<Test>::default()
+    .assimilate_storage(&mut storage)
+    .unwrap();
+
+  pallet_sunrise::GenesisConfig::<Test>::default()
     .assimilate_storage(&mut storage)
     .unwrap();
 

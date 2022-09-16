@@ -14,25 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
-#![cfg_attr(rustfmt, rustfmt_skip)]
-#![allow(unused_parens)]
-#![allow(unused_imports)]
+#![cfg(feature = "runtime-benchmarks")]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
-use sp_std::marker::PhantomData;
+use crate::{Call, Config, Pallet};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_system::RawOrigin;
+use tidefi_primitives::StatusCode;
 
-/// Weight functions needed for `pallet_tidefi`.
-pub trait WeightInfo {
-   fn claim_sunrise_rewards() -> Weight;
+benchmarks! {
+   set_status {
+      let new_status = StatusCode::Maintenance;
+   }: _(RawOrigin::Root, new_status.clone())
 }
 
-/// Weights for `pallet_tidefi` using the Substrate node and recommended hardware.
-pub struct SubstrateWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-
-   fn claim_sunrise_rewards() -> Weight {
-      14_100_000_u64
-      .saturating_add(T::DbWeight::get().reads(6_u64))
-      .saturating_add(T::DbWeight::get().writes(5_u64))
-   }
-}
+impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

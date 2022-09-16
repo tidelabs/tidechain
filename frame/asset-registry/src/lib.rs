@@ -13,9 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
-
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::type_complexity)]
 
 #[cfg(test)]
 mod mock;
@@ -286,7 +284,7 @@ pub mod pallet {
 
     pub fn is_currency_exist(currency_id: CurrencyId) -> bool {
       match currency_id {
-        // tifi always exist
+        // TDFY always exist
         CurrencyId::Tdfy => true,
         CurrencyId::Wrapped(asset_id) => {
           pallet_assets::Pallet::<T>::asset_details(asset_id).is_some()
@@ -374,7 +372,7 @@ pub mod pallet {
   impl<T: Config> AssetRegistryExt for Pallet<T> {
     fn is_currency_enabled(currency_id: CurrencyId) -> bool {
       match currency_id {
-        // we can't disable tifi
+        // we can't disable TDFY
         CurrencyId::Tdfy => true,
         CurrencyId::Wrapped(asset_id) => pallet_assets::Pallet::<T>::asset_details(asset_id)
           .map(|detail| !detail.is_frozen)

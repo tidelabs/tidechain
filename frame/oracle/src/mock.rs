@@ -33,7 +33,7 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult, Permill,
+  DispatchError, DispatchResult, FixedU128, Permill,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
@@ -58,6 +58,7 @@ frame_support::construct_runtime!(
     Oracle: pallet_oracle::{Pallet, Call, Config<T>, Storage, Event<T>},
     Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
     Fees: pallet_fees::{Pallet, Storage, Event<T>},
+    Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
     TidefiStaking: pallet_tidefi_stake::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
@@ -139,6 +140,7 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
+  pub const SunrisePalletId: PalletId = PalletId(*b"sunr*pal");
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const FeesPalletId: PalletId = PalletId(*b"wrpr*pab");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
@@ -161,7 +163,11 @@ parameter_types! {
   pub const SwapLimitByAccount: u32 = 100;
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
-  pub const BlocksSunriseClaims: BlockNumber = 10;
+  pub const Cooldown: BlockNumber = 10;
+  // max 10k rewards
+  pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
+  // 50%
+  pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
 }
 
 impl pallet_oracle::Config for Test {
@@ -170,12 +176,14 @@ impl pallet_oracle::Config for Test {
   type CurrencyTidefi = Adapter<AccountId>;
   type Security = Security;
   type Fees = Fees;
+  type Sunrise = Sunrise;
   type SwapLimitByAccount = SwapLimitByAccount;
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_tidefi_stake::Config for Test {
@@ -201,7 +209,6 @@ impl pallet_asset_registry::Config for Test {
 impl pallet_fees::Config for Test {
   type Event = Event;
   type Security = Security;
-  type WeightInfo = pallet_fees::weights::SubstrateWeight<Test>;
   type FeesPalletId = TidefiPalletId;
   type CurrencyTidefi = Adapter<AccountId>;
   type ForceOrigin = EnsureRoot<Self::AccountId>;
@@ -212,8 +219,18 @@ impl pallet_fees::Config for Test {
   type MarketMakerFeeAmount = MarketMakerFeeAmount;
   type MarketMakerLimitFeeAmount = MarketMakerLimitFeeAmount;
   type BlocksPerSession = BlocksPerSession;
-  type BlocksSunriseClaims = BlocksSunriseClaims;
   type Staking = TidefiStaking;
+  type Sunrise = Sunrise;
+}
+
+impl pallet_sunrise::Config for Test {
+  type Event = Event;
+  type Security = Security;
+  type SunrisePalletId = SunrisePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Cooldown = Cooldown;
+  type MaximumRewardPerSwap = MaximumRewardPerSwap;
+  type LeftoverSwapRebates = LeftoverSwapRebates;
 }
 
 impl pallet_timestamp::Config for Test {

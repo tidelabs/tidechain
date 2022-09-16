@@ -49,10 +49,9 @@ pub mod pallet {
   };
   use sp_std::vec;
   use tidefi_primitives::{
-    assets::{Asset, USDT},
-    pallet::{FeesExt, OracleExt, SecurityExt},
-    AssetId, Balance, CurrencyId, Hash, OracleImAlive, Swap, SwapConfirmation, SwapStatus,
-    SwapType,
+    assets::Asset,
+    pallet::{FeesExt, OracleExt, SecurityExt, SunriseExt},
+    AssetId, Balance, CurrencyId, Hash, Swap, SwapConfirmation, SwapStatus, SwapType,
   };
 
   /// Oracle configuration
@@ -78,7 +77,10 @@ pub mod pallet {
     type SwapLimitByAccount: Get<u32>;
 
     /// Fees traits
-    type Fees: FeesExt<Self::AccountId>;
+    type Fees: FeesExt<Self::AccountId, Self::BlockNumber>;
+
+    /// Tidefi sunrise traits
+    type Sunrise: SunriseExt<Self::AccountId, Self::BlockNumber>;
 
     /// Tidechain currency wrapper
     type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
@@ -767,33 +769,47 @@ pub mod pallet {
       Ok(Pays::No.into())
     }
 
-    /// Change Oracle status.
+    /// Update assets values.
     ///
-    /// - `is_enabled`: Is the oracle enabled?
+    /// - `value`: How many TDFY required for 1 Asset.
     ///
-    /// Emits `StatusChanged` event when successful.
+    /// The value should be formatted with TDFY decimals (12)
+    ///
+    /// Example:
+    ///
+    /// If the Bitcoin price is 0.001815 BTC (for 1 TDFY)
+    /// You get 550.9641873278 TDFY for 1 BTC
+    ///
+    /// The value should be: `vec![(2, 550_964_187_327_800)]`
+    ///
+    /// ***
+    ///
+    /// If the ETH price is 0.03133 ETH (for 1 TDFY)
+    /// You get 31.9182891796999 TDFY for 1 ETH
+    ///
+    /// The value sent should be: `vec![(4, 31_918_289_179_699)]`
+    ///
+    /// ***
+    ///
+    /// If the USDT price is 33.650000 USDT (for 1 TDFY)
+    /// You get 0.029717682000 TDFY for 1 USDT
+    ///
+    /// The value sent should be: `vec![(4, 29_717_682_020)]`
     ///
     /// Weight: `O(1)`
-    #[pallet::weight(<T as pallet::Config>::WeightInfo::im_alive())]
-    pub fn im_alive(origin: OriginFor<T>, im_alive: OracleImAlive) -> DispatchResultWithPostInfo {
+    ///
+    #[pallet::weight(<T as pallet::Config>::WeightInfo::update_assets_value())]
+    pub fn update_assets_value(
+      origin: OriginFor<T>,
+      value: Vec<(AssetId, Balance)>,
+    ) -> DispatchResultWithPostInfo {
       // 1. Make sure this is signed by `account_id`
       let sender = ensure_signed(origin)?;
       ensure!(Some(sender) == Self::account_id(), Error::<T>::AccessDenied);
 
-      // 2. Build final price vector
-      let mut all_prices = Vec::new();
-
-      for (currency_id, price) in im_alive.usdt_value {
-        all_prices.push((currency_id, CurrencyId::Wrapped(USDT), price))
-      }
-
-      for (asset_id, price) in im_alive.tdfy_value {
-        all_prices.push((CurrencyId::Wrapped(asset_id), CurrencyId::Tdfy, price))
-      }
-
-      if !all_prices.is_empty() {
-        // Update only if we provided at least one price
-        T::Fees::register_order_book_price(all_prices)?;
+      if !value.is_empty() {
+        // 2. Update only if we provided at least one price
+        T::Sunrise::register_exchange_rate(value)?;
       }
 
       // 3. Update last seen

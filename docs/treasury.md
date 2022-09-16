@@ -3,7 +3,7 @@ title: Treasury
 ---
 
 The Treasury is a pot of funds collected through transaction fees, slashing,
-[staking inefficiencies](staking-tifi.md#inflation), etc. The funds held in the Treasury can be spent by making a spending proposal that, if approved by the [Council](governance.md#council), will enter a waiting period before distribution. This waiting period is known as the budget period, and its duration is subject to [governance](governance.md), with the current default set to 24 days. The Treasury attempts to spend as many proposals in the queue as it can without running out of funds.
+[staking inefficiencies](staking-tdfy.md#inflation), etc. The funds held in the Treasury can be spent by making a spending proposal that, if approved by the [Council](governance.md#council), will enter a waiting period before distribution. This waiting period is known as the budget period, and its duration is subject to [governance](governance.md), with the current default set to 24 days. The Treasury attempts to spend as many proposals in the queue as it can without running out of funds.
 
 If the Treasury ends a budget period without spending all of its funds, it suffers a burn of a percentage of its funds -- thereby causing deflationary pressure. This percentage is currently at 1%.
 
@@ -28,7 +28,7 @@ The Treasury is funded from different sources:
 
 2. Transaction fees: A portion of each block's transaction fees goes to the Treasury, with the remainder going to the block author.
 
-3. Staking inefficiency: [Inflation](staking-tifi.md#inflation) is designed to be 10% in the first year, and the ideal staking ratio is set at 50%, meaning half of all tokens should be locked in staking. Any deviation from this ratio will cause a proportional amount of the inflation to go to the Treasury. In other words, if 50% of all tokens are staked, then 100% of the inflation goes to the validators as reward. If the staking rate is less than 50%, then the validators will receive less, with the remainder going to the Treasury.
+3. Staking inefficiency: [Inflation](staking-tdfy.md#inflation) is designed to be 10% in the first year, and the ideal staking ratio is set at 50%, meaning half of all tokens should be locked in staking. Any deviation from this ratio will cause a proportional amount of the inflation to go to the Treasury. In other words, if 50% of all tokens are staked, then 100% of the inflation goes to the validators as reward. If the staking rate is less than 50%, then the validators will receive less, with the remainder going to the Treasury.
 
 ## Creating a Treasury Proposal
 
@@ -42,8 +42,8 @@ To minimize storage on chain, proposals don't contain contextual information. Wh
 
 ### Creating the Proposal
 
-One way to create the proposal is to use the [Tidechain Explorer](http://explorer.stg.e.semantic-network.tech/). From the website, use either the
-[extrinsics tab](http://explorer.stg.e.semantic-network.tech/#/extrinsics) and select the Treasury pallet, then `proposeSpend` and enter the desired amount and recipient, or use the [Treasury tab](http://explorer.stg.e.semantic-network.tech/#/treasury) and its dedicated Submit Proposal button
+One way to create the proposal is to use the [Tidechain Explorer](http://explorer.tidefi.io/). From the website, use either the
+[extrinsics tab](https://explorer.tidefi.io/#/extrinsics) and select the Treasury pallet, then `proposeSpend` and enter the desired amount and recipient, or use the [Treasury tab](http://explorer.tidefi.io/#/treasury) and its dedicated Submit Proposal button
 
 ![A proposal being created](./assets/treasury-submit-proposal.png)
 
@@ -84,7 +84,7 @@ The bounty has a predetermined duration of 90 days with the possibility of being
 
 Anyone can create a Bounty proposal using Tidechain Explorer: Users are able to submit a proposal on the dedicated Bounty section under Governance. The development of a robust user interface to view and manage bounties in the Tidefi Apps is still under development and it will serve Council members, Curators and Beneficiaries of the bounties, as well as all users observing the on-chain treasury governance. For now, the help of a Councillor is needed to open a bounty proposal as a motion to be voted.
 
-To submit a bounty, please visit [Tidechain Explorer](http://explorer.stg.e.semantic-network.tech/) and click on the governance tab in the options bar on the top of the site. After, click on 'Bounties' and find the button '+ Add Bounty' on the upper-right side of the interface. Complete the bounty title, the requested allocation (including curator's fee) and confirm the call.
+To submit a bounty, please visit [Tidechain Explorer](http://explorer.tidefi.io/) and click on the governance tab in the options bar on the top of the site. After, click on 'Bounties' and find the button '+ Add Bounty' on the upper-right side of the interface. Complete the bounty title, the requested allocation (including curator's fee) and confirm the call.
 
 After this, a Council member will need to assist you to pass the bounty proposal for vote as a motion.
 

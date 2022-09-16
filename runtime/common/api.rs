@@ -268,6 +268,7 @@ impl_runtime_apis! {
        //list_benchmark!(list, extra, pallet_bags_list, crate::BagsList);
        list_benchmark!(list, extra, pallet_balances, crate::Balances);
        list_benchmark!(list, extra, pallet_bounties, crate::Bounties);
+       list_benchmark!(list, extra, pallet_democracy, crate::Democracy);
        list_benchmark!(list, extra, pallet_collective, crate::Council);
        list_benchmark!(list, extra, pallet_election_provider_multi_phase, crate::ElectionProviderMultiPhase);
        list_benchmark!(list, extra, pallet_elections_phragmen, crate::Elections);
@@ -282,6 +283,7 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_preimage, crate::Preimage);
        list_benchmark!(list, extra, pallet_scheduler, crate::Scheduler);
        list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
+       list_benchmark!(list, extra, pallet_security, crate::Security);
        list_benchmark!(list, extra, pallet_staking, crate::Staking);
        list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
        list_benchmark!(list, extra, pallet_assets, crate::Assets);
@@ -292,7 +294,6 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_tidefi_stake, crate::TidefiStaking);
        list_benchmark!(list, extra, pallet_quorum, crate::Quorum);
        list_benchmark!(list, extra, pallet_oracle, crate::Oracle);
-       list_benchmark!(list, extra, pallet_fees, crate::Fees);
        list_benchmark!(list, extra, pallet_asset_registry, crate::AssetRegistry);
        list_benchmark!(list, extra, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
@@ -343,6 +344,7 @@ impl_runtime_apis! {
            //add_benchmark!(params, batches, pallet_bags_list, crate::BagsList);
            add_benchmark!(params, batches, pallet_balances, crate::Balances);
            add_benchmark!(params, batches, pallet_bounties, crate::Bounties);
+           add_benchmark!(params, batches, pallet_democracy, crate::Democracy);
            add_benchmark!(params, batches, pallet_collective, crate::Council);
            add_benchmark!(params, batches, pallet_election_provider_multi_phase, crate::ElectionProviderMultiPhase);
            add_benchmark!(params, batches, pallet_elections_phragmen, crate::Elections);
@@ -359,6 +361,7 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
            add_benchmark!(params, batches, pallet_staking, crate::Staking);
            add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+           add_benchmark!(params, batches, pallet_security, crate::Security);
            add_benchmark!(params, batches, pallet_timestamp, crate::Timestamp);
            add_benchmark!(params, batches, pallet_treasury, crate::Treasury);
            add_benchmark!(params, batches, pallet_utility, crate::Utility);
@@ -368,7 +371,6 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_oracle, crate::Oracle);
            add_benchmark!(params, batches, pallet_asset_registry, crate::AssetRegistry);
            add_benchmark!(params, batches, pallet_preimage, crate::Preimage);
-           add_benchmark!(params, batches, pallet_fees, crate::Fees);
            add_benchmark!(params, batches, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
            if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

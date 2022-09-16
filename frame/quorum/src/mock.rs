@@ -33,11 +33,11 @@ use sp_core::H256;
 use sp_runtime::{
   testing::Header,
   traits::{BlakeTwo256, IdentityLookup},
-  DispatchError, DispatchResult,
+  DispatchError, DispatchResult, FixedU128,
 };
 use std::marker::PhantomData;
 use system::EnsureRoot;
-use tidefi_primitives::CurrencyId;
+use tidefi_primitives::{BlockNumber, CurrencyId};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -56,6 +56,7 @@ frame_support::construct_runtime!(
     Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
     Quorum: pallet_quorum::{Pallet, Call, Config<T>, Storage, Event<T>},
     Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>},
+    Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>},
     AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>},
   }
 );
@@ -147,8 +148,14 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
+  pub const SunrisePalletId: PalletId = PalletId(*b"sunr*pal");
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
+  pub const Cooldown: BlockNumber = 10;
+  // max 10k rewards
+  pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
+  // 50%
+  pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
 }
 
 impl pallet_quorum::Config for Test {
@@ -156,6 +163,7 @@ impl pallet_quorum::Config for Test {
   type WeightInfo = crate::weights::SubstrateWeight<Test>;
   type QuorumPalletId = TidefiPalletId;
   type Security = Security;
+  type Sunrise = Sunrise;
   type CurrencyTidefi = Adapter<AccountId>;
   type AssetRegistry = AssetRegistry;
   type ProposalsCap = ProposalsCap;
@@ -167,8 +175,19 @@ impl pallet_quorum::Config for Test {
   type PubkeyLimitPerAsset = PubkeyLimitPerAsset;
 }
 
+impl pallet_sunrise::Config for Test {
+  type Event = Event;
+  type Security = Security;
+  type SunrisePalletId = SunrisePalletId;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type Cooldown = Cooldown;
+  type MaximumRewardPerSwap = MaximumRewardPerSwap;
+  type LeftoverSwapRebates = LeftoverSwapRebates;
+}
+
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_asset_registry::Config for Test {

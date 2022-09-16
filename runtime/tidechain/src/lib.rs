@@ -91,9 +91,8 @@ mod bag_thresholds;
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-// FIXME: Replace with SEMNET Unique prefix. (7007)
-// 42 = Substrate default
-pub const SS58_PREFIX: u8 = 42;
+// Tidefi Prefix
+pub const SS58_PREFIX: u16 = 7007;
 
 /// Wasm binary unwrapped. If built with `SKIP_WASM_BUILD`, the function panics.
 #[cfg(feature = "std")]
@@ -116,7 +115,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 5010,
+  spec_version: 6000,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -152,7 +151,14 @@ parameter_types! {
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"py/asstr");
   pub const TidefiStakingPalletId: PalletId = PalletId(*b"py/stake");
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
+  pub const SunrisePalletId: PalletId = PalletId(*b"py/sunrp");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+}
+
+// FIXME: Should be removed once we'll give control to the community (governance)
+impl pallet_sudo::Config for Runtime {
+  type Event = Event;
+  type Call = Call;
 }
 
 construct_runtime!(
@@ -183,44 +189,48 @@ construct_runtime!(
         AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 13,
 
         // Governance
-        Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 14,
-        TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 15,
-        Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 16,
-        TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
-        Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 18,
+        Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 14,
+        Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 15,
+        TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 16,
+        Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
+        TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 18,
+        Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 19,
 
         // Utility module
-        Utility: pallet_utility::{Pallet, Call, Event} = 19,
+        Utility: pallet_utility::{Pallet, Call, Event} = 20,
 
         // Identity module
-        Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 20,
+        Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 21,
 
         // Election pallet. Only works with staking, but placed here to maintain indices.
-        ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 21,
+        ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 22,
 
         // Social recovery module
-        Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 22,
+        Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 23,
 
         // System scheduler
-        Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 23,
+        Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 24,
 
         // Proxy module
-        Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 24,
+        Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 25,
 
         // Multisig
-        Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 25,
+        Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 26,
 
         // Bounties
-        Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 26,
+        Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 27,
 
         // Assets
-        Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 27,
+        Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 28,
 
         // Provides a semi-sorted list of nominators for staking
-        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 28,
+        BagsList: pallet_bags_list::{Pallet, Call, Storage, Event<T>} = 29,
 
         // Preimage registrar
-        Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 29,
+        Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 30,
+
+        // Sudo module
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
 
         // Tidefi public calls
         Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>} = 50,
@@ -238,10 +248,16 @@ construct_runtime!(
         Security: pallet_security::{Pallet, Call, Config, Storage, Event<T>} = 54,
 
         // Fees module
-        Fees: pallet_fees::{Pallet, Call, Config<T>, Storage, Event<T>} = 55,
+        Fees: pallet_fees::{Pallet, Config<T>, Storage, Event<T>} = 55,
 
         // Asset registry module
         AssetRegistry: pallet_asset_registry::{Pallet, Call, Config<T>, Storage, Event<T>} = 56,
+
+        // Sunrise module
+        Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>} = 57,
+
+        // Vesting module
+        Vesting: pallet_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 58,
     }
 );
 

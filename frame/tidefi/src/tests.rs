@@ -16,8 +16,8 @@
 
 use crate::{
   mock::{
-    new_test_ext, Adapter, Assets, Balances, Event as MockEvent, Oracle, Origin, Quorum,
-    SwapLimitByAccount, System, Test, Tidefi,
+    new_test_ext, Adapter, Assets, Balances, Event as MockEvent, ExistentialDeposit, Fees, Oracle,
+    Origin, Quorum, Sunrise, SwapLimitByAccount, System, Test, Tidefi,
   },
   pallet::*,
 };
@@ -29,16 +29,21 @@ use frame_support::{
 use pallet_assets::{Account, Error as AssetsError};
 use pallet_balances::Error as BalancesError;
 use pallet_oracle::{AccountSwaps, Error as OracleError};
+use pallet_sunrise::Error as SunriseError;
 use sp_runtime::{traits::BadOrigin, Permill};
 use std::str::FromStr;
 use tidefi_primitives::{
-  pallet::OracleExt, Balance, CurrencyId, Hash, ProposalType, SwapStatus, SwapType, Withdrawal,
+  pallet::{FeesExt, OracleExt, SunriseExt},
+  ActiveEraInfo, Balance, CurrencyId, EraIndex, Hash, ProposalType, SwapStatus, SwapType,
+  Withdrawal,
 };
 
 type AccountId = u64;
+type BlockNumber = u64;
 
 const ALICE_ACCOUNT_ID: AccountId = 1;
 const BOB_ACCOUNT_ID: AccountId = 2;
+const CHARLIE_ACCOUNT_ID: AccountId = 3;
 
 const ONE_TDFY: u128 = 1_000_000_000_000;
 
@@ -60,6 +65,7 @@ const EXTRINSIC_HASH: [u8; 32] = [
 ];
 
 struct Context {
+  rewards_claimer: Origin,
   sender: AccountId,
   receiver: AccountId,
   test_assets: Vec<CurrencyId>,
@@ -67,11 +73,14 @@ struct Context {
   external_address: Vec<u8>,
   request_id: Hash,
   proposal_id: Hash,
+  era_index: EraIndex,
 }
 
 impl Default for Context {
   fn default() -> Self {
     Context {
+      era_index: 1,
+      rewards_claimer: Origin::signed(CHARLIE_ACCOUNT_ID),
       sender: ALICE_ACCOUNT_ID,
       receiver: BOB_ACCOUNT_ID,
       test_assets: vec![CurrencyId::Tdfy, TEMP_CURRENCY_ID],
@@ -100,8 +109,12 @@ impl Context {
   }
 
   fn mint_tdfy(self, account: AccountId, amount: u128) -> Self {
+    let balance_before_mint = Adapter::balance(CurrencyId::Tdfy, &account);
     Self::mint_asset_for_accounts(vec![account], CurrencyId::Tdfy, amount);
-    assert_eq!(Adapter::balance(CurrencyId::Tdfy, &account), amount);
+    assert_eq!(
+      Adapter::balance(CurrencyId::Tdfy, &account),
+      balance_before_mint + amount
+    );
     self
   }
 
@@ -186,6 +199,28 @@ impl Context {
         .find(|(request_id, _)| *request_id == self.request_id),
       Some(&(self.request_id, SwapStatus::Pending))
     );
+    self
+  }
+
+  fn set_active_era(self, era_index: u32, start_block: BlockNumber) -> Self {
+    pallet_fees::ActiveEra::<Test>::put(ActiveEraInfo::<BlockNumber> {
+      index: era_index,
+      start_block: Some(start_block),
+      start_session_index: None,
+      last_session_block: None,
+      start: None,
+    });
+    self
+  }
+
+  fn set_sunrise_rewards(
+    self,
+    account: AccountId,
+    era_index: u32,
+    rewards_amount: Balance,
+  ) -> Self {
+    pallet_sunrise::Rewards::<Test>::insert(account, era_index, rewards_amount);
+    assert_eq!(Sunrise::sunrise_rewards(account, era_index), rewards_amount);
     self
   }
 }
@@ -1216,6 +1251,243 @@ mod cancel_swap {
           );
         });
       }
+    }
+  }
+}
+
+mod claim_sunrise_rewards {
+  use super::*;
+
+  #[test]
+  fn succeeds() {
+    new_test_ext().execute_with(|| {
+      const REWARDS_AMOUNT: u128 = ONE_TDFY;
+      const REWARDS_ERA_INDEX: u32 = 1;
+      const REWARDS_CLAIMER: AccountId = CHARLIE_ACCOUNT_ID;
+
+      let context = Context::default()
+        .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+        .mint_tdfy(REWARDS_CLAIMER, 1_000 * ONE_TDFY)
+        .set_active_era(3, 1)
+        .set_sunrise_rewards(REWARDS_CLAIMER, REWARDS_ERA_INDEX, REWARDS_AMOUNT);
+
+      let rewards_claimer_balance_before = Adapter::balance(CurrencyId::Tdfy, &REWARDS_CLAIMER);
+
+      assert_ok!(Pallet::<Test>::claim_sunrise_rewards(
+        context.rewards_claimer,
+        context.era_index,
+      ));
+
+      // Rewards are received
+      let rewards_claimer_balance_after = Adapter::balance(CurrencyId::Tdfy, &REWARDS_CLAIMER);
+      assert_eq!(
+        rewards_claimer_balance_before.saturating_add(REWARDS_AMOUNT),
+        rewards_claimer_balance_after
+      );
+
+      // SunriseClaimed event is emitted
+      System::assert_has_event(MockEvent::Sunrise(pallet_sunrise::Event::SunriseClaimed {
+        era_index: REWARDS_ERA_INDEX,
+        account_id: REWARDS_CLAIMER,
+        reward: REWARDS_AMOUNT,
+      }));
+
+      // Rewards book keeping is updated in storage
+      assert_eq!(
+        Sunrise::sunrise_rewards(REWARDS_CLAIMER, REWARDS_ERA_INDEX),
+        0
+      );
+    });
+  }
+
+  mod fails_when {
+    use super::*;
+
+    #[test]
+    fn not_signed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(Origin::none(), context.era_index),
+          BadOrigin
+        );
+      });
+    }
+
+    #[test]
+    fn no_active_era() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+
+        pallet_fees::ActiveEra::<Test>::kill();
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index),
+          Error::<Test>::NoActiveEra
+        );
+      });
+    }
+
+    #[test]
+    fn no_active_era_start_block() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index),
+          Error::<Test>::NoActiveEra
+        );
+      });
+    }
+
+    #[test]
+    fn claim_current_era() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+
+        let current_era = Fees::current_era().unwrap().index;
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), current_era),
+          Error::<Test>::InvalidEra
+        );
+      });
+    }
+
+    #[test]
+    fn claim_future_era() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+
+        let future_era = Fees::current_era().unwrap().index + 1;
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, future_era),
+          Error::<Test>::InvalidEra
+        );
+      });
+    }
+
+    #[test]
+    fn claim_previous_era_without_blocks_sunrise_claims_cooldown_completed() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ONE_TDFY);
+
+        let previous_era = Fees::current_era().unwrap().index - 1;
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), previous_era),
+          Error::<Test>::EraNotReady
+        );
+      });
+    }
+
+    #[test]
+    fn reward_is_zero() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, 0);
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index),
+          SunriseError::<Test>::NoRewardsAvailable
+        );
+      });
+    }
+
+    #[test]
+    fn no_rewards_available() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1);
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index),
+          SunriseError::<Test>::NoRewardsAvailable
+        );
+      });
+    }
+
+    #[test]
+    fn fees_pallet_account_has_insufficient_balance_to_pay_rewards() {
+      new_test_ext().execute_with(|| {
+        Context::default()
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, 1_000 * ONE_TDFY)
+          .set_active_era(3, 1);
+
+        let fees_pallet_account_balance =
+          Adapter::balance(CurrencyId::Tdfy, &Sunrise::account_id());
+        let context = Context::default().set_sunrise_rewards(
+          CHARLIE_ACCOUNT_ID,
+          1,
+          fees_pallet_account_balance + 1,
+        );
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), context.era_index),
+          BalancesError::<Test>::InsufficientBalance
+        );
+      });
+    }
+
+    #[test]
+    fn claimer_account_cannot_keep_alive() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(Sunrise::account_id(), 1_000 * ONE_TDFY)
+          .set_active_era(3, 1)
+          .set_sunrise_rewards(CHARLIE_ACCOUNT_ID, 1, ExistentialDeposit::get() - 1);
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer.clone(), context.era_index),
+          BalancesError::<Test>::ExistentialDeposit
+        );
+      });
+    }
+
+    #[test]
+    fn fees_pallet_account_cannot_keep_alive() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().set_active_era(3, 1).set_sunrise_rewards(
+          CHARLIE_ACCOUNT_ID,
+          1,
+          ONE_TDFY,
+        );
+
+        assert_noop!(
+          Pallet::<Test>::claim_sunrise_rewards(context.rewards_claimer, context.era_index,),
+          BalancesError::<Test>::KeepAlive
+        );
+      });
     }
   }
 }
