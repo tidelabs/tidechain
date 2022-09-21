@@ -48,21 +48,26 @@ use frame_support::{
   ensure,
   pallet_prelude::*,
   traits::{
+    tokens::fungibles::{Inspect, Mutate, Transfer},
     Currency, EnsureOrigin, ExistenceRequirement, Get, LockIdentifier, LockableCurrency,
     WithdrawReasons,
   },
-  BoundedVec,
+  BoundedVec, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 use scale_info::TypeInfo;
 use sp_runtime::{
-  traits::{AtLeast32Bit, BlockNumberProvider, CheckedAdd, Saturating, StaticLookup, Zero},
-  ArithmeticError, DispatchResult, RuntimeDebug,
+  traits::{
+    AccountIdConversion, AtLeast32Bit, BlockNumberProvider, CheckedAdd, Saturating, StaticLookup,
+    Zero,
+  },
+  ArithmeticError, DispatchResult, RuntimeDebug, SaturatedConversion,
 };
 use sp_std::{
   cmp::{Eq, PartialEq},
   vec::Vec,
 };
+use tidefi_primitives::{Balance, CurrencyId};
 
 mod mock;
 mod tests;
@@ -166,6 +171,14 @@ pub mod module {
 
     // The block number provider
     type BlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
+
+    /// Tidechain currency wrapper
+    type CurrencyTidefi: Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
+      + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+
+    /// Treasury Pallet Id
+    type TreasuryPalletId: Get<PalletId>;
   }
 
   #[pallet::error]
@@ -200,6 +213,9 @@ pub mod module {
     },
     /// Updated vesting schedules.
     VestingSchedulesUpdated { who: T::AccountId },
+
+    /// Stopped vesting schedules.
+    VestingSchedulesStopped { who: T::AccountId },
   }
 
   /// Vesting schedules of an account.
@@ -318,6 +334,24 @@ pub mod module {
       Ok(())
     }
 
+    #[pallet::weight(0)]
+    pub fn stop_vesting_schedules(
+      origin: OriginFor<T>,
+      who: <T::Lookup as StaticLookup>::Source,
+    ) -> DispatchResult {
+      ensure_root(origin)?;
+
+      let account = T::Lookup::lookup(who)?;
+      Self::do_stop_vesting_schedules(&account)?;
+
+      Self::deposit_event(Event::Claimed {
+        who: account.clone(),
+        amount: Zero::zero(),
+      });
+      Self::deposit_event(Event::VestingSchedulesStopped { who: account });
+      Ok(())
+    }
+
     #[pallet::weight(T::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
     pub fn claim_for(
       origin: OriginFor<T>,
@@ -420,6 +454,22 @@ impl<T: Config> Pallet<T> {
 
     T::Currency::set_lock(VESTING_LOCK_ID, who, total_amount, WithdrawReasons::all());
     <VestingSchedules<T>>::insert(who, bounded_schedules);
+
+    Ok(())
+  }
+
+  fn do_stop_vesting_schedules(who: &T::AccountId) -> DispatchResult {
+    let locked_amount = Self::do_claim(who);
+
+    <VestingSchedules<T>>::remove(who);
+    T::Currency::remove_lock(VESTING_LOCK_ID, who);
+    T::CurrencyTidefi::transfer(
+      CurrencyId::Tdfy,
+      who,
+      &T::TreasuryPalletId::get().into_account_truncating(),
+      locked_amount.saturated_into::<u128>(),
+      true,
+    )?;
 
     Ok(())
   }
