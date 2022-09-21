@@ -382,6 +382,36 @@ fn update_vesting_schedules_works() {
 }
 
 #[test]
+fn stop_vesting_schedules_works() {
+  ExtBuilder::build().execute_with(|| {
+    let schedule = VestingSchedule {
+      start: 0u64,
+      period: 10u64,
+      period_count: 2u32,
+      per_period: 10u64,
+    };
+    assert_ok!(Vesting::vested_transfer(
+      Origin::signed(ALICE),
+      BOB,
+      schedule
+    ));
+
+    MockBlockNumberProvider::set(11);
+
+    assert_ok!(Vesting::stop_vesting_schedules(Origin::root(), BOB,));
+    assert!(PalletBalances::transfer(Origin::signed(BOB), ALICE, 20).is_err());
+    assert!(!VestingSchedules::<Runtime>::contains_key(BOB));
+    assert_eq!(PalletBalances::locks(&BOB), vec![]);
+
+    MockBlockNumberProvider::set(21);
+
+    assert_ok!(Vesting::claim(Origin::signed(BOB)));
+    assert!(PalletBalances::transfer(Origin::signed(BOB), ALICE, 20).is_err());
+    assert_ok!(PalletBalances::transfer(Origin::signed(BOB), ALICE, 10));
+  });
+}
+
+#[test]
 fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
   ExtBuilder::build().execute_with(|| {
     assert_ok!(PalletBalances::transfer(Origin::signed(ALICE), BOB, 1));
