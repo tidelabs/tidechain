@@ -15,7 +15,7 @@
 // along with Tidechain.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-  constants::currency::{deposit, TDFY},
+  constants::currency::{deposit, Adapter, TDFY},
   types::{AccountId, Balance, BlockNumber},
   Balances, Call, Event, Origin, OriginCaller, Runtime, System, TreasuryPalletId,
 };
@@ -95,4 +95,6 @@ impl pallet_vesting::Config for Runtime {
   type WeightInfo = ();
   type MaxVestingSchedules = MaxVestingSchedules;
   type BlockNumberProvider = SusbtrateBlockNumberProvider;
+  type CurrencyTidefi = Adapter<AccountId>;
+  type TreasuryPalletId = TreasuryPalletId;
 }
