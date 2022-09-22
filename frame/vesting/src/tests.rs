@@ -44,13 +44,13 @@ fn vesting_from_chain_spec_works() {
           start: 2u64,
           period: 3u64,
           period_count: 1u32,
-          per_period: 5u64,
+          per_period: 5u128,
         },
         VestingSchedule {
           start: 2u64 + 3u64,
           period: 3u64,
           period_count: 3u32,
-          per_period: 5u64,
+          per_period: 5u128,
         }
       ]
     );
@@ -91,7 +91,7 @@ fn vested_transfer_works() {
       start: 0u64,
       period: 10u64,
       period_count: 1u32,
-      per_period: 100u64,
+      per_period: 100u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -114,7 +114,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
       start: 0u64,
       period: 10u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -128,7 +128,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
       start: 10u64,
       period: 13u64,
       period_count: 1u32,
-      per_period: 7u64,
+      per_period: 7u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -140,7 +140,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
       PalletBalances::locks(&BOB).get(0),
       Some(&BalanceLock {
         id: VESTING_LOCK_ID,
-        amount: 17u64,
+        amount: 17u128,
         reasons: Reasons::All,
       })
     );
@@ -154,7 +154,7 @@ fn cannot_use_fund_if_not_claimed() {
       start: 10u64,
       period: 10u64,
       period_count: 1u32,
-      per_period: 50u64,
+      per_period: 50u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -172,7 +172,7 @@ fn vested_transfer_fails_if_zero_period_or_count() {
       start: 1u64,
       period: 0u64,
       period_count: 1u32,
-      per_period: 100u64,
+      per_period: 100u128,
     };
     assert_noop!(
       Vesting::vested_transfer(Origin::signed(ALICE), BOB, schedule),
@@ -183,7 +183,7 @@ fn vested_transfer_fails_if_zero_period_or_count() {
       start: 1u64,
       period: 1u64,
       period_count: 0u32,
-      per_period: 100u64,
+      per_period: 100u128,
     };
     assert_noop!(
       Vesting::vested_transfer(Origin::signed(ALICE), BOB, schedule),
@@ -199,7 +199,7 @@ fn vested_transfer_fails_if_transfer_err() {
       start: 1u64,
       period: 1u64,
       period_count: 1u32,
-      per_period: 100u64,
+      per_period: 100u128,
     };
     assert_noop!(
       Vesting::vested_transfer(Origin::signed(BOB), ALICE, schedule),
@@ -215,7 +215,7 @@ fn vested_transfer_fails_if_overflow() {
       start: 1u64,
       period: 1u64,
       period_count: 2u32,
-      per_period: u64::MAX,
+      per_period: u128::MAX,
     };
     assert_noop!(
       Vesting::vested_transfer(Origin::signed(ALICE), BOB, schedule),
@@ -226,7 +226,7 @@ fn vested_transfer_fails_if_overflow() {
       start: u64::MAX,
       period: 1u64,
       period_count: 2u32,
-      per_period: 1u64,
+      per_period: 1u128,
     };
     assert_noop!(
       Vesting::vested_transfer(Origin::signed(ALICE), BOB, another_schedule),
@@ -242,7 +242,7 @@ fn vested_transfer_fails_if_bad_origin() {
       start: 0u64,
       period: 10u64,
       period_count: 1u32,
-      per_period: 100u64,
+      per_period: 100u128,
     };
     assert_noop!(
       Vesting::vested_transfer(Origin::signed(CHARLIE), BOB, schedule),
@@ -258,7 +258,7 @@ fn claim_works() {
       start: 0u64,
       period: 10u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -296,7 +296,7 @@ fn claim_for_works() {
       start: 0u64,
       period: 10u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -310,7 +310,7 @@ fn claim_for_works() {
       PalletBalances::locks(&BOB).get(0),
       Some(&BalanceLock {
         id: VESTING_LOCK_ID,
-        amount: 20u64,
+        amount: 20u128,
         reasons: Reasons::All,
       })
     );
@@ -333,7 +333,7 @@ fn update_vesting_schedules_works() {
       start: 0u64,
       period: 10u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -345,7 +345,7 @@ fn update_vesting_schedules_works() {
       start: 0u64,
       period: 20u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::update_vesting_schedules(
       Origin::root(),
@@ -367,7 +367,7 @@ fn update_vesting_schedules_works() {
       PalletBalances::locks(&BOB).get(0),
       Some(&BalanceLock {
         id: VESTING_LOCK_ID,
-        amount: 10u64,
+        amount: 10u128,
         reasons: Reasons::All,
       })
     );
@@ -388,7 +388,7 @@ fn stop_vesting_schedules_works() {
       start: 0u64,
       period: 10u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -415,7 +415,7 @@ fn stop_vesting_schedules_works() {
 fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
   ExtBuilder::build().execute_with(|| {
     assert_ok!(PalletBalances::transfer(Origin::signed(ALICE), BOB, 1));
-    PalletBalances::set_lock(*b"prelocks", &BOB, 0u64, WithdrawReasons::all());
+    PalletBalances::set_lock(*b"prelocks", &BOB, 0u128, WithdrawReasons::all());
   });
 }
 
@@ -426,7 +426,7 @@ fn vested_transfer_check_for_min() {
       start: 1u64,
       period: 1u64,
       period_count: 1u32,
-      per_period: 3u64,
+      per_period: 3u128,
     };
     assert_noop!(
       Vesting::vested_transfer(Origin::signed(BOB), ALICE, schedule),
@@ -442,7 +442,7 @@ fn multiple_vesting_schedule_claim_works() {
       start: 0u64,
       period: 10u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -454,7 +454,7 @@ fn multiple_vesting_schedule_claim_works() {
       start: 0u64,
       period: 10u64,
       period_count: 3u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -490,7 +490,7 @@ fn exceeding_maximum_schedules_should_fail() {
       start: 0u64,
       period: 10u64,
       period_count: 2u32,
-      per_period: 10u64,
+      per_period: 10u128,
     };
     assert_ok!(Vesting::vested_transfer(
       Origin::signed(ALICE),
@@ -523,7 +523,7 @@ fn exceeding_maximum_schedules_should_fail() {
 
 #[test]
 fn cliff_vesting_works() {
-  const VESTING_AMOUNT: u64 = 12;
+  const VESTING_AMOUNT: Balance = 12;
   const VESTING_PERIOD: u64 = 20;
 
   ExtBuilder::build().execute_with(|| {

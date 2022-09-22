@@ -22,7 +22,9 @@ use super::*;
 use frame_support::{
   construct_runtime, parameter_types,
   traits::{
-    fungible::Transfer as FungibleTransfer,
+    fungible::{
+      Inspect as FungibleInspect, Mutate as FungibleMutate, Transfer as FungibleTransfer,
+    },
     fungibles::{Inspect, Mutate, Transfer},
     tokens::{DepositConsequence, WithdrawConsequence},
     ConstU128, ConstU32, ConstU64, EnsureOrigin, Everything, GenesisBuild,
@@ -55,7 +57,7 @@ impl frame_system::Config for Runtime {
   type BlockLength = ();
   type Version = ();
   type PalletInfo = PalletInfo;
-  type AccountData = pallet_balances::AccountData<u64>;
+  type AccountData = pallet_balances::AccountData<u128>;
   type OnNewAccount = ();
   type OnKilledAccount = ();
   type DbWeight = ();
@@ -66,11 +68,8 @@ impl frame_system::Config for Runtime {
   type MaxConsumers = ConstU32<16>;
 }
 
-type Balance = u128;
-
-pub const TDFY: Balance = 1_000_000_000_000;
 parameter_types! {
-  pub const ExistentialDeposit: Balance = TDFY;
+  pub const ExistentialDeposit: Balance = 0;
   pub const MaxLocks: u32 = 50;
   pub const MaxReserves: u32 = 50;
 }
@@ -148,7 +147,7 @@ impl BlockNumberProvider for MockBlockNumberProvider {
 impl Config for Runtime {
   type Event = Event;
   type Currency = PalletBalances;
-  type MinVestedTransfer = ConstU64<5>;
+  type MinVestedTransfer = ConstU128<5>;
   type VestedTransferOrigin = EnsureAliceOrBob;
   type WeightInfo = ();
   type MaxVestingSchedules = ConstU32<2>;
@@ -182,7 +181,11 @@ impl Inspect<AccountId> for Adapter<AccountId> {
 
   fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
     match asset {
-      CurrencyId::Tdfy => PalletBalances::minimum_balance(),
+      CurrencyId::Tdfy => {
+        <pallet_balances::Pallet<mock::Runtime> as frame_support::traits::fungible::Inspect<
+          AccountId,
+        >>::minimum_balance()
+      }
       CurrencyId::Wrapped(asset_id) => Assets::minimum_balance(asset_id),
     }
   }
