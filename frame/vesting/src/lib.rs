@@ -179,6 +179,9 @@ pub mod module {
 
     /// Treasury Pallet Id
     type TreasuryPalletId: Get<PalletId>;
+
+    /// Force Origin
+    type ForceOrigin: EnsureOrigin<Self::Origin>;
   }
 
   #[pallet::error]
@@ -339,7 +342,7 @@ pub mod module {
       origin: OriginFor<T>,
       who: <T::Lookup as StaticLookup>::Source,
     ) -> DispatchResult {
-      ensure_root(origin)?;
+      T::ForceOrigin::ensure_origin(origin)?;
 
       let account = T::Lookup::lookup(who)?;
       Self::do_stop_vesting_schedules(&account)?;

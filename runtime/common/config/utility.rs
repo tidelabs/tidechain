@@ -16,7 +16,7 @@
 
 use crate::{
   constants::currency::{deposit, Adapter, TDFY},
-  types::{AccountId, Balance, BlockNumber},
+  types::{AccountId, Balance, BlockNumber, EnsureRootOrHalfCouncil},
   Balances, Call, Event, Origin, OriginCaller, Runtime, System, TreasuryPalletId,
 };
 use frame_support::{parameter_types, traits::EnsureOrigin};
@@ -97,4 +97,5 @@ impl pallet_vesting::Config for Runtime {
   type BlockNumberProvider = SusbtrateBlockNumberProvider;
   type CurrencyTidefi = Adapter<AccountId>;
   type TreasuryPalletId = TreasuryPalletId;
+  type ForceOrigin = EnsureRootOrHalfCouncil;
 }

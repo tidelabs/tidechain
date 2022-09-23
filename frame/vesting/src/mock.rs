@@ -154,6 +154,7 @@ impl Config for Runtime {
   type BlockNumberProvider = MockBlockNumberProvider;
   type CurrencyTidefi = Adapter<AccountId>;
   type TreasuryPalletId = TreasuryPalletId;
+  type ForceOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // this is only the mock for benchmarking, it's implemented directly in the runtime
