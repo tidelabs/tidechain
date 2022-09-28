@@ -17,7 +17,7 @@
 use crate::{
   constants::currency::{deposit, Adapter, TDFY},
   types::{AccountId, AssetId, Balance, BlockNumber, SessionIndex},
-  AssetRegistry, AssetRegistryPalletId, Balances, CouncilCollectiveInstance, Event, Fees,
+  AssetRegistry, AssetRegistryPalletId, Balances, Call, CouncilCollectiveInstance, Event, Fees,
   FeesPalletId, Oracle, OraclePalletId, Origin, Quorum, QuorumPalletId, Runtime, Security, Sunrise,
   SunrisePalletId, TidefiStaking, TidefiStakingPalletId, Timestamp,
 };
@@ -82,6 +82,8 @@ parameter_types! {
   pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
   // Rebates applied to left-over pool
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+  // The maximum length of each tidefi call
+  pub const MaximumExternalAddressLength: u8 = 100;
 }
 
 pub struct EnsureRootOrAssetRegistry;
@@ -145,6 +147,8 @@ impl pallet_tidefi::Config for Runtime {
   // Asset registry
   type AssetRegistry = AssetRegistry;
   type WeightInfo = crate::weights::pallet_tidefi::WeightInfo<Runtime>;
+  type Call = Call;
+  type MaximumExternalAddressLength = MaximumExternalAddressLength;
 }
 
 impl pallet_tidefi_stake::Config for Runtime {

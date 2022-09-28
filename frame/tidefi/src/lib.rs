@@ -28,8 +28,13 @@ mod benchmarking;
 pub mod weights;
 pub use weights::*;
 
+mod extensions;
+pub use extensions::check_external_address_length::CheckExternalAddressLength;
+
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
+use sp_runtime::traits::Dispatchable;
+use sp_std::{fmt::Debug, prelude::*};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -41,8 +46,9 @@ pub mod pallet {
       fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
       WithdrawConsequence,
     },
+    weights::Pays,
   };
-  use frame_system::pallet_prelude::*;
+  use frame_system::{ensure_signed, pallet_prelude::*};
   use sp_io::hashing::blake2_256;
   use sp_runtime::{traits::Saturating, Permill};
   use tidefi_primitives::{
@@ -83,6 +89,13 @@ pub mod pallet {
       + Transfer<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + InspectHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
       + MutateHold<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
+
+    /// The aggregated `Call` type.
+    type Call: Dispatchable + Debug;
+
+    /// Maximum length for external address.
+    #[pallet::constant]
+    type MaximumExternalAddressLength: Get<u8>;
   }
 
   #[pallet::pallet]

@@ -30,7 +30,11 @@ use pallet_assets::{Account, Error as AssetsError};
 use pallet_balances::Error as BalancesError;
 use pallet_oracle::{AccountSwaps, Error as OracleError};
 use pallet_sunrise::Error as SunriseError;
-use sp_runtime::{traits::BadOrigin, Permill};
+use sp_runtime::{
+  traits::{BadOrigin, SignedExtension},
+  Permill,
+};
+use sp_std::prelude::*;
 use std::str::FromStr;
 use tidefi_primitives::{
   pallet::{FeesExt, OracleExt, SunriseExt},
@@ -534,6 +538,8 @@ mod withdrawal {
 
   mod fails_when {
     use super::*;
+    use crate::{pallet as pallet_tidefi, CheckExternalAddressLength};
+    use frame_support::{pallet_prelude::InvalidTransaction, weights::DispatchInfo};
 
     #[test]
     fn not_signed() {
@@ -675,6 +681,42 @@ mod withdrawal {
             context.external_address.clone(),
           ),
           Error::<Test>::ReducedToZero
+        );
+      });
+    }
+
+    #[test]
+    fn external_address_is_larger_than_the_maximum() {
+      new_test_ext().execute_with(|| {
+        let info = DispatchInfo::default();
+        let len = 100usize;
+        let maximum_eternal_address_length =
+          usize::from(crate::mock::MaximumExternalAddressLength::get());
+
+        let valid_call: &<Test as pallet_tidefi::Config>::Call =
+          &crate::mock::Call::Tidefi(pallet_tidefi::Call::withdrawal {
+            currency_id: CurrencyId::Wrapped(4),
+            amount: 100u128,
+            external_address: vec![0u8; maximum_eternal_address_length],
+          });
+        assert_ok!(CheckExternalAddressLength::<Test>::new().validate(&1, valid_call, &info, len));
+        assert_ok!(
+          CheckExternalAddressLength::<Test>::new().pre_dispatch(&1, valid_call, &info, len)
+        );
+
+        let invalid_call: &<Test as pallet_tidefi::Config>::Call =
+          &crate::mock::Call::Tidefi(pallet_tidefi::Call::withdrawal {
+            currency_id: CurrencyId::Wrapped(4),
+            amount: 100u128,
+            external_address: vec![0u8; maximum_eternal_address_length + 1],
+          });
+        assert_noop!(
+          CheckExternalAddressLength::<Test>::new().validate(&1, invalid_call, &info, len),
+          InvalidTransaction::ExhaustsResources
+        );
+        assert_noop!(
+          CheckExternalAddressLength::<Test>::new().pre_dispatch(&1, invalid_call, &info, len),
+          InvalidTransaction::ExhaustsResources
         );
       });
     }

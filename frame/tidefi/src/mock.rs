@@ -187,6 +187,7 @@ parameter_types! {
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
   pub const LeftoverSwapRebates: FixedU128 = FixedU128::from_inner(500_000_000_000_000_000);
+  pub const MaximumExternalAddressLength: u8 = 100;
 }
 
 impl pallet_tidefi::Config for Test {
@@ -199,6 +200,8 @@ impl pallet_tidefi::Config for Test {
   type Sunrise = Sunrise;
   type Security = Security;
   type AssetRegistry = AssetRegistry;
+  type Call = Call;
+  type MaximumExternalAddressLength = MaximumExternalAddressLength;
 }
 
 impl pallet_quorum::Config for Test {
