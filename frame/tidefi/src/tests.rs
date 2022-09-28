@@ -1253,6 +1253,43 @@ mod cancel_swap {
       }
     }
   }
+
+  mod reported_tests {
+    use super::*;
+
+    #[test]
+    fn from_tdfy_to_temp() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 20 * ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, 2_869_522_482_719_856_860)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 27_601_341_270_000_000_000)
+          .add_tdfy_to_temp_limit_swap(
+            BOB_ACCOUNT_ID,
+            358_691_894_374_000_000,
+            27_601_341_270_000_000_000,
+          );
+
+        let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy); // 2_503_656_750_458_376_860
+        let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy); // 365_865_732_261_480_000
+
+        assert_ok!(Tidefi::cancel_swap(
+          Origin::signed(BOB_ACCOUNT_ID),
+          context.request_id,
+        ));
+
+        assert_eq!(
+          Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
+          requester_balance_before + requester_reserved
+        );
+
+        assert_cancelled_swap_is_set_to_none(&context);
+        assert_cancelled_swap_is_deleted_from_account_swaps(&context);
+        assert_event_is_emitted_swap_cancelled(&context);
+      })
+    }
+  }
 }
 
 mod claim_sunrise_rewards {
