@@ -43,7 +43,6 @@
 //! * Asset Issuance (Minting)
 //! * Asset Transferal
 //! * Asset Freezing
-//! * Asset Destruction (Burning)
 //! * Delegated Asset Transfers ("Approval API")
 //!
 //! To use it in your runtime, you need to implement the assets [`Config`].
@@ -59,8 +58,6 @@
 //!   account that issues the asset. This is a privileged operation.
 //! * **Asset transfer**: The reduction of the balance of an asset of one account with the
 //!   corresponding increase in the balance of another.
-//! * **Asset destruction**: The process of reduce the balance of an asset of one account. This is a
-//!   privileged operation.
 //! * **Fungible asset**: An asset whose units are interchangeable.
 //! * **Issuer**: An account ID uniquely privileged to be able to mint a particular class of assets.
 //! * **Freezer**: An account ID uniquely privileged to be able to freeze an account from

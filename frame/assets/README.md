@@ -9,7 +9,6 @@ with a fixed supply, including:
 
 * Asset Issuance
 * Asset Transfer
-* Asset Destruction
 
 To use it in your runtime, you need to implement the assets [`assets::Config`](https://docs.rs/pallet-assets/latest/pallet_assets/pallet/trait.Config.html).
 
@@ -20,7 +19,6 @@ The supported dispatchable functions are documented in the [`assets::Call`](http
 * **Asset issuance:** The creation of a new asset, whose total supply will belong to the
   account that issues the asset.
 * **Asset transfer:** The action of transferring assets from one account to another.
-* **Asset destruction:** The process of an account removing its entire holding of an asset.
 * **Fungible asset:** An asset whose units are interchangeable.
 * **Non-fungible asset:** An asset for which each unit has unique characteristics.
 
