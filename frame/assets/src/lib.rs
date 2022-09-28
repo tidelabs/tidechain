@@ -68,8 +68,8 @@
 //! * **Freezing**: Removing the possibility of an unpermissioned transfer of an asset from a
 //!   particular account.
 //! * **Non-fungible asset**: An asset for which each unit has unique characteristics.
-//! * **Owner**: An account ID uniquely privileged to be able to destroy a particular asset class,
-//!   or to set the Issuer, Freezer or Admin of that asset class.
+//! * **Owner**: An account ID uniquely privileged to be able to set the Issuer, Freezer,
+//!   or Admin of that asset class.
 //! * **Approval**: The act of allowing an account the permission to transfer some balance of asset
 //!   from the approving account into some third-party destination account.
 //! * **Sufficiency**: The idea of a minimum-balance of an asset being sufficient to allow the
@@ -110,7 +110,6 @@
 //! * `force_cancel_approval`: Rescind a previous approval.
 //!
 //! ### Privileged Functions
-//! * `destroy`: Destroys an entire asset class; called by the asset class's Owner.
 //! * `mint`: Increases the asset balance of an account; called by the asset class's Issuer.
 //! * `burn`: Decreases the asset balance of an account; called by the asset class's Admin.
 //! * `force_transfer`: Transfers between arbitrary accounts; called by the asset class's Admin.
@@ -171,7 +170,6 @@ use sp_std::{borrow::Borrow, prelude::*};
 use frame_support::{
   dispatch::{DispatchError, DispatchResult},
   ensure,
-  pallet_prelude::DispatchResultWithPostInfo,
   traits::{
     tokens::{fungibles, DepositConsequence, WithdrawConsequence},
     BalanceStatus::Reserved,
@@ -222,7 +220,7 @@ pub mod pallet {
     /// The currency mechanism.
     type Currency: ReservableCurrency<Self::AccountId>;
 
-    /// The origin which may forcibly create or destroy an asset or otherwise alter privileged
+    /// The origin which may forcibly create an asset or otherwise alter privileged
     /// attributes.
     type ForceOrigin: EnsureOrigin<Self::Origin>;
 
@@ -449,8 +447,6 @@ pub mod pallet {
     AssetFrozen { asset_id: T::AssetId },
     /// Some asset `asset_id` was thawed.
     AssetThawed { asset_id: T::AssetId },
-    /// An asset class was destroyed.
-    Destroyed { asset_id: T::AssetId },
     /// Some asset class was force-created.
     ForceCreated {
       asset_id: T::AssetId,
@@ -566,16 +562,6 @@ pub mod pallet {
       T::ForceOrigin::ensure_origin(origin)?;
       let owner = T::Lookup::lookup(owner)?;
       Self::do_force_create(id, owner, is_sufficient, min_balance)
-    }
-
-    /// Destroy are disabled in Tidechain
-    #[pallet::weight(100_000)]
-    pub fn destroy(
-      _origin: OriginFor<T>,
-      #[pallet::compact] _id: T::AssetId,
-      _witness: DestroyWitness,
-    ) -> DispatchResultWithPostInfo {
-      Ok(Some(100_000).into())
     }
 
     /// Mint assets of a particular class.

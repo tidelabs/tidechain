@@ -665,66 +665,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
     Ok(())
   }
 
-  /// Destroy an existing asset.
-  ///
-  /// * `id`: The asset you want to destroy.
-  /// * `witness`: Witness data needed about the current state of the asset, used to confirm
-  ///   complexity of the operation.
-  /// * `maybe_check_owner`: An optional check before destroying the asset, if the provided
-  ///   account is the owner of that asset. Can be used for authorization checks.
-  pub(super) fn do_destroy(
-    id: T::AssetId,
-    witness: DestroyWitness,
-    maybe_check_owner: Option<T::AccountId>,
-  ) -> Result<DestroyWitness, DispatchError> {
-    Asset::<T, I>::try_mutate_exists(id, |maybe_details| {
-      let details = maybe_details
-        .take()
-        .ok_or(Error::<T, I>::AssetIdNotFoundInAssets)?;
-      if let Some(check_owner) = maybe_check_owner {
-        ensure!(details.owner == check_owner, Error::<T, I>::NoPermission);
-      }
-      ensure!(
-        details.accounts <= witness.accounts,
-        Error::<T, I>::BadWitness
-      );
-      ensure!(
-        details.sufficients <= witness.sufficients,
-        Error::<T, I>::BadWitness
-      );
-      ensure!(
-        details.approvals <= witness.approvals,
-        Error::<T, I>::BadWitness
-      );
-
-      //for (who, v) in Account::<T, I>::drain_prefix(id) {
-      // We have to force this as it's destroying the entire asset class.
-      // This could mean that some accounts now have irreversibly reserved
-      // funds.
-      //let _ = Self::dead_account(id, &who, &mut details, &v.reason, true);
-      //}
-      //debug_assert_eq!(details.accounts, 0);
-      //debug_assert_eq!(details.sufficients, 0);
-
-      let metadata = Metadata::<T, I>::take(&id);
-      T::Currency::unreserve(
-        &details.owner,
-        details.deposit.saturating_add(metadata.deposit),
-      );
-
-      for ((owner, _), approval) in Approvals::<T, I>::drain_prefix((&id,)) {
-        T::Currency::unreserve(&owner, approval.deposit);
-      }
-      Self::deposit_event(Event::Destroyed { asset_id: id });
-
-      Ok(DestroyWitness {
-        accounts: details.accounts,
-        sufficients: details.sufficients,
-        approvals: details.approvals,
-      })
-    })
-  }
-
   /// Creates an approval from `owner` to spend `amount` of asset `id` tokens by 'delegate'
   /// while reserving `T::ApprovalDeposit` from owner
   ///
