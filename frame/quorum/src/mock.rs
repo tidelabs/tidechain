@@ -151,7 +151,7 @@ parameter_types! {
   pub const SunrisePalletId: PalletId = PalletId(*b"sunr*pal");
   pub const TidefiPalletId: PalletId = PalletId(*b"wrpr*pal");
   pub const AssetRegistryPalletId: PalletId = PalletId(*b"asst*pal");
-  pub const Cooldown: BlockNumber = 10;
+  pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // max 10k rewards
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
