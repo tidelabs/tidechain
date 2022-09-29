@@ -907,13 +907,8 @@ pub mod pallet {
         )
         .ok_or(Error::<T>::ArithmeticError)?;
 
-      T::CurrencyTidefi::release(
-        trade.token_from,
-        &trade.account_id,
-        amount_to_release,
-        false,
-      )
-      .map_err(|_| Error::<T>::ReleaseFailed)?;
+      T::CurrencyTidefi::release(trade.token_from, &trade.account_id, amount_to_release, true)
+        .map_err(|_| Error::<T>::ReleaseFailed)?;
 
       Ok(())
     }
@@ -1095,7 +1090,7 @@ pub mod pallet {
             swap_intent.token_from,
             &swap_intent.account_id,
             real_amount_to_release,
-            false,
+            true,
           )
           .map_err(|_| Error::<T>::ReleaseFailed)?;
 
