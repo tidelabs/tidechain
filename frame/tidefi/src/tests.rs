@@ -1291,12 +1291,12 @@ mod cancel_swap {
     //   }
     #[test]
     fn from_tdfy_to_temp() {
-      let free: u128 = 2_510_661_247_398_669_860;
+      let free_balance: u128 = 2_510_661_247_398_669_860;
       let from_amount: u128 = 358_691_894_374_000_000;
       let to_amount: u128 = 27_601_341_270_000_000_000;
-      let fee: u128 = 179_345_947_187_000;
-      let reserved: u128 = from_amount + fee;
-      let total: u128 = free + reserved;
+      let fee: u128 = 179_345_947_187_000; // MarketMakerLimitFeeAmount: 0.05% of from_amount
+      let reserved_balance: u128 = from_amount + fee;
+      let total: u128 = free_balance + reserved_balance;
 
       new_test_ext().execute_with(|| {
         let context = Context::default()
@@ -1332,8 +1332,8 @@ mod cancel_swap {
         let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
         let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
 
-        assert_eq!(requester_balance_before, free);
-        assert_eq!(requester_reserved, reserved);
+        assert_eq!(requester_balance_before, free_balance);
+        assert_eq!(requester_reserved, reserved_balance);
 
         assert_ok!(Tidefi::cancel_swap(
           Origin::signed(BOB_ACCOUNT_ID),
