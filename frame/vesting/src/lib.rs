@@ -39,6 +39,8 @@
 //! - `claim` - Claim unlocked balances.
 //! - `update_vesting_schedules` - Update all vesting schedules under an
 //!   account, `root` origin required.
+//! - `stop_vesting_schedules` - Calim unlocked balances first, then stop all
+//!   future vesting schedules under an account, `root` origin required.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
