@@ -1257,22 +1257,76 @@ mod cancel_swap {
   mod reported_tests {
     use super::*;
 
+    //  Test Case
+    // {
+    //     extrinsicHash: 0xaa2da68e072933bdb893c23221afb27fa54993666bdc17fbf58049bffac84790
+    //     accountId: fhEVp1YLd462wqi7ZZQ6kwsAJJoSiQTLryHr8haS47FVTJZiZ
+    //     isMarketMaker: true
+    //     tokenFrom: Tdfy
+    //     amountFrom: 358,691,894,374,000,000
+    //     amountFromFilled: 0
+    //     tokenTo: {
+    //       Wrapped: 3
+    //     }
+    //     amountTo: 27,601,341,270,000,000,000
+    //     amountToFilled: 0
+    //     status: Pending
+    //     swapType: Limit
+    //     blockNumber: 181,437
+    //     slippage: 0.00%
+    //   }
+
+    //   the user balance:
+    //   {
+    //     nonce: 7,723
+    //     consumers: 0
+    //     providers: 1
+    //     sufficients: 4
+    //     data: {
+    //       free: 2,510,661,247,398,669,860
+    //       reserved: 358,861,235,321,187,000
+    //       miscFrozen: 0
+    //       feeFrozen: 0
+    //     }
+    //   }
     #[test]
     fn from_tdfy_to_temp() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .mint_tdfy(ALICE_ACCOUNT_ID, 20 * ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, 2_869_522_482_719_856_860)
+          .mint_tdfy(BOB_ACCOUNT_ID, 2_872_940_060_716_409_860)
           .create_temp_asset_and_metadata()
-          .mint_temp(ALICE_ACCOUNT_ID, 27_601_341_270_000_000_000)
-          .add_tdfy_to_temp_limit_swap(
-            BOB_ACCOUNT_ID,
-            358_691_894_374_000_000,
-            27_601_341_270_000_000_000,
-          );
+          .mint_temp(ALICE_ACCOUNT_ID, 27_601_341_270_000_000_000);
 
-        let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy); // 2_503_656_750_458_376_860
-        let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy); // 365_865_732_261_480_000
+        Oracle::add_new_swap_in_queue(
+          BOB_ACCOUNT_ID,
+          CurrencyId::Tdfy,
+          358_691_894_374_000_000,
+          TEMP_CURRENCY_ID,
+          27_601_341_270_000_000_000,
+          181_437,
+          *Hash::from_str("0xaa2da68e072933bdb893c23221afb27fa54993666bdc17fbf58049bffac84790")
+            .unwrap_or_default()
+            .as_fixed_bytes(),
+          true,
+          SwapType::Limit,
+          Permill::from_parts(0),
+        )
+        .unwrap();
+
+        assert_eq!(
+          Oracle::account_swaps(BOB_ACCOUNT_ID)
+            .unwrap()
+            .iter()
+            .find(|(request_id, _)| *request_id == context.request_id),
+          Some(&(context.request_id, SwapStatus::Pending))
+        );
+
+        let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+        let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+
+        assert_eq!(requester_balance_before, 2_510_661_247_398_669_860);
+        assert_eq!(requester_reserved, 362_278_813_317_740_000);
 
         assert_ok!(Tidefi::cancel_swap(
           Origin::signed(BOB_ACCOUNT_ID),
