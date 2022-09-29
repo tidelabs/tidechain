@@ -162,7 +162,7 @@ parameter_types! {
   pub const FeeAmount: Permill = Permill::from_perthousand(20);
   // 10 basis point
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
-  pub const MarketMakerLimitFeeAmount: Permill = Permill::from_perthousand(10);
+  pub const MarketMakerLimitFeeAmount: Permill = Permill::from_parts(500);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
   pub const BurnedCap: u32 = 1000;

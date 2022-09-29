@@ -1291,19 +1291,26 @@ mod cancel_swap {
     //   }
     #[test]
     fn from_tdfy_to_temp() {
+      let free: u128 = 2_510_661_247_398_669_860;
+      let from_amount: u128 = 358_691_894_374_000_000;
+      let to_amount: u128 = 27_601_341_270_000_000_000;
+      let fee: u128 = 179_345_947_187_000;
+      let reserved: u128 = from_amount + fee;
+      let total: u128 = free + reserved;
+
       new_test_ext().execute_with(|| {
         let context = Context::default()
           .mint_tdfy(ALICE_ACCOUNT_ID, 20 * ONE_TDFY)
-          .mint_tdfy(BOB_ACCOUNT_ID, 2_872_940_060_716_409_860)
+          .mint_tdfy(BOB_ACCOUNT_ID, total)
           .create_temp_asset_and_metadata()
-          .mint_temp(ALICE_ACCOUNT_ID, 27_601_341_270_000_000_000);
+          .mint_temp(ALICE_ACCOUNT_ID, to_amount);
 
         Oracle::add_new_swap_in_queue(
           BOB_ACCOUNT_ID,
           CurrencyId::Tdfy,
-          358_691_894_374_000_000,
+          from_amount,
           TEMP_CURRENCY_ID,
-          27_601_341_270_000_000_000,
+          to_amount,
           181_437,
           *Hash::from_str("0xaa2da68e072933bdb893c23221afb27fa54993666bdc17fbf58049bffac84790")
             .unwrap_or_default()
@@ -1325,8 +1332,8 @@ mod cancel_swap {
         let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
         let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
 
-        assert_eq!(requester_balance_before, 2_510_661_247_398_669_860);
-        assert_eq!(requester_reserved, 362_278_813_317_740_000);
+        assert_eq!(requester_balance_before, free);
+        assert_eq!(requester_reserved, reserved);
 
         assert_ok!(Tidefi::cancel_swap(
           Origin::signed(BOB_ACCOUNT_ID),
