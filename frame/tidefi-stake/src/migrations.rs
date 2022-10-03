@@ -40,7 +40,6 @@ pub fn migrate_to_v1<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 
     // set default staking periods
     let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = vec![
-      (T::BlockNumber::from(150_u32), Percent::from_parts(1)),
       (
         T::BlockNumber::from(14400_u32 * 15_u32),
         Percent::from_parts(2),

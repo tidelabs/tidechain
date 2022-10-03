@@ -347,8 +347,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
   pallet_tidefi_stake::GenesisConfig::<Test> {
     unstake_fee: Percent::from_parts(1),
     staking_periods: vec![
-      // FIXME: Remove the 15 minutes after our tests
-      (150_u32.into(), Percent::from_parts(1)),
       ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
       ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
       ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),

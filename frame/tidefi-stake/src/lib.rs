@@ -203,8 +203,6 @@ pub mod pallet {
         // 1%
         unstake_fee: Percent::from_parts(1),
         staking_periods: vec![
-          // FIXME: Remove the 15 minutes after our tests
-          (150_u32.into(), Percent::from_parts(1)),
           ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
           ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
           ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
@@ -219,7 +217,6 @@ pub mod pallet {
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
       let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = vec![
-        (T::BlockNumber::from(150_u32), Percent::from_parts(1)),
         (
           T::BlockNumber::from(14400_u32 * 15_u32),
           Percent::from_parts(2),
