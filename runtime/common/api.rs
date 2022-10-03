@@ -295,6 +295,7 @@ impl_runtime_apis! {
        list_benchmark!(list, extra, pallet_quorum, crate::Quorum);
        list_benchmark!(list, extra, pallet_oracle, crate::Oracle);
        list_benchmark!(list, extra, pallet_asset_registry, crate::AssetRegistry);
+       list_benchmark!(list, extra, pallet_vesting, crate::Vesting);
        list_benchmark!(list, extra, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 
        let storage_info = crate::AllPalletsWithSystem::storage_info();
@@ -370,6 +371,7 @@ impl_runtime_apis! {
            add_benchmark!(params, batches, pallet_quorum, crate::Quorum);
            add_benchmark!(params, batches, pallet_oracle, crate::Oracle);
            add_benchmark!(params, batches, pallet_asset_registry, crate::AssetRegistry);
+           add_benchmark!(params, batches, pallet_vesting, crate::Vesting);
            add_benchmark!(params, batches, pallet_preimage, crate::Preimage);
            add_benchmark!(params, batches, frame_election_provider_support, ElectionProviderBench::<Runtime>);
 

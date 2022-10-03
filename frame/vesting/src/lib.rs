@@ -73,6 +73,10 @@ use tidefi_primitives::{Balance, CurrencyId};
 
 mod mock;
 mod tests;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 mod weights;
 
 pub use module::*;
@@ -339,7 +343,7 @@ pub mod module {
       Ok(())
     }
 
-    #[pallet::weight(0)]
+    #[pallet::weight(T::WeightInfo::stop_vesting_schedules())]
     pub fn stop_vesting_schedules(
       origin: OriginFor<T>,
       who: <T::Lookup as StaticLookup>::Source,

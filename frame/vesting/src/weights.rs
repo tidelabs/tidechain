@@ -49,6 +49,7 @@ pub trait WeightInfo {
 	fn vested_transfer() -> Weight;
 	fn claim(i: u32, ) -> Weight;
 	fn update_vesting_schedules(i: u32, ) -> Weight;
+	fn stop_vesting_schedules() -> Weight;
 }
 
 /// Default weights.
@@ -71,5 +72,8 @@ impl WeightInfo for () {
 			.saturating_add((117_000 as Weight).saturating_mul(i as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	fn stop_vesting_schedules() -> Weight {
+		(0 as Weight)
 	}
 }

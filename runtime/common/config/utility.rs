@@ -92,7 +92,7 @@ impl pallet_vesting::Config for Runtime {
   type Currency = Balances;
   type MinVestedTransfer = MinVestedTransfer;
   type VestedTransferOrigin = EnsureRootOrTreasury;
-  type WeightInfo = ();
+  type WeightInfo = (); //crate::weights::pallet_vesting::WeightInfo<Runtime>;
   type MaxVestingSchedules = MaxVestingSchedules;
   type BlockNumberProvider = SusbtrateBlockNumberProvider;
   type CurrencyTidefi = Adapter<AccountId>;

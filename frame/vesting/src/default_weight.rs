@@ -40,4 +40,7 @@ impl crate::WeightInfo for () {
       .saturating_add(DbWeight::get().reads(2 as Weight))
       .saturating_add(DbWeight::get().writes(3 as Weight))
   }
+  fn stop_vesting_schedules() -> Weight {
+    (0 as Weight)
+  }
 }
