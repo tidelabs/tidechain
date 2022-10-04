@@ -54,7 +54,7 @@ benchmarks! {
 
       frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
       frame_system::Pallet::<T>::set_block_number(
-        frame_system::Pallet::<T>::block_number() + T::BlockNumber::from(100_000_u32),
+        frame_system::Pallet::<T>::block_number() + <T as Config>::Sunrise::cooldown_blocks_count()
       );
       frame_system::Pallet::<T>::on_initialize(frame_system::Pallet::<T>::block_number());
       frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
