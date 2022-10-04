@@ -2755,6 +2755,42 @@
 <span id="2750">2750</span>
 <span id="2751">2751</span>
 <span id="2752">2752</span>
+<span id="2753">2753</span>
+<span id="2754">2754</span>
+<span id="2755">2755</span>
+<span id="2756">2756</span>
+<span id="2757">2757</span>
+<span id="2758">2758</span>
+<span id="2759">2759</span>
+<span id="2760">2760</span>
+<span id="2761">2761</span>
+<span id="2762">2762</span>
+<span id="2763">2763</span>
+<span id="2764">2764</span>
+<span id="2765">2765</span>
+<span id="2766">2766</span>
+<span id="2767">2767</span>
+<span id="2768">2768</span>
+<span id="2769">2769</span>
+<span id="2770">2770</span>
+<span id="2771">2771</span>
+<span id="2772">2772</span>
+<span id="2773">2773</span>
+<span id="2774">2774</span>
+<span id="2775">2775</span>
+<span id="2776">2776</span>
+<span id="2777">2777</span>
+<span id="2778">2778</span>
+<span id="2779">2779</span>
+<span id="2780">2780</span>
+<span id="2781">2781</span>
+<span id="2782">2782</span>
+<span id="2783">2783</span>
+<span id="2784">2784</span>
+<span id="2785">2785</span>
+<span id="2786">2786</span>
+<span id="2787">2787</span>
+<span id="2788">2788</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2021-2022 Semantic Network Ltd.</span>
 <span class="comment">// This file is part of Tidechain.</span>
 
@@ -2894,7 +2930,9 @@
   <span class="kw">const</span> <span class="ident">ENDOWMENT</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">10_500</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
   <span class="kw">const</span> <span class="ident">TOTAL_SUPPLY</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">1_000_000_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
   <span class="kw">const</span> <span class="ident">STASH</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">10_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
-  <span class="kw">const</span> <span class="ident">SUNRISE_POOL</span>: <span class="ident">u128</span> <span class="op">=</span> (<span class="number">192_000_000</span> <span class="op">+</span> <span class="number">48_000_000</span>) <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
+  <span class="kw">const</span> <span class="ident">ON_BOARDING_REBATES</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">48_000_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
+  <span class="kw">const</span> <span class="ident">TRADING_REBATES</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">192_000_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
+  <span class="kw">const</span> <span class="ident">SUNRISE_POOL</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="ident">ON_BOARDING_REBATES</span> <span class="op">+</span> <span class="ident">TRADING_REBATES</span>;
   <span class="comment">// Treasury Account Id</span>
   <span class="kw">let</span> <span class="ident">treasury_account</span>: <span class="ident">AccountId</span> <span class="op">=</span>
     <span class="ident">lagoon_runtime::TreasuryPalletId::get</span>().<span class="ident">into_account_truncating</span>();
@@ -2961,6 +2999,17 @@
   );
 
   <span class="kw">let</span> <span class="ident">vesting</span> <span class="op">=</span> <span class="ident">helpers::get_vesting_terms_lagoon</span>();
+
+  <span class="kw">let</span> <span class="ident">sunrise</span> <span class="op">=</span> <span class="macro">crate::tidefi_sunrise_pool_genesis!</span>(<span class="ident">lagoon_runtime</span>);
+  <span class="kw">let</span> <span class="ident">trading_rebates_total</span>: <span class="ident">Balance</span> <span class="op">=</span> <span class="ident">sunrise</span>
+    .<span class="ident">swap_pools</span>
+    .<span class="ident">iter</span>()
+    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">swap_pool</span><span class="op">|</span> <span class="ident">swap_pool</span>.<span class="ident">balance</span>)
+    .<span class="ident">sum</span>();
+  <span class="macro">assert_eq!</span>(
+    <span class="ident">trading_rebates_total</span>, <span class="ident">TRADING_REBATES</span>,
+    <span class="string">&quot;Sunrise pool trading rebates total is not correct&quot;</span>
+  );
 
   <span class="ident">lagoon_runtime::GenesisConfig</span> {
     <span class="ident">system</span>: <span class="ident">lagoon_runtime::SystemConfig</span> {
@@ -3068,8 +3117,17 @@
     <span class="ident">security</span>: <span class="ident">Default::default</span>(),
     <span class="ident">fees</span>: <span class="ident">Default::default</span>(),
     <span class="ident">vesting</span>: <span class="ident">lagoon_runtime::VestingConfig</span> { <span class="ident">vesting</span> },
-    <span class="ident">sunrise</span>: <span class="macro">crate::tidefi_sunrise_pool_genesis!</span>(<span class="ident">lagoon_runtime</span>),
-    <span class="ident">tidefi_staking</span>: <span class="macro">crate::tidefi_staking_genesis!</span>(<span class="ident">lagoon_runtime</span>),
+    <span class="ident">sunrise</span>,
+    <span class="ident">tidefi_staking</span>: <span class="macro">crate::tidefi_staking_genesis!</span>(
+      <span class="ident">lagoon_runtime</span>,
+      <span class="macro">vec!</span>[
+        (<span class="number">150_u32</span>, <span class="ident">Percent::from_parts</span>(<span class="number">1</span>)),
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">15_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">2</span>)),
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">30_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">3</span>)),
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">60_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">4</span>)),
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">90_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">5</span>)),
+      ]
+    ),
   }
 }
 
@@ -3094,7 +3152,9 @@
   <span class="kw">const</span> <span class="ident">ENDOWMENT</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">10_500</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
   <span class="kw">const</span> <span class="ident">TOTAL_SUPPLY</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">1_000_000_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
   <span class="kw">const</span> <span class="ident">STASH</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">10_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
-  <span class="kw">const</span> <span class="ident">SUNRISE_POOL</span>: <span class="ident">u128</span> <span class="op">=</span> (<span class="number">192_000_000</span> <span class="op">+</span> <span class="number">48_000_000</span>) <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
+  <span class="kw">const</span> <span class="ident">ON_BOARDING_REBATES</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">48_000_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
+  <span class="kw">const</span> <span class="ident">TRADING_REBATES</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">192_000_000</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
+  <span class="kw">const</span> <span class="ident">SUNRISE_POOL</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="ident">ON_BOARDING_REBATES</span> <span class="op">+</span> <span class="ident">TRADING_REBATES</span>;
 
   <span class="kw">const</span> <span class="ident">VESTING_TOTAL_FOR_ONE_MONTH_PERIOD</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">2_382_910</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
   <span class="kw">const</span> <span class="ident">VESTING_TOTAL_FOR_SIX_MONTHS_PERIOD</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">2_382_910</span> <span class="op">*</span> <span class="number">1_000_000_000_000</span>;
@@ -3206,6 +3266,17 @@
     <span class="string">&quot;Total vesting at the end of the three years is not correct&quot;</span>
   );
 
+  <span class="kw">let</span> <span class="ident">sunrise</span> <span class="op">=</span> <span class="macro">crate::tidefi_sunrise_pool_genesis!</span>(<span class="ident">tidechain_runtime</span>);
+  <span class="kw">let</span> <span class="ident">trading_rebates_total</span>: <span class="ident">Balance</span> <span class="op">=</span> <span class="ident">sunrise</span>
+    .<span class="ident">swap_pools</span>
+    .<span class="ident">iter</span>()
+    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">swap_pool</span><span class="op">|</span> <span class="ident">swap_pool</span>.<span class="ident">balance</span>)
+    .<span class="ident">sum</span>();
+  <span class="macro">assert_eq!</span>(
+    <span class="ident">trading_rebates_total</span>, <span class="ident">TRADING_REBATES</span>,
+    <span class="string">&quot;Sunrise pool trading rebates total is not correct&quot;</span>
+  );
+
   <span class="ident">tidechain_runtime::GenesisConfig</span> {
     <span class="ident">system</span>: <span class="ident">tidechain_runtime::SystemConfig</span> {
       <span class="ident">code</span>: <span class="ident">wasm_binary</span>.<span class="ident">to_vec</span>(),
@@ -3292,8 +3363,16 @@
     <span class="ident">security</span>: <span class="ident">Default::default</span>(),
     <span class="ident">fees</span>: <span class="ident">Default::default</span>(),
     <span class="ident">vesting</span>: <span class="ident">tidechain_runtime::VestingConfig</span> { <span class="ident">vesting</span> },
-    <span class="ident">sunrise</span>: <span class="macro">crate::tidefi_sunrise_pool_genesis!</span>(<span class="ident">tidechain_runtime</span>),
-    <span class="ident">tidefi_staking</span>: <span class="macro">crate::tidefi_staking_genesis!</span>(<span class="ident">tidechain_runtime</span>),
+    <span class="ident">sunrise</span>,
+    <span class="ident">tidefi_staking</span>: <span class="macro">crate::tidefi_staking_genesis!</span>(
+      <span class="ident">tidechain_runtime</span>,
+      <span class="macro">vec!</span>[
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">15_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">2</span>)),
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">30_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">3</span>)),
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">60_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">4</span>)),
+        ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">90_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">5</span>)),
+      ]
+    ),
   }
 }
 
@@ -3773,14 +3852,9 @@
   <span class="comment">// syntactic sugar for tidefi staking genesis config.</span>
   <span class="attribute">#[<span class="ident">macro_export</span>]</span>
   <span class="macro">macro_rules!</span> <span class="ident">tidefi_staking_genesis</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">runtime</span>:<span class="ident">tt</span>) =&gt; {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">runtime</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">staking_periods</span>:<span class="ident">expr</span>) =&gt; {
       <span class="macro-nonterminal">$</span><span class="macro-nonterminal">runtime::TidefiStakingConfig</span> {
-        <span class="ident">staking_periods</span>: <span class="macro">vec!</span>[
-          ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">15_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">2</span>)),
-          ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">30_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">3</span>)),
-          ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">60_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">4</span>)),
-          ((<span class="number">14400_u32</span> <span class="op">*</span> <span class="number">90_u32</span>).<span class="ident">into</span>(), <span class="ident">Percent::from_parts</span>(<span class="number">5</span>)),
-        ],
+        <span class="ident">staking_periods</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">staking_periods</span>,
         <span class="ident">staking_meta</span>: <span class="ident">assets::Asset::iter</span>()
           .<span class="ident">map</span>(<span class="op">|</span><span class="ident">asset</span><span class="op">|</span> {
             (
@@ -3807,8 +3881,6 @@
           <span class="ident">initial_amount</span>: <span class="ident">assets::Asset::Tdfy</span>.<span class="ident">saturating_mul</span>(<span class="number">48_000_000</span>),
           <span class="ident">available_amount</span>: <span class="ident">assets::Asset::Tdfy</span>.<span class="ident">saturating_mul</span>(<span class="number">48_000_000</span>),
         }),
-        <span class="comment">// FIXME: Maybe add some validation to make sure it equals `192_000_000`</span>
-        <span class="comment">// 67200000 + 57600000 + 38400000 + 19200000 + 9600000 = 192_000_000</span>
         <span class="ident">swap_pools</span>: <span class="macro">vec!</span>[
           <span class="ident">SunriseSwapPool</span> {
             <span class="ident">id</span>: <span class="number">1</span>,
