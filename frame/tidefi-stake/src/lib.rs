@@ -218,27 +218,11 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
-      let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = vec![
-        (T::BlockNumber::from(150_u32), Percent::from_parts(1)),
-        (
-          T::BlockNumber::from(14400_u32 * 15_u32),
-          Percent::from_parts(2),
-        ),
-        (
-          T::BlockNumber::from(14400_u32 * 30_u32),
-          Percent::from_parts(3),
-        ),
-        (
-          T::BlockNumber::from(14400_u32 * 60_u32),
-          Percent::from_parts(4),
-        ),
-        (
-          T::BlockNumber::from(14400_u32 * 90_u32),
-          Percent::from_parts(5),
-        ),
-      ]
-      .try_into()
-      .expect("too much periods");
+      let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = self
+        .staking_periods
+        .clone()
+        .try_into()
+        .expect("too much periods");
 
       StakingPeriodRewards::<T>::put(bounded_periods);
       UnstakeFee::<T>::put(self.unstake_fee.clone());

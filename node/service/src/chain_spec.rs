@@ -137,7 +137,9 @@ fn lagoon_testnet_genesis(
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
+  const ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
+  const TRADING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = ON_BOARDING_REBATES + TRADING_REBATES;
   // Treasury Account Id
   let treasury_account: AccountId =
     lagoon_runtime::TreasuryPalletId::get().into_account_truncating();
@@ -204,6 +206,17 @@ fn lagoon_testnet_genesis(
   );
 
   let vesting = helpers::get_vesting_terms_lagoon();
+
+  let sunrise = crate::tidefi_sunrise_pool_genesis!(lagoon_runtime);
+  let trading_rebates_total: Balance = sunrise
+    .swap_pools
+    .iter()
+    .map(|swap_pool| swap_pool.balance)
+    .sum();
+  assert_eq!(
+    trading_rebates_total, TRADING_REBATES,
+    "Sunrise pool trading rebates total is not correct"
+  );
 
   lagoon_runtime::GenesisConfig {
     system: lagoon_runtime::SystemConfig {
@@ -311,8 +324,17 @@ fn lagoon_testnet_genesis(
     security: Default::default(),
     fees: Default::default(),
     vesting: lagoon_runtime::VestingConfig { vesting },
-    sunrise: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
-    tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
+    sunrise,
+    tidefi_staking: crate::tidefi_staking_genesis!(
+      lagoon_runtime,
+      vec![
+        (150_u32, Percent::from_parts(1)),
+        ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+        ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+        ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+        ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+      ]
+    ),
   }
 }
 
@@ -337,7 +359,9 @@ fn tidechain_testnet_genesis(
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
+  const ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
+  const TRADING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = ON_BOARDING_REBATES + TRADING_REBATES;
 
   const VESTING_TOTAL_FOR_ONE_MONTH_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
   const VESTING_TOTAL_FOR_SIX_MONTHS_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
@@ -449,6 +473,17 @@ fn tidechain_testnet_genesis(
     "Total vesting at the end of the three years is not correct"
   );
 
+  let sunrise = crate::tidefi_sunrise_pool_genesis!(tidechain_runtime);
+  let trading_rebates_total: Balance = sunrise
+    .swap_pools
+    .iter()
+    .map(|swap_pool| swap_pool.balance)
+    .sum();
+  assert_eq!(
+    trading_rebates_total, TRADING_REBATES,
+    "Sunrise pool trading rebates total is not correct"
+  );
+
   tidechain_runtime::GenesisConfig {
     system: tidechain_runtime::SystemConfig {
       code: wasm_binary.to_vec(),
@@ -535,8 +570,16 @@ fn tidechain_testnet_genesis(
     security: Default::default(),
     fees: Default::default(),
     vesting: tidechain_runtime::VestingConfig { vesting },
-    sunrise: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
-    tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
+    sunrise,
+    tidefi_staking: crate::tidefi_staking_genesis!(
+      tidechain_runtime,
+      vec![
+        ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+        ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+        ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+        ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+      ]
+    ),
   }
 }
 
@@ -1016,14 +1059,9 @@ mod helpers {
   // syntactic sugar for tidefi staking genesis config.
   #[macro_export]
   macro_rules! tidefi_staking_genesis {
-    ($runtime:tt) => {
+    ($runtime:tt, $staking_periods:expr) => {
       $runtime::TidefiStakingConfig {
-        staking_periods: vec![
-          ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
-          ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
-          ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
-          ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
-        ],
+        staking_periods: $staking_periods,
         staking_meta: assets::Asset::iter()
           .map(|asset| {
             (
@@ -1050,8 +1088,6 @@ mod helpers {
           initial_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
           available_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
         }),
-        // FIXME: Maybe add some validation to make sure it equals `192_000_000`
-        // 67200000 + 57600000 + 38400000 + 19200000 + 9600000 = 192_000_000
         swap_pools: vec![
           SunriseSwapPool {
             id: 1,
