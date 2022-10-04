@@ -77,7 +77,7 @@ parameter_types! {
   pub const SwapLimitByAccount: u32 = 10_000;
   // Sunrise Pool: Number of blocks to wait before they can claim the last era reward.
   // current_era.start_block + Cooldown < current_block to be able to claim last era sunrise reward
-  pub const Cooldown: BlockNumber = 10;
+  pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // Maximum sunrise rewards before rewards allocation (in TDFY's)
   pub const MaximumRewardPerSwap: Balance = 100_000_000_000_000_000;
   // Rebates applied to left-over pool

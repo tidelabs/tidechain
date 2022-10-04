@@ -182,7 +182,7 @@ parameter_types! {
   pub const SwapLimitByAccount: u32 = 100;
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
-  pub const Cooldown: BlockNumber = 10;
+  pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // max 10k rewards
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
