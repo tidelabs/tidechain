@@ -324,8 +324,17 @@ fn lagoon_testnet_genesis(
     security: Default::default(),
     fees: Default::default(),
     vesting: lagoon_runtime::VestingConfig { vesting },
-    sunrise: sunrise,
-    tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
+    sunrise,
+    tidefi_staking: crate::tidefi_staking_genesis!(
+      lagoon_runtime,
+      vec![
+        (150_u32, Percent::from_parts(1)),
+        ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+        ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+        ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+        ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+      ]
+    ),
   }
 }
 
@@ -561,8 +570,16 @@ fn tidechain_testnet_genesis(
     security: Default::default(),
     fees: Default::default(),
     vesting: tidechain_runtime::VestingConfig { vesting },
-    sunrise: sunrise,
-    tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
+    sunrise,
+    tidefi_staking: crate::tidefi_staking_genesis!(
+      tidechain_runtime,
+      vec![
+        ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
+        ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
+        ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
+        ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
+      ]
+    ),
   }
 }
 
@@ -1042,14 +1059,9 @@ mod helpers {
   // syntactic sugar for tidefi staking genesis config.
   #[macro_export]
   macro_rules! tidefi_staking_genesis {
-    ($runtime:tt) => {
+    ($runtime:tt, $staking_periods:expr) => {
       $runtime::TidefiStakingConfig {
-        staking_periods: vec![
-          ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
-          ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
-          ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
-          ((14400_u32 * 90_u32).into(), Percent::from_parts(5)),
-        ],
+        staking_periods: $staking_periods,
         staking_meta: assets::Asset::iter()
           .map(|asset| {
             (
