@@ -218,8 +218,11 @@ pub mod pallet {
   #[pallet::genesis_build]
   impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
     fn build(&self) {
-      let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> =
-        self.staking_periods.clone().try_into().expect("too much periods");
+      let bounded_periods: BoundedVec<(T::BlockNumber, Percent), T::StakingRewardCap> = self
+        .staking_periods
+        .clone()
+        .try_into()
+        .expect("too much periods");
 
       StakingPeriodRewards::<T>::put(bounded_periods);
       UnstakeFee::<T>::put(self.unstake_fee.clone());
