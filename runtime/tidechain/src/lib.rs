@@ -91,9 +91,8 @@ mod bag_thresholds;
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-// FIXME: Replace with SEMNET Unique prefix. (7007)
-// 42 = Substrate default
-pub const SS58_PREFIX: u8 = 42;
+// Tidefi Prefix
+pub const SS58_PREFIX: u16 = 7007;
 
 /// Wasm binary unwrapped. If built with `SKIP_WASM_BUILD`, the function panics.
 #[cfg(feature = "std")]
@@ -116,7 +115,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
   // 1.10-1 -> 1101
   // 2.4 -> 2040
   // 2.14 -> 2140
-  spec_version: 5020,
+  spec_version: 6000,
   impl_version: 0,
   apis: crate::api::PRUNTIME_API_VERSIONS,
   transaction_version: 1,
@@ -154,6 +153,12 @@ parameter_types! {
   pub const FeesPalletId: PalletId = PalletId(*b"py/wfees");
   pub const SunrisePalletId: PalletId = PalletId(*b"py/sunrp");
   pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+}
+
+// FIXME: Should be removed once we'll give control to the community (governance)
+impl pallet_sudo::Config for Runtime {
+  type Event = Event;
+  type Call = Call;
 }
 
 construct_runtime!(
@@ -224,6 +229,9 @@ construct_runtime!(
         // Preimage registrar
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 30,
 
+        // Sudo module
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 31,
+
         // Tidefi public calls
         Tidefi: pallet_tidefi::{Pallet, Call, Storage, Event<T>} = 50,
 
@@ -248,6 +256,8 @@ construct_runtime!(
         // Sunrise module
         Sunrise: pallet_sunrise::{Pallet, Config<T>, Storage, Event<T>} = 57,
 
+        // Vesting module
+        Vesting: pallet_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 58,
     }
 );
 

@@ -45,6 +45,15 @@ const LAGOON_STAGING_TELEMETRY_URL: &str = "wss://telemetry.tidefi.io/submit/";
 #[cfg(any(feature = "lagoon-native", feature = "tidechain-native"))]
 const DEFAULT_PROTOCOL_ID: &str = "tidec0";
 
+const STARTING_BLOCK: u32 = 0;
+
+// We are approximating a month to 30 days
+const ONE_MONTH: u32 = 432_000;
+const SIX_MONTHS: u32 = 2_592_000;
+const ONE_YEAR: u32 = 5_184_000;
+
+const TOTAL_INITIAL_ACCOUNT_ALLOCATION: u128 = 147_248_200 * 1_000_000_000_000;
+
 /// Node `ChainSpec` extensions.
 ///
 /// Additional parameters for some Substrate core modules,
@@ -128,7 +137,9 @@ fn lagoon_testnet_genesis(
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
+  const ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
+  const TRADING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = ON_BOARDING_REBATES + TRADING_REBATES;
   // Treasury Account Id
   let treasury_account: AccountId =
     lagoon_runtime::TreasuryPalletId::get().into_account_truncating();
@@ -194,6 +205,19 @@ fn lagoon_testnet_genesis(
     "Total Supply (endowed_accounts) is not equal to 1 billion"
   );
 
+  let vesting = helpers::get_vesting_terms_lagoon();
+
+  let sunrise = crate::tidefi_sunrise_pool_genesis!(lagoon_runtime);
+  let trading_rebates_total: Balance = sunrise
+    .swap_pools
+    .iter()
+    .map(|swap_pool| swap_pool.balance)
+    .sum();
+  assert_eq!(
+    trading_rebates_total, TRADING_REBATES,
+    "Sunrise pool trading rebates total is not correct"
+  );
+
   lagoon_runtime::GenesisConfig {
     system: lagoon_runtime::SystemConfig {
       code: wasm_binary.to_vec(),
@@ -244,7 +268,6 @@ fn lagoon_testnet_genesis(
       phantom: Default::default(),
     },
 
-    // FIXME: Remove sudo once the staging is completed
     sudo: lagoon_runtime::SudoConfig {
       key: Some(root.clone()),
     },
@@ -300,7 +323,8 @@ fn lagoon_testnet_genesis(
     },
     security: Default::default(),
     fees: Default::default(),
-    sunrise: crate::tidefi_sunrise_pool_genesis!(lagoon_runtime),
+    vesting: lagoon_runtime::VestingConfig { vesting },
+    sunrise: sunrise,
     tidefi_staking: crate::tidefi_staking_genesis!(lagoon_runtime),
   }
 }
@@ -319,13 +343,20 @@ fn tidechain_testnet_genesis(
   stakeholders: Vec<(CurrencyId, AccountId, Balance)>,
   quorums: Vec<AccountId>,
   oracle: AccountId,
+  root: AccountId,
   assets: Vec<(AssetId, Vec<u8>, Vec<u8>, u8)>,
 ) -> tidechain_runtime::GenesisConfig {
   // 10_500 TDFYs / validators (10_000 stashed)
   const ENDOWMENT: u128 = 10_500 * 1_000_000_000_000;
   const TOTAL_SUPPLY: u128 = 1_000_000_000 * 1_000_000_000_000;
   const STASH: u128 = 10_000 * 1_000_000_000_000;
-  const SUNRISE_POOL: u128 = (192_000_000 + 48_000_000) * 1_000_000_000_000;
+  const ON_BOARDING_REBATES: u128 = 48_000_000 * 1_000_000_000_000;
+  const TRADING_REBATES: u128 = 192_000_000 * 1_000_000_000_000;
+  const SUNRISE_POOL: u128 = ON_BOARDING_REBATES + TRADING_REBATES;
+
+  const VESTING_TOTAL_FOR_ONE_MONTH_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_SIX_MONTHS_PERIOD: u128 = 2_382_910 * 1_000_000_000_000;
+  const VESTING_TOTAL_FOR_THREE_YEARS_PERIOD: u128 = 102_892_380 * 1_000_000_000_000;
 
   // default threshold set to 60%
   let quorum_threshold = (quorums.len() as f64 * 0.6).ceil() as u16;
@@ -354,6 +385,8 @@ fn tidechain_testnet_genesis(
   helpers::adjust_treasury_balance_for_initial_validators_and_quorums(initial_authorities.len(), quorums.len(), ENDOWMENT)
   // all tokens claimed by the stake holders
   + total_claims
+  // root
+  + 10_000_000_000_000
   // Sunrise pool
   + SUNRISE_POOL;
 
@@ -371,6 +404,8 @@ fn tidechain_testnet_genesis(
     (treasury_account, treasury_funds),
     // Sunrise pool
     (sunrise_account, SUNRISE_POOL),
+    // 10 TDFY to root so he can pay fees
+    (root.clone(), 10_000_000_000_000),
   ];
 
   // Add all stake holders account
@@ -390,6 +425,54 @@ fn tidechain_testnet_genesis(
   assert_eq!(
     total_supply, TOTAL_SUPPLY,
     "Total Supply (endowed_accounts) is not equal to 1 billion"
+  );
+
+  let vesting = helpers::get_vesting_terms_tidechain();
+
+  let one_month_vesting_total: Balance = vesting
+    .iter()
+    .filter(|(_, starting_block, period, period_count, _)| {
+      *starting_block == STARTING_BLOCK && *period == ONE_MONTH && *period_count == 1
+    })
+    .map(|(_, _, _, _, per_period)| per_period)
+    .sum();
+  let six_months_vesting_total: Balance = vesting
+    .iter()
+    .filter(|(_, starting_block, period, period_count, _)| {
+      *starting_block == STARTING_BLOCK && *period == SIX_MONTHS && *period_count == 1
+    })
+    .map(|(_, _, _, _, per_period)| per_period)
+    .sum();
+  let three_years_vesting_total: Balance = vesting
+    .iter()
+    .filter(|(_, starting_block, period, period_count, _)| {
+      *starting_block == STARTING_BLOCK && *period == ONE_YEAR && *period_count == 3
+    })
+    .map(|(_, _, _, period_count, per_period)| *per_period * Balance::from(*period_count))
+    .sum();
+
+  assert_eq!(
+    one_month_vesting_total, VESTING_TOTAL_FOR_ONE_MONTH_PERIOD,
+    "Total vesting at the end of the first month is not correct"
+  );
+  assert_eq!(
+    six_months_vesting_total, VESTING_TOTAL_FOR_SIX_MONTHS_PERIOD,
+    "Total vesting at the end of the first six months is not correct"
+  );
+  assert_eq!(
+    three_years_vesting_total, VESTING_TOTAL_FOR_THREE_YEARS_PERIOD,
+    "Total vesting at the end of the three years is not correct"
+  );
+
+  let sunrise = crate::tidefi_sunrise_pool_genesis!(tidechain_runtime);
+  let trading_rebates_total: Balance = sunrise
+    .swap_pools
+    .iter()
+    .map(|swap_pool| swap_pool.balance)
+    .sum();
+  assert_eq!(
+    trading_rebates_total, TRADING_REBATES,
+    "Sunrise pool trading rebates total is not correct"
   );
 
   tidechain_runtime::GenesisConfig {
@@ -433,13 +516,20 @@ fn tidechain_testnet_genesis(
     },
     elections: Default::default(),
     democracy: Default::default(),
+
     council: tidechain_runtime::CouncilConfig {
       members: vec![],
       phantom: Default::default(),
     },
+
     technical_committee: tidechain_runtime::TechnicalCommitteeConfig {
       members: vec![],
       phantom: Default::default(),
+    },
+
+    // FIXME: Remove sudo once the staging is completed
+    sudo: tidechain_runtime::SudoConfig {
+      key: Some(root.clone()),
     },
 
     babe: tidechain_runtime::BabeConfig {
@@ -470,7 +560,8 @@ fn tidechain_testnet_genesis(
     },
     security: Default::default(),
     fees: Default::default(),
-    sunrise: crate::tidefi_sunrise_pool_genesis!(tidechain_runtime),
+    vesting: tidechain_runtime::VestingConfig { vesting },
+    sunrise: sunrise,
     tidefi_staking: crate::tidefi_staking_genesis!(tidechain_runtime),
   }
 }
@@ -782,6 +873,7 @@ fn tidechain_development_config_genesis(wasm_binary: &[u8]) -> tidechain_runtime
     helpers::get_stakeholder_tokens_tidechain(),
     vec![helpers::get_account_id_from_seed::<sr25519::Public>("Bob")],
     helpers::get_account_id_from_seed::<sr25519::Public>("Charlie"),
+    helpers::get_account_id_from_seed::<sr25519::Public>("Ferdie"),
     helpers::get_all_assets(),
   )
 }
@@ -859,6 +951,8 @@ fn tidechain_staging_testnet_config_genesis(
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
+    //fhAwZQ4RZm2rWe6mWyAGwWRASr8t5a4rMVuctVPprubZC6TM6
+    hex!["36cac8f87497cbe1eb00b78c923515ae03aabe8e50c1fa1086a884589b25f23f"].into(),
     helpers::get_all_assets(),
   )
 }
@@ -934,6 +1028,8 @@ fn tidechain_local_testnet_config_genesis(wasm_binary: &[u8]) -> tidechain_runti
     quorums,
     //5HKDZMoz5NnX37Np8dMKMAANbNu9N1XuQec15b3tZ8NaBTAR
     hex!["e83e965a0e2c599751184bcea1507d9fe37510d9d75eb37cba3ad8c1a5a1fe12"].into(),
+    //fhAwZQ4RZm2rWe6mWyAGwWRASr8t5a4rMVuctVPprubZC6TM6
+    hex!["36cac8f87497cbe1eb00b78c923515ae03aabe8e50c1fa1086a884589b25f23f"].into(),
     helpers::get_all_assets(),
   )
 }
@@ -949,8 +1045,6 @@ mod helpers {
     ($runtime:tt) => {
       $runtime::TidefiStakingConfig {
         staking_periods: vec![
-          // FIXME: Remove the 15 minutes after our tests
-          (150_u32.into(), Percent::from_parts(1)),
           ((14400_u32 * 15_u32).into(), Percent::from_parts(2)),
           ((14400_u32 * 30_u32).into(), Percent::from_parts(3)),
           ((14400_u32 * 60_u32).into(), Percent::from_parts(4)),
@@ -982,8 +1076,6 @@ mod helpers {
           initial_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
           available_amount: assets::Asset::Tdfy.saturating_mul(48_000_000),
         }),
-        // FIXME: Maybe add some validation to make sure it equals `192_000_000`
-        // 67200000 + 57600000 + 38400000 + 19200000 + 9600000 = 192_000_000
         swap_pools: vec![
           SunriseSwapPool {
             id: 1,
@@ -2036,86 +2128,648 @@ mod helpers {
   // SECRET="key" ./scripts/prepare-dev-tidechain.sh
   #[cfg(feature = "tidechain-native")]
   pub fn get_stakeholder_tokens_tidechain() -> Vec<(CurrencyId, AccountId, Balance)> {
+    let stakeholder_tokens_tidechain = vec![
+      (
+        CurrencyId::Tdfy,
+        //Lending for Validators
+        hex!["49a114a2e284aead1fac808e7678969feaa203ab13573bdf531aac7593e79fa2"].into(),
+        // 5_000_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(5_000_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //Market Maker
+        hex!["c4a1869429a17efc98db6c2c664d5230e8d74e842ef40235507d119ef705e532"].into(),
+        // 10_000_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(10_000_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //Tidefi development pool
+        hex!["8e14d1ac896ea00e18d855588ee13103449cc6e41d4b0173d917cabea84bdb08"].into(),
+        // 80_000_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(80_000_000),
+      ),
+      // team
+      (
+        CurrencyId::Tdfy,
+        //A
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
+        // 1_720_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_720_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //B
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
+        // 2_230_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_230_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //C
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
+        // 11_760_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(11_760_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //D
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
+        // 1_885_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_885_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //E
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
+        // 2_066_900 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_066_900),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //F
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
+        // 105_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_653_800),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //G
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
+        // 3_043_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(3_043_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //H
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
+        // 4_355_200 TDFY
+        assets::Asset::Tdfy.saturating_mul(4_355_200),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //I
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
+        // 1_994_800 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_994_800),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //J
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
+        // 2_215_500 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_215_500),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //K
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
+        // 1_113_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_113_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //L
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
+        // 2_825_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_825_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //M
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
+        // 2_175_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_175_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //N
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
+        // 590_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(590_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //O
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
+        // 2_451_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(2_451_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //P
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
+        // 1_845_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_845_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //Q
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
+        // 1_515_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_515_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //R
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
+        // 3_360_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(3_360_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //S
+        hex!["043c68b39d9b45788ca53ad830979e221c4034f86398672775c6a9d35424b878"].into(),
+        // 240_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(240_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //T
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
+        // 1_865_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_865_000),
+      ),
+      (
+        CurrencyId::Tdfy,
+        //U
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        // 1_345_000 TDFY
+        assets::Asset::Tdfy.saturating_mul(1_345_000),
+      ),
+    ];
+
+    let total_initial_account_allocation: Balance = stakeholder_tokens_tidechain
+      .iter()
+      .filter(|(currency_id, _, _)| *currency_id == CurrencyId::Tdfy)
+      .map(|(_, _, balance)| *balance)
+      .sum();
+
+    assert_eq!(
+      total_initial_account_allocation, TOTAL_INITIAL_ACCOUNT_ALLOCATION,
+      "Initial account allocation total is not correct"
+    );
+
+    stakeholder_tokens_tidechain
+  }
+
+  #[cfg(feature = "lagoon-native")]
+  pub fn get_vesting_terms_lagoon() -> Vec<(AccountId, u32, u32, u32, Balance)> {
+    vec![]
+  }
+
+  #[cfg(feature = "tidechain-native")]
+  pub fn get_vesting_terms_tidechain() -> Vec<(AccountId, u32, u32, u32, Balance)> {
     vec![
-      // faucet
+      //Tidefi development pool
       (
-        CurrencyId::Tdfy,
-        //5DUeL7kapQZbyP4FCohywPtsN7AfQ8nA1cayoB6P33FL64xQ
-        hex!["3e7e404546ac4697dd7026e3837915e60aa2381954803f18cb09eebd7d1aba67"].into(),
-        // 10_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(10_000),
+        hex!["8e14d1ac896ea00e18d855588ee13103449cc6e41d4b0173d917cabea84bdb08"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(20_000_000),
       ),
-      // investors
+      //A
       (
-        CurrencyId::Tdfy,
-        //5DUTRtdo3T6CtLx5rxJQxAVhT9RmZUWGw4FJWZSPWbLFhNf2
-        hex!["3e598e8ee9577c609c70823e394ab1a2e0301f73f074a773a3a1b20bfba9050e"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
-      ),
-      (
-        CurrencyId::Tdfy,
-        //5GHab6U9Ke5XjbHHEB5WSUreyp293BryKjJrGWgQ1nCvEDzM
-        hex!["bac2a7f4be9d7e0f8eee75e0af5e33240698e8ac0b02904627bd9c4d37b3dd5e"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
       ),
       (
-        CurrencyId::Tdfy,
-        //5CLmiDfMLGbuuvuuc87ZF1fr9itkyVzTE5hjWb725JemcGka
-        hex!["0c40e6b8b6686685828658080a17af04562fa69818c848146795c8c586691a68"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
       ),
       (
-        CurrencyId::Tdfy,
-        //5CJMQZA3LgdZ7EXN1eTXjxqQvmxgZEuXy9iWA1Yvd67zK9Da
-        hex!["0a689812fb1b2763c3ff90ad8f12c652848904d7f4cb3ea5d5328a30c4d3c978"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["542e6df326b7ea609ae7d1b3f30b5fbc9e473415d8094e236ebdbc0f5204cc25"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(480_000),
+      ),
+      //B
+      (
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(95_000),
       ),
       (
-        CurrencyId::Tdfy,
-        //5DWorbmbirDwHNNrLFu15aRjD63fiEAbi5K9Eo96mxwirVdM
-        hex!["4024cecb82ca165b7960b22a19ac3fafa5240582691eaf22ffee7a6f06cb1526"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
-      ),
-      // devs
-      (
-        CurrencyId::Tdfy,
-        //5CFsxqm4muZDTZA3vZVE8Pm9ny2XDrKvR8UAZuufxFLGoAwQ
-        hex!["0885b880a6305cb19ea441fab8b5ed02cadef5cb5dafe9e9afd7c0be80046636"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(95_000),
       ),
       (
-        CurrencyId::Tdfy,
-        //5HVXyDbEY3Luroo4aiurP1xLZnKKAsXU4GRxVNBGmH2d2io5
-        hex!["f01d04fcd4db7b552a14bec692f6fcb7a9fc4669972cdadc563f2bcb324c9741"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["264bf1d4d2e4fe38912bce61c7fcdc35d83147fdb164bd761bcfd951265c9e47"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(570_000),
+      ),
+      //C
+      (
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(552_000),
       ),
       (
-        CurrencyId::Tdfy,
-        //5CLdLM1HrtWdRvYBfH6dcEWQnRD6AeKZWGyuxE4shPBdY2r2
-        hex!["0c24b38a7a768577d9e00b8d01f3412bf5121632c855dd4837abc7fe4afd4609"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(552_000),
       ),
       (
-        CurrencyId::Tdfy,
-        //5HgiTfx31XKS8F74LDVjiXG7VcJ69Q1sWFRjAgyJrK4yXFY1
-        hex!["f8a4088e206592cb8eaa5bd73279b552f85a4b4da7761184076ee404df2c906c"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["56d24b8bd664c8f986139c943764033ff87d75f070be15a5756fd8a1461d925a"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(3_312_000),
+      ),
+      //D
+      (
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
       ),
       (
-        CurrencyId::Tdfy,
-        //5GL5yZjsYNDLWY12CJt5Vm1jktLfaHTiHXHcZNmsxd13EXf9
-        hex!["bcac12e15f80982de85d5667ddc1b6dd49bee80c4edfd371c5ba5d47023fa97b"].into(),
-        // 1_000 TDFY
-        assets::Asset::Tdfy.saturating_mul(1_000),
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(80_000),
+      ),
+      (
+        hex!["7c37ae52b566e906c12d692c6491f6bf53c7b8aac48a5508a19ead28cbb63a6b"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(480_000),
+      ),
+      //E
+      (
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(89_095),
+      ),
+      (
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(89_095),
+      ),
+      (
+        hex!["640bc73182d4aff458d28e15d6747d51aedd0be5c663c0cf09ac292727a4022b"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(534_570),
+      ),
+      //F
+      (
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(77_440),
+      ),
+      (
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(77_440),
+      ),
+      (
+        hex!["1073d449bf500cfdb1d6bb58bd3ed056ebcbf35023b7a749e35d7b69b8cb3229"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(464_640),
+      ),
+      //G
+      (
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(136_400),
+      ),
+      (
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(136_400),
+      ),
+      (
+        hex!["0e17ae7783c5eabf6a99ae2de893c51ea418645283a41aa888e9d52af00e5e44"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(818_400),
+      ),
+      //H
+      (
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(199_760),
+      ),
+      (
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(199_760),
+      ),
+      (
+        hex!["fed36467731f9f952aac5fe2f3d23601aea3057cf9a9e37baea4afd752928654"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(1_198_560),
+      ),
+      //I
+      (
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(86_240),
+      ),
+      (
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(86_240),
+      ),
+      (
+        hex!["9e0726eaac26eb8c8d7a9c75bd5f074464a3c974c16467d193769dacd7743c31"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(517_440),
+      ),
+      //J
+      (
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(96_525),
+      ),
+      (
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(96_525),
+      ),
+      (
+        hex!["d263a88080f51fb484804b9e2e744f0a81ab820a5255d666424c5a8aa5e82418"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(579_150),
+      ),
+      //K
+      (
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(45_150),
+      ),
+      (
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(45_150),
+      ),
+      (
+        hex!["1661a2075b7be54a942b52ba10e924469e3bdf8abbe9037d38f357ee78f86d79"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(270_900),
+      ),
+      //L
+      (
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(130_000),
+      ),
+      (
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(130_000),
+      ),
+      (
+        hex!["40a4ee2d7304c4ef7cf00732425c57a9d58e4202bf43472f2dcb162a748f606d"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(780_000),
+      ),
+      //M
+      (
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(105_000),
+      ),
+      (
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(105_000),
+      ),
+      (
+        hex!["5e7d7e4a8af71774f2928de7cd8b201fafff6bd6c96b5601d687da560cf00916"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(630_000),
+      ),
+      //N
+      (
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(25_000),
+      ),
+      (
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(25_000),
+      ),
+      (
+        hex!["d0fbfacb97883cb2556460da5e6308c11b836c216714255a03f28ab1106aff41"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(150_000),
+      ),
+      //O
+      (
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(118_800),
+      ),
+      (
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(118_800),
+      ),
+      (
+        hex!["1a6ccfd2da09c82181721b0d819a0bb4a7fd5fefccda52281d5ba6508fbb6c64"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(712_800),
+      ),
+      //P
+      (
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(88_500),
+      ),
+      (
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(88_500),
+      ),
+      (
+        hex!["a61f1f9724052d89026286f60158fb096d191bbb9d657332964ad20503effc31"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(531_000),
+      ),
+      //Q
+      (
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(72_000),
+      ),
+      (
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(72_000),
+      ),
+      (
+        hex!["ece719a6a53971d93350f7df82fad72be842ebc15fd6fda6a3c9a01f74819e74"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(432_000),
+      ),
+      //R
+      (
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(150_000),
+      ),
+      (
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(150_000),
+      ),
+      (
+        hex!["d683b0f3706345f4ff1bbb1fd9a54454c4edf050e20cb177d5e82b0945a55b3f"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(900_000),
+      ),
+      //S has no vesting terms
+      //T
+      (
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(91_000),
+      ),
+      (
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(91_000),
+      ),
+      (
+        hex!["f49304cc009eb5eb37e762ff829db11b86b3f639048da93f638ea9fd65828a72"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(546_000),
+      ),
+      //U
+      (
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        STARTING_BLOCK,
+        ONE_MONTH,
+        1,
+        assets::Asset::Tdfy.saturating_mul(65_000),
+      ),
+      (
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        STARTING_BLOCK,
+        SIX_MONTHS,
+        1,
+        assets::Asset::Tdfy.saturating_mul(65_000),
+      ),
+      (
+        hex!["7a6df5d223accd21b5672ada2ed68b790b5be0cafd84dc18d30f0b525122617e"].into(),
+        STARTING_BLOCK,
+        ONE_YEAR,
+        3,
+        assets::Asset::Tdfy.saturating_mul(390_000),
       ),
     ]
   }

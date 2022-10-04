@@ -1253,6 +1253,104 @@ mod cancel_swap {
       }
     }
   }
+
+  mod reported_tests {
+    use super::*;
+
+    //  Test Case
+    // {
+    //     extrinsicHash: 0xaa2da68e072933bdb893c23221afb27fa54993666bdc17fbf58049bffac84790
+    //     accountId: fhEVp1YLd462wqi7ZZQ6kwsAJJoSiQTLryHr8haS47FVTJZiZ
+    //     isMarketMaker: true
+    //     tokenFrom: Tdfy
+    //     amountFrom: 358,691,894,374,000,000
+    //     amountFromFilled: 0
+    //     tokenTo: {
+    //       Wrapped: 3
+    //     }
+    //     amountTo: 27,601,341,270,000,000,000
+    //     amountToFilled: 0
+    //     status: Pending
+    //     swapType: Limit
+    //     blockNumber: 181,437
+    //     slippage: 0.00%
+    //   }
+
+    //   the user balance:
+    //   {
+    //     nonce: 7,723
+    //     consumers: 0
+    //     providers: 1
+    //     sufficients: 4
+    //     data: {
+    //       free: 2,510,661,247,398,669,860
+    //       reserved: 358,861,235,321,187,000
+    //       miscFrozen: 0
+    //       feeFrozen: 0
+    //     }
+    //   }
+    #[test]
+    fn from_tdfy_to_temp() {
+      let free_balance: u128 = 2_510_661_247_398_669_860;
+      let from_amount: u128 = 358_691_894_374_000_000;
+      let to_amount: u128 = 27_601_341_270_000_000_000;
+      let fee: u128 = 179_345_947_187_000; // MarketMakerLimitFeeAmount: 0.05% of from_amount
+      let reserved_balance: u128 = from_amount + fee;
+      let total: u128 = free_balance + reserved_balance;
+
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 20 * ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, total)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, to_amount);
+
+        Oracle::add_new_swap_in_queue(
+          BOB_ACCOUNT_ID,
+          CurrencyId::Tdfy,
+          from_amount,
+          TEMP_CURRENCY_ID,
+          to_amount,
+          181_437,
+          *Hash::from_str("0xaa2da68e072933bdb893c23221afb27fa54993666bdc17fbf58049bffac84790")
+            .unwrap_or_default()
+            .as_fixed_bytes(),
+          true,
+          SwapType::Limit,
+          Permill::from_parts(0),
+        )
+        .unwrap();
+
+        assert_eq!(
+          Oracle::account_swaps(BOB_ACCOUNT_ID)
+            .unwrap()
+            .iter()
+            .find(|(request_id, _)| *request_id == context.request_id),
+          Some(&(context.request_id, SwapStatus::Pending))
+        );
+
+        let requester_balance_before = get_account_balance(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+        let requester_reserved = get_account_reserved(BOB_ACCOUNT_ID, CurrencyId::Tdfy);
+
+        assert_eq!(requester_balance_before, free_balance);
+        assert_eq!(requester_reserved, reserved_balance);
+
+        assert_ok!(Tidefi::cancel_swap(
+          Origin::signed(BOB_ACCOUNT_ID),
+          context.request_id,
+        ));
+
+        assert_eq!(
+          Adapter::balance(CurrencyId::Tdfy, &BOB_ACCOUNT_ID),
+          requester_balance_before + requester_reserved
+        );
+
+        assert_cancelled_swap_is_set_to_none(&context);
+        assert_cancelled_swap_is_deleted_from_account_swaps(&context);
+        assert_event_is_emitted_swap_cancelled(&context);
+      })
+    }
+  }
 }
 
 mod claim_sunrise_rewards {

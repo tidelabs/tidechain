@@ -162,7 +162,7 @@ parameter_types! {
   pub const FeeAmount: Permill = Permill::from_perthousand(20);
   // 10 basis point
   pub const MarketMakerFeeAmount: Permill = Permill::from_perthousand(10);
-  pub const MarketMakerLimitFeeAmount: Permill = Permill::from_perthousand(10);
+  pub const MarketMakerLimitFeeAmount: Permill = Permill::from_parts(500);
   // 20 %
   pub const DistributionPercentage: Permill = Permill::from_percent(20);
   pub const BurnedCap: u32 = 1000;
@@ -182,7 +182,7 @@ parameter_types! {
   pub const SwapLimitByAccount: u32 = 100;
   // Maximum number of staking period the chain can support
   pub const StakingRewardCap: u32 = 10;
-  pub const Cooldown: BlockNumber = 10;
+  pub const Cooldown: BlockNumber = 1_296_000; // 90 DAYS
   // max 10k rewards
   pub const MaximumRewardPerSwap: Balance = 10_000_000_000_000_000;
   // 50%
@@ -238,6 +238,7 @@ impl pallet_oracle::Config for Test {
 
 impl pallet_security::Config for Test {
   type Event = Event;
+  type WeightInfo = pallet_security::weights::SubstrateWeight<Test>;
 }
 
 impl pallet_asset_registry::Config for Test {
