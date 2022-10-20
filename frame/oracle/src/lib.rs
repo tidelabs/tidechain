@@ -481,6 +481,17 @@ pub mod pallet {
                     .checked_sub(market_maker_trade_intent.amount_from_filled)
                     .ok_or(Error::<T>::MarketMakerHasNotEnoughTokenLeftToSell)?;
 
+                  // 11 d) prevent MM overflow
+                  if market_maker_trade_intent
+                    .amount_from_filled
+                    .checked_add(mm.amount_to_send)
+                    .ok_or(Error::<T>::ArithmeticError)?
+                    > market_maker_trade_intent.amount_from
+                  {
+                    return Err(Error::<T>::MarketMakerHasNotEnoughTokenLeftToSell);
+                  }
+
+                  // 11 e) make sure there is enough funds available
                   if available_funds
                     .checked_add(market_maker_trade_intent.slippage * available_funds)
                     .ok_or(Error::<T>::ArithmeticError)?
