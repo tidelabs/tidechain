@@ -488,7 +488,7 @@ pub mod pallet {
                     .ok_or(Error::<T>::ArithmeticError)?
                     > market_maker_trade_intent.amount_from
                   {
-                    return Err(Error::<T>::MarketMakerHasNotEnoughTokenLeftToSell);
+                    return Err(Error::<T>::MarketMakerHasNotEnoughTokenToSell);
                   }
 
                   // 11 e) make sure there is enough funds available
