@@ -232,7 +232,7 @@ pub mod pallet {
 
       // 5. Make sure the account have enough funds
       match T::CurrencyTidefi::can_withdraw(currency_id, &account_id, amount) {
-        WithdrawConsequence::Success => {
+        WithdrawConsequence::Success | WithdrawConsequence::ReducedToZero(_) => {
           // Add withdrawal in queue
           T::Quorum::add_new_withdrawal_in_queue(
             account_id.clone(),
@@ -257,7 +257,6 @@ pub mod pallet {
           Err(Error::<T>::WithdrawAmountGreaterThanAssetSupply.into())
         }
         WithdrawConsequence::Frozen => Err(Error::<T>::AccountAssetFrozen.into()),
-        WithdrawConsequence::ReducedToZero(_) => Err(Error::<T>::ReducedToZero.into()),
         _ => Err(Error::<T>::UnknownError.into()),
       }
     }

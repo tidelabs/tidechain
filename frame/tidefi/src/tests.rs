@@ -532,6 +532,23 @@ mod withdrawal {
     });
   }
 
+  #[test]
+  fn succeeds_if_max_withdrawal() {
+    new_test_ext().execute_with(|| {
+      let context = Context::default()
+        .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+        .create_temp_asset_and_metadata()
+        .mint_temp(ALICE_ACCOUNT_ID, ONE_TEMP);
+
+      assert_ok!(Tidefi::withdrawal(
+        Origin::signed(context.sender),
+        TEMP_CURRENCY_ID,
+        ONE_TEMP,
+        context.external_address.clone(),
+      ));
+    });
+  }
+
   mod fails_when {
     use super::*;
 
@@ -655,26 +672,6 @@ mod withdrawal {
             context.external_address.clone(),
           ),
           Error::<Test>::AccountAssetFrozen
-        );
-      });
-    }
-
-    #[test]
-    fn sender_balance_would_be_reduced_to_zero() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default()
-          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
-          .create_temp_asset_and_metadata()
-          .mint_temp(ALICE_ACCOUNT_ID, 10 * ONE_TEMP);
-
-        assert_noop!(
-          Tidefi::withdrawal(
-            Origin::signed(context.sender),
-            TEMP_CURRENCY_ID,
-            10 * ONE_TEMP,
-            context.external_address.clone(),
-          ),
-          Error::<Test>::ReducedToZero
         );
       });
     }
