@@ -364,6 +364,44 @@ mod transfer {
         }
       });
     }
+
+    #[test]
+    fn sender_send_max_tdfy_delete_keepalive() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY);
+
+        assert_ok!(Tidefi::transfer(
+          Origin::signed(context.sender),
+          context.receiver,
+          CurrencyId::Tdfy,
+          ONE_TDFY
+        ));
+      });
+    }
+
+    #[test]
+    fn sender_send_max_wrapped_asset_delete_keepalive() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID, 10);
+
+        for currency_id in context.test_assets.clone() {
+          let alice_balance_before = get_alice_balance(currency_id);
+
+          assert_ok!(Tidefi::transfer(
+            Origin::signed(context.sender),
+            context.receiver,
+            currency_id,
+            alice_balance_before
+          ));
+
+          assert_eq!(0, get_alice_balance(currency_id));
+          assert_eq!(alice_balance_before, get_bob_balance(currency_id));
+        }
+      });
+    }
   }
 
   mod fails_when {
@@ -466,23 +504,6 @@ mod transfer {
             10 * ONE_TEMP + 1
           ),
           AssetsError::<Test>::BalanceLow
-        );
-      });
-    }
-
-    #[test]
-    fn sender_has_insufficient_tdfy_left_to_keep_alive() {
-      new_test_ext().execute_with(|| {
-        let context = Context::default().mint_tdfy(ALICE_ACCOUNT_ID, 10 * ONE_TDFY);
-
-        assert_noop!(
-          Tidefi::transfer(
-            Origin::signed(context.sender),
-            context.receiver,
-            CurrencyId::Tdfy,
-            10 * ONE_TDFY
-          ),
-          BalancesError::<Test>::KeepAlive
         );
       });
     }
