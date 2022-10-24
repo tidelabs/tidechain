@@ -184,7 +184,7 @@ pub mod pallet {
       );
 
       // 3. Transfer the request currency, only if the funds are available and the recipient can receive it.
-      T::CurrencyTidefi::transfer(currency_id, &account_id, &destination_id, amount, true)?;
+      T::CurrencyTidefi::transfer(currency_id, &account_id, &destination_id, amount, false)?;
 
       // 4. Send event to the chain
       Self::deposit_event(Event::<T>::Transfer {
