@@ -1958,6 +1958,47 @@ mod confirm_swap {
     }
 
     #[test]
+    fn market_maker_overflow() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .set_oracle_status(true)
+          .set_market_makers(vec![CHARLIE_ACCOUNT_ID])
+          .mint_tdfy(ALICE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(CHARLIE_ACCOUNT_ID, ONE_TDFY)
+          .mint_tdfy(BOB_ACCOUNT_ID, BOB_INITIAL_20_TDFYS)
+          .create_temp_asset_and_metadata()
+          .mint_temp(CHARLIE_ACCOUNT_ID, CHARLIE_INITIAL_10000_TEMPS);
+
+        let trade_request_id =
+          create_bob_limit_swap_request_from_10_tdfys_to_200_temps_with_2_percents_slippage(
+            &context,
+          );
+
+        let trade_request_mm_id = context.create_temp_to_tdfy_limit_swap_request(
+          CHARLIE_ACCOUNT_ID,
+          CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS,
+          CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+          EXTRINSIC_HASH_1,
+          SLIPPAGE_2_PERCENTS,
+        );
+
+        assert_noop!(
+          Oracle::confirm_swap(
+            context.alice.clone(),
+            trade_request_id,
+            vec![SwapConfirmation {
+              request_id: trade_request_mm_id,
+              amount_to_receive: CHARLIE_PARTIAL_FILLING_BUYS_5_TDFYS,
+              // this pass the slippage but overflow the initial request
+              amount_to_send: CHARLIE_PARTIAL_FILLING_SELLS_100_TEMPS.saturating_add(1),
+            },],
+          ),
+          Error::<Test>::MarketMakerHasNotEnoughTokenToSell
+        );
+      });
+    }
+
+    #[test]
     fn requester_does_not_have_enough_funds() {
       new_test_ext().execute_with(|| {
         let context = Context::default()

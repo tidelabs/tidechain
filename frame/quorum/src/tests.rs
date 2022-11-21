@@ -1768,6 +1768,30 @@ mod eval_proposal_state {
     }
 
     #[test]
+    pub fn approved_max_withdrawal() {
+      new_test_ext().execute_with(|| {
+        let context = Context::default()
+          .insert_asset1_with_alice_public_key()
+          .mint_tdfy(ALICE_ACCOUNT_ID as u64, ONE_TDFY)
+          .create_temp_asset_and_metadata()
+          .mint_temp(ALICE_ACCOUNT_ID as u64, ONE_TEMP)
+          .insert_a_valid_withdrawal_proposal()
+          .commit_a_valid_vote(true);
+
+        assert_ok!(Quorum::eval_proposal_state(
+          context.alice.clone(),
+          context.proposal_id
+        ));
+
+        assert_eq!(0, get_alice_temp_balance());
+        assert_proposal_and_its_votes_have_been_deleted(context.proposal_id);
+        assert_event_is_emitted_proposal_approved(&context);
+        assert_event_is_emitted_burned_initialized(&context);
+        assert_event_is_emitted_proposal_processed(&context);
+      });
+    }
+
+    #[test]
     pub fn rejected() {
       new_test_ext().execute_with(|| {
         let context = Context::default()
