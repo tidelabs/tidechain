@@ -411,10 +411,8 @@ pub mod pallet {
         return Err(Error::<T>::InvalidEra.into());
       }
 
-      // Unable to claim previous era if the `T::Cooldown` cooldown isnt completed
-      if era_index == current_era.index.saturating_sub(1)
-        && starting_block.saturating_add(T::Sunrise::cooldown_blocks_count()) > current_block
-      {
+      // Unable to claim in any previous era if the `T::Cooldown` cooldown isnt completed
+      if starting_block.saturating_add(T::Sunrise::cooldown_blocks_count()) > current_block {
         return Err(Error::<T>::EraNotReady.into());
       }
 
