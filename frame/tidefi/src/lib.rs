@@ -420,12 +420,6 @@ pub mod pallet {
       let minimum_era_index_as_blocknumber =
         T::BlockNumber::from(current_era.index).saturating_sub(eras_in_cooldown);
 
-      println!("era_index {}", era_index);
-      println!(
-        "minimum_era_index_as_blocknumber {}",
-        minimum_era_index_as_blocknumber
-      );
-
       // Unable to claim previous era's if the `T::Cooldown` cooldown isnt cleared
       if T::BlockNumber::from(era_index) >= minimum_era_index_as_blocknumber {
         return Err(Error::<T>::EraNotReady.into());
