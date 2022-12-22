@@ -21,7 +21,7 @@ use frame_support::{
   traits::{fungibles::Mutate, Hooks},
 };
 use frame_system::RawOrigin;
-use tidefi_primitives::{pallet::SunriseExt, CurrencyId, SwapType};
+use tidefi_primitives::{pallet::SunriseExt, ActiveEraInfo, CurrencyId, SwapType};
 const INITIAL_AMOUNT: u128 = 500_000_000_000_000;
 const IA_MULTIPLIER: u32 = 2;
 const TEST_TOKEN: u32 = 2;
@@ -53,9 +53,15 @@ benchmarks! {
       <pallet_sunrise::Rewards<T>>::insert(&caller, 1, 1_000_000_000_000);
 
       frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
-      frame_system::Pallet::<T>::set_block_number(
-        frame_system::Pallet::<T>::block_number() + <T as Config>::Sunrise::cooldown_blocks_count()
-      );
+      frame_system::Pallet::<T>::set_block_number(T::BlockNumber::from(1_500_000_u32));
+      pallet_fees::ActiveEra::<T>::put(ActiveEraInfo::<T::BlockNumber> {
+         index: 25_000,
+         start_block: Some(T::BlockNumber::from(1_500_000_u32)),
+         start_session_index: None,
+         last_session_block: None,
+         start: None,
+       });
+
       frame_system::Pallet::<T>::on_initialize(frame_system::Pallet::<T>::block_number());
       frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
       pallet_security::CurrentBlockCount::<T>::put(frame_system::Pallet::<T>::block_number());

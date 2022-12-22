@@ -44,7 +44,10 @@ pub mod pallet {
   };
   use frame_system::pallet_prelude::*;
   use sp_io::hashing::blake2_256;
-  use sp_runtime::{traits::Saturating, Permill};
+  use sp_runtime::{
+    traits::{CheckedDiv, Saturating},
+    Permill,
+  };
   use tidefi_primitives::{
     pallet::{AssetRegistryExt, FeesExt, OracleExt, QuorumExt, SecurityExt, SunriseExt},
     Balance, CurrencyId, EraIndex, Hash, SwapType,
@@ -403,18 +406,28 @@ pub mod pallet {
 
       // 2. Make sure the era Index provided is ready to be claimed
       let current_era = T::Fees::current_era().ok_or(Error::<T>::NoActiveEra)?;
-      let starting_block = current_era.start_block.ok_or(Error::<T>::NoActiveEra)?;
-      let current_block = T::Security::get_current_block_count();
 
       // Unable to claim current Era
       if era_index >= current_era.index {
         return Err(Error::<T>::InvalidEra.into());
       }
 
-      // Unable to claim previous era if the `T::Cooldown` cooldown isnt completed
-      if era_index == current_era.index.saturating_sub(1)
-        && starting_block.saturating_add(T::Sunrise::cooldown_blocks_count()) > current_block
-      {
+      let era_blocks_count = T::Fees::era_blocks_count();
+      let cooldown_blocks_count = T::Sunrise::cooldown_blocks_count();
+      let eras_in_cooldown = cooldown_blocks_count
+        .checked_div(&era_blocks_count)
+        .ok_or(Error::<T>::EraNotReady)?;
+      let minimum_era_index_as_blocknumber =
+        T::BlockNumber::from(current_era.index).saturating_sub(eras_in_cooldown);
+
+      println!("era_index {}", era_index);
+      println!(
+        "minimum_era_index_as_blocknumber {}",
+        minimum_era_index_as_blocknumber
+      );
+
+      // Unable to claim previous era's if the `T::Cooldown` cooldown isnt cleared
+      if T::BlockNumber::from(era_index) >= minimum_era_index_as_blocknumber {
         return Err(Error::<T>::EraNotReady.into());
       }
 
