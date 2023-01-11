@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Network",""]],"struct":[["NetworkIter",""]],"type":[["Addresses",""],["ChainIds",""]]});
+initSidebarItems({"enum":[["Network",""]],"struct":[["NetworkIter",""]],"type":[["Addresses",""],["ChainIds",""],["Enabled",""]]});

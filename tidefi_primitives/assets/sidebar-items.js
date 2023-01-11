@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["BTC",""],["ETH",""],["TDFY",""],["USDC",""],["USDT",""]],"enum":[["Algo",""],["Asset",""]],"struct":[["AssetIter",""]]});
+initSidebarItems({"constant":[["ATH",""],["BTC",""],["ETH",""],["TDFY",""],["USDC",""],["USDT",""]],"enum":[["Algo",""],["Asset",""]],"struct":[["AssetIter",""]]});
