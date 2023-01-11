@@ -395,6 +395,11 @@ pub mod pallet {
   }
 
   impl<T: Config> FeesExt<T::AccountId, T::BlockNumber> for Pallet<T> {
+    fn era_blocks_count() -> T::BlockNumber {
+      T::BlocksPerSession::get()
+        .saturating_mul(T::BlockNumber::from(T::SessionsPerEra::get() as u32))
+    }
+
     fn account_id() -> T::AccountId {
       T::FeesPalletId::get().into_account_truncating()
     }
