@@ -1540,11 +1540,11 @@ mod confirm_swap {
           trade_request_id,
           vec![SwapConfirmation {
             request_id: trade_request_mm_id,
-            amount_to_receive: BOB_SELLS_10_TDFYS
+            amount_to_receive: BOB_SELLS_10_TDFYS.saturating_div(2),
+            amount_to_send: BOB_BUYS_200_TEMPS
               .saturating_div(2)
-              .saturating_add(SLIPPAGE_4_PERCENTS * BOB_SELLS_10_TDFYS.saturating_div(2))
-              .saturating_add(100_000_000),
-            amount_to_send: BOB_BUYS_200_TEMPS.saturating_div(2),
+              .saturating_add(SLIPPAGE_4_PERCENTS * BOB_BUYS_200_TEMPS.saturating_div(2))
+              .saturating_add(1_000_000),
           }],
         ));
       });
