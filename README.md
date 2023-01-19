@@ -16,7 +16,7 @@ either run the latest binary from our [releases](https://github.com/tidelabs/tid
 Make sure you have the support software installed from the **Build from Source** section
 below this section.
 
-If you want to install Tidechain in your PATH, you can do so with with:
+If you want to install Tidechain in your PATH, you can do so with:
 
 ```bash
 cargo install --git https://github.com/tidelabs/tidechain --tag <version> tidechain --locked
